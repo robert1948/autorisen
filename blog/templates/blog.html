@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/favicon-16x16.png' %}" >
+
+<title>The Blog</title>
+</head>
+<body>
+{% block content %}
+<h1>This is a Blog</h1>
+<p>This is a paragraph1.</p>
+<link rel="shortcut icon" type="image/png" href="{% static 'img/favicon-16x16.png' %}" >
+{% include 'boxthree.html' %} {% include 'newsletter.html' %} {% include 'note.html' %} {% endblock %} 
+
+
+</body>
+</html>

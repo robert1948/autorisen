@@ -1,0 +1,31 @@
+{% extends 'base.html' %} 
+
+{% block content %} 
+{% include 'navbar.html' %} 
+
+{% if form.errors %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  There was an error with your request. Please try again
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div>
+  <h1 class="text-center">Register</h1>
+  <br />
+  <form action="{% url 'register_user' %}" method="POST" class="form-horizontal">
+    {% csrf_token %} 
+    {{ form.as_p }}
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <input type="submit" value="Register" class="btn btn-primary" />
+      </div>
+    </div>
+    {% include 'newsletter.html' %} 
+
+    <!--Boxes-->
+
+  </form>
+</div>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-{% load static %} 
+{% load static %}
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 
@@ -33,41 +33,10 @@
         </ul>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{%url 'vision' %}">Vision</a>
+        <a class="nav-link" href="{% url 'home' %}">Home</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{%url 'blog:blog1' %}">Blog</a>
-      </li>
-       <li class="nav-item">
-         <a class="nav-link" href="{%url 'blog:firstblog' %}">FBlog</a>
-       </li>
-
-
-
-    {% if user.is_authenticated %}
-    <li class="nav-item">
-      <a class="nav-link" href="{%url 'logout' %}">Logout</a>
-    </li>
-    {% else %}
-      <li class="nav-item">
-        <a class="nav-link" href="{%url 'register_user' %}">Register</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{%url 'login' %}">Login</a>
+        <a class="nav-link" href="{% url 'vision' %}">Vision</a>
       </li>
 
-    {% endif %}
-    </ul>
-    <form class="form-inline my-2 my-lg-0">
-      <input
-        class="form-control mr-sm-2"
-        type="search"
-        placeholder="Search"
-        aria-label="Search"
-      />
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
-        Search
-      </button>
-    </form>
-  </div>
 </nav>
