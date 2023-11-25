@@ -40,8 +40,6 @@
 - **Location:** Durbanville
 - **Expertise:** Specialized in Engineering Solid Edge Design, FeatureCAM software development, project and operations management.
 
-## Owner2
-
 ### Controlled Process Systems
 
 - **Duration:** January 1990 - December 2000 (11 years)
