@@ -1,5 +1,6 @@
 {
     "githubPullRequests.ignoredPullRequestBranches": [
         "main"
-    ]
+    ],
+    "python.pythonPath": "C:\\Users\\user\\appdata\\local\\programs\\python\\python311\\python.exe"
 }

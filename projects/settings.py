@@ -13,18 +13,18 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 import django_heroku
-#import dj_database_url
-from decouple import config
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+import dj_database_url
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2w#c0xjda#hshvg^8eb=yl@0(gcy*(uipcyg9*okrkh*)$5z6_'
+from decouple import config
+config.encoding = 'cp1251'
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = '1'
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -89,12 +89,30 @@ WSGI_APPLICATION = 'projects.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import dj_database_url
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Other settings...
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'd9fpvi0egbl659',
+        'USER': 'zintgllvckjzyq',
+        'PASSWORD': 'd8c99b88c4fd630f630c8ea57b2ee526932913d2cb1d61b33ea84144c74e37a4',
+        'HOST': 'ec2-44-194-102-142.compute-1.amazonaws.com',
+        'PORT': '5432',
     }
 }
+
+# Use DATABASE_URL from the environment if available
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+
+# Other settings...
 
 
 # Password validation
