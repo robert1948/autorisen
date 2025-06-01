@@ -1,0 +1,25 @@
+@use "variables" as *;
+
+.title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: $primary-color; // Use variable if defined
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: $secondary-color; // Use variable if defined
+}
+
+.homepage-header {
+  background-color: $dark-color; // Use variable if defined
+  color: $light-color; // Use variable if defined
+  padding: 4rem 1.5rem;
+  text-align: center;
+
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+}

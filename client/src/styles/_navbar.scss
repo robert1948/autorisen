@@ -1,0 +1,62 @@
+@use "variables" as *;
+
+.navbar {
+  background-color: $navbar-bg-color; // Dark theme navbar
+  padding: 0.75rem 1rem;
+
+  .navbar-brand {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: $brand-color; // Use variable
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: $brand-hover-color; // Use variable
+    }
+  }
+
+  .navbar-toggler {
+    border: none;
+    background: none;
+    color: $light-color; // Icon color
+    font-size: 1.25rem;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.3s ease;
+
+    &:focus {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .navbar-toggler-icon {
+      filter: invert(100%); // Adjust color
+    }
+  }
+
+  .navbar-collapse {
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+
+    &.collapsing {
+      opacity: 0.5;
+    }
+
+    &.collapse.show {
+      max-height: 500px; // Adjust as needed
+      opacity: 1;
+    }
+  }
+
+  .navbar-nav {
+    .nav-link {
+      font-size: 1.15rem;
+      color: $link-color; // Use variable
+      padding: 0.5rem 1rem;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: $link-hover-color; // Use variable
+      }
+    }
+  }
+}

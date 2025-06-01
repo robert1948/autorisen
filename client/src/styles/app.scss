@@ -1,0 +1,20 @@
+// Use variables first (shared by other modules)
+@use "variables" as *;
+
+// Use global layout, typography, etc.
+@use "layout" as *;
+@use "typography" as *;
+
+// Use navbar, buttons, forms, responsive enhancements
+@use "navbar" as *;
+@use "buttons" as *;
+@use "forms" as *;
+@use "responsive" as *;
+
+// Additional global styles can go here
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}

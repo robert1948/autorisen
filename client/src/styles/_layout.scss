@@ -1,0 +1,24 @@
+@use "variables" as *;
+
+.fullscreen-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: $background-color; // Use variable if defined
+}
+
+.centered-content {
+  text-align: center;
+  max-width: 640px;
+  margin: auto;
+  padding: 2rem 1rem;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: $text-color; // Use variable if defined
+}

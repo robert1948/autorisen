@@ -1,0 +1,52 @@
+@use "variables" as *;
+
+// Small devices (max-width: 575.98px)
+@media (max-width: 575.98px) {
+  .fullscreen-container {
+    align-items: flex-start;
+    padding-top: 2rem;
+    min-height: auto;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .subtitle {
+    font-size: 1.125rem;
+  }
+
+  .homepage-header {
+    padding: 2rem 1rem;
+  }
+}
+
+// Medium devices (≥576px and ≤991.98px)
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .title {
+    font-size: 3rem;
+  }
+
+  .subtitle {
+    font-size: 1.4rem;
+  }
+
+  .homepage-header {
+    padding: 3rem 1.5rem;
+  }
+}
+
+// Large devices (≥992px)
+@media (min-width: 992px) {
+  .fullscreen-container {
+    padding: 0 3rem;
+  }
+
+  .title {
+    font-size: 4.5rem;
+  }
+
+  .homepage-header {
+    padding: 5rem 2rem;
+  }
+}

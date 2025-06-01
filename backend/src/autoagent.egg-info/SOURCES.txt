@@ -1,0 +1,9 @@
+setup.py
+src/autoagent.egg-info/PKG-INFO
+src/autoagent.egg-info/SOURCES.txt
+src/autoagent.egg-info/dependency_links.txt
+src/autoagent.egg-info/entry_points.txt
+src/autoagent.egg-info/requires.txt
+src/autoagent.egg-info/top_level.txt
+src/config/__init__.py
+src/config/settings.py

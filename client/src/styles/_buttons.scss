@@ -1,0 +1,20 @@
+@use "variables" as *;
+
+.hero-button,
+.btn-hero {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+  background-color: $warning-color; // Use variable if defined
+  color: $dark-color; // Use variable if defined
+  border: none;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.hero-button:hover,
+.btn-hero:hover {
+  background-color: $warning-hover-color; // Use variable if defined
+  color: $dark-color; // Use variable if defined
+}
