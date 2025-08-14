@@ -2,7 +2,7 @@ name: Deploy via Heroku Pipeline
 
 on:
   push:
-    branches: [ develop ]  # auto-deploy to staging when you push to develop
+    branches: [develop] # auto-deploy to staging when you push to develop
   workflow_dispatch:
     inputs:
       promote_to_prod:
@@ -10,49 +10,72 @@ on:
         type: boolean
         default: false
 
+# Prevent overlapping runs per ref
+concurrency:
+  group: heroku-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HEROKU_STAGING_APP: autorisen
+  HEROKU_PRODUCTION_APP: capecraft
+  # Change this if your Heroku app uses 'master' as its default deploy branch
+  HEROKU_TARGET_BRANCH: main
+
 jobs:
   deploy-staging:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      # Install Heroku CLI
+    steps:
+      - name: Checkout (full history + LFS)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # <-- fixes "shallow clone" push rejection
+          lfs: true # fetch real LFS files
+
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Auth Heroku
-        run: |
-          heroku auth:token
+      - name: Authenticate to Heroku
+        run: heroku auth:token
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
-      # Push current commit to autorisen using buildpacks (Git deploy)
-      - name: Push to Heroku (autorisen)
+      - name: Add Heroku remote (staging)
         run: |
-          git remote add heroku-autorisen https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/autorisen.git
-          # If your default branch on Heroku is main, push HEAD:main
-          git push heroku-autorisen HEAD:main --force
+          git remote add heroku-staging https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/${{ env.HEROKU_STAGING_APP }}.git
+          git remote -v
 
-      - name: Show release output
-        run: heroku releases:output -a autorisen
+      - name: Push to Heroku (staging)
+        run: |
+          # If your Heroku default branch is master, set HEROKU_TARGET_BRANCH=master in env above
+          git push heroku-staging HEAD:${{ env.HEROKU_TARGET_BRANCH }} --force
+
+      - name: Show last release output (staging)
+        run: heroku releases:output -a ${{ env.HEROKU_STAGING_APP }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
   promote-to-prod:
     if: ${{ github.event.inputs.promote_to_prod == 'true' }}
     runs-on: ubuntu-latest
+    needs: [deploy-staging]
+
     steps:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Auth Heroku
+      - name: Authenticate to Heroku
         run: heroku auth:token
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
-      # Promote *the exact tested slug* from autorisen -> capecraft
-      - name: Promote slug to production
-        run: heroku pipelines:promote -a autorisen
+      - name: Promote slug from staging -> production
+        run: heroku pipelines:promote -a ${{ env.HEROKU_STAGING_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Show last release output (production)
+        run: heroku releases:output -a ${{ env.HEROKU_PRODUCTION_APP }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
