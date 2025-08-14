@@ -1,13 +1,10 @@
 {
   "name": "autorisen-dev",
   "build": { "dockerfile": "Dockerfile" },
-
   "remoteUser": "vscode",
   "containerUser": "vscode",
   "remoteEnv": { "HOME": "/home/vscode" },
-
   "postCreateCommand": "pip install -U pip && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && if [ -f client/package.json ]; then cd client && npm ci || true; fi",
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -19,10 +16,7 @@
         "github.vscode-github-actions",
         "ms-azuretools.vscode-docker"
       ],
-      "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "editor.formatOnSave": true
-      }
+      "settings": { "python.defaultInterpreterPath": "/usr/local/bin/python", "editor.formatOnSave": true }
     }
   }
 }
