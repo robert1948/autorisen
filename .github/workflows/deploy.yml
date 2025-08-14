@@ -1,0 +1,58 @@
+name: Deploy via Heroku Pipeline
+
+on:
+  push:
+    branches: [ develop ]  # auto-deploy to staging when you push to develop
+  workflow_dispatch:
+    inputs:
+      promote_to_prod:
+        description: "Promote current staging slug (autorisen) to production (capecraft)?"
+        type: boolean
+        default: false
+
+jobs:
+  deploy-staging:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Heroku CLI
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Auth Heroku
+        run: |
+          heroku auth:token
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      # Push current commit to autorisen using buildpacks (Git deploy)
+      - name: Push to Heroku (autorisen)
+        run: |
+          git remote add heroku-autorisen https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/autorisen.git
+          # If your default branch on Heroku is main, push HEAD:main
+          git push heroku-autorisen HEAD:main --force
+
+      - name: Show release output
+        run: heroku releases:output -a autorisen
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+  promote-to-prod:
+    if: ${{ github.event.inputs.promote_to_prod == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Auth Heroku
+        run: heroku auth:token
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      # Promote *the exact tested slug* from autorisen -> capecraft
+      - name: Promote slug to production
+        run: heroku pipelines:promote -a autorisen
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
