@@ -1,0 +1,66 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.ruff_cache/
+
+# SQLite / local DBs
+*.sqlite3
+
+# --- Node / JavaScript (client) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.parcel-cache/
+.next/
+.nuxt/
+out/
+client/.cache/
+client/build/
+client/dist/
+client/coverage/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Editors / IDE ---
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# --- System / Misc ---
+.DS_Store
+Thumbs.db
+
+# --- Test / Temp ---
+.cache/
+tmp/
+temp/
+
+# --- Docker / Devcontainers Artifacts (keep Dockerfile itself) ---
+**/.devcontainer/local-history/

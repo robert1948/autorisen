@@ -1,0 +1,106 @@
+# ---------------------------
+# VCS / CI
+# ---------------------------
+.git
+.gitignore
+.github/
+.gitlab-ci.yml
+
+# ---------------------------
+# Python artifacts
+# ---------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.mypy_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+.tox/
+.venv/
+venv/
+.ruff_cache/
+
+# Local DBs
+*.sqlite3
+
+# ---------------------------
+# Node / frontend (install separately if needed)
+# ---------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.parcel-cache/
+.next/
+.nuxt/
+out/
+client/node_modules/
+client/.cache/
+client/build/
+client/dist/
+client/coverage/
+
+# ---------------------------
+# Env / secrets (keep only examples)
+# ---------------------------
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ---------------------------
+# Logs
+# ---------------------------
+logs/
+*.log
+
+# ---------------------------
+# Temp / caches
+# ---------------------------
+.cache/
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+
+# ---------------------------
+# Editors / OS
+# ---------------------------
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---------------------------
+# Docker / Devcontainer (exclude dev-only tooling)
+# ---------------------------
+.devcontainer/
+docker-compose*.yml
+Dockerfile.dev
+**/local-history/
+
+# If you COPY . . and need only app code, explicitly allow key files:
+# !requirements.txt
+# !pyproject.toml
+# !package.json
+# !package-lock.json
+# !client/package.json
+
+# ---------------------------
+# Misc
+# ---------------------------
+*.bak
