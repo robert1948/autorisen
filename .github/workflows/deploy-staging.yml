@@ -57,11 +57,31 @@ jobs:
           heroku ps:scale web=1 -a "${APP}" || true
           heroku ps -a "${APP}"
 
+      - name: Wait for dyno to boot
+        run: |
+          # Best-effort: wait for dyno state or show recent releases
+          heroku ps:wait -a "${APP}" || true
+          heroku releases -a "${APP}" | head -n 5 || true
+
       - name: Health check
         run: |
           set -euo pipefail
           URL=$(heroku info -a "${APP}" | sed -n 's/^Web URL: *//p')
-          curl -fsSL "${URL}health" || curl -fsSL "${URL}"
+          BASE=${URL%/}
+          echo "Probing ${BASE}..."
+          for i in $(seq 1 24); do
+            if curl -fsS "${BASE}/api/health" \
+              || curl -fsS "${BASE}/health" \
+              || curl -fsS "${BASE}/"; then
+              echo "✅ Healthy"
+              exit 0
+            fi
+            echo "⏳ Not ready yet ($i/24); sleeping 5s..."
+            sleep 5
+          done
+          echo "❌ Health check failed. Recent logs:" >&2
+          heroku logs -n 200 -a "${APP}" || true
+          exit 1
 
       - name: Show app URL
         run: |
