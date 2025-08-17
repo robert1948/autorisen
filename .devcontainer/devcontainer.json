@@ -1,10 +1,24 @@
 {
   "name": "autorisen-dev",
   "build": { "dockerfile": "Dockerfile" },
+
   "remoteUser": "vscode",
   "containerUser": "vscode",
   "remoteEnv": { "HOME": "/home/vscode" },
-  "postCreateCommand": "pip install -U pip && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && if [ -f client/package.json ]; then cd client && npm ci || true; fi",
+
+  // Run our full setup (venv, Node deps, Heroku CLI, etc.)
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+
+  // Avoid git safety warnings inside the container
+  "postStartCommand": "git config --global --add safe.directory /workspaces/autorisen || true",
+
+  // Helpful forwards for local dev
+  "forwardPorts": [8000, 5173],
+  "portsAttributes": {
+    "8000": { "label": "FastAPI (uvicorn)", "onAutoForward": "notify" },
+    "5173": { "label": "Vite dev server", "onAutoForward": "notify" }
+  },
+
   "customizations": {
     "vscode": {
       "extensions": [
@@ -16,7 +30,14 @@
         "github.vscode-github-actions",
         "ms-azuretools.vscode-docker"
       ],
-      "settings": { "python.defaultInterpreterPath": "/usr/local/bin/python", "editor.formatOnSave": true }
+      "settings": {
+        "python.defaultInterpreterPath": "/workspaces/autorisen/.venv/bin/python",
+        "editor.formatOnSave": true,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true
+        }
+      }
     }
   }
 }

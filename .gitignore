@@ -64,3 +64,4 @@ temp/
 
 # --- Docker / Devcontainers Artifacts (keep Dockerfile itself) ---
 **/.devcontainer/local-history/
+.venv
