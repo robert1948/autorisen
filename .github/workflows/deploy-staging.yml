@@ -1,0 +1,67 @@
+name: Deploy to Heroku (staging)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.repository_owner == 'robert1948'
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      APP: ${{ secrets.HEROKU_APP_STAGING }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify required files exist
+        run: |
+          set -euo pipefail
+          test -f Procfile
+          test -f requirements.txt
+          test -f runtime.txt
+
+      - name: Install Heroku CLI
+        run: |
+          curl -fsSL https://cli-assets.heroku.com/install-ubuntu.sh | sh
+          heroku --version
+
+      - name: Set Heroku remote (HTTPS w/ API key)
+        run: |
+          git remote add heroku "https://heroku:${HEROKU_API_KEY}@git.heroku.com/${APP}.git" || \
+          git remote set-url heroku "https://heroku:${HEROKU_API_KEY}@git.heroku.com/${APP}.git"
+
+      - name: Ensure Python buildpack (idempotent)
+        run: |
+          heroku buildpacks:clear -a "${APP}" || true
+          heroku buildpacks:add heroku/python -a "${APP}" || true
+
+      - name: Push -> build -> release
+        run: git push heroku HEAD:main -f
+
+      - name: Make sure web dyno is up
+        run: |
+          heroku ps:scale web=1 -a "${APP}" || true
+          heroku ps -a "${APP}"
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+          URL=$(heroku info -a "${APP}" | sed -n 's/^Web URL: *//p')
+          curl -fsSL "${URL}health" || curl -fsSL "${URL}"
+
+      - name: Show app URL
+        run: heroku info -a "${APP}" | sed -n 's/^Web URL: *//p'
