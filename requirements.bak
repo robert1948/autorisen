@@ -1,0 +1,13 @@
+Django>=5.0,<6.0
+gunicorn>=21.2
+psycopg2-binary>=2.9
+dj-database-url>=2.2
+python-decouple>=3.8
+whitenoise>=6.5
+
+# AWS S3 or static file support (if used)
+boto3>=1.34
+
+# Any other dependencies your app needs
+Pillow>=10.0
+requests>=2.31
