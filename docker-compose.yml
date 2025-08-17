@@ -1,0 +1,224 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database - Primary data store
+  db:
+    image: postgres:15
+    container_name: capeai-database
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: capeai_dev
+      POSTGRES_USER: capeai_user
+      POSTGRES_PASSWORD: capeai_dev_password_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init_scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U capeai_user -d capeai_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - capeai-network
+
+  # Redis Cache - Session storage and AI response caching
+  redis:
+    image: redis:7-alpine
+    container_name: capeai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - capeai-network
+
+  # Backend API - FastAPI with enterprise services
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: development
+    container_name: capeai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql://capeai_user:capeai_dev_password_2024@db:5432/capeai_dev
+      POSTGRES_DB: capeai_dev
+      POSTGRES_USER: capeai_user
+      POSTGRES_PASSWORD: capeai_dev_password_2024
+      
+      # Redis Configuration
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # Application Configuration
+      SECRET_KEY: capeai-dev-secret-key-2024-enterprise
+      JWT_SECRET_KEY: capeai-jwt-dev-secret-2024
+      DEBUG: "true"
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      
+      # API Configuration
+      API_URL: http://localhost:8000
+      FRONTEND_ORIGIN: http://localhost:3000
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+      
+      # AI Service Configuration (replace with your actual keys)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-your-openai-key-here}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-your-claude-key-here}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your-gemini-key-here}
+      
+      # Enterprise Features
+      ENABLE_MONITORING: "true"
+      ENABLE_AUDIT_LOGGING: "true"
+      ENABLE_RATE_LIMITING: "true"
+      ENABLE_DDOS_PROTECTION: "true"
+      
+      # Performance Configuration
+      WORKERS: 1
+      MAX_CONNECTIONS: 100
+      POOL_SIZE: 10
+      MAX_OVERFLOW: 20
+      
+      # Security Configuration
+      BCRYPT_ROUNDS: 12
+      SESSION_TIMEOUT: 3600
+      MAX_LOGIN_ATTEMPTS: 5
+      
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+      - backend_uploads:/app/uploads
+    working_dir: /app
+    command: >
+      bash -c "
+        echo '🚀 Starting CapeAI Enterprise Backend...' &&
+        echo '📊 Waiting for services to be ready...' &&
+        sleep 5 &&
+        echo '🔧 Running database migrations...' &&
+        python -c 'from app.database import engine, Base; Base.metadata.create_all(bind=engine); print(\"✅ Database tables created\")' &&
+        echo '👤 Creating default admin user...' &&
+        python -c 'import asyncio; from app.services.auth_service import AuthService; from app.database import SessionLocal; 
+        async def create_admin(): 
+          db = SessionLocal(); 
+          auth = AuthService(); 
+          try: 
+            admin = await auth.register_user(db, {\"email\": \"admin@capeai.dev\", \"password\": \"admin123\", \"full_name\": \"CapeAI Admin\", \"user_role\": \"admin\"}); 
+            print(\"✅ Admin created: admin@capeai.dev / admin123\" if admin else \"ℹ️ Admin already exists\"); 
+          except: pass; 
+          finally: db.close(); 
+        asyncio.run(create_admin())' &&
+        echo '🎯 Starting FastAPI server with hot reload...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
+      "
+    restart: unless-stopped
+    networks:
+      - capeai-network
+
+  # Frontend - React with Vite
+  frontend:
+    image: node:20-alpine
+    container_name: capeai-frontend
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_APP_NAME: CapeAI Enterprise Platform
+      VITE_ENVIRONMENT: development
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+    command: >
+      sh -c "
+        echo '🎨 Starting CapeAI Frontend Development Server...' &&
+        npm install &&
+        echo '✅ Dependencies installed' &&
+        echo '🚀 Starting Vite dev server...' &&
+        npm run dev -- --host 0.0.0.0 --port 3000
+      "
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - capeai-network
+
+  # pgAdmin - PostgreSQL Database Management (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: capeai-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@capeai.dev
+      PGADMIN_DEFAULT_PASSWORD: pgadmin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - capeai-network
+    profiles:
+      - tools
+
+  # Redis Commander - Redis Management Interface (Optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: capeai-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: redis123
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - capeai-network
+    profiles:
+      - tools
+
+# Named volumes for data persistence
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  frontend_node_modules:
+    driver: local
+
+# Custom network for service communication
+networks:
+  capeai-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

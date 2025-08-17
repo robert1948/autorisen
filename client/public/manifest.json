@@ -1,0 +1,36 @@
+{
+  "name": "CapeControl",
+  "short_name": "CapeControl",
+  "description": "Empower your business with AI agents",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://lightning-s3.s3.us-east-1.amazonaws.com/static/website/img/logo-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lightning-s3.s3.us-east-1.amazonaws.com/static/website/img/logo-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lightning-s3.s3.us-east-1.amazonaws.com/static/website/img/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lightning-s3.s3.us-east-1.amazonaws.com/static/website/img/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lightning-s3.s3.us-east-1.amazonaws.com/static/website/img/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ]
+}
