@@ -1,4 +1,1 @@
-# Root requirements used by Heroku
-uvicorn[standard]==0.27.1
-fastapi==0.110.0
 -r backend/requirements.txt
