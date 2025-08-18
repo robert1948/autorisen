@@ -18,20 +18,26 @@ import smtplib
 import json
 import time
 import os
-from typing import Dict, Any, List, Optional, Callable, Union
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import aiohttp
-from sqlalchemy.orm import Session
+
+# ---- Optional dependency: aiohttp (defensive import) ------------------------
+try:
+    import aiohttp  # type: ignore
+except ModuleNotFoundError:
+    aiohttp = None  # type: ignore
 
 from app.database import get_db
 from app.services.audit_service import get_audit_logger, AuditEventType
-from app.services.error_tracker import get_error_tracker, ErrorSeverity, ErrorCategory
-from app.services.health_service import get_health_service, HealthStatus
+from app.services.error_tracker import get_error_tracker, ErrorSeverity, ErrorCategory  # noqa: F401
+
+# NOTE: Do NOT import get_health_service at module load to avoid circular import.
+# from app.services.health_service import get_health_service, HealthStatus
 
 
 class AlertSeverity(Enum):
@@ -80,7 +86,7 @@ class AlertRule:
     name: str
     alert_type: AlertType
     severity: AlertSeverity
-    condition: str  # JSON condition or function name
+    condition: str  # JSON-ish condition or DSL fragment
     threshold: float
     duration: int  # seconds
     channels: List[AlertChannel]
@@ -88,7 +94,7 @@ class AlertRule:
     cooldown: int = 300  # 5 minutes cooldown between alerts
     escalation_time: int = 1800  # 30 minutes to escalate
     tags: List[str] = None
-    
+
     def __post_init__(self):
         if self.tags is None:
             self.tags = []
@@ -111,7 +117,7 @@ class Alert:
     acknowledged_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
     escalated_at: Optional[datetime] = None
-    
+
     def __post_init__(self):
         if self.source_data is None:
             self.source_data = {}
@@ -131,34 +137,45 @@ class NotificationChannel:
 
 class AlertSystem:
     """Comprehensive alert management system"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.audit_logger = get_audit_logger()
         self.error_tracker = get_error_tracker()
-        self.health_service = get_health_service()
-        
+        self._health_service = None  # lazy-loaded to avoid circular import
+
         # Alert storage and management
         self.active_alerts: Dict[str, Alert] = {}
         self.alert_history = deque(maxlen=1000)
         self.alert_rules: Dict[str, AlertRule] = {}
         self.notification_channels: Dict[str, NotificationChannel] = {}
-        
+
         # Rate limiting and cooldowns
         self.last_alert_times: Dict[str, datetime] = {}
         self.alert_counts = defaultdict(int)
-        
+
         # Background tasks
         self.monitoring_task = None
         self.escalation_task = None
-        
-        # Initialize default alert rules
+
+        # Initialize defaults
         self._initialize_default_rules()
         self._initialize_default_channels()
-        
+
         # Start background monitoring
         self._start_background_monitoring()
-    
+
+    # ---------- Lazy import helpers (break circular imports) ----------
+
+    def _get_health_service(self):
+        """Import and cache the health service on first use (avoids circular import)."""
+        if self._health_service is None:
+            from app.services.health_service import get_health_service  # lazy import
+            self._health_service = get_health_service()
+        return self._health_service
+
+    # ---------- Setup: rules & channels ----------
+
     def _initialize_default_rules(self):
         """Initialize default alert rules"""
         default_rules = [
@@ -286,12 +303,12 @@ class AlertSystem:
                 tags=["security", "threats"]
             )
         ]
-        
+
         for rule in default_rules:
             self.alert_rules[rule.name] = rule
-            
+
         self.logger.info(f"Initialized {len(default_rules)} default alert rules")
-    
+
     def _initialize_default_channels(self):
         """Initialize default notification channels"""
         # Log channel (always available)
@@ -301,7 +318,7 @@ class AlertSystem:
             config={},
             enabled=True
         )
-        
+
         # Email channel
         email_config = {
             "smtp_server": os.getenv("SMTP_SERVER", "localhost"),
@@ -309,16 +326,16 @@ class AlertSystem:
             "smtp_username": os.getenv("SMTP_USERNAME", ""),
             "smtp_password": os.getenv("SMTP_PASSWORD", ""),
             "from_email": os.getenv("ALERT_FROM_EMAIL", "alerts@localstorm.com"),
-            "to_emails": os.getenv("ALERT_TO_EMAILS", "admin@localstorm.com").split(",")
+            "to_emails": os.getenv("ALERT_TO_EMAILS", "admin@localstorm.com").split(","),
         }
-        
+
         self.notification_channels["email"] = NotificationChannel(
             name="email",
             channel_type=AlertChannel.EMAIL,
             config=email_config,
-            enabled=bool(email_config["smtp_username"])  # Enable if SMTP configured
+            enabled=bool(email_config["smtp_username"])  # Enable only if SMTP configured
         )
-        
+
         # Webhook channel
         webhook_config = {
             "url": os.getenv("ALERT_WEBHOOK_URL", ""),
@@ -328,56 +345,59 @@ class AlertSystem:
             },
             "timeout": 30
         }
-        
+
         self.notification_channels["webhook"] = NotificationChannel(
             name="webhook",
             channel_type=AlertChannel.WEBHOOK,
             config=webhook_config,
             enabled=bool(webhook_config["url"])
         )
-        
+
         self.logger.info(f"Initialized {len(self.notification_channels)} notification channels")
-    
+
+    # ---------- Public API ----------
+
     def add_alert_rule(self, rule: AlertRule):
         """Add a custom alert rule"""
         self.alert_rules[rule.name] = rule
         self.logger.info(f"Added alert rule: {rule.name}")
-    
+
     def remove_alert_rule(self, rule_name: str):
         """Remove an alert rule"""
         if rule_name in self.alert_rules:
             del self.alert_rules[rule_name]
             self.logger.info(f"Removed alert rule: {rule_name}")
-    
+
     def add_notification_channel(self, channel: NotificationChannel):
         """Add a notification channel"""
         self.notification_channels[channel.name] = channel
         self.logger.info(f"Added notification channel: {channel.name}")
-    
-    async def create_alert(self, 
-                          rule_name: str, 
-                          title: str, 
-                          description: str, 
-                          source_data: Dict[str, Any] = None) -> str:
+
+    async def create_alert(
+        self,
+        rule_name: str,
+        title: str,
+        description: str,
+        source_data: Dict[str, Any] = None
+    ) -> Optional[str]:
         """Create a new alert"""
-        
         if rule_name not in self.alert_rules:
             self.logger.error(f"Alert rule not found: {rule_name}")
             return None
-        
+
         rule = self.alert_rules[rule_name]
-        
-        # Check cooldown
+
+        # Cooldown
         cooldown_key = f"{rule_name}_{title}"
         if cooldown_key in self.last_alert_times:
             time_since_last = datetime.utcnow() - self.last_alert_times[cooldown_key]
             if time_since_last.total_seconds() < rule.cooldown:
                 self.logger.debug(f"Alert {rule_name} in cooldown, skipping")
                 return None
-        
+
         # Generate alert ID
         alert_id = f"{rule_name}_{int(time.time() * 1000)}"
-        
+
         # Create alert
         alert = Alert(
             id=alert_id,
@@ -390,16 +410,17 @@ class AlertSystem:
             source_data=source_data or {},
             tags=rule.tags.copy()
         )
-        
-        # Store alert
+
+        # Store
         self.active_alerts[alert_id] = alert
         self.alert_history.append(alert)
         self.last_alert_times[cooldown_key] = alert.timestamp
-        
+
         # Send notifications
         await self._send_alert_notifications(alert, rule)
-        
-        # Log to audit system
+
+        # Audit log (ensure DB session is closed)
+        db = None
         try:
             db = next(get_db())
             self.audit_logger.log_system_event(
@@ -416,46 +437,51 @@ class AlertSystem:
                 }
             )
         except Exception as e:
-            self.logger.error(f"Failed to log alert to audit system: {str(e)}")
-        
+            self.logger.error(f"Failed to log alert to audit system: {e}")
+        finally:
+            if db is not None:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+
         self.logger.info(f"Created alert: {alert_id} ({rule_name})")
         return alert_id
-    
+
+    # ---------- Notification sending ----------
+
     async def _send_alert_notifications(self, alert: Alert, rule: AlertRule):
         """Send alert notifications through configured channels"""
-        
         for channel_type in rule.channels:
             try:
-                # Find matching notification channel
-                channel = None
-                for ch in self.notification_channels.values():
-                    if ch.channel_type == channel_type and ch.enabled:
-                        channel = ch
-                        break
-                
+                # Find an enabled channel of this type
+                channel = next(
+                    (ch for ch in self.notification_channels.values()
+                     if ch.channel_type == channel_type and ch.enabled),
+                    None
+                )
                 if not channel:
                     self.logger.warning(f"No enabled channel found for type: {channel_type.value}")
                     continue
-                
-                # Check rate limit
+
+                # Rate limit per (channel, rule)
                 rate_limit_key = f"{channel.name}_{alert.rule_name}"
                 if rate_limit_key in self.last_alert_times:
                     time_since_last = datetime.utcnow() - self.last_alert_times[rate_limit_key]
                     if time_since_last.total_seconds() < channel.rate_limit:
                         self.logger.debug(f"Channel {channel.name} rate limited, skipping")
                         continue
-                
-                # Send notification
+
+                # Send
                 success = await self._send_notification(alert, channel)
                 if success:
                     self.last_alert_times[rate_limit_key] = datetime.utcnow()
-                    
+
             except Exception as e:
-                self.logger.error(f"Failed to send alert via {channel_type.value}: {str(e)}")
-    
+                self.logger.error(f"Failed to send alert via {channel_type.value}: {e}")
+
     async def _send_notification(self, alert: Alert, channel: NotificationChannel) -> bool:
         """Send notification through specific channel"""
-        
         try:
             if channel.channel_type == AlertChannel.LOG:
                 return self._send_log_notification(alert)
@@ -466,11 +492,10 @@ class AlertSystem:
             else:
                 self.logger.warning(f"Unsupported notification channel: {channel.channel_type.value}")
                 return False
-                
         except Exception as e:
-            self.logger.error(f"Failed to send notification via {channel.name}: {str(e)}")
+            self.logger.error(f"Failed to send notification via {channel.name}: {e}")
             return False
-    
+
     def _send_log_notification(self, alert: Alert) -> bool:
         """Send alert notification to logs"""
         try:
@@ -479,33 +504,29 @@ class AlertSystem:
                 AlertSeverity.WARNING: logging.WARNING,
                 AlertSeverity.ERROR: logging.ERROR,
                 AlertSeverity.CRITICAL: logging.CRITICAL,
-                AlertSeverity.EMERGENCY: logging.CRITICAL
+                AlertSeverity.EMERGENCY: logging.CRITICAL,
             }.get(alert.severity, logging.INFO)
-            
-            alert_message = f"ALERT [{alert.severity.value.upper()}] {alert.title}: {alert.description}"
-            self.logger.log(log_level, alert_message)
-            
+
+            self.logger.log(log_level, f"ALERT [{alert.severity.value.upper()}] {alert.title}: {alert.description}")
             return True
         except Exception as e:
-            self.logger.error(f"Failed to send log notification: {str(e)}")
+            self.logger.error(f"Failed to send log notification: {e}")
             return False
-    
+
     async def _send_email_notification(self, alert: Alert, channel: NotificationChannel) -> bool:
         """Send alert notification via email"""
         try:
             config = channel.config
-            
             if not config.get("smtp_username") or not config.get("to_emails"):
                 self.logger.warning("Email configuration incomplete, skipping email notification")
                 return False
-            
-            # Create email message
+
+            # Compose
             msg = MIMEMultipart()
-            msg['From'] = config['from_email']
-            msg['To'] = ', '.join(config['to_emails'])
-            msg['Subject'] = f"[LocalStorm Alert] {alert.severity.value.upper()}: {alert.title}"
-            
-            # Email body
+            msg["From"] = config["from_email"]
+            msg["To"] = ", ".join(config["to_emails"])
+            msg["Subject"] = f"[LocalStorm Alert] {alert.severity.value.upper()}: {alert.title}"
+
             body = f"""
 LocalStorm Alert Notification
 
@@ -525,34 +546,33 @@ Source Data:
 --
 LocalStorm Alert System
             """.strip()
-            
-            msg.attach(MIMEText(body, 'plain'))
-            
-            # Send email
-            server = smtplib.SMTP(config['smtp_server'], config['smtp_port'])
+            msg.attach(MIMEText(body, "plain"))
+
+            # Send
+            server = smtplib.SMTP(config["smtp_server"], config["smtp_port"])
             server.starttls()
-            server.login(config['smtp_username'], config['smtp_password'])
-            text = msg.as_string()
-            server.sendmail(config['from_email'], config['to_emails'], text)
+            server.login(config["smtp_username"], config["smtp_password"])
+            server.sendmail(config["from_email"], config["to_emails"], msg.as_string())
             server.quit()
-            
+
             self.logger.info(f"Sent email notification for alert {alert.id}")
             return True
-            
         except Exception as e:
-            self.logger.error(f"Failed to send email notification: {str(e)}")
+            self.logger.error(f"Failed to send email notification: {e}")
             return False
-    
+
     async def _send_webhook_notification(self, alert: Alert, channel: NotificationChannel) -> bool:
         """Send alert notification via webhook"""
         try:
+            if aiohttp is None:
+                self.logger.warning("aiohttp is not installed; skipping webhook notification")
+                return False
+
             config = channel.config
-            
             if not config.get("url"):
                 self.logger.warning("Webhook URL not configured, skipping webhook notification")
                 return False
-            
-            # Prepare webhook payload
+
             payload = {
                 "alert_id": alert.id,
                 "rule_name": alert.rule_name,
@@ -563,16 +583,15 @@ LocalStorm Alert System
                 "timestamp": alert.timestamp.isoformat(),
                 "status": alert.status.value,
                 "tags": alert.tags,
-                "source_data": alert.source_data
+                "source_data": alert.source_data,
             }
-            
-            # Send webhook
-            async with aiohttp.ClientSession() as session:
+
+            timeout = aiohttp.ClientTimeout(total=config.get("timeout", 30))
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(
-                    config['url'],
+                    config["url"],
                     json=payload,
-                    headers=config.get('headers', {}),
-                    timeout=aiohttp.ClientTimeout(total=config.get('timeout', 30))
+                    headers=config.get("headers", {})
                 ) as response:
                     if response.status == 200:
                         self.logger.info(f"Sent webhook notification for alert {alert.id}")
@@ -580,79 +599,80 @@ LocalStorm Alert System
                     else:
                         self.logger.error(f"Webhook returned status {response.status}")
                         return False
-                        
         except Exception as e:
-            self.logger.error(f"Failed to send webhook notification: {str(e)}")
+            self.logger.error(f"Failed to send webhook notification: {e}")
             return False
-    
+
+    # ---------- Alert lifecycle ----------
+
     async def acknowledge_alert(self, alert_id: str, acknowledged_by: str) -> bool:
         """Acknowledge an alert"""
         if alert_id not in self.active_alerts:
             return False
-        
+
         alert = self.active_alerts[alert_id]
         alert.status = AlertStatus.ACKNOWLEDGED
         alert.acknowledged_by = acknowledged_by
         alert.acknowledged_at = datetime.utcnow()
-        
+
         self.logger.info(f"Alert {alert_id} acknowledged by {acknowledged_by}")
         return True
-    
+
     async def resolve_alert(self, alert_id: str) -> bool:
         """Resolve an alert"""
         if alert_id not in self.active_alerts:
             return False
-        
+
         alert = self.active_alerts[alert_id]
         alert.status = AlertStatus.RESOLVED
         alert.resolved_at = datetime.utcnow()
-        
+
         # Remove from active alerts
         del self.active_alerts[alert_id]
-        
+
         self.logger.info(f"Alert {alert_id} resolved")
         return True
-    
+
+    # ---------- Monitoring loop ----------
+
     def _start_background_monitoring(self):
         """Start background monitoring tasks"""
-        
+
         async def monitor_alerts():
             """Background task to monitor conditions and generate alerts"""
             while True:
                 try:
                     await self._check_alert_conditions()
                     await self._check_alert_escalations()
-                    await asyncio.sleep(60)  # Check every minute
+                    await asyncio.sleep(60)  # run every minute
                 except Exception as e:
-                    self.logger.error(f"Error in alert monitoring: {str(e)}")
+                    self.logger.error(f"Error in alert monitoring: {e}")
                     await asyncio.sleep(60)
-        
-        # Start monitoring task
+
         try:
             loop = asyncio.get_event_loop()
-            self.monitoring_task = loop.create_task(monitor_alerts())
+            # Only schedule if not already scheduled and loop is running
+            if self.monitoring_task is None or self.monitoring_task.done():
+                self.monitoring_task = loop.create_task(monitor_alerts())
         except RuntimeError:
-            # No event loop running, will start when one is available
+            # No event loop running yet (e.g., import time); will be started later when a loop exists
             pass
-    
+
     async def _check_alert_conditions(self):
         """Check all alert rule conditions"""
-        
         try:
-            # Get current system state
-            health_result = await self.health_service.run_comprehensive_health_check()
+            # Current system state
+            health_service = self._get_health_service()
+            health_result = await health_service.run_comprehensive_health_check()
             error_stats = self.error_tracker.get_error_statistics()
-            
-            # Extract metrics for condition checking
+
+            # Extract metrics
             system_metrics = health_result.get("system_metrics", {})
             overall_status = health_result.get("overall_status")
-            
-            # Convert health status to string for comparison
-            if hasattr(overall_status, 'value'):
-                health_status = overall_status.value
-            else:
-                health_status = str(overall_status)
-            
+
+            # Normalize health status to string
+            health_status = overall_status.value if hasattr(overall_status, "value") else str(overall_status)
+
             current_data = {
                 "error_rate": error_stats.get("error_rates", {}).get("1min", 0),
                 "critical_errors": error_stats.get("errors_by_severity", {}).get("critical", 0),
@@ -662,44 +682,37 @@ LocalStorm Alert System
                 "memory_percent": system_metrics.get("memory", {}).get("percent", 0),
                 "disk_percent": system_metrics.get("disk", {}).get("percent", 0),
                 "database_connected": health_result.get("application", {}).get("database_connected", True),
-                "security_events": 0,  # Would be populated by security monitoring
-                "timestamp": datetime.utcnow()
+                "security_events": 0,  # populate from security monitoring if available
+                "timestamp": datetime.utcnow(),
             }
-            
-            # Check each alert rule
+
+            # Evaluate rules
             for rule_name, rule in self.alert_rules.items():
                 if not rule.enabled:
                     continue
-                
                 try:
                     condition_met = self._evaluate_condition(rule, current_data)
-                    
                     if condition_met:
-                        # Generate alert
                         title = self._generate_alert_title(rule, current_data)
                         description = self._generate_alert_description(rule, current_data)
-                        
                         await self.create_alert(
                             rule_name=rule_name,
                             title=title,
                             description=description,
                             source_data=current_data
                         )
-                        
                 except Exception as e:
-                    self.logger.error(f"Error evaluating rule {rule_name}: {str(e)}")
-                    
+                    self.logger.error(f"Error evaluating rule {rule_name}: {e}")
+
         except Exception as e:
-            self.logger.error(f"Error checking alert conditions: {str(e)}")
-    
+            self.logger.error(f"Error checking alert conditions: {e}")
+
     def _evaluate_condition(self, rule: AlertRule, data: Dict[str, Any]) -> bool:
-        """Evaluate if alert condition is met"""
-        
+        """Evaluate if alert condition is met (simple DSL)"""
         try:
             condition = rule.condition
             threshold = rule.threshold
-            
-            # Simple condition evaluation (can be extended)
+
             if "error_rate > threshold" in condition:
                 return data.get("error_rate", 0) > threshold
             elif "health_status != healthy" in condition:
@@ -719,14 +732,12 @@ LocalStorm Alert System
             else:
                 self.logger.warning(f"Unknown condition: {condition}")
                 return False
-                
         except Exception as e:
-            self.logger.error(f"Error evaluating condition: {str(e)}")
+            self.logger.error(f"Error evaluating condition: {e}")
             return False
-    
+
     def _generate_alert_title(self, rule: AlertRule, data: Dict[str, Any]) -> str:
         """Generate alert title based on rule and data"""
-        
         if rule.alert_type == AlertType.ERROR_RATE:
             return f"High Error Rate: {data.get('error_rate', 0):.1f}%"
         elif rule.alert_type == AlertType.SYSTEM_HEALTH:
@@ -742,14 +753,12 @@ LocalStorm Alert System
             return "Database Connection Failure"
         elif rule.alert_type == AlertType.SECURITY:
             return f"Security Threat Detected: {data.get('security_events', 0)} events"
-        
         return f"Alert: {rule.name}"
-    
+
     def _generate_alert_description(self, rule: AlertRule, data: Dict[str, Any]) -> str:
         """Generate alert description with context"""
-        
         base_desc = f"Alert rule '{rule.name}' triggered. "
-        
+
         if rule.alert_type == AlertType.ERROR_RATE:
             return base_desc + f"Current error rate is {data.get('error_rate', 0):.1f}%, threshold is {rule.threshold}%."
         elif rule.alert_type == AlertType.SYSTEM_HEALTH:
@@ -765,100 +774,86 @@ LocalStorm Alert System
             return base_desc + "Database connection check failed."
         elif rule.alert_type == AlertType.SECURITY:
             return base_desc + f"{data.get('security_events', 0)} security events detected in the last period."
-        
         return base_desc + "Condition met."
-    
+
     async def _check_alert_escalations(self):
         """Check for alerts that need escalation"""
-        
         current_time = datetime.utcnow()
-        
+
         for alert_id, alert in list(self.active_alerts.items()):
             if alert.status == AlertStatus.ACTIVE:
                 rule = self.alert_rules.get(alert.rule_name)
                 if rule and rule.escalation_time > 0:
                     time_since_alert = (current_time - alert.timestamp).total_seconds()
-                    
                     if time_since_alert > rule.escalation_time and not alert.escalated_at:
-                        # Escalate alert
                         alert.status = AlertStatus.ESCALATED
                         alert.escalated_at = current_time
-                        
-                        # Send escalation notifications
                         await self._send_escalation_notifications(alert, rule)
-                        
                         self.logger.warning(f"Alert {alert_id} escalated after {rule.escalation_time} seconds")
-    
+
     async def _send_escalation_notifications(self, alert: Alert, rule: AlertRule):
         """Send escalation notifications"""
-        
-        # Create escalation alert with higher priority channels
         escalation_title = f"ESCALATED: {alert.title}"
-        escalation_description = f"Alert has been active for {rule.escalation_time} seconds without resolution. Original: {alert.description}"
-        
-        # Send to all available channels for escalated alerts
+        escalation_description = (
+            f"Alert has been active for {rule.escalation_time} seconds without resolution. "
+            f"Original: {alert.description}"
+        )
+
         escalation_channels = [AlertChannel.LOG, AlertChannel.EMAIL, AlertChannel.WEBHOOK]
-        
         for channel_type in escalation_channels:
-            channel = None
-            for ch in self.notification_channels.values():
-                if ch.channel_type == channel_type and ch.enabled:
-                    channel = ch
-                    break
-            
+            channel = next(
+                (ch for ch in self.notification_channels.values()
+                 if ch.channel_type == channel_type and ch.enabled),
+                None
+            )
             if channel:
-                # Create temporary escalated alert for notification
                 escalated_alert = Alert(
                     id=f"{alert.id}_escalated",
                     rule_name=alert.rule_name,
                     alert_type=alert.alert_type,
-                    severity=AlertSeverity.CRITICAL,  # Escalate severity
+                    severity=AlertSeverity.CRITICAL,
                     title=escalation_title,
                     description=escalation_description,
                     timestamp=datetime.utcnow(),
                     source_data=alert.source_data,
                     tags=alert.tags + ["escalated"]
                 )
-                
                 await self._send_notification(escalated_alert, channel)
-    
-    def get_active_alerts(self, 
-                         severity: Optional[AlertSeverity] = None,
-                         alert_type: Optional[AlertType] = None,
-                         tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+
+    # ---------- Queries / Stats ----------
+
+    def get_active_alerts(
+        self,
+        severity: Optional[AlertSeverity] = None,
+        alert_type: Optional[AlertType] = None,
+        tags: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
         """Get active alerts with optional filtering"""
-        
-        alerts = []
+        alerts: List[Dict[str, Any]] = []
         for alert in self.active_alerts.values():
-            # Apply filters
             if severity and alert.severity != severity:
                 continue
             if alert_type and alert.alert_type != alert_type:
                 continue
             if tags and not any(tag in alert.tags for tag in tags):
                 continue
-            
             alerts.append(asdict(alert))
-        
         return alerts
-    
+
     def get_alert_statistics(self) -> Dict[str, Any]:
         """Get alert system statistics"""
-        
-        # Count alerts by severity and type
         severity_counts = defaultdict(int)
         type_counts = defaultdict(int)
         status_counts = defaultdict(int)
-        
+
         for alert in self.active_alerts.values():
             severity_counts[alert.severity.value] += 1
             type_counts[alert.alert_type.value] += 1
             status_counts[alert.status.value] += 1
-        
-        # Recent alert history (last 24 hours)
+
         recent_cutoff = datetime.utcnow() - timedelta(hours=24)
         recent_alerts = [alert for alert in self.alert_history if alert.timestamp > recent_cutoff]
-        
+
         return {
             "active_alerts": len(self.active_alerts),
             "total_rules": len(self.alert_rules),
@@ -869,12 +864,12 @@ LocalStorm Alert System
             "type_counts": dict(type_counts),
             "status_counts": dict(status_counts),
             "recent_alerts_24h": len(recent_alerts),
-            "alert_history_size": len(self.alert_history)
+            "alert_history_size": len(self.alert_history),
         }
 
 
 # Global alert system instance
-_alert_system_instance = None
+_alert_system_instance: Optional[AlertSystem] = None
 
 def get_alert_system() -> AlertSystem:
     """Get global alert system instance"""
