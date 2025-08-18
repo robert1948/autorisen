@@ -32,3 +32,4 @@ threadpoolctl==3.5.0
 hiredis>=2.0,<3
 redis>=5.0
 user-agents>=2.2
+PyJWT>=2.8.0
