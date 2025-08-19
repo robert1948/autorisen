@@ -65,3 +65,9 @@ temp/
 # --- Docker / Devcontainers Artifacts (keep Dockerfile itself) ---
 **/.devcontainer/local-history/
 .venv
+
+# Local dev
+.venv/
+.env
+__pycache__/
+*.pyc
