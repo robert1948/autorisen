@@ -71,3 +71,9 @@ temp/
 .env
 __pycache__/
 *.pyc
+
+# Local dev
+.venv/
+.env
+__pycache__/
+*.pyc
