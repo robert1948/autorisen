@@ -8,7 +8,13 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-import stripe
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except Exception:
+    stripe = None
+    STRIPE_AVAILABLE = False
+
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -21,7 +27,12 @@ class DeveloperEarningsService:
     
     def __init__(self):
         """Initialize the developer earnings service"""
-        stripe.api_key = settings.STRIPE_SECRET_KEY
+        # Configure stripe only when available and a key is present.
+        if STRIPE_AVAILABLE and getattr(settings, "STRIPE_SECRET_KEY", None):
+            try:
+                stripe.api_key = settings.STRIPE_SECRET_KEY
+            except Exception:
+                logger.warning("Stripe is available but failed to set api key")
         self.platform_commission_rate = Decimal('0.20')  # 20% platform commission
         self.developer_share_rate = Decimal('0.80')  # 80% goes to developer
     
