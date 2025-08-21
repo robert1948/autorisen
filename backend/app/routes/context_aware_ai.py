@@ -3,17 +3,14 @@ Task 2.2.3: Context-Aware AI Responses - API Routes
 REST API endpoints for context-aware AI response generation and analysis.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
 
-from ..services.context_aware_ai import (
-    context_aware_ai_service,
-    ContextType,
-    ResponseStrategy
-)
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
+from ..services.context_aware_ai import ContextType, ResponseStrategy, context_aware_ai_service
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +23,7 @@ class ChatMessage(BaseModel):
     role: str = Field(..., description="Message role (user/assistant)")
     content: str = Field(..., description="Message content")
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    metadata: dict[str, Any] | None = Field(default_factory=dict)
 
 class UserProfile(BaseModel):
     """User profile model"""
@@ -34,41 +31,41 @@ class UserProfile(BaseModel):
     communication_style: str = Field(default="balanced", description="User's communication style")
     learning_style: str = Field(default="mixed", description="User's learning style")
     expertise_level: str = Field(default="intermediate", description="User's expertise level")
-    interests: List[str] = Field(default_factory=list, description="User interests")
-    preferences: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    interests: list[str] = Field(default_factory=list, description="User interests")
+    preferences: dict[str, Any] | None = Field(default_factory=dict)
 
 class ContextAwareRequest(BaseModel):
     """Request for context-aware AI response"""
     query: str = Field(..., description="User query")
     user_profile: UserProfile = Field(..., description="User profile information")
-    conversation_history: List[ChatMessage] = Field(default_factory=list, description="Recent conversation history")
-    additional_context: Optional[Dict[str, Any]] = Field(default=None, description="Additional context information")
-    preferred_strategy: Optional[str] = Field(default=None, description="Preferred response strategy")
+    conversation_history: list[ChatMessage] = Field(default_factory=list, description="Recent conversation history")
+    additional_context: dict[str, Any] | None = Field(default=None, description="Additional context information")
+    preferred_strategy: str | None = Field(default=None, description="Preferred response strategy")
 
 class ContextAnalysisRequest(BaseModel):
     """Request for context analysis"""
     user_id: str = Field(..., description="User ID")
-    conversation_history: List[ChatMessage] = Field(..., description="Conversation history to analyze")
+    conversation_history: list[ChatMessage] = Field(..., description="Conversation history to analyze")
 
 class ResponseGenerationResult(BaseModel):
     """Result of context-aware response generation"""
     prompt: str = Field(..., description="Generated contextual prompt")
     strategy: str = Field(..., description="Response strategy used")
     context_summary: str = Field(..., description="Summary of context used")
-    metadata: Dict[str, Any] = Field(..., description="Response metadata")
+    metadata: dict[str, Any] = Field(..., description="Response metadata")
     personalization_applied: bool = Field(..., description="Whether personalization was applied")
     confidence_score: float = Field(..., description="Confidence score for the response")
-    response_context: Dict[str, Any] = Field(..., description="Full response context")
+    response_context: dict[str, Any] = Field(..., description="Full response context")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
-    quality_indicators: Dict[str, Any] = Field(..., description="Quality indicators")
-    suggestions: List[str] = Field(..., description="Follow-up suggestions")
+    quality_indicators: dict[str, Any] = Field(..., description="Quality indicators")
+    suggestions: list[str] = Field(..., description="Follow-up suggestions")
     from_cache: bool = Field(..., description="Whether response was served from cache")
 
 class ContextAnalysisResult(BaseModel):
     """Result of context analysis"""
-    conversation_analysis: Dict[str, Any] = Field(..., description="Conversation context analysis")
-    user_analysis: Dict[str, Any] = Field(..., description="User context analysis")
-    recommendations: List[str] = Field(..., description="Context improvement recommendations")
+    conversation_analysis: dict[str, Any] = Field(..., description="Conversation context analysis")
+    user_analysis: dict[str, Any] = Field(..., description="User context analysis")
+    recommendations: list[str] = Field(..., description="Context improvement recommendations")
     quality_score: float = Field(..., description="Overall context quality score")
 
 class PerformanceMetrics(BaseModel):
@@ -158,8 +155,8 @@ async def get_performance_metrics() -> PerformanceMetrics:
             detail=f"Failed to get performance metrics: {str(e)}"
         )
 
-@router.get("/strategies", response_model=List[Dict[str, str]])
-async def get_response_strategies() -> List[Dict[str, str]]:
+@router.get("/strategies", response_model=list[dict[str, str]])
+async def get_response_strategies() -> list[dict[str, str]]:
     """
     Get available response strategies and their descriptions.
     
@@ -203,8 +200,8 @@ async def get_response_strategies() -> List[Dict[str, str]]:
             detail=f"Failed to get response strategies: {str(e)}"
         )
 
-@router.get("/context-types", response_model=List[Dict[str, str]])
-async def get_context_types() -> List[Dict[str, str]]:
+@router.get("/context-types", response_model=list[dict[str, str]])
+async def get_context_types() -> list[dict[str, str]]:
     """
     Get available context types used in analysis.
     
@@ -248,12 +245,12 @@ async def get_context_types() -> List[Dict[str, str]]:
             detail=f"Failed to get context types: {str(e)}"
         )
 
-@router.post("/quick-response", response_model=Dict[str, Any])
+@router.post("/quick-response", response_model=dict[str, Any])
 async def generate_quick_response(
     query: str = Field(..., description="User query"),
-    user_id: Optional[str] = Field(default=None, description="Optional user ID"),
-    strategy: Optional[str] = Field(default=None, description="Optional response strategy")
-) -> Dict[str, Any]:
+    user_id: str | None = Field(default=None, description="Optional user ID"),
+    strategy: str | None = Field(default=None, description="Optional response strategy")
+) -> dict[str, Any]:
     """
     Generate a quick context-aware response with minimal context.
     
@@ -294,10 +291,10 @@ async def generate_quick_response(
             detail=f"Failed to generate quick response: {str(e)}"
         )
 
-@router.post("/batch-analyze", response_model=List[Dict[str, Any]])
+@router.post("/batch-analyze", response_model=list[dict[str, Any]])
 async def batch_analyze_conversations(
-    requests: List[ContextAnalysisRequest]
-) -> List[Dict[str, Any]]:
+    requests: list[ContextAnalysisRequest]
+) -> list[dict[str, Any]]:
     """
     Analyze multiple conversations in batch for efficiency.
     
@@ -346,8 +343,8 @@ async def batch_analyze_conversations(
             detail=f"Failed to perform batch analysis: {str(e)}"
         )
 
-@router.post("/clear-cache", response_model=Dict[str, str])
-async def clear_response_cache() -> Dict[str, str]:
+@router.post("/clear-cache", response_model=dict[str, str])
+async def clear_response_cache() -> dict[str, str]:
     """
     Clear the response cache to force fresh context analysis.
     
@@ -370,8 +367,8 @@ async def clear_response_cache() -> Dict[str, str]:
             detail=f"Failed to clear cache: {str(e)}"
         )
 
-@router.get("/health", response_model=Dict[str, Any])
-async def health_check() -> Dict[str, Any]:
+@router.get("/health", response_model=dict[str, Any])
+async def health_check() -> dict[str, Any]:
     """
     Health check endpoint for the context-aware AI service.
     
@@ -401,12 +398,12 @@ async def health_check() -> Dict[str, Any]:
             'timestamp': datetime.utcnow().isoformat()
         }
 
-@router.post("/simulate-conversation", response_model=List[Dict[str, Any]])
+@router.post("/simulate-conversation", response_model=list[dict[str, Any]])
 async def simulate_conversation_flow(
     user_profile: UserProfile,
-    queries: List[str] = Field(..., description="List of queries to simulate"),
+    queries: list[str] = Field(..., description="List of queries to simulate"),
     max_queries: int = Field(default=10, description="Maximum number of queries to process")
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Simulate a conversation flow to test context evolution.
     
@@ -465,8 +462,8 @@ async def simulate_conversation_flow(
 
 # Additional utility endpoints
 
-@router.get("/statistics", response_model=Dict[str, Any])
-async def get_service_statistics() -> Dict[str, Any]:
+@router.get("/statistics", response_model=dict[str, Any])
+async def get_service_statistics() -> dict[str, Any]:
     """Get detailed service statistics and analytics."""
     try:
         metrics = await context_aware_ai_service.get_performance_metrics()

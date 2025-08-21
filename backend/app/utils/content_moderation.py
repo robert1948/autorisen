@@ -6,14 +6,12 @@ Comprehensive content moderation for AI responses and user-generated content.
 Implements multiple layers of content filtering, safety scoring, and policy enforcement.
 """
 
-import re
-import json
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+import re
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-import asyncio
-from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +51,11 @@ class ModerationResult:
     moderated_content: str
     is_safe: bool
     category: ContentCategory
-    violations: List[ViolationType]
+    violations: list[ViolationType]
     confidence_score: float  # 0-100
     explanation: str
     suggested_action: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 class ContentModerator:
     """Advanced content moderation system for AI responses and user content"""
@@ -67,7 +65,7 @@ class ContentModerator:
         self.content_filters = self._initialize_content_filters()
         self.policy_rules = self._load_policy_rules()
         
-    def _load_moderation_patterns(self) -> Dict[str, List[re.Pattern]]:
+    def _load_moderation_patterns(self) -> dict[str, list[re.Pattern]]:
         """Load and compile moderation patterns"""
         patterns = {
             ViolationType.HATE_SPEECH.value: [
@@ -143,7 +141,7 @@ class ContentModerator:
         
         return patterns
     
-    def _initialize_content_filters(self) -> Dict[str, Any]:
+    def _initialize_content_filters(self) -> dict[str, Any]:
         """Initialize content filtering rules"""
         return {
             ModerationLevel.PERMISSIVE.value: {
@@ -207,7 +205,7 @@ class ContentModerator:
             }
         }
     
-    def _load_policy_rules(self) -> Dict[str, Any]:
+    def _load_policy_rules(self) -> dict[str, Any]:
         """Load content policy rules"""
         return {
             "ai_response_filtering": {
@@ -241,7 +239,7 @@ class ContentModerator:
         content: str, 
         content_type: str = "ai_response",
         moderation_level: ModerationLevel = ModerationLevel.STANDARD,
-        user_context: Optional[Dict[str, Any]] = None
+        user_context: dict[str, Any] | None = None
     ) -> ModerationResult:
         """
         Moderate content using comprehensive filtering system
@@ -334,7 +332,7 @@ class ContentModerator:
             metadata=metadata
         )
     
-    def _detect_violations(self, content: str) -> Tuple[List[ViolationType], List[float]]:
+    def _detect_violations(self, content: str) -> tuple[list[ViolationType], list[float]]:
         """Detect content violations and confidence scores"""
         violations = []
         confidence_scores = []
@@ -365,7 +363,7 @@ class ContentModerator:
         
         return violations, confidence_scores
     
-    def _analyze_context_violations(self, content: str, violations: List[ViolationType], confidence_scores: List[float]):
+    def _analyze_context_violations(self, content: str, violations: list[ViolationType], confidence_scores: list[float]):
         """Analyze contextual violations that require more complex logic"""
         
         # Check for potential misinformation patterns
@@ -415,7 +413,7 @@ class ContentModerator:
     def _apply_content_filtering(
         self, 
         content: str, 
-        violations: List[ViolationType], 
+        violations: list[ViolationType], 
         category: ContentCategory,
         moderation_level: ModerationLevel
     ) -> str:
@@ -430,7 +428,7 @@ class ContentModerator:
         # For safe content, apply minimal filtering
         return self._apply_basic_filtering(content)
     
-    def _generate_blocked_content_message(self, violations: List[ViolationType]) -> str:
+    def _generate_blocked_content_message(self, violations: list[ViolationType]) -> str:
         """Generate message for blocked content"""
         
         primary_violation = violations[0] if violations else ViolationType.INAPPROPRIATE_LANGUAGE
@@ -450,7 +448,7 @@ class ContentModerator:
             "This content has been blocked due to community guideline violations. Please review our content policy."
         )
     
-    def _add_content_warnings(self, content: str, violations: List[ViolationType]) -> str:
+    def _add_content_warnings(self, content: str, violations: list[ViolationType]) -> str:
         """Add warnings to potentially harmful content"""
         
         warnings = []
@@ -491,8 +489,8 @@ class ContentModerator:
     
     def _generate_explanation(
         self, 
-        violations: List[ViolationType], 
-        confidence_scores: List[float],
+        violations: list[ViolationType], 
+        confidence_scores: list[float],
         category: ContentCategory
     ) -> str:
         """Generate human-readable explanation of moderation decision"""
@@ -514,7 +512,7 @@ class ContentModerator:
     def moderate_ai_response(
         self, 
         ai_response: str, 
-        user_context: Optional[Dict[str, Any]] = None,
+        user_context: dict[str, Any] | None = None,
         moderation_level: ModerationLevel = ModerationLevel.STANDARD
     ) -> ModerationResult:
         """Moderate AI-generated response content"""
@@ -549,7 +547,7 @@ class ContentModerator:
         
         return result
     
-    def _check_disclaimer_requirements(self, content: str) -> List[str]:
+    def _check_disclaimer_requirements(self, content: str) -> list[str]:
         """Check if AI response requires disclaimers"""
         required_disclaimers = []
         content_lower = content.lower()
@@ -569,7 +567,7 @@ class ContentModerator:
         
         return required_disclaimers
     
-    def _add_ai_disclaimers(self, content: str, disclaimer_types: List[str]) -> str:
+    def _add_ai_disclaimers(self, content: str, disclaimer_types: list[str]) -> str:
         """Add appropriate disclaimers to AI content"""
         
         disclaimers = {
@@ -586,7 +584,7 @@ class ContentModerator:
         
         return content + disclaimer_text
     
-    def get_moderation_stats(self, timeframe: str = "24h") -> Dict[str, Any]:
+    def get_moderation_stats(self, timeframe: str = "24h") -> dict[str, Any]:
         """Get moderation statistics for monitoring"""
         # This would typically connect to a database to get real stats
         # For now, return example structure
@@ -607,7 +605,7 @@ content_moderator = ContentModerator()
 # Convenience functions for common use cases
 def moderate_ai_response(
     response: str, 
-    user_context: Optional[Dict[str, Any]] = None,
+    user_context: dict[str, Any] | None = None,
     level: ModerationLevel = ModerationLevel.STANDARD
 ) -> ModerationResult:
     """Moderate AI response with standard settings"""

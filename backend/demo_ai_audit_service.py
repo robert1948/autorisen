@@ -10,13 +10,11 @@ This demo showcases all features of the AI Audit Service including:
 """
 
 import asyncio
-import json
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-
-import sys
 import os
+import sys
+import time
+from datetime import datetime
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
@@ -104,7 +102,7 @@ class AIAuditServiceDemo:
             print(f"✅ Logged {provider}/{model} interaction for user {user}")
         
         end_time = time.time()
-        print(f"\n📊 Results:")
+        print("\n📊 Results:")
         print(f"   Logged {len(audit_ids)} interactions in {end_time - start_time:.3f}s")
         print(f"   Average time per log: {(end_time - start_time) / len(audit_ids):.4f}s")
         print(f"   All audit IDs generated: {len(set(audit_ids)) == len(audit_ids)}")
@@ -144,11 +142,11 @@ class AIAuditServiceDemo:
             pii_status = "🔴 PII DETECTED" if contains_pii else "🟢 Clean"
             print(f"   {pii_status}: {prompt[:50]}...")
         
-        print(f"\n📊 PII Detection Results:")
+        print("\n📊 PII Detection Results:")
         print(f"   Total prompts tested: {len(self.pii_prompts)}")
         print(f"   PII detected: {pii_detected_count}")
         print(f"   Detection rate: {pii_detected_count / len(self.pii_prompts) * 100:.1f}%")
-        print(f"   All flagged for safety filtering: ✅")
+        print("   All flagged for safety filtering: ✅")
         
         return pii_audit_ids
 
@@ -184,9 +182,9 @@ class AIAuditServiceDemo:
             severity_emoji = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}
             print(f"   {severity_emoji[severity.value]} [{severity.value.upper()}] {event_type}: {description}")
         
-        print(f"\n📊 Security Event Results:")
+        print("\n📊 Security Event Results:")
         print(f"   Total events logged: {len(security_audit_ids)}")
-        print(f"   Severity distribution:")
+        print("   Severity distribution:")
         for level in ComplianceLevel:
             count = sum(1 for i in range(len(self.security_events)) 
                        if i % len(ComplianceLevel) == list(ComplianceLevel).index(level))
@@ -232,17 +230,17 @@ class AIAuditServiceDemo:
                 if entry.get('contains_pii', False):
                     pii_count += 1
         
-        print(f"\n📊 Audit Trail Analysis:")
+        print("\n📊 Audit Trail Analysis:")
         print(f"   Total audit entries: {total_entries}")
         print(f"   Unique users tracked: {len(all_trails)}")
         print(f"   Average entries per user: {total_entries / len(all_trails):.1f}")
         
-        print(f"\n   Provider distribution:")
+        print("\n   Provider distribution:")
         for provider, count in provider_stats.items():
             percentage = count / total_entries * 100
             print(f"     {provider}: {count} ({percentage:.1f}%)")
         
-        print(f"\n   Compliance level distribution:")
+        print("\n   Compliance level distribution:")
         for level, count in compliance_stats.items():
             percentage = count / total_entries * 100
             print(f"     {level.capitalize()}: {count} ({percentage:.1f}%)")
@@ -263,7 +261,7 @@ class AIAuditServiceDemo:
         print("📄 Compliance Report Generated:")
         print(f"   Report Period: {report['period']['start']} to {report['period']['end']}")
         
-        print(f"\n📈 Summary Statistics:")
+        print("\n📈 Summary Statistics:")
         summary = report['summary']
         print(f"   Total AI Interactions: {summary['total_interactions']}")
         print(f"   PII Detection Events: {summary['pii_detected']}")
@@ -271,7 +269,7 @@ class AIAuditServiceDemo:
         print(f"   Rate Limiting Events: {summary['rate_limited']}")
         print(f"   Compliance Violations: {summary['compliance_violations']}")
         
-        print(f"\n🏢 Provider Breakdown:")
+        print("\n🏢 Provider Breakdown:")
         providers = report.get('providers', {})
         if providers:
             for provider, count in providers.items():
@@ -279,7 +277,7 @@ class AIAuditServiceDemo:
         else:
             print("   No provider data available (using memory cache)")
         
-        print(f"\n🔍 Security Events:")
+        print("\n🔍 Security Events:")
         security_events = report.get('security_events', [])
         if security_events:
             for event in security_events[:5]:  # Show first 5
@@ -287,7 +285,7 @@ class AIAuditServiceDemo:
         else:
             print("   No security events in report period")
         
-        print(f"\n💡 Compliance Recommendations:")
+        print("\n💡 Compliance Recommendations:")
         recommendations = report.get('recommendations', [])
         if recommendations:
             for i, rec in enumerate(recommendations, 1):
@@ -330,7 +328,7 @@ class AIAuditServiceDemo:
         print(f"   Throughput: {50 / total_time:.1f} logs/second")
         
         # Benchmark 2: PII detection speed
-        print(f"\n🔍 Benchmark 2: PII Detection Speed")
+        print("\n🔍 Benchmark 2: PII Detection Speed")
         pii_test_texts = [
             "My email is user@example.com and SSN is 123-45-6789",
             "Contact me at phone 555-123-4567 or card 4532-1234-5678-9012",
@@ -356,7 +354,7 @@ class AIAuditServiceDemo:
         print(f"   Detection rate: {pii_detected / len(pii_test_texts) * 100:.1f}%")
         
         # Benchmark 3: Memory usage estimation
-        print(f"\n💾 Benchmark 3: Memory Usage Analysis")
+        print("\n💾 Benchmark 3: Memory Usage Analysis")
         import sys
         
         cache_size = len(self.audit_service.memory_cache)
@@ -404,7 +402,7 @@ class AIAuditServiceDemo:
         print(f"   Concurrency handling: {'✅ PASS' if successful_logs == 20 and unique_ids == 20 else '❌ FAIL'}")
         
         # Test 2: Content hashing consistency
-        print(f"\n🔐 Advanced Test 2: Content Hashing Consistency")
+        print("\n🔐 Advanced Test 2: Content Hashing Consistency")
         test_content = "This is a test prompt for hashing consistency"
         hash1 = self.audit_service._hash_content(test_content)
         hash2 = self.audit_service._hash_content(test_content)
@@ -415,7 +413,7 @@ class AIAuditServiceDemo:
         print(f"   Hash length (SHA-256): {len(hash1)} characters")
         
         # Test 3: Error handling
-        print(f"\n🛡️ Advanced Test 3: Error Handling & Resilience")
+        print("\n🛡️ Advanced Test 3: Error Handling & Resilience")
         
         # Test with empty/None values
         empty_audit_id = await self.audit_service.log_ai_interaction(
@@ -440,7 +438,7 @@ class AIAuditServiceDemo:
         print(f"   Large content handling: {'✅ PASS' if long_audit_id is not None else '❌ FAIL'}")
         
         # Test 4: Cache overflow behavior
-        print(f"\n💽 Advanced Test 4: Cache Overflow Management")
+        print("\n💽 Advanced Test 4: Cache Overflow Management")
         original_cache_size = self.audit_service.cache_max_size
         self.audit_service.cache_max_size = 5  # Temporarily reduce for testing
         
@@ -458,7 +456,7 @@ class AIAuditServiceDemo:
         cache_size_after = len(self.audit_service.memory_cache)
         self.audit_service.cache_max_size = original_cache_size  # Restore
         
-        print(f"   Added 10 entries to cache with limit 5")
+        print("   Added 10 entries to cache with limit 5")
         print(f"   Final cache size: {cache_size_after}")
         print(f"   Cache overflow handling: {'✅ PASS' if cache_size_after == 5 else '❌ FAIL'}")
 
@@ -498,32 +496,32 @@ class AIAuditServiceDemo:
             print(f"✅ Total audit entries created: {cache_entries}")
             print(f"✅ Average processing time: {total_demo_time / max(cache_entries, 1):.4f}s per entry")
             
-            print(f"\n🔍 Key Features Demonstrated:")
-            print(f"   ✅ Real-time AI interaction logging")
-            print(f"   ✅ PII detection and compliance monitoring")
-            print(f"   ✅ Security event tracking and alerting")
-            print(f"   ✅ Comprehensive audit trail retrieval")
-            print(f"   ✅ Compliance reporting and analytics")
-            print(f"   ✅ High-performance concurrent logging")
-            print(f"   ✅ Error handling and resilience")
-            print(f"   ✅ Memory-efficient caching system")
+            print("\n🔍 Key Features Demonstrated:")
+            print("   ✅ Real-time AI interaction logging")
+            print("   ✅ PII detection and compliance monitoring")
+            print("   ✅ Security event tracking and alerting")
+            print("   ✅ Comprehensive audit trail retrieval")
+            print("   ✅ Compliance reporting and analytics")
+            print("   ✅ High-performance concurrent logging")
+            print("   ✅ Error handling and resilience")
+            print("   ✅ Memory-efficient caching system")
             
-            print(f"\n📊 Performance Achievements:")
-            print(f"   🚀 Sub-millisecond audit logging")
-            print(f"   🔍 Real-time PII detection")
-            print(f"   💾 Memory-efficient storage")
-            print(f"   🔄 Concurrent operation support")
-            print(f"   🛡️ Comprehensive error handling")
+            print("\n📊 Performance Achievements:")
+            print("   🚀 Sub-millisecond audit logging")
+            print("   🔍 Real-time PII detection")
+            print("   💾 Memory-efficient storage")
+            print("   🔄 Concurrent operation support")
+            print("   🛡️ Comprehensive error handling")
             
-            print(f"\n🎯 Production Readiness:")
-            print(f"   ✅ Enterprise-grade audit trail system")
-            print(f"   ✅ GDPR/CCPA compliance capabilities")
-            print(f"   ✅ High availability with fallback systems")
-            print(f"   ✅ Scalable architecture for growth")
-            print(f"   ✅ Security-first design principles")
+            print("\n🎯 Production Readiness:")
+            print("   ✅ Enterprise-grade audit trail system")
+            print("   ✅ GDPR/CCPA compliance capabilities")
+            print("   ✅ High availability with fallback systems")
+            print("   ✅ Scalable architecture for growth")
+            print("   ✅ Security-first design principles")
             
-            print(f"\n🚀 AI AUDIT SERVICE IS FULLY OPERATIONAL!")
-            print(f"Ready for production deployment and integration.")
+            print("\n🚀 AI AUDIT SERVICE IS FULLY OPERATIONAL!")
+            print("Ready for production deployment and integration.")
             
         except Exception as e:
             print(f"\n❌ Demo failed with error: {e}")

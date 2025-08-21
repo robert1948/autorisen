@@ -1,8 +1,9 @@
 # backend/app/config.py
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, field_validator
-from typing import List
 import os
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
     project_name: str = Field("CapeControl", alias="PROJECT_NAME")
@@ -94,13 +95,13 @@ class Settings(BaseSettings):
         return self.gemini_api_key
     
     @property
-    def allowed_hosts_list(self) -> List[str]:
+    def allowed_hosts_list(self) -> list[str]:
         if isinstance(self.allowed_hosts, str):
             return [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
         return []
     
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         if isinstance(self.cors_origins, str):
             return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
         return []

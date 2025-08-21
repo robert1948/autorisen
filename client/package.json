@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite preview",
+    "prebuild": "node ../scripts/write-version.cjs",
     "build": "vite build && npm run cache-bust && npm run copy && npm run verify:manifest",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -19,7 +20,7 @@
     "preserve:png": "bash ../scripts/preserve-png-images.sh",
     "verify:png": "bash ../scripts/verify-png-images.sh",
     "verify:manifest": "test -f dist/manifest.json && echo '✅ manifest.json found' || echo '❌ manifest.json missing'",
-    "heroku-postbuild": "npm install && npm run build && npm run upload && npm run deploy:static && npm run preserve:png",
+    "heroku-postbuild": "npm run build", 
     "purge:cloudflare": "echo '🔄 Add curl call to Cloudflare API here'",
     "lint": "eslint . --max-warnings 10",
     "reorganize:assets": "bash ../scripts/reorganize-assets.sh"

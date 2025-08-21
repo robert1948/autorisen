@@ -5,8 +5,9 @@ This script helps you test your Stripe webhook configuration.
 """
 
 import os
+
 import requests
-import json
+
 
 def test_webhook_endpoint():
     """Test if the webhook endpoint is accessible."""
@@ -96,7 +97,7 @@ def test_webhook_endpoint():
         
         if response.status_code in [200, 400, 401, 405]:  # These are all acceptable responses
             print(f"   ✅ Webhook endpoint accessible at {webhook_url}")
-            print(f"   📋 Use this URL in your Stripe Dashboard")
+            print("   📋 Use this URL in your Stripe Dashboard")
         else:
             print(f"   ⚠️  Webhook endpoint status: {response.status_code}")
     except Exception as e:

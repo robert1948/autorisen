@@ -15,17 +15,17 @@ from ..database import get_dbnt routes for CapeControl platform
 Handles subscriptions, one-time payments, and webhooks
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request
+import logging
+import os
+
+import stripe
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional
-import stripe
-import os
-import logging
 
-from ..services.stripe_service import StripeService
 from ..core.auth import get_current_user
 from ..models import User
+from ..services.stripe_service import StripeService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -43,12 +43,12 @@ def get_stripe_service(db: Session = Depends(get_db)) -> StripeService:
 class CreateCheckoutSessionRequest(BaseModel):
     price_id: str
     mode: str = "subscription"  # 'subscription' or 'payment'
-    quantity: Optional[int] = 1
-    success_url: Optional[str] = None
-    cancel_url: Optional[str] = None
+    quantity: int | None = 1
+    success_url: str | None = None
+    cancel_url: str | None = None
 
 class CreatePortalSessionRequest(BaseModel):
-    return_url: Optional[str] = None
+    return_url: str | None = None
 
 class WebhookResponse(BaseModel):
     received: bool = True

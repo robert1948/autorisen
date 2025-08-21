@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Don't lint throwaway demos and local stuff
+exclude = [
+  ".git", ".venv", "node_modules",
+  "backend/alembic",        # migrations
+  "scripts/archive",        # demo scripts, noisy prints
+  "scripts/tests",          # demo tests
+]
+select = ["E","F","I","UP","B"]   # pep8/flake/imports/pyupgrade/bugbear
+# If you DO want to lint scripts/, keep them but ignore “print f-strings”, unused, etc.
+[tool.ruff.per-file-ignores]
+"scripts/**/*.py" = ["F541","F401","E402","E722"]

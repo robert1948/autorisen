@@ -6,7 +6,7 @@ Currently includes input sanitization with plans for expansion.
 """
 
 # Import only EXISTING utilities to prevent deployment failures
-from app.utils.input_sanitization import input_sanitizer, SanitizationLevel
+from app.utils.input_sanitization import SanitizationLevel, input_sanitizer
 
 # Available utilities (only existing ones)
 AVAILABLE_UTILS = {

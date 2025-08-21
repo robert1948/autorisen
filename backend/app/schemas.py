@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr, validator
-from typing import Optional
-from datetime import datetime
 import re
+from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, validator
+
 
 # ----------------------------
 # Schema: Enhanced User Registration (V2)
@@ -18,10 +19,10 @@ class UserCreateV2(BaseModel):
     
     # Role and company information
     role: str  # 'customer' or 'developer'
-    company: Optional[str] = None
-    phone: Optional[str] = None
-    website: Optional[str] = None
-    experience: Optional[str] = None
+    company: str | None = None
+    phone: str | None = None
+    website: str | None = None
+    experience: str | None = None
     
     @validator('password')
     def validate_password(cls, v):
@@ -111,10 +112,10 @@ class UserCreate(BaseModel):
     
     # Role and company information
     role: str  # 'user' or 'developer'
-    company: Optional[str] = None
-    phone: Optional[str] = None
-    website: Optional[str] = None
-    experience: Optional[str] = None
+    company: str | None = None
+    phone: str | None = None
+    website: str | None = None
+    experience: str | None = None
     
     class Config:
         from_attributes = True
@@ -152,11 +153,11 @@ class UserOut(BaseModel):
     """
     id: str  # UUID string in production database
     email: EmailStr
-    full_name: Optional[str] = None
-    user_role: Optional[str] = None
-    company_name: Optional[str] = None
-    access_token: Optional[str] = None
-    created_at: Optional[datetime] = None
+    full_name: str | None = None
+    user_role: str | None = None
+    company_name: str | None = None
+    access_token: str | None = None
+    created_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -189,18 +190,18 @@ class UserCreateV2Production(BaseModel):
     full_name: str  # Single field instead of firstName/lastName
     
     # Role and company information - matches production columns
-    user_role: Optional[str] = "client"  # Default to 'client' if not provided
-    company_name: Optional[str] = None
+    user_role: str | None = "client"  # Default to 'client' if not provided
+    company_name: str | None = None
     
     # Production database additional fields
-    industry: Optional[str] = None
-    project_budget: Optional[str] = None
-    skills: Optional[str] = None
-    portfolio: Optional[str] = None
-    github: Optional[str] = None
+    industry: str | None = None
+    project_budget: str | None = None
+    skills: str | None = None
+    portfolio: str | None = None
+    github: str | None = None
     
     # Terms acceptance - allow missing for API compatibility
-    tos_accepted: Optional[bool] = True
+    tos_accepted: bool | None = True
     
     @validator('password')
     def validate_password(cls, v):
@@ -274,8 +275,8 @@ class RegisterStep2Request(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    user_role: Optional[str] = "client"  # Fixed: match database constraint
-    company_name: Optional[str] = None
+    user_role: str | None = "client"  # Fixed: match database constraint
+    company_name: str | None = None
     
     @validator('password')
     def validate_password(cls, v):

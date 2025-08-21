@@ -7,29 +7,27 @@ Date: July 25, 2025
 """
 
 import asyncio
-import json
-import time
 import sys
+import time
 import traceback
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
+from datetime import datetime
 
 # Add the app directory to the path for imports
 sys.path.insert(0, '/home/robert/Documents/localstorm250722/backend')
 
 try:
     from app.services.conversation_manager import (
-        ConversationManager,
-        EnhancedConversation,
-        ConversationMessage,
-        ConversationThread,
-        ConversationSummary,
         ConversationAnalytics,
-        MessageRole,
-        ConversationType,
+        ConversationManager,
+        ConversationMessage,
         ConversationStatus,
+        ConversationSummary,
+        ConversationThread,
+        ConversationType,
+        EnhancedConversation,
+        MessageRole,
         ThreadingStrategy,
-        create_conversation_manager
+        create_conversation_manager,
     )
     print("✅ Successfully imported conversation management components")
 except ImportError as e:
@@ -822,7 +820,7 @@ class ConversationValidationDemo:
         failed_tests = self.results['tests_failed']
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
-        print(f"\n📈 SUMMARY STATISTICS:")
+        print("\n📈 SUMMARY STATISTICS:")
         print(f"Total Tests Run: {total_tests}")
         print(f"Tests Passed: {passed_tests}")
         print(f"Tests Failed: {failed_tests}")
@@ -830,7 +828,7 @@ class ConversationValidationDemo:
         
         # Performance metrics
         if self.results['performance_metrics']:
-            print(f"\n⚡ PERFORMANCE METRICS:")
+            print("\n⚡ PERFORMANCE METRICS:")
             for metric, data in self.results['performance_metrics'].items():
                 print(f"{metric.replace('_', ' ').title()}:")
                 if 'average_time' in data:
@@ -839,19 +837,19 @@ class ConversationValidationDemo:
                     print(f"  - Total Time: {data['total_time']:.2f}s")
         
         # Test results breakdown
-        print(f"\n🧪 DETAILED TEST RESULTS:")
+        print("\n🧪 DETAILED TEST RESULTS:")
         for test_name, result in self.results['functional_tests'].items():
             status_icon = "✅" if result == "PASSED" else "❌"
             print(f"  {status_icon} {test_name}: {result}")
         
         # Errors
         if self.results['errors']:
-            print(f"\n❌ ERRORS ENCOUNTERED:")
+            print("\n❌ ERRORS ENCOUNTERED:")
             for error in self.results['errors']:
                 print(f"  - {error}")
         
         # Overall assessment
-        print(f"\n🎯 OVERALL ASSESSMENT:")
+        print("\n🎯 OVERALL ASSESSMENT:")
         if success_rate >= 90:
             print("🟢 EXCELLENT: Advanced Conversation Management system is working perfectly!")
             print("✅ All core functionality operational")
@@ -868,7 +866,7 @@ class ConversationValidationDemo:
             print("❌ Critical functionality failures detected")
         
         # Recommendations
-        print(f"\n💡 RECOMMENDATIONS:")
+        print("\n💡 RECOMMENDATIONS:")
         if success_rate >= 90:
             print("✅ System is ready for production deployment")
             print("✅ Consider adding advanced features like ML-based threading")

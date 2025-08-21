@@ -9,11 +9,11 @@ Enterprise-grade service layer providing:
 """
 
 # Import only EXISTING services to prevent deployment failures
+from .audit_service import AuditEventType, AuditLogLevel, get_audit_logger  # REMOVED: AuditService
 from .auth_service import AuthService, get_auth_service
-from .user_service import UserService, get_user_service
-from .conversation_service import ConversationService
 from .cape_ai_service import CapeAIService, get_cape_ai_service
-from .audit_service import get_audit_logger, AuditEventType, AuditLogLevel  # REMOVED: AuditService
+from .conversation_service import ConversationService
+from .user_service import UserService, get_user_service
 
 # Core services that actually exist and work
 CORE_SERVICES = {

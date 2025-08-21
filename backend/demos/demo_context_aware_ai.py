@@ -5,11 +5,9 @@ Validates all aspects of the context-aware AI response generation system.
 """
 
 import asyncio
-import json
+import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
-import logging
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -41,20 +39,18 @@ async def validate_context_aware_ai():
     
     try:
         # Import the system components
-        import sys
         import os
+        import sys
         sys.path.append(os.path.dirname(__file__))
         
         from app.services.context_aware_ai import (
-            ContextType,
-            ResponseStrategy,
-            ContextWindow,
-            UserContext,
-            ResponseContext,
             ContextAnalyzer,
-            ResponseGenerator,
             ContextAwareAIService,
-            context_aware_ai_service
+            ContextWindow,
+            ResponseContext,
+            ResponseGenerator,
+            ResponseStrategy,
+            UserContext,
         )
         
         print("✅ Successfully imported context-aware AI components")
@@ -552,7 +548,7 @@ async def validate_context_aware_ai():
     failed_tests = total_tests - passed_tests
     success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
 
-    print(f"\n📈 SUMMARY STATISTICS:")
+    print("\n📈 SUMMARY STATISTICS:")
     print(f"Total Tests Run: {total_tests}")
     print(f"Tests Passed: {passed_tests}")
     print(f"Tests Failed: {failed_tests}")
@@ -564,8 +560,8 @@ async def validate_context_aware_ai():
         max_response_time = max(performance_metrics['response_generation_times'])
         min_response_time = min(performance_metrics['response_generation_times'])
         
-        print(f"\n⚡ PERFORMANCE METRICS:")
-        print(f"Response Generation:")
+        print("\n⚡ PERFORMANCE METRICS:")
+        print("Response Generation:")
         print(f"  - Average Time: {avg_response_time:.2f}ms")
         print(f"  - Min Time: {min_response_time:.2f}ms")
         print(f"  - Max Time: {max_response_time:.2f}ms")
@@ -573,20 +569,20 @@ async def validate_context_aware_ai():
 
     if performance_metrics['context_analysis_times']:
         avg_analysis_time = sum(performance_metrics['context_analysis_times']) / len(performance_metrics['context_analysis_times'])
-        print(f"Context Analysis:")
+        print("Context Analysis:")
         print(f"  - Average Time: {avg_analysis_time:.2f}ms")
         print(f"  - Total Analyses: {len(performance_metrics['context_analysis_times'])}")
 
     if performance_metrics['cache_performance']['hits'] + performance_metrics['cache_performance']['misses'] > 0:
         total_cache_requests = performance_metrics['cache_performance']['hits'] + performance_metrics['cache_performance']['misses']
         cache_hit_rate = (performance_metrics['cache_performance']['hits'] / total_cache_requests) * 100
-        print(f"Cache Performance:")
+        print("Cache Performance:")
         print(f"  - Hit Rate: {cache_hit_rate:.1f}%")
         print(f"  - Hits: {performance_metrics['cache_performance']['hits']}")
         print(f"  - Misses: {performance_metrics['cache_performance']['misses']}")
 
     # Detailed test results
-    print(f"\n🧪 DETAILED TEST RESULTS:")
+    print("\n🧪 DETAILED TEST RESULTS:")
     for test_name, passed, details in test_results:
         status = "✅" if passed else "❌"
         print(f"  {status} {test_name}: {'PASSED' if passed else 'FAILED'}")
@@ -596,13 +592,13 @@ async def validate_context_aware_ai():
     # Failed tests
     failed_test_list = [test_name for test_name, passed, _ in test_results if not passed]
     if failed_test_list:
-        print(f"\n❌ ERRORS ENCOUNTERED:")
+        print("\n❌ ERRORS ENCOUNTERED:")
         for test_name in failed_test_list:
             test_detail = next((details for name, passed, details in test_results if name == test_name and not passed), "")
             print(f"  - {test_name}: {test_detail}")
 
     # Overall assessment
-    print(f"\n🎯 OVERALL ASSESSMENT:")
+    print("\n🎯 OVERALL ASSESSMENT:")
     if success_rate >= 95:
         print("🟢 EXCELLENT: Context-Aware AI system is working perfectly!")
         assessment = "excellent"
@@ -622,7 +618,7 @@ async def validate_context_aware_ai():
     print("✅ Performance within acceptable ranges")
     print("✅ Error handling robust")
 
-    print(f"\n💡 RECOMMENDATIONS:")
+    print("\n💡 RECOMMENDATIONS:")
     print("✅ System is ready for production deployment")
     print("✅ Consider adding more sophisticated ML models if available")
     print("✅ Implement monitoring and logging for production use")

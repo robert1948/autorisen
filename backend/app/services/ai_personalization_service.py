@@ -11,17 +11,15 @@ Advanced AI personalization system that adapts to individual users:
 - Personal AI assistant creation
 """
 
-import logging
 import json
-import asyncio
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
+import logging
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-import hashlib
+from typing import Any
 
-from app.services.conversation_context_service import get_context_service, ContextType
-from app.services.multi_provider_ai_service import MultiProviderAIService, ModelProvider
+from app.services.conversation_context_service import get_context_service
+from app.services.multi_provider_ai_service import MultiProviderAIService
 
 logger = logging.getLogger(__name__)
 
@@ -73,18 +71,18 @@ class UserPersonalityProfile:
     communication_style: CommunicationStyle
     expertise_level: ExpertiseLevel
     preferred_response_length: str  # short, medium, long
-    topics_of_interest: List[str]
-    interaction_patterns: Dict[str, Any]
-    personality_traits: List[PersonalityTrait]
-    preferred_providers: List[str]
-    preferred_models: List[str]
-    response_preferences: Dict[str, Any]
-    learning_goals: List[str]
+    topics_of_interest: list[str]
+    interaction_patterns: dict[str, Any]
+    personality_traits: list[PersonalityTrait]
+    preferred_providers: list[str]
+    preferred_models: list[str]
+    response_preferences: dict[str, Any]
+    learning_goals: list[str]
     created_at: datetime
     updated_at: datetime
     confidence_score: float  # How confident we are in this profile (0-1)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage"""
         return {
             'user_id': self.user_id,
@@ -105,7 +103,7 @@ class UserPersonalityProfile:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'UserPersonalityProfile':
+    def from_dict(cls, data: dict[str, Any]) -> 'UserPersonalityProfile':
         """Create from dictionary"""
         return cls(
             user_id=data['user_id'],
@@ -132,7 +130,7 @@ class PersonalizedPrompt:
     prompt_id: str
     user_id: str
     base_prompt: str
-    personalization_rules: Dict[str, Any]
+    personalization_rules: dict[str, Any]
     generated_prompt: str
     effectiveness_score: float  # How well this prompt works for the user
     usage_count: int
@@ -154,7 +152,7 @@ class AIPersonalizationService:
         self.context_service = await get_context_service()
         logger.info("AI Personalization Service initialized")
     
-    def _load_prompt_templates(self) -> Dict[str, str]:
+    def _load_prompt_templates(self) -> dict[str, str]:
         """Load base prompt templates for personalization"""
         return {
             'general_chat': "You are a helpful AI assistant. Respond to the user's question or request.",
@@ -165,7 +163,7 @@ class AIPersonalizationService:
             'problem_solving': "You are a problem-solving assistant. Help the user find solutions to their challenge."
         }
     
-    async def analyze_user_patterns(self, user_id: str) -> Dict[str, Any]:
+    async def analyze_user_patterns(self, user_id: str) -> dict[str, Any]:
         """Analyze user interaction patterns from conversation history"""
         try:
             # Get user's conversation history
@@ -201,7 +199,7 @@ class AIPersonalizationService:
             logger.error(f"Failed to analyze user patterns: {e}")
             return self._get_default_patterns()
     
-    def _get_default_patterns(self) -> Dict[str, Any]:
+    def _get_default_patterns(self) -> dict[str, Any]:
         """Get default interaction patterns for new users"""
         return {
             'message_length_preference': 'medium',
@@ -272,7 +270,7 @@ class AIPersonalizationService:
             logger.error(f"Failed to create personality profile: {e}")
             return self._get_default_profile(user_id)
     
-    def _infer_learning_style(self, patterns: Dict[str, Any], prefs: Dict[str, Any]) -> LearningStyle:
+    def _infer_learning_style(self, patterns: dict[str, Any], prefs: dict[str, Any]) -> LearningStyle:
         """Infer user's learning style from patterns"""
         # Simple heuristics - would be enhanced with ML in production
         if 'visual' in str(prefs.get('topics_of_interest', [])).lower():
@@ -284,7 +282,7 @@ class AIPersonalizationService:
         else:
             return LearningStyle.MULTIMODAL
     
-    def _infer_communication_style(self, patterns: Dict[str, Any], prefs: Dict[str, Any]) -> CommunicationStyle:
+    def _infer_communication_style(self, patterns: dict[str, Any], prefs: dict[str, Any]) -> CommunicationStyle:
         """Infer user's preferred communication style"""
         interaction_style = patterns.get('interaction_style', 'professional')
         
@@ -297,7 +295,7 @@ class AIPersonalizationService:
         else:
             return CommunicationStyle.PROFESSIONAL
     
-    def _infer_expertise_level(self, patterns: Dict[str, Any], prefs: Dict[str, Any]) -> ExpertiseLevel:
+    def _infer_expertise_level(self, patterns: dict[str, Any], prefs: dict[str, Any]) -> ExpertiseLevel:
         """Infer user's expertise level"""
         topics = prefs.get('topics_of_interest', [])
         
@@ -309,7 +307,7 @@ class AIPersonalizationService:
         else:
             return ExpertiseLevel.BEGINNER
     
-    def _infer_personality_traits(self, patterns: Dict[str, Any], prefs: Dict[str, Any]) -> List[PersonalityTrait]:
+    def _infer_personality_traits(self, patterns: dict[str, Any], prefs: dict[str, Any]) -> list[PersonalityTrait]:
         """Infer which AI personality traits would work best for this user"""
         traits = [PersonalityTrait.HELPFUL]  # Always helpful
         
@@ -326,7 +324,7 @@ class AIPersonalizationService:
         
         return traits
     
-    def _infer_learning_goals(self, patterns: Dict[str, Any], prefs: Dict[str, Any]) -> List[str]:
+    def _infer_learning_goals(self, patterns: dict[str, Any], prefs: dict[str, Any]) -> list[str]:
         """Infer user's learning goals"""
         topics = prefs.get('topics_of_interest', [])
         goals = []
@@ -344,7 +342,7 @@ class AIPersonalizationService:
         
         return goals
     
-    def _calculate_confidence_score(self, patterns: Dict[str, Any], prefs: Dict[str, Any]) -> float:
+    def _calculate_confidence_score(self, patterns: dict[str, Any], prefs: dict[str, Any]) -> float:
         """Calculate confidence in the personality profile"""
         score = 0.5  # Base confidence
         
@@ -376,7 +374,7 @@ class AIPersonalizationService:
         except Exception as e:
             logger.error(f"Failed to store personality profile: {e}")
     
-    async def get_personality_profile(self, user_id: str) -> Optional[UserPersonalityProfile]:
+    async def get_personality_profile(self, user_id: str) -> UserPersonalityProfile | None:
         """Get user's personality profile"""
         try:
             # Check cache first
@@ -515,8 +513,8 @@ class AIPersonalizationService:
     async def adapt_ai_parameters(
         self,
         user_id: str,
-        base_params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        base_params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Adapt AI parameters based on user personality"""
         try:
             profile = await self.get_personality_profile(user_id)
@@ -554,7 +552,7 @@ class AIPersonalizationService:
     async def update_profile_from_interaction(
         self,
         user_id: str,
-        interaction_data: Dict[str, Any]
+        interaction_data: dict[str, Any]
     ):
         """Update user profile based on interaction feedback"""
         try:
@@ -590,7 +588,7 @@ class AIPersonalizationService:
 
 
 # Global instance
-_personalization_service: Optional[AIPersonalizationService] = None
+_personalization_service: AIPersonalizationService | None = None
 
 
 async def get_personalization_service() -> AIPersonalizationService:

@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Request, HTTPException, status
-from fastapi.responses import JSONResponse, PlainTextResponse
+import hashlib
+import logging
+import os
 from urllib.parse import urlencode
-import os, hashlib, hmac, logging
+
+from fastapi import APIRouter, Request, status
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter(prefix="/api/payment/payfast", tags=["payments:payfast"])
 log = logging.getLogger("payfast")

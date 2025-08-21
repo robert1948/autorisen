@@ -10,17 +10,18 @@ This service implements the secure authentication architecture with:
 - Audit logging
 """
 
-import secrets
-import hashlib
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-from app.models_enhanced import UserV2, Token, PasswordReset, AuditLog, UserRole
-from app.schemas_enhanced import UserCreate, TokenResponse, UserResponse
 import os
+import secrets
+from datetime import datetime, timedelta
+from typing import Any
+
+from fastapi import HTTPException, status
+from jose import jwt
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from app.models_enhanced import AuditLog, PasswordReset, Token, UserV2
+from app.schemas_enhanced import TokenResponse, UserResponse
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -54,7 +55,7 @@ class AuthService:
     # JWT Token Management
     # ================================
     
-    def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(self, data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
         """Create a JWT access token"""
         to_encode = data.copy()
         if expires_delta:
@@ -66,7 +67,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
     
-    def create_refresh_token(self, data: Dict[str, Any]) -> str:
+    def create_refresh_token(self, data: dict[str, Any]) -> str:
         """Create a JWT refresh token"""
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
@@ -74,7 +75,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
     
-    def verify_token(self, token: str, token_type: str = "access") -> Dict[str, Any]:
+    def verify_token(self, token: str, token_type: str = "access") -> dict[str, Any]:
         """Verify and decode a JWT token"""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -99,7 +100,7 @@ class AuthService:
     # User Authentication
     # ================================
     
-    def authenticate_user(self, db: Session, email: str, password: str) -> Optional[UserV2]:
+    def authenticate_user(self, db: Session, email: str, password: str) -> UserV2 | None:
         """Authenticate a user by email and password"""
         user = db.query(UserV2).filter(UserV2.email == email).first()
         if not user:
@@ -337,7 +338,7 @@ class AuthService:
     # Audit Logging
     # ================================
     
-    def log_event(self, db: Session, user_id: Optional[int], event_type: str, 
+    def log_event(self, db: Session, user_id: int | None, event_type: str, 
                   event_description: str = None, success: bool = True, 
                   ip_address: str = None, user_agent: str = None, 
                   endpoint: str = None, error_message: str = None, 

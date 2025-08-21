@@ -7,18 +7,19 @@ Date: July 25, 2025
 """
 
 import asyncio
-import logging
-import base64
 import json
+import logging
 import time
 from datetime import datetime
-from typing import Dict, Any, List
 
 # Voice service imports
 from app.services.voice_service import (
-    VoiceService, VoiceProvider, AudioFormat, VoiceGender, VoiceProfile,
-    SpeechToTextResult, TextToSpeechResult, VoiceAnalytics,
-    create_voice_service, get_supported_audio_formats, get_supported_languages
+    AudioFormat,
+    SpeechToTextResult,
+    VoiceProvider,
+    create_voice_service,
+    get_supported_audio_formats,
+    get_supported_languages,
 )
 
 # Setup logging
@@ -121,7 +122,7 @@ class VoiceIntegrationDemo:
                 
                 processing_time = time.time() - start_time
                 
-                print(f"✅ Success!")
+                print("✅ Success!")
                 print(f"   Provider: {result.provider.value}")
                 print(f"   Voice: {result.voice_profile.name}")
                 print(f"   Audio Duration: {result.audio_duration:.2f}s")
@@ -297,13 +298,13 @@ class VoiceIntegrationDemo:
         else:
             print("  No analytics data available yet")
         
-        print(f"\n🚀 Performance Metrics:")
+        print("\n🚀 Performance Metrics:")
         print(f"  Total Requests: {performance['total_requests']}")
         print(f"  Success Rate: {performance['successful_requests']}/{performance['total_requests']} ({performance['successful_requests']/max(performance['total_requests'], 1)*100:.1f}%)")
         print(f"  Average Processing: {performance['average_processing_time']:.2f}s")
         
         if performance['provider_performance']:
-            print(f"\n  Provider Performance:")
+            print("\n  Provider Performance:")
             for provider, perf in performance['provider_performance'].items():
                 success_rate = perf['successes'] / max(perf['requests'], 1) * 100
                 print(f"    {provider}: {perf['requests']} requests, {success_rate:.1f}% success, {perf['average_time']:.2f}s avg")
@@ -337,7 +338,7 @@ class VoiceIntegrationDemo:
                     print(f"      Stability: {profile.stability:.2f}, Similarity: {profile.similarity_boost:.2f}")
         
         # Test profile selection
-        print(f"\n🎯 Profile Selection Test:")
+        print("\n🎯 Profile Selection Test:")
         best_profile = self.voice_service._select_best_voice_profile("demo-user")
         print(f"  Best profile for demo-user: {best_profile.name} ({best_profile.provider.value})")
         
@@ -470,7 +471,7 @@ class VoiceIntegrationDemo:
         passed = sum(validation_results.values())
         total = len(validation_results)
         
-        print(f"\n📊 VALIDATION SUMMARY:")
+        print("\n📊 VALIDATION SUMMARY:")
         print(f"   Tests Passed: {passed}/{total} ({passed/total*100:.1f}%)")
         
         if passed == total:

@@ -7,23 +7,32 @@ Date: July 25, 2025
 """
 
 import asyncio
-import pytest
 import json
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timedelta
+import os
 
 # Import the components to test
 import sys
-import os
+
+import pytest
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.user_profile_service import (
-    UserProfileService, EnhancedUserProfile, UserRole, UserStatus,
-    PrivacyLevel, LearningStyle, CommunicationStyle,
-    UserPreferences, UserBehaviorMetrics, AIInteractionProfile,
-    UserAchievements, SocialConnections, create_user_profile_service,
-    generate_sample_profile_data
+    AIInteractionProfile,
+    CommunicationStyle,
+    EnhancedUserProfile,
+    LearningStyle,
+    SocialConnections,
+    UserAchievements,
+    UserBehaviorMetrics,
+    UserPreferences,
+    UserProfileService,
+    UserRole,
+    UserStatus,
+    create_user_profile_service,
+    generate_sample_profile_data,
 )
+
 
 class TestEnhancedUserProfile:
     """Test cases for Enhanced User Profile"""

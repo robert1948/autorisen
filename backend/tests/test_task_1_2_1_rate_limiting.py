@@ -14,9 +14,10 @@ Success Criteria:
 - Different rate limits applied to different endpoint types
 """
 
-import pytest
 import time
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 # Test configuration

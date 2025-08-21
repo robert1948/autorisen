@@ -10,21 +10,19 @@ Fixes registration timeout issues by:
 4. Adding request timeout handling
 """
 
-import sys
 import os
-import asyncio
+import sys
 import time
-from datetime import datetime
-from typing import Optional
 
 # Add backend to path
 sys.path.append(os.path.dirname(__file__))
 
 try:
-    from app.database import get_db, engine
+    from sqlalchemy.orm import sessionmaker
+
+    from app.database import engine, get_db
     from app.models import User
     from app.services.audit_service import get_audit_logger
-    from sqlalchemy.orm import sessionmaker
     print("✅ Successfully imported registration modules")
 except ImportError as e:
     print(f"❌ Import error: {e}")

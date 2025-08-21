@@ -1,6 +1,7 @@
 import os
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Get DATABASE_URL from environment with fallback to SQLite for development
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./localstorm.db')

@@ -3,39 +3,33 @@ Stripe Payment Service for Cape Control
 Handles subscription management, credit purchases, and webhook processing
 """
 
-import stripe
-import os
 import logging
-from typing import Dict, Optional, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
+import os
 
-from app.models.payment import (
-    Subscription, Credits, CreditTransaction, CustomRequest,
-    SupportTicket, PaymentAnalyticsEvent, PaymentMethod,
-    SUBSCRIPTION_TIERS, CREDIT_PACKS
-)
-from app.models import User
+import stripe
+from sqlalchemy.orm import Session
+
 from app.config import settings
+from app.models import User
+from app.models.payment import (
+    CREDIT_PACKS,
+    SUBSCRIPTION_TIERS,
+    Credits,
+    CreditTransaction,
+    PaymentAnalyticsEvent,
+    PaymentMethod,
+    Subscription,
+)
 
 # Configure Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 logger = logging.getLogger(__name__)
 
-import stripe
-import os
-from typing import Dict, Optional, List
-from decimal import Decimal
 import logging
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.payment import (
-    Subscription, Credits, CreditTransaction, CustomRequest, 
-    PaymentMethod, PaymentAnalyticsEvent, SUBSCRIPTION_TIERS, CREDIT_PACKS
-)
-from app.models import User
+import stripe
+from sqlalchemy.exc import SQLAlchemyError
 
 # Configure Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -72,7 +66,7 @@ class StripeService:
             logger.error(f"Failed to create Stripe customer for user {user.id}: {e}")
             raise Exception(f"Payment service error: {e.user_message}")
     
-    async def create_subscription(self, user: User, tier: str, payment_method_id: str) -> Dict:
+    async def create_subscription(self, user: User, tier: str, payment_method_id: str) -> dict:
         """Create or update a user subscription"""
         try:
             # Validate tier
@@ -159,7 +153,7 @@ class StripeService:
             self.db.rollback()
             raise
     
-    async def purchase_credits(self, user: User, pack_size: str, payment_method_id: str) -> Dict:
+    async def purchase_credits(self, user: User, pack_size: str, payment_method_id: str) -> dict:
         """Purchase credit pack"""
         try:
             # Validate pack size
@@ -287,7 +281,7 @@ class StripeService:
             self.db.rollback()
             return False
     
-    async def get_subscription_status(self, user_id: int) -> Optional[Dict]:
+    async def get_subscription_status(self, user_id: int) -> dict | None:
         """Get user subscription status"""
         subscription = self.db.query(Subscription).filter(
             Subscription.user_id == user_id
@@ -311,7 +305,7 @@ class StripeService:
     
     # Private helper methods
     
-    async def _create_free_subscription(self, user: User, customer_id: str, tier: str) -> Dict:
+    async def _create_free_subscription(self, user: User, customer_id: str, tier: str) -> dict:
         """Create a free subscription record"""
         subscription = self.db.query(Subscription).filter(
             Subscription.user_id == user.id
@@ -339,7 +333,7 @@ class StripeService:
             "status": "active"
         }
     
-    async def _get_or_create_price(self, tier: str, tier_config: Dict) -> str:
+    async def _get_or_create_price(self, tier: str, tier_config: dict) -> str:
         """Get or create Stripe price for subscription tier"""
         # In production, prices should be pre-created in Stripe dashboard
         # This is for development/testing
@@ -419,7 +413,7 @@ class StripeService:
         except stripe.error.StripeError as e:
             logger.warning(f"Could not save payment method details: {e}")
     
-    async def _log_event(self, event_type: str, user_id: int, data: Dict):
+    async def _log_event(self, event_type: str, user_id: int, data: dict):
         """Log analytics event"""
         try:
             event = PaymentAnalyticsEvent(
@@ -454,7 +448,7 @@ class WebhookService:
             logger.error(f"Invalid signature: {e}")
             raise
     
-    async def handle_webhook(self, event: Dict) -> bool:
+    async def handle_webhook(self, event: dict) -> bool:
         """Handle webhook event"""
         try:
             if event["type"] == "customer.subscription.updated":
@@ -471,7 +465,7 @@ class WebhookService:
             logger.error(f"Error handling webhook: {e}")
             return False
     
-    async def _handle_subscription_updated(self, subscription: Dict) -> bool:
+    async def _handle_subscription_updated(self, subscription: dict) -> bool:
         """Handle subscription status updates"""
         try:
             sub_record = self.db.query(Subscription).filter(
@@ -509,7 +503,7 @@ class WebhookService:
             logger.error(f"Error handling subscription update: {e}")
             return False
     
-    async def _handle_payment_succeeded(self, payment_intent: Dict) -> bool:
+    async def _handle_payment_succeeded(self, payment_intent: dict) -> bool:
         """Handle successful payments"""
         try:
             metadata = payment_intent.get("metadata", {})
@@ -537,7 +531,7 @@ class WebhookService:
             logger.error(f"Error handling payment success: {e}")
             return False
     
-    async def _handle_payment_failed(self, payment_intent: Dict) -> bool:
+    async def _handle_payment_failed(self, payment_intent: dict) -> bool:
         """Handle failed payments"""
         try:
             metadata = payment_intent.get("metadata", {})

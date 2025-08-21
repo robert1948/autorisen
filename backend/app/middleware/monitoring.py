@@ -3,16 +3,15 @@ Enhanced Monitoring Middleware with Performance Tracking
 Enterprise-grade monitoring with metrics collection and performance insights
 """
 
+import logging
 import time
-import json
-import asyncio
-import psutil
-from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+from typing import Any, Optional
+
+import psutil
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +24,8 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, max_requests: int = 1000):
         super().__init__(app)
         self.max_requests = max_requests
-        self.requests: List[Dict[str, Any]] = []
-        self.metrics: Dict[str, Any] = {
+        self.requests: list[dict[str, Any]] = []
+        self.metrics: dict[str, Any] = {
             "total_requests": 0,
             "total_response_time": 0.0,
             "errors": 0,
@@ -116,7 +115,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
                 }
             )
 
-    async def _update_metrics(self, request_info: Dict[str, Any]) -> None:
+    async def _update_metrics(self, request_info: dict[str, Any]) -> None:
         """Update comprehensive metrics"""
         try:
             # Add to requests list (with rotation)
@@ -192,7 +191,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.error(f"Failed to cleanup old requests: {e}")
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get current metrics"""
         try:
             # Calculate additional metrics
@@ -221,7 +220,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             logger.error(f"Failed to get metrics: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def get_recent_requests(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_recent_requests(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent requests"""
         try:
             return self.requests[-limit:] if self.requests else []
@@ -229,7 +228,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             logger.error(f"Failed to get recent requests: {e}")
             return []
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get health status"""
         try:
             metrics = self.get_metrics()
@@ -285,7 +284,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             }
 
 # Global access functions
-def get_monitoring_middleware_instance() -> Optional[MonitoringMiddleware]:
+def get_monitoring_middleware_instance() -> MonitoringMiddleware | None:
     """Get the current monitoring middleware instance"""
     return _monitoring_middleware_instance
 
@@ -294,21 +293,21 @@ def set_monitoring_middleware_instance(instance: MonitoringMiddleware) -> None:
     global _monitoring_middleware_instance
     _monitoring_middleware_instance = instance
 
-def get_current_metrics() -> Dict[str, Any]:
+def get_current_metrics() -> dict[str, Any]:
     """Get current monitoring metrics"""
     instance = get_monitoring_middleware_instance()
     if instance:
         return instance.get_metrics()
     return {"error": "Monitoring middleware not initialized"}
 
-def get_health_status() -> Dict[str, Any]:
+def get_health_status() -> dict[str, Any]:
     """Get current health status"""
     instance = get_monitoring_middleware_instance()
     if instance:
         return instance.get_health_status()
     return {"status": "unknown", "error": "Monitoring middleware not initialized"}
 
-def get_recent_requests(limit: int = 10) -> List[Dict[str, Any]]:
+def get_recent_requests(limit: int = 10) -> list[dict[str, Any]]:
     """
     Get recent requests from the monitoring middleware
 

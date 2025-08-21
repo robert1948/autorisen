@@ -1,10 +1,12 @@
 """Rate Limiting Middleware"""
 
+import time
+from collections import defaultdict
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from collections import defaultdict
-import time
+
 
 class RateLimitingMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, requests_per_minute: int = 60):
@@ -24,7 +26,6 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         
         # Check if rate limit exceeded
         if len(self.request_counts[client_ip]) >= self.requests_per_minute:
-            from fastapi import HTTPException
             from starlette.responses import JSONResponse
             return JSONResponse(
                 status_code=429,

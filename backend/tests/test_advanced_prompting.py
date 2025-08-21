@@ -10,21 +10,19 @@ Comprehensive test suite for advanced prompting functionality:
 - API endpoint tests
 """
 
-import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from typing import Dict, Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.services.advanced_prompting_service import (
     AdvancedPromptingService,
-    PromptTemplate,
-    PromptGenerationRequest,
-    GeneratedPrompt,
     PromptCategory,
-    PromptRole,
     PromptComplexity,
-    TemplateVersion
+    PromptGenerationRequest,
+    PromptRole,
+    PromptTemplate,
+    TemplateVersion,
 )
 
 
@@ -392,6 +390,7 @@ class TestAdvancedPromptingAPI:
     async def test_list_templates_endpoint(self, mock_user):
         """Test the list templates API endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
@@ -435,6 +434,7 @@ class TestAdvancedPromptingAPI:
     async def test_generate_prompt_endpoint(self, mock_user):
         """Test the generate prompt API endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
@@ -470,6 +470,7 @@ class TestAdvancedPromptingAPI:
     async def test_create_custom_template_endpoint(self, mock_user):
         """Test the create custom template API endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
@@ -520,6 +521,7 @@ class TestAdvancedPromptingAPI:
     async def test_template_analytics_endpoint(self, mock_user):
         """Test the template analytics API endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):

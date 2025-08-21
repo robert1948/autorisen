@@ -3,6 +3,7 @@ Database optimization utilities for CapeControl
 """
 from sqlalchemy import Index, text
 from sqlalchemy.orm import Session
+
 from app.database import engine
 from app.models import User, UserProfile
 

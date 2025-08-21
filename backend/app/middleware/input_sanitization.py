@@ -3,15 +3,16 @@ Input Sanitization Middleware
 Enterprise-grade input validation and sanitization for security
 """
 
-import re
 import html
 import json
 import logging
-from typing import Dict, Any, List, Optional, Union
-from fastapi import Request, Response, HTTPException
+import re
+from typing import Any
+
+import bleach
+from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-import bleach
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class InputSanitizationMiddleware(BaseHTTPMiddleware):
         
         logger.info("✅ InputSanitizationMiddleware initialized with performance monitoring")
     
-    def get_security_stats(self) -> Dict[str, Any]:
+    def get_security_stats(self) -> dict[str, Any]:
         """Get security middleware performance statistics"""
         return {
             "requests_processed": self._request_counter,
@@ -234,7 +235,7 @@ class InputSanitizationMiddleware(BaseHTTPMiddleware):
                 content={"error": "Internal server error", "details": "Input processing failed"}
             )
     
-    def _sanitize_query_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _sanitize_query_params(self, params: dict[str, Any]) -> dict[str, Any]:
         """Sanitize query parameters"""
         threats = []
         
@@ -258,7 +259,7 @@ class InputSanitizationMiddleware(BaseHTTPMiddleware):
             'threats': threats
         }
     
-    async def _sanitize_json_body(self, body: bytes) -> Dict[str, Any]:
+    async def _sanitize_json_body(self, body: bytes) -> dict[str, Any]:
         """Sanitize JSON request body"""
         threats = []
         
@@ -284,7 +285,7 @@ class InputSanitizationMiddleware(BaseHTTPMiddleware):
             'threats': threats
         }
     
-    def _sanitize_form_data(self, form_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _sanitize_form_data(self, form_data: dict[str, Any]) -> dict[str, Any]:
         """Sanitize form data"""
         threats = []
         
@@ -308,7 +309,7 @@ class InputSanitizationMiddleware(BaseHTTPMiddleware):
             'threats': threats
         }
     
-    def _check_json_recursively(self, data: Any, path: str) -> List[str]:
+    def _check_json_recursively(self, data: Any, path: str) -> list[str]:
         """Recursively check JSON data for threats"""
         threats = []
         

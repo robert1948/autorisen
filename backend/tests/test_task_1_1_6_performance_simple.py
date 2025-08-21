@@ -12,16 +12,14 @@ Success Criteria:
 - AI endpoints perform within acceptable thresholds
 """
 
-import pytest
-import asyncio
-import time
-import threading
 import concurrent.futures
-import statistics
 import os
+import statistics
+import time
 import uuid
-from typing import List, Dict, Any
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch
+
+import pytest
 
 # Simple performance configuration
 TEST_API_PREFIX = "/api"
@@ -37,6 +35,7 @@ os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "False"
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 # Initialize test client
@@ -49,7 +48,7 @@ class SimplePerformanceHelper:
         self.client = TestClient(app)
         
     def measure_response_time(self, endpoint: str, method: str = "GET", 
-                            data: Dict = None, headers: Dict = None) -> tuple:
+                            data: dict = None, headers: dict = None) -> tuple:
         """Measure response time for a single request"""
         start_time = time.time()
         
@@ -63,12 +62,12 @@ class SimplePerformanceHelper:
             response_time = end_time - start_time
             
             return response_time, response.status_code
-        except Exception as e:
+        except Exception:
             end_time = time.time()
             return end_time - start_time, 500
     
     def concurrent_requests(self, endpoint: str, num_requests: int, 
-                          method: str = "GET", data: Dict = None) -> List[Dict]:
+                          method: str = "GET", data: dict = None) -> list[dict]:
         """Execute concurrent requests and measure performance"""
         results = []
         
@@ -319,7 +318,6 @@ def test_task_1_1_6_performance_tests():
     print()
     
     # Run performance tests
-    import pytest
     
     test_classes = [
         "TestBasicPerformance",

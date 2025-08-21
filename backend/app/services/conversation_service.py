@@ -6,15 +6,15 @@ Integrates with advanced conversation management system
 """
 
 import logging
-from typing import Optional, Dict, Any, List
-from sqlalchemy.orm import Session
 from datetime import datetime
-from app.models import User
-from ..database import get_db
-from .conversation_manager import ConversationManager, create_conversation_manager
-from .conversation_context_service import get_context_service
-from .user_service import get_user_service
+from typing import Any
+
+from sqlalchemy.orm import Session
+
 from .cape_ai_service import get_cape_ai_service
+from .conversation_context_service import get_context_service
+from .conversation_manager import create_conversation_manager
+from .user_service import get_user_service
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ConversationService:
         self.conversation_manager = create_conversation_manager(config)
         logger.info("Enhanced ConversationService initialized with advanced features")
     
-    async def create_conversation(self, db: Session, user_id: str, title: str = None, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def create_conversation(self, db: Session, user_id: str, title: str = None, context: dict[str, Any] = None) -> dict[str, Any]:
         """Create a new conversation using advanced conversation manager."""
         try:
             # Verify user exists
@@ -87,7 +87,7 @@ class ConversationService:
             logger.error(f"Error creating conversation: {e}")
             return None
     
-    async def get_conversation(self, db: Session, conversation_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_conversation(self, db: Session, conversation_id: str, user_id: str) -> dict[str, Any] | None:
         """Get conversation using advanced manager."""
         try:
             conversation = await self.conversation_manager.get_conversation(conversation_id)
@@ -133,7 +133,7 @@ class ConversationService:
             logger.error(f"Error getting conversation {conversation_id}: {e}")
             return None
     
-    async def add_message(self, db: Session, conversation_id: str, user_id: str, message: str, role: str = "user") -> Dict[str, Any]:
+    async def add_message(self, db: Session, conversation_id: str, user_id: str, message: str, role: str = "user") -> dict[str, Any]:
         """Add message using advanced conversation manager."""
         try:
             from .conversation_manager import MessageRole
@@ -171,7 +171,7 @@ class ConversationService:
             logger.error(f"Error adding message to conversation {conversation_id}: {e}")
             return None
     
-    async def process_ai_message(self, db: Session, conversation_id: str, user_id: str, user_message: str, ai_provider: str = "auto") -> Dict[str, Any]:
+    async def process_ai_message(self, db: Session, conversation_id: str, user_id: str, user_message: str, ai_provider: str = "auto") -> dict[str, Any]:
         """Process AI message with context awareness."""
         try:
             # Add user message first
@@ -239,7 +239,7 @@ class ConversationService:
             logger.error(f"Error processing AI message: {e}")
             return None
     
-    async def get_user_conversations(self, db: Session, user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    async def get_user_conversations(self, db: Session, user_id: str, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
         """Get user conversations using advanced manager."""
         try:
             conversations = await self.conversation_manager.get_user_conversations(user_id)
@@ -268,7 +268,7 @@ class ConversationService:
             logger.error(f"Error getting conversations for user {user_id}: {e}")
             return []
     
-    async def _generate_ai_response_with_context(self, message: str, context: Dict[str, Any], provider: str) -> Optional[Dict[str, Any]]:
+    async def _generate_ai_response_with_context(self, message: str, context: dict[str, Any], provider: str) -> dict[str, Any] | None:
         """Generate AI response with full context awareness."""
         try:
             # This integrates with your existing CapeAI service

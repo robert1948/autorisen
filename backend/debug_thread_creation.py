@@ -4,13 +4,11 @@ Quick debug test for thread creation issue
 
 import asyncio
 import sys
+
 sys.path.insert(0, '/home/robert/Documents/localstorm250722/backend')
 
-from app.services.conversation_manager import (
-    EnhancedConversation,
-    MessageRole,
-    create_conversation_manager
-)
+from app.services.conversation_manager import MessageRole, create_conversation_manager
+
 
 async def debug_thread_creation():
     """Debug the thread creation issue"""
@@ -38,7 +36,7 @@ async def debug_thread_creation():
         msg3 = await manager.add_message(conversation.conversation_id, MessageRole.USER, "Third message")
         msg4 = await manager.add_message(conversation.conversation_id, MessageRole.ASSISTANT, "Fourth message")
         
-        print(f"✅ Added 4 messages")
+        print("✅ Added 4 messages")
         
         # Get updated conversation
         updated_conversation = await manager.get_conversation(conversation.conversation_id)
@@ -56,7 +54,7 @@ async def debug_thread_creation():
         )
         
         print(f"✅ Created thread: {thread.thread_id}")
-        print(f"📊 Thread details:")
+        print("📊 Thread details:")
         print(f"   - Title: {thread.title}")
         print(f"   - Type: {thread.thread_type}")
         print(f"   - Message count: {thread.message_count}")

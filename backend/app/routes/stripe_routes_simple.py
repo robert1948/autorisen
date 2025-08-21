@@ -1,10 +1,9 @@
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
-import stripe
-import os
 import logging
+import os
+
+import stripe
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -18,9 +17,9 @@ router = APIRouter()
 class CreateCheckoutSessionRequest(BaseModel):
     price_id: str
     mode: str = "subscription"  # 'subscription' or 'payment'
-    quantity: Optional[int] = 1
-    success_url: Optional[str] = None
-    cancel_url: Optional[str] = None
+    quantity: int | None = 1
+    success_url: str | None = None
+    cancel_url: str | None = None
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(request: CreateCheckoutSessionRequest):

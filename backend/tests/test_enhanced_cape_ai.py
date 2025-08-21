@@ -10,18 +10,14 @@ Test suite covering:
 - Performance monitoring integration
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
-from app.routes.cape_ai import (
-    CapeAIService,
-    AIPromptRequest,
-    AIResponse,
-    cape_ai_service
-)
-from app.services.multi_provider_ai_service import ModelProvider, AIProviderResponse
+import pytest
+
+from app.routes.cape_ai import AIPromptRequest, AIResponse, CapeAIService
+from app.services.multi_provider_ai_service import AIProviderResponse, ModelProvider
 
 
 class TestEnhancedCapeAIService:
@@ -374,7 +370,6 @@ class TestAPIEndpoints:
     @pytest.fixture
     def mock_app(self):
         """Mock FastAPI app for testing"""
-        from fastapi.testclient import TestClient
         from fastapi import FastAPI
         
         app = FastAPI()

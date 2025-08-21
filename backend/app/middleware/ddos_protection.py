@@ -2,11 +2,12 @@
 DDoS Protection Middleware for CapeAI Enterprise Platform
 """
 
+import time
+from collections import defaultdict
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from collections import defaultdict
-import time
-from typing import Dict, Tuple
+
 
 class DDoSProtectionMiddleware(BaseHTTPMiddleware):
     """Enterprise DDoS protection middleware"""
@@ -15,7 +16,7 @@ class DDoSProtectionMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.max_requests = max_requests
         self.window = window
-        self.request_counts: Dict[str, list] = defaultdict(list)
+        self.request_counts: dict[str, list] = defaultdict(list)
     
     async def dispatch(self, request: Request, call_next):
         """Process request with DDoS protection"""

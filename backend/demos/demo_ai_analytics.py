@@ -8,15 +8,9 @@ for quality metrics tracking and performance analysis.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
 
 # Import our service
-from app.services.ai_analytics_service import (
-    AIAnalyticsService,
-    AnalyticsPeriod,
-    QualityDimension
-)
+from app.services.ai_analytics_service import AIAnalyticsService, AnalyticsPeriod
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,10 +29,10 @@ async def demo_ai_analytics():
         print("\n🚀 1. Service Initialization")
         print("-" * 30)
         
-        print(f"✅ Analytics service initialized")
+        print("✅ Analytics service initialized")
         print(f"   Quality evaluators: {len(service.quality_evaluators)}")
-        print(f"   Response analytics storage: Ready")
-        print(f"   Model performance tracking: Ready")
+        print("   Response analytics storage: Ready")
+        print("   Model performance tracking: Ready")
         
         print("\n📝 2. Recording Sample AI Responses")
         print("-" * 30)
@@ -126,7 +120,7 @@ async def demo_ai_analytics():
             quality = analytics.quality_score
             print(f"   Response {i+1} ({analytics.model_used}):")
             print(f"     Overall Score: {quality.overall_score:.3f}")
-            print(f"     Dimensions:")
+            print("     Dimensions:")
             for dim, score in quality.dimension_scores.items():
                 print(f"       • {dim.value}: {score:.3f}")
             print(f"     Evaluation Method: {quality.evaluation_method}")
@@ -161,7 +155,7 @@ async def demo_ai_analytics():
         
         # Overview metrics
         overview = dashboard['overview']
-        print(f"\n   📊 Overview Metrics:")
+        print("\n   📊 Overview Metrics:")
         print(f"     • Total Responses: {overview['total_responses']}")
         print(f"     • Unique Conversations: {overview['unique_conversations']}")
         print(f"     • Unique Users: {overview['unique_users']}")
@@ -171,13 +165,13 @@ async def demo_ai_analytics():
         
         # Quality metrics
         quality_metrics = dashboard['quality_metrics']
-        print(f"\n   🎯 Quality Metrics:")
+        print("\n   🎯 Quality Metrics:")
         if quality_metrics['dimension_scores']:
             for dimension, score in quality_metrics['dimension_scores'].items():
                 print(f"     • {dimension.title()}: {score:.3f}")
         
         quality_dist = quality_metrics['quality_distribution']
-        print(f"   📊 Quality Distribution:")
+        print("   📊 Quality Distribution:")
         print(f"     • Excellent (0.9+): {quality_dist['excellent']}")
         print(f"     • Good (0.7-0.9): {quality_dist['good']}")
         print(f"     • Average (0.5-0.7): {quality_dist['average']}")
@@ -185,7 +179,7 @@ async def demo_ai_analytics():
         
         # Performance metrics
         perf_metrics = dashboard['performance_metrics']
-        print(f"\n   ⚡ Performance Metrics:")
+        print("\n   ⚡ Performance Metrics:")
         print(f"     • Avg Response Time: {perf_metrics['avg_response_time']:.0f}ms")
         print(f"     • Median Response Time: {perf_metrics['median_response_time']:.0f}ms")
         print(f"     • Fast Responses (<2s): {perf_metrics['fast_responses']}")
@@ -193,18 +187,18 @@ async def demo_ai_analytics():
         
         # Usage metrics
         usage_metrics = dashboard['usage_metrics']
-        print(f"\n   📱 Usage Metrics:")
-        print(f"   Provider Distribution:")
+        print("\n   📱 Usage Metrics:")
+        print("   Provider Distribution:")
         for provider, count in usage_metrics['provider_distribution'].items():
             print(f"     • {provider}: {count}")
-        print(f"   Model Distribution:")
+        print("   Model Distribution:")
         for model, count in usage_metrics['model_distribution'].items():
             print(f"     • {model}: {count}")
         print(f"   Personalization Rate: {usage_metrics['personalization_rate']:.1%}")
         
         # Cost metrics
         cost_metrics = dashboard['cost_metrics']
-        print(f"\n   💰 Cost Metrics:")
+        print("\n   💰 Cost Metrics:")
         print(f"     • Total Cost: ${cost_metrics['total_cost']:.4f}")
         print(f"     • Avg Cost per Response: ${cost_metrics['avg_cost_per_response']:.4f}")
         print(f"     • Total Tokens: {cost_metrics['total_tokens']:,}")
@@ -278,7 +272,7 @@ async def demo_ai_analytics():
         avg_response_time = sum(ra.response_time_ms for ra in service.response_analytics.values()) / max(total_responses, 1)
         total_cost = sum(ra.cost_estimate for ra in service.response_analytics.values())
         
-        print(f"✅ System Performance Metrics:")
+        print("✅ System Performance Metrics:")
         print(f"   📊 Responses Tracked: {total_responses}")
         print(f"   💬 Conversations: {total_conversations}")
         print(f"   🤖 Models Monitored: {total_models}")
@@ -291,7 +285,7 @@ async def demo_ai_analytics():
         excellent_count = len([s for s in quality_scores if s >= 0.9])
         good_count = len([s for s in quality_scores if 0.7 <= s < 0.9])
         
-        print(f"   📈 Quality Distribution:")
+        print("   📈 Quality Distribution:")
         print(f"     • Excellent responses: {excellent_count}/{total_responses}")
         print(f"     • Good responses: {good_count}/{total_responses}")
         

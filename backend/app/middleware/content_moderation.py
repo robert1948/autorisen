@@ -3,10 +3,11 @@ Content Moderation Middleware
 Enterprise-grade content filtering and moderation for AI safety
 """
 
-import re
 import json
 import logging
-from typing import Dict, Any, List, Optional
+import re
+from typing import Any
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -144,7 +145,7 @@ class ContentModerationMiddleware(BaseHTTPMiddleware):
             logger.warning(f"JSON content check error: {e}")
             return False
     
-    def moderate_text(self, text: str) -> Dict[str, Any]:
+    def moderate_text(self, text: str) -> dict[str, Any]:
         """Public method to moderate text content"""
         try:
             is_safe = not self._contains_inappropriate_content(text)
@@ -172,7 +173,7 @@ class ContentModerationMiddleware(BaseHTTPMiddleware):
                 'error': str(e)
             }
     
-    def get_moderation_stats(self) -> Dict[str, Any]:
+    def get_moderation_stats(self) -> dict[str, Any]:
         """Get moderation statistics"""
         try:
             return {

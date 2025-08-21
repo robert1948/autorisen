@@ -6,25 +6,20 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query, status
-from fastapi.responses import JSONResponse
-from typing import Dict, List, Optional, Any, Union
-from pydantic import BaseModel, Field
-from datetime import datetime, timedelta
 import logging
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from ..services.conversation_manager import (
     ConversationManager,
-    EnhancedConversation,
-    ConversationMessage,
-    ConversationThread,
-    ConversationSummary,
-    ConversationAnalytics,
-    MessageRole,
-    ConversationType,
     ConversationStatus,
+    ConversationType,
+    MessageRole,
     ThreadingStrategy,
-    create_conversation_manager
+    create_conversation_manager,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,7 +48,7 @@ class CreateConversationRequest(BaseModel):
     title: str = Field(..., description="Conversation title")
     description: str = Field("", description="Conversation description")
     conversation_type: str = Field("general", description="Type of conversation")
-    tags: List[str] = Field(default_factory=list, description="Conversation tags")
+    tags: list[str] = Field(default_factory=list, description="Conversation tags")
     is_shared: bool = Field(False, description="Whether conversation is shared")
     auto_threading: bool = Field(True, description="Enable automatic threading")
     threading_strategy: str = Field("hybrid", description="Threading strategy")
@@ -62,7 +57,7 @@ class AddMessageRequest(BaseModel):
     """Request model for adding a message"""
     role: str = Field(..., description="Message role (user, assistant, system)")
     content: str = Field(..., description="Message content")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 class EditMessageRequest(BaseModel):
     """Request model for editing a message"""
@@ -71,26 +66,26 @@ class EditMessageRequest(BaseModel):
 class CreateThreadRequest(BaseModel):
     """Request model for creating a thread"""
     title: str = Field(..., description="Thread title")
-    message_ids: List[str] = Field(default_factory=list, description="Message IDs to include")
+    message_ids: list[str] = Field(default_factory=list, description="Message IDs to include")
     thread_type: str = Field("general", description="Thread type")
 
 class UpdateConversationRequest(BaseModel):
     """Request model for updating conversation"""
-    title: Optional[str] = Field(None, description="New title")
-    description: Optional[str] = Field(None, description="New description")
-    tags: Optional[List[str]] = Field(None, description="New tags")
-    status: Optional[str] = Field(None, description="New status")
-    is_shared: Optional[bool] = Field(None, description="Sharing status")
+    title: str | None = Field(None, description="New title")
+    description: str | None = Field(None, description="New description")
+    tags: list[str] | None = Field(None, description="New tags")
+    status: str | None = Field(None, description="New status")
+    is_shared: bool | None = Field(None, description="Sharing status")
 
 class SearchConversationsRequest(BaseModel):
     """Request model for searching conversations"""
     query: str = Field(..., description="Search query")
-    filters: Dict[str, Any] = Field(default_factory=dict, description="Search filters")
+    filters: dict[str, Any] = Field(default_factory=dict, description="Search filters")
 
 class MessageSearchRequest(BaseModel):
     """Request model for searching messages within a conversation"""
     query: str = Field(..., description="Search query")
-    filters: Dict[str, Any] = Field(default_factory=dict, description="Search filters")
+    filters: dict[str, Any] = Field(default_factory=dict, description="Search filters")
 
 class ConversationResponse(BaseModel):
     """Response model for conversation data"""
@@ -102,8 +97,8 @@ class ConversationResponse(BaseModel):
     status: str
     created_at: str
     updated_at: str
-    tags: List[str]
-    participants: List[str]
+    tags: list[str]
+    participants: list[str]
     is_shared: bool
     auto_threading: bool
     threading_strategy: str
@@ -118,9 +113,9 @@ class MessageResponse(BaseModel):
     content: str
     timestamp: str
     tokens: int
-    thread_id: Optional[str] = None
+    thread_id: str | None = None
     edited: bool = False
-    reactions: Dict[str, int] = Field(default_factory=dict)
+    reactions: dict[str, int] = Field(default_factory=dict)
 
 class ThreadResponse(BaseModel):
     """Response model for thread data"""
@@ -131,13 +126,13 @@ class ThreadResponse(BaseModel):
     created_at: str
     updated_at: str
     message_count: int
-    participants: List[str]
-    tags: List[str]
-    topic_keywords: List[str]
+    participants: list[str]
+    tags: list[str]
+    topic_keywords: list[str]
     thread_type: str
     status: str
-    parent_thread_id: Optional[str] = None
-    child_thread_ids: List[str] = Field(default_factory=list)
+    parent_thread_id: str | None = None
+    child_thread_ids: list[str] = Field(default_factory=list)
 
 # API Endpoints
 
@@ -184,13 +179,13 @@ async def create_conversation(
         logger.error(f"Failed to create conversation: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create conversation: {str(e)}")
 
-@router.get("/", response_model=List[ConversationResponse])
+@router.get("/", response_model=list[ConversationResponse])
 async def get_user_conversations(
     user_id: str = Query(..., description="User ID"),
-    status_filter: Optional[str] = Query(None, description="Filter by status"),
-    type_filter: Optional[str] = Query(None, description="Filter by type"),
+    status_filter: str | None = Query(None, description="Filter by status"),
+    type_filter: str | None = Query(None, description="Filter by type"),
     limit: int = Query(50, description="Maximum number of conversations to return")
-) -> List[ConversationResponse]:
+) -> list[ConversationResponse]:
     """Get all conversations for a user with optional filters"""
     try:
         manager = get_conversation_manager()
@@ -375,13 +370,13 @@ async def add_message(
         logger.error(f"Failed to add message to conversation {conversation_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to add message: {str(e)}")
 
-@router.get("/{conversation_id}/messages", response_model=List[MessageResponse])
+@router.get("/{conversation_id}/messages", response_model=list[MessageResponse])
 async def get_conversation_messages(
     conversation_id: str,
-    thread_id: Optional[str] = Query(None, description="Filter by thread ID"),
+    thread_id: str | None = Query(None, description="Filter by thread ID"),
     limit: int = Query(100, description="Maximum number of messages to return"),
     offset: int = Query(0, description="Number of messages to skip")
-) -> List[MessageResponse]:
+) -> list[MessageResponse]:
     """Get messages from a conversation"""
     try:
         manager = get_conversation_manager()
@@ -485,11 +480,11 @@ async def delete_message(conversation_id: str, message_id: str) -> JSONResponse:
         logger.error(f"Failed to delete message {message_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete message: {str(e)}")
 
-@router.post("/{conversation_id}/messages/search", response_model=List[MessageResponse])
+@router.post("/{conversation_id}/messages/search", response_model=list[MessageResponse])
 async def search_messages(
     conversation_id: str,
     request: MessageSearchRequest
-) -> List[MessageResponse]:
+) -> list[MessageResponse]:
     """Search messages within a conversation"""
     try:
         manager = get_conversation_manager()
@@ -565,8 +560,8 @@ async def create_thread(
         logger.error(f"Failed to create thread in conversation {conversation_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create thread: {str(e)}")
 
-@router.get("/{conversation_id}/threads", response_model=List[ThreadResponse])
-async def get_conversation_threads(conversation_id: str) -> List[ThreadResponse]:
+@router.get("/{conversation_id}/threads", response_model=list[ThreadResponse])
+async def get_conversation_threads(conversation_id: str) -> list[ThreadResponse]:
     """Get all threads in a conversation"""
     try:
         manager = get_conversation_manager()
@@ -601,8 +596,8 @@ async def get_conversation_threads(conversation_id: str) -> List[ThreadResponse]
         logger.error(f"Failed to get threads for conversation {conversation_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get threads: {str(e)}")
 
-@router.get("/{conversation_id}/threads/{thread_id}/messages", response_model=List[MessageResponse])
-async def get_thread_messages(conversation_id: str, thread_id: str) -> List[MessageResponse]:
+@router.get("/{conversation_id}/threads/{thread_id}/messages", response_model=list[MessageResponse])
+async def get_thread_messages(conversation_id: str, thread_id: str) -> list[MessageResponse]:
     """Get all messages in a specific thread"""
     try:
         manager = get_conversation_manager()
@@ -670,7 +665,7 @@ async def merge_threads(
 async def get_conversation_summary(
     conversation_id: str,
     summary_type: str = Query("detailed", description="Type of summary (brief/detailed)")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Generate and get conversation summary"""
     try:
         manager = get_conversation_manager()
@@ -688,7 +683,7 @@ async def get_conversation_summary(
         raise HTTPException(status_code=500, detail=f"Failed to get summary: {str(e)}")
 
 @router.get("/{conversation_id}/analytics")
-async def get_conversation_analytics(conversation_id: str) -> Dict[str, Any]:
+async def get_conversation_analytics(conversation_id: str) -> dict[str, Any]:
     """Get conversation analytics"""
     try:
         manager = get_conversation_manager()
@@ -709,7 +704,7 @@ async def get_conversation_analytics(conversation_id: str) -> Dict[str, Any]:
 async def get_similar_conversations(
     conversation_id: str,
     limit: int = Query(5, description="Maximum number of similar conversations to return")
-) -> List[ConversationResponse]:
+) -> list[ConversationResponse]:
     """Get similar conversations"""
     try:
         manager = get_conversation_manager()
@@ -742,11 +737,11 @@ async def get_similar_conversations(
 
 # Search and discovery endpoints
 
-@router.post("/search", response_model=List[ConversationResponse])
+@router.post("/search", response_model=list[ConversationResponse])
 async def search_conversations(
     request: SearchConversationsRequest,
     user_id: str = Query(..., description="User ID")
-) -> List[ConversationResponse]:
+) -> list[ConversationResponse]:
     """Search conversations for a user"""
     try:
         manager = get_conversation_manager()
@@ -782,9 +777,9 @@ async def search_conversations(
 @router.get("/export")
 async def export_conversations(
     user_id: str = Query(..., description="User ID"),
-    conversation_ids: Optional[str] = Query(None, description="Comma-separated conversation IDs"),
+    conversation_ids: str | None = Query(None, description="Comma-separated conversation IDs"),
     format: str = Query("json", description="Export format")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Export conversations"""
     try:
         manager = get_conversation_manager()
@@ -808,7 +803,7 @@ async def export_conversations(
 # System endpoints
 
 @router.get("/system/analytics")
-async def get_system_analytics() -> Dict[str, Any]:
+async def get_system_analytics() -> dict[str, Any]:
     """Get system-wide conversation analytics"""
     try:
         manager = get_conversation_manager()
@@ -819,7 +814,7 @@ async def get_system_analytics() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Failed to get system analytics: {str(e)}")
 
 @router.get("/system/health")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """Check conversation management system health"""
     try:
         manager = get_conversation_manager()
@@ -832,7 +827,7 @@ async def health_check() -> Dict[str, Any]:
 # Utility endpoints
 
 @router.get("/types")
-async def get_conversation_types() -> Dict[str, List[str]]:
+async def get_conversation_types() -> dict[str, list[str]]:
     """Get available conversation types and statuses"""
     return {
         "conversation_types": [ct.value for ct in ConversationType],

@@ -10,19 +10,16 @@ Comprehensive tests for AI performance monitoring system:
 - Health monitoring and optimization recommendations
 """
 
-import pytest
-import asyncio
-import json
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 from app.services.ai_performance_service import (
     AIPerformanceMonitor,
     AIProvider,
-    AIMetricType,
-    AIUsageMetrics,
-    get_ai_performance_monitor
+    get_ai_performance_monitor,
 )
 
 
@@ -596,14 +593,14 @@ class TestIntegrationComplete:
         assert isinstance(recommendations, list)
         
         print("✅ Task 1.3.2 AI Performance Metrics - IMPLEMENTATION COMPLETE")
-        print(f"   - AI Performance Monitor: Operational")
+        print("   - AI Performance Monitor: Operational")
         print(f"   - Cost Models: {len(monitor.cost_models)} providers configured")
         print(f"   - Metrics Tracking: {len(monitor.metrics_history)} metrics recorded")
-        print(f"   - API Endpoints: 12+ endpoints available")
-        print(f"   - CapeAI Integration: Performance monitoring active")
-        print(f"   - Real-time Analytics: Functional")
-        print(f"   - Health Monitoring: Active")
-        print(f"   - Cost Analytics: Operational")
+        print("   - API Endpoints: 12+ endpoints available")
+        print("   - CapeAI Integration: Performance monitoring active")
+        print("   - Real-time Analytics: Functional")
+        print("   - Health Monitoring: Active")
+        print("   - Cost Analytics: Operational")
 
 
 if __name__ == "__main__":

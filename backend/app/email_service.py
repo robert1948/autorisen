@@ -1,8 +1,9 @@
-import aiosmtplib
 import os
 from email.message import EmailMessage
-from typing import Optional
+
+import aiosmtplib
 from jinja2 import Template
+
 
 class EmailService:
     def __init__(self):
@@ -19,7 +20,7 @@ class EmailService:
         to_email: str, 
         subject: str, 
         html_content: str, 
-        text_content: Optional[str] = None
+        text_content: str | None = None
     ):
         """Send an email using SMTP"""
         try:
@@ -36,7 +37,7 @@ class EmailService:
             
             # For development/testing, print email instead of sending
             if not self.smtp_username or not self.smtp_password:
-                print(f"\n📧 EMAIL NOTIFICATION (Development Mode)")
+                print("\n📧 EMAIL NOTIFICATION (Development Mode)")
                 print(f"To: {to_email}")
                 print(f"Subject: {subject}")
                 print(f"Content:\n{html_content or text_content}")
@@ -58,7 +59,7 @@ class EmailService:
             )
             return True
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             print(f"⏰ Email sending timeout for {to_email}")
             return False
         except Exception as e:

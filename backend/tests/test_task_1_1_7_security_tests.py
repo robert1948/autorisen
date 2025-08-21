@@ -14,17 +14,16 @@ Success Criteria:
 - API rate limiting and security headers present
 """
 
-import pytest
-import asyncio
-import time
-import uuid
 import json
-import re
-from typing import List, Dict, Any
-from unittest.mock import patch, MagicMock
 
 # Set test environment variables
 import os
+import re
+import time
+import uuid
+
+import pytest
+
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-very-long-and-secure"
 os.environ["DATABASE_URL"] = "sqlite:///./test_security.db"
 os.environ["OPENAI_API_KEY"] = "test-openai-key-sk-1234567890abcdef"
@@ -33,10 +32,11 @@ os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "False"
 
 from fastapi.testclient import TestClient
-from app.main import app
-from app.database import engine, SessionLocal, Base
-from app.models import User
+
 from app.auth import create_access_token
+from app.database import Base, SessionLocal, engine
+from app.main import app
+from app.models import User
 
 # Test client
 client = TestClient(app)
@@ -119,7 +119,7 @@ class SecurityTestHelper:
                 db.close()
     
     def test_payload_injection(self, endpoint: str, method: str, 
-                             payloads: List[str], field_name: str = "email") -> Dict:
+                             payloads: list[str], field_name: str = "email") -> dict:
         """Test various injection payloads against an endpoint"""
         results = {
             "safe_responses": 0,
@@ -156,12 +156,12 @@ class SecurityTestHelper:
                 else:
                     results["error_responses"] += 1
                     
-            except Exception as e:
+            except Exception:
                 results["error_responses"] += 1
                 
         return results
     
-    def check_security_headers(self, response) -> Dict[str, bool]:
+    def check_security_headers(self, response) -> dict[str, bool]:
         """Check for important security headers"""
         headers = response.headers
         security_checks = {

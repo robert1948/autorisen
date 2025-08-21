@@ -10,20 +10,21 @@ Enhanced AI service supporting multiple providers:
 - Task 2.4.2: Rate limiting integration for production security
 """
 
-import os
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any, Union
-from enum import Enum
+import os
 from dataclasses import dataclass
-from datetime import datetime
+from enum import Enum
+from typing import Any
+
+import anthropic
 
 # Provider-specific imports
 from openai import AsyncOpenAI
-import anthropic
+
 try:
     import google.generativeai as genai
-    from google.generativeai.types import HarmCategory, HarmBlockThreshold
+    from google.generativeai.types import HarmBlockThreshold, HarmCategory
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
@@ -31,16 +32,16 @@ except ImportError:
 
 # Rate limiting integration - Task 2.4.2
 try:
-    from .ai_rate_limit_service import check_ai_rate_limit, RateLimitResult
+    from .ai_rate_limit_service import RateLimitResult, check_ai_rate_limit
     RATE_LIMITING_AVAILABLE = True
 except ImportError:
     RATE_LIMITING_AVAILABLE = False
 
-from pydantic import BaseModel
 
 from app.config import settings
-from app.services.ai_performance_service import get_ai_performance_monitor, AIModelType
-from app.services.conversation_context_service import get_context_service, ContextType
+from app.services.ai_performance_service import AIModelType, get_ai_performance_monitor
+from app.services.conversation_context_service import ContextType, get_context_service
+
 # Task 2.1.4: AI Personalization integration (imported lazily to avoid circular import)
 
 logger = logging.getLogger(__name__)
@@ -72,10 +73,10 @@ class AIProviderResponse:
     content: str
     provider: ModelProvider
     model: str
-    usage: Dict[str, int]
+    usage: dict[str, int]
     response_time_ms: int
     finish_reason: str
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
 
 class MultiProviderAIService:
@@ -232,7 +233,7 @@ class MultiProviderAIService:
                 )
             })
     
-    def get_available_models(self) -> Dict[str, List[str]]:
+    def get_available_models(self) -> dict[str, list[str]]:
         """Get all available models grouped by provider"""
         
         available = {}
@@ -246,11 +247,11 @@ class MultiProviderAIService:
         
         return available
     
-    def get_model_config(self, model_name: str) -> Optional[AIModelConfig]:
+    def get_model_config(self, model_name: str) -> AIModelConfig | None:
         """Get configuration for a specific model"""
         return self.model_configs.get(model_name)
     
-    def get_default_model(self, provider: Optional[ModelProvider] = None) -> str:
+    def get_default_model(self, provider: ModelProvider | None = None) -> str:
         """Get the default model for a provider or overall default"""
         
         # Provider-specific defaults
@@ -275,12 +276,12 @@ class MultiProviderAIService:
     
     async def generate_response(
         self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        user_id: Optional[str] = None,
-        conversation_id: Optional[str] = None,
+        messages: list[dict[str, str]],
+        model: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        user_id: str | None = None,
+        conversation_id: str | None = None,
         use_context: bool = True,
         use_personalization: bool = True,
         **kwargs
@@ -617,7 +618,7 @@ class MultiProviderAIService:
     
     async def _generate_openai_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         config: AIModelConfig,
         temperature: float,
         max_tokens: int,
@@ -655,7 +656,7 @@ class MultiProviderAIService:
     
     async def _generate_claude_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         config: AIModelConfig,
         temperature: float,
         max_tokens: int,
@@ -707,7 +708,7 @@ class MultiProviderAIService:
             }
         )
     
-    def _convert_messages_to_claude_format(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_messages_to_claude_format(self, messages: list[dict[str, str]]) -> list[dict[str, str]]:
         """Convert OpenAI-style messages to Claude format"""
         
         claude_messages = []
@@ -733,7 +734,7 @@ class MultiProviderAIService:
     
     async def _generate_gemini_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         config: AIModelConfig,
         temperature: float,
         max_tokens: int,
@@ -809,7 +810,7 @@ class MultiProviderAIService:
             self.logger.error(f"Gemini API error: {str(e)}")
             raise Exception(f"Gemini generation failed: {str(e)}")
     
-    def _convert_to_gemini_format(self, messages: List[Dict[str, str]]) -> List[str]:
+    def _convert_to_gemini_format(self, messages: list[dict[str, str]]) -> list[str]:
         """Convert standard messages to Gemini format"""
         
         gemini_messages = []
@@ -829,7 +830,7 @@ class MultiProviderAIService:
         
         return gemini_messages
     
-    async def get_provider_status(self) -> Dict[str, Dict[str, Any]]:
+    async def get_provider_status(self) -> dict[str, dict[str, Any]]:
         """Get status of all AI providers"""
         
         status = {}

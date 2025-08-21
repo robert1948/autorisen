@@ -9,19 +9,29 @@ import asyncio
 import hashlib
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, Any, List, Optional, Union
-from dataclasses import dataclass, asdict
-from contextlib import asynccontextmanager
+from typing import Any
 
 import redis.asyncio as redis
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+    and_,
+    func,
+    or_,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, String, DateTime, Text, Integer, Float, Boolean, Index
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import select, and_, or_, func
-from pydantic import BaseModel, Field
+from sqlalchemy.orm import sessionmaker
 
 # Database Models
 Base = declarative_base()
@@ -102,7 +112,7 @@ class AuditEntry:
     
     # Request/Response
     prompt_hash: str
-    response_hash: Optional[str] = None
+    response_hash: str | None = None
     status_code: int = 200
     response_time_ms: float = 0.0
     
@@ -113,22 +123,22 @@ class AuditEntry:
     safety_filtered: bool = False
     
     # Usage tracking
-    tokens_used: Optional[int] = None
-    estimated_cost: Optional[float] = None
+    tokens_used: int | None = None
+    estimated_cost: float | None = None
     rate_limited: bool = False
     
     # Security context
-    session_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    session_id: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
     
     # Compliance
     compliance_level: ComplianceLevel = ComplianceLevel.LOW
-    compliance_flags: List[str] = None
-    security_events: List[str] = None
+    compliance_flags: list[str] = None
+    security_events: list[str] = None
     
     # Additional metadata
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
 class AIAuditService:
     """
@@ -187,8 +197,8 @@ class AIAuditService:
         provider: str,
         model: str,
         prompt: str,
-        response: Optional[str] = None,
-        request_metadata: Optional[Dict[str, Any]] = None,
+        response: str | None = None,
+        request_metadata: dict[str, Any] | None = None,
         **kwargs
     ) -> str:
         """
@@ -262,7 +272,7 @@ class AIAuditService:
         event_type: str,
         description: str,
         severity: ComplianceLevel = ComplianceLevel.MEDIUM,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None
     ) -> str:
         """Log a security event"""
         try:
@@ -291,10 +301,10 @@ class AIAuditService:
     async def get_user_audit_trail(
         self,
         user_id: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get audit trail for a specific user"""
         try:
             if not start_date:
@@ -327,9 +337,9 @@ class AIAuditService:
 
     async def get_compliance_report(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+        start_date: datetime | None = None,
+        end_date: datetime | None = None
+    ) -> dict[str, Any]:
         """Generate compliance report"""
         try:
             if not start_date:
@@ -510,7 +520,7 @@ class AIAuditService:
         except Exception as e:
             print(f"❌ AI Audit Service: Failed to store audit entry: {e}")
 
-    async def _store_content(self, audit_id: str, prompt: str, response: Optional[str]):
+    async def _store_content(self, audit_id: str, prompt: str, response: str | None):
         """Store content securely with encryption"""
         try:
             # Truncate long content
@@ -533,7 +543,7 @@ class AIAuditService:
         except Exception as e:
             print(f"❌ AI Audit Service: Failed to store content: {e}")
 
-    async def _get_cached_audit_trail(self, user_id: str, start_date: datetime, end_date: datetime, limit: int) -> List[Dict[str, Any]]:
+    async def _get_cached_audit_trail(self, user_id: str, start_date: datetime, end_date: datetime, limit: int) -> list[dict[str, Any]]:
         """Get audit trail from cache"""
         try:
             results = []
@@ -543,7 +553,7 @@ class AIAuditService:
                 cursor = 0
                 while cursor != '0':
                     cursor, keys = await self.redis_client.scan(
-                        cursor, match=f"audit:*", count=100
+                        cursor, match="audit:*", count=100
                     )
                     for key in keys:
                         data = await self.redis_client.get(key)
@@ -570,7 +580,7 @@ class AIAuditService:
             print(f"❌ AI Audit Service: Failed to get cached audit trail: {e}")
             return []
 
-    def _log_to_dict(self, log: AIAuditLog) -> Dict[str, Any]:
+    def _log_to_dict(self, log: AIAuditLog) -> dict[str, Any]:
         """Convert database log to dictionary"""
         return {
             "id": log.id,
@@ -590,7 +600,7 @@ class AIAuditService:
             "metadata": json.loads(log.audit_metadata or "{}")
         }
 
-    def _generate_compliance_recommendations(self, report: Dict[str, Any]) -> List[str]:
+    def _generate_compliance_recommendations(self, report: dict[str, Any]) -> list[str]:
         """Generate compliance recommendations based on report data"""
         recommendations = []
         
@@ -661,7 +671,7 @@ if __name__ == "__main__":
         # Demo 5: Generate compliance report
         print("\n5. Generating Compliance Report")
         report = await audit_service.get_compliance_report()
-        print(f"✅ Compliance Report Generated:")
+        print("✅ Compliance Report Generated:")
         print(f"   Total Interactions: {report['summary']['total_interactions']}")
         print(f"   PII Detected: {report['summary']['pii_detected']}")
         print(f"   Recommendations: {len(report['recommendations'])}")

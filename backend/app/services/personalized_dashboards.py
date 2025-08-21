@@ -3,15 +3,13 @@ Task 2.2.4: Personalized Dashboards
 Intelligent, context-aware user interfaces with role-specific widgets and adaptive layouts.
 """
 
-import json
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
 import logging
-from collections import defaultdict, Counter
 import uuid
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +71,13 @@ class WidgetConfig:
     widget_type: WidgetType
     title: str
     size: WidgetSize
-    position: Tuple[int, int]  # (row, column)
-    settings: Dict[str, Any]
+    position: tuple[int, int]  # (row, column)
+    settings: dict[str, Any]
     is_visible: bool = True
     is_moveable: bool = True
     is_resizable: bool = True
     refresh_interval: int = 300  # seconds
-    permissions: List[str] = None
+    permissions: list[str] = None
     
     def __post_init__(self):
         if self.permissions is None:
@@ -93,7 +91,7 @@ class DashboardLayout:
     layout_type: LayoutType
     columns: int
     rows: int
-    widgets: List[WidgetConfig]
+    widgets: list[WidgetConfig]
     theme: str = "default"
     is_responsive: bool = True
     created_at: str = None
@@ -112,9 +110,9 @@ class UserDashboard:
     dashboard_id: str
     role: DashboardRole
     active_layout: str
-    layouts: List[DashboardLayout]
-    preferences: Dict[str, Any]
-    usage_stats: Dict[str, Any]
+    layouts: list[DashboardLayout]
+    preferences: dict[str, Any]
+    usage_stats: dict[str, Any]
     personalization_level: float  # 0.0 to 1.0
     created_at: str = None
     last_accessed: str = None
@@ -143,8 +141,8 @@ class DashboardPersonalizer:
         self.usage_patterns = defaultdict(dict)
         self.personalization_rules = []
     
-    async def create_personalized_dashboard(self, user_profile: Dict[str, Any], 
-                                          usage_history: List[Dict[str, Any]]) -> UserDashboard:
+    async def create_personalized_dashboard(self, user_profile: dict[str, Any], 
+                                          usage_history: list[dict[str, Any]]) -> UserDashboard:
         """Create a personalized dashboard for a user"""
         try:
             # Determine user role
@@ -182,8 +180,8 @@ class DashboardPersonalizer:
             # Return default dashboard
             return await self._create_default_dashboard(user_profile.get('user_id', 'default'))
     
-    async def _determine_user_role(self, user_profile: Dict[str, Any], 
-                                 usage_history: List[Dict[str, Any]]) -> DashboardRole:
+    async def _determine_user_role(self, user_profile: dict[str, Any], 
+                                 usage_history: list[dict[str, Any]]) -> DashboardRole:
         """Determine the most appropriate role for the user"""
         try:
             # Check explicit role in profile
@@ -236,7 +234,7 @@ class DashboardPersonalizer:
             return DashboardRole.BUSINESS_USER
     
     async def _create_base_layout(self, role: DashboardRole, 
-                                user_profile: Dict[str, Any]) -> DashboardLayout:
+                                user_profile: dict[str, Any]) -> DashboardLayout:
         """Create base layout for user role"""
         try:
             template_creator = self.role_templates.get(role, self._create_business_template)
@@ -245,7 +243,7 @@ class DashboardPersonalizer:
             logger.error(f"Error creating base layout: {e}")
             return await self._create_default_layout()
     
-    async def _create_developer_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_developer_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create developer-focused dashboard template"""
         widgets = [
             WidgetConfig(
@@ -334,7 +332,7 @@ class DashboardPersonalizer:
             theme="dark"
         )
     
-    async def _create_business_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_business_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create business user dashboard template"""
         widgets = [
             WidgetConfig(
@@ -423,7 +421,7 @@ class DashboardPersonalizer:
             theme="light"
         )
     
-    async def _create_analyst_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_analyst_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create analyst-focused dashboard template"""
         widgets = [
             WidgetConfig(
@@ -485,7 +483,7 @@ class DashboardPersonalizer:
             theme="data"
         )
     
-    async def _create_manager_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_manager_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create manager dashboard template"""
         widgets = [
             WidgetConfig(
@@ -548,7 +546,7 @@ class DashboardPersonalizer:
             theme="executive"
         )
     
-    async def _create_admin_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_admin_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create admin dashboard template"""
         widgets = [
             WidgetConfig(
@@ -626,7 +624,7 @@ class DashboardPersonalizer:
             theme="admin"
         )
     
-    async def _create_content_creator_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_content_creator_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create content creator dashboard template"""
         widgets = [
             WidgetConfig(
@@ -700,7 +698,7 @@ class DashboardPersonalizer:
             theme="creative"
         )
     
-    async def _create_student_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_student_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create student dashboard template"""
         widgets = [
             WidgetConfig(
@@ -775,7 +773,7 @@ class DashboardPersonalizer:
             theme="education"
         )
     
-    async def _create_researcher_template(self, user_profile: Dict[str, Any]) -> DashboardLayout:
+    async def _create_researcher_template(self, user_profile: dict[str, Any]) -> DashboardLayout:
         """Create researcher dashboard template"""
         widgets = [
             WidgetConfig(
@@ -851,8 +849,8 @@ class DashboardPersonalizer:
         )
     
     async def _personalize_layout(self, base_layout: DashboardLayout,
-                                user_profile: Dict[str, Any],
-                                usage_history: List[Dict[str, Any]]) -> DashboardLayout:
+                                user_profile: dict[str, Any],
+                                usage_history: list[dict[str, Any]]) -> DashboardLayout:
         """Personalize layout based on user behavior"""
         try:
             # Analyze usage patterns
@@ -892,7 +890,7 @@ class DashboardPersonalizer:
             logger.error(f"Error personalizing layout: {e}")
             return base_layout
     
-    async def _analyze_widget_usage(self, usage_history: List[Dict[str, Any]]) -> Dict[str, float]:
+    async def _analyze_widget_usage(self, usage_history: list[dict[str, Any]]) -> dict[str, float]:
         """Analyze widget usage patterns"""
         try:
             widget_interactions = defaultdict(int)
@@ -914,8 +912,8 @@ class DashboardPersonalizer:
             return {}
     
     async def _identify_missing_widgets(self, layout: DashboardLayout,
-                                       user_profile: Dict[str, Any],
-                                       usage_history: List[Dict[str, Any]]) -> List[WidgetConfig]:
+                                       user_profile: dict[str, Any],
+                                       usage_history: list[dict[str, Any]]) -> list[WidgetConfig]:
         """Identify widgets that should be added based on user behavior"""
         try:
             missing_widgets = []
@@ -948,7 +946,7 @@ class DashboardPersonalizer:
             return []
     
     async def _optimize_widget_positions(self, layout: DashboardLayout,
-                                        usage_scores: Dict[str, float]) -> DashboardLayout:
+                                        usage_scores: dict[str, float]) -> DashboardLayout:
         """Optimize widget positions based on usage patterns"""
         try:
             # Sort widgets by usage score (most used first)
@@ -983,8 +981,8 @@ class DashboardPersonalizer:
             logger.error(f"Error optimizing positions: {e}")
             return layout
     
-    async def _calculate_personalization_level(self, user_profile: Dict[str, Any],
-                                              usage_history: List[Dict[str, Any]]) -> float:
+    async def _calculate_personalization_level(self, user_profile: dict[str, Any],
+                                              usage_history: list[dict[str, Any]]) -> float:
         """Calculate how personalized the dashboard is"""
         try:
             factors = []
@@ -1011,7 +1009,7 @@ class DashboardPersonalizer:
         except Exception:
             return 0.5
     
-    async def _extract_user_preferences(self, user_profile: Dict[str, Any]) -> Dict[str, Any]:
+    async def _extract_user_preferences(self, user_profile: dict[str, Any]) -> dict[str, Any]:
         """Extract user preferences for dashboard"""
         try:
             return {
@@ -1028,7 +1026,7 @@ class DashboardPersonalizer:
         except Exception:
             return {}
     
-    async def _calculate_usage_stats(self, usage_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _calculate_usage_stats(self, usage_history: list[dict[str, Any]]) -> dict[str, Any]:
         """Calculate usage statistics"""
         try:
             if not usage_history:
@@ -1129,8 +1127,8 @@ class DashboardManager:
         self.usage_tracker = defaultdict(list)
         self.adaptation_rules = []
     
-    async def create_dashboard(self, user_profile: Dict[str, Any],
-                              usage_history: Optional[List[Dict[str, Any]]] = None) -> UserDashboard:
+    async def create_dashboard(self, user_profile: dict[str, Any],
+                              usage_history: list[dict[str, Any]] | None = None) -> UserDashboard:
         """Create a new personalized dashboard"""
         try:
             if usage_history is None:
@@ -1151,12 +1149,12 @@ class DashboardManager:
                 user_profile.get('user_id', 'error_user')
             )
     
-    async def get_dashboard(self, dashboard_id: str) -> Optional[UserDashboard]:
+    async def get_dashboard(self, dashboard_id: str) -> UserDashboard | None:
         """Get dashboard by ID"""
         return self.dashboards.get(dashboard_id)
     
     async def update_dashboard(self, dashboard_id: str, 
-                              updates: Dict[str, Any]) -> Optional[UserDashboard]:
+                              updates: dict[str, Any]) -> UserDashboard | None:
         """Update dashboard configuration"""
         try:
             dashboard = self.dashboards.get(dashboard_id)
@@ -1178,7 +1176,7 @@ class DashboardManager:
             return None
     
     async def adapt_dashboard(self, dashboard_id: str,
-                             interaction_data: Dict[str, Any]) -> Optional[UserDashboard]:
+                             interaction_data: dict[str, Any]) -> UserDashboard | None:
         """Adapt dashboard based on user interactions"""
         try:
             dashboard = self.dashboards.get(dashboard_id)
@@ -1222,7 +1220,7 @@ class DashboardManager:
             return dashboard
     
     async def _should_adapt_dashboard(self, dashboard: UserDashboard,
-                                     interaction_data: Dict[str, Any]) -> bool:
+                                     interaction_data: dict[str, Any]) -> bool:
         """Determine if dashboard should be adapted"""
         try:
             # Adapt if significant usage pattern changes
@@ -1254,7 +1252,7 @@ class DashboardManager:
         except Exception:
             return False
     
-    async def get_dashboard_analytics(self, dashboard_id: str) -> Dict[str, Any]:
+    async def get_dashboard_analytics(self, dashboard_id: str) -> dict[str, Any]:
         """Get analytics for a dashboard"""
         try:
             dashboard = self.dashboards.get(dashboard_id)
@@ -1309,7 +1307,7 @@ class DashboardManager:
             logger.error(f"Error getting dashboard analytics: {e}")
             return {}
     
-    async def export_dashboard(self, dashboard_id: str) -> Optional[Dict[str, Any]]:
+    async def export_dashboard(self, dashboard_id: str) -> dict[str, Any] | None:
         """Export dashboard configuration"""
         try:
             dashboard = self.dashboards.get(dashboard_id)
@@ -1339,7 +1337,7 @@ class DashboardManager:
             logger.error(f"Error exporting dashboard: {e}")
             return None
     
-    async def import_dashboard(self, dashboard_data: Dict[str, Any]) -> Optional[str]:
+    async def import_dashboard(self, dashboard_data: dict[str, Any]) -> str | None:
         """Import dashboard configuration"""
         try:
             # Validate data structure

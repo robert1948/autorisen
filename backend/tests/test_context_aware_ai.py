@@ -3,28 +3,27 @@ Task 2.2.3: Context-Aware AI Responses - Comprehensive Test Suite
 Tests for context-aware AI response generation, analysis, and optimization.
 """
 
-import pytest
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
+import os
 
 # Import the modules to test
 import sys
-import os
+from datetime import datetime, timedelta
+
+import pytest
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from app.services.context_aware_ai import (
-    ContextType,
-    ResponseStrategy,
-    ContextWindow,
-    UserContext,
-    ResponseContext,
     ContextAnalyzer,
-    ResponseGenerator,
     ContextAwareAIService,
-    context_aware_ai_service
+    ContextWindow,
+    ResponseContext,
+    ResponseGenerator,
+    ResponseStrategy,
+    UserContext,
 )
+
 
 class TestContextAwareAI:
     """Test suite for context-aware AI response system"""
@@ -682,7 +681,7 @@ class TestContextAwareAIPerformance:
         max_time = max(times)
         min_time = min(times)
         
-        print(f"\nResponse Generation Benchmark:")
+        print("\nResponse Generation Benchmark:")
         print(f"Average time: {avg_time:.2f}ms")
         print(f"Min time: {min_time:.2f}ms")
         print(f"Max time: {max_time:.2f}ms")
@@ -730,7 +729,7 @@ class TestContextAwareAIPerformance:
         max_time = max(times)
         min_time = min(times)
         
-        print(f"\nContext Analysis Benchmark:")
+        print("\nContext Analysis Benchmark:")
         print(f"Average time: {avg_time:.2f}ms")
         print(f"Min time: {min_time:.2f}ms")
         print(f"Max time: {max_time:.2f}ms")

@@ -7,16 +7,16 @@ dependencies or environment services are missing so the application can boot
 and report graceful health statuses.
 """
 
-import asyncio
 import inspect
 import logging
-import time
 import os
-from typing import Dict, Any, List, Optional, Callable
-from datetime import datetime
-from dataclasses import dataclass, asdict, field
-from enum import Enum
+import time
 from collections import defaultdict, deque
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 # Optional HTTP client
 try:
@@ -42,7 +42,7 @@ except Exception:
     get_error_tracker = lambda: None  # type: ignore
 
 try:
-    from app.services.audit_service import get_audit_logger, AuditEventType  # type: ignore
+    from app.services.audit_service import AuditEventType, get_audit_logger  # type: ignore
 except Exception:
     get_audit_logger = lambda: None  # type: ignore
     AuditEventType = None  # type: ignore
@@ -73,9 +73,9 @@ class HealthCheckResult:
     status: HealthStatus
     response_time_ms: float
     timestamp: datetime
-    details: Dict[str, Any] = field(default_factory=dict)
-    error_message: Optional[str] = None
-    suggestions: List[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+    suggestions: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -85,10 +85,10 @@ class EndpointHealthCheck:
     method: str = "GET"
     timeout: int = 5
     expected_status: int = 200
-    expected_response_key: Optional[str] = None
-    expected_response_value: Optional[Any] = None
+    expected_response_key: str | None = None
+    expected_response_value: Any | None = None
     critical: bool = False
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 class HealthService:
@@ -99,7 +99,7 @@ class HealthService:
         self.audit_logger = get_audit_logger() if callable(get_audit_logger) else None
         self.error_tracker = get_error_tracker() if callable(get_error_tracker) else None
 
-        self.health_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
+        self.health_history: dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
 
         # thresholds can be tuned via environment in the future
         self.thresholds = {
@@ -113,8 +113,8 @@ class HealthService:
             "response_time_critical": float(os.getenv("RESP_CRIT_MS", 5000.0)),
         }
 
-        self.health_checks: Dict[str, Callable] = {}
-        self.endpoint_checks: List[EndpointHealthCheck] = []
+        self.health_checks: dict[str, Callable] = {}
+        self.endpoint_checks: list[EndpointHealthCheck] = []
 
         self._register_builtin_checks()
 
@@ -137,12 +137,12 @@ class HealthService:
     def register_endpoint_check(self, endpoint_check: EndpointHealthCheck):
         self.endpoint_checks.append(endpoint_check)
 
-    async def run_comprehensive_health_check(self) -> Dict[str, Any]:
+    async def run_comprehensive_health_check(self) -> dict[str, Any]:
         start = time.time()
         overall = HealthStatus.HEALTHY
 
-        services: Dict[str, Any] = {}
-        endpoints: Dict[str, Any] = {}
+        services: dict[str, Any] = {}
+        endpoints: dict[str, Any] = {}
 
         # run registered health checks
         for name, func in self.health_checks.items():

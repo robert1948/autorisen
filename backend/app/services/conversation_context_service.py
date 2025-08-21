@@ -11,15 +11,15 @@ Advanced conversation context management with semantic memory:
 - Context summarization for long conversations
 """
 
+import hashlib
 import json
 import logging
-import hashlib
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any
+
 import redis.asyncio as redis
-from pydantic import BaseModel
 
 from app.config import settings
 
@@ -45,13 +45,13 @@ class ConversationMessage:
     message_type: ContextType
     content: str
     timestamp: datetime
-    metadata: Dict[str, Any]
-    ai_provider: Optional[str] = None
-    ai_model: Optional[str] = None
-    tokens_used: Optional[Dict[str, int]] = None
-    response_time_ms: Optional[int] = None
+    metadata: dict[str, Any]
+    ai_provider: str | None = None
+    ai_model: str | None = None
+    tokens_used: dict[str, int] | None = None
+    response_time_ms: int | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage"""
         return {
             'message_id': self.message_id,
@@ -68,7 +68,7 @@ class ConversationMessage:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ConversationMessage':
+    def from_dict(cls, data: dict[str, Any]) -> 'ConversationMessage':
         """Create from dictionary"""
         return cls(
             message_id=data['message_id'],
@@ -90,16 +90,16 @@ class ConversationContext:
     """Complete conversation context"""
     conversation_id: str
     user_id: str
-    messages: List[ConversationMessage]
-    context_summary: Optional[str]
-    user_preferences: Dict[str, Any]
-    conversation_metadata: Dict[str, Any]
+    messages: list[ConversationMessage]
+    context_summary: str | None
+    user_preferences: dict[str, Any]
+    conversation_metadata: dict[str, Any]
     created_at: datetime
     updated_at: datetime
     total_messages: int
     total_tokens: int
     
-    def get_recent_context(self, max_messages: int = 10) -> List[Dict[str, str]]:
+    def get_recent_context(self, max_messages: int = 10) -> list[dict[str, str]]:
         """Get recent messages formatted for AI context"""
         recent_messages = self.messages[-max_messages:]
         context = []
@@ -135,7 +135,7 @@ class ConversationContextService:
     """Service for managing conversation context and memory"""
     
     def __init__(self):
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: redis.Redis | None = None
         self.conversation_ttl = 86400 * 30  # 30 days
         self.context_cache_ttl = 3600  # 1 hour
         self.max_context_messages = 50  # Maximum messages to keep in active context
@@ -157,7 +157,7 @@ class ConversationContextService:
             self.redis_client = None
             logger.warning("Context service running without Redis - conversations will not persist")
     
-    async def get_conversation_id(self, user_id: str, session_id: Optional[str] = None) -> str:
+    async def get_conversation_id(self, user_id: str, session_id: str | None = None) -> str:
         """Get or create conversation ID"""
         if session_id:
             conversation_id = f"conv_{user_id}_{session_id}"
@@ -174,11 +174,11 @@ class ConversationContextService:
         conversation_id: str,
         message_type: ContextType,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        ai_provider: Optional[str] = None,
-        ai_model: Optional[str] = None,
-        tokens_used: Optional[Dict[str, int]] = None,
-        response_time_ms: Optional[int] = None
+        metadata: dict[str, Any] | None = None,
+        ai_provider: str | None = None,
+        ai_model: str | None = None,
+        tokens_used: dict[str, int] | None = None,
+        response_time_ms: int | None = None
     ) -> ConversationMessage:
         """Add a message to the conversation context"""
         
@@ -232,8 +232,8 @@ class ConversationContextService:
     async def get_conversation_context(
         self,
         conversation_id: str,
-        max_messages: Optional[int] = None
-    ) -> Optional[ConversationContext]:
+        max_messages: int | None = None
+    ) -> ConversationContext | None:
         """Retrieve conversation context"""
         
         if not self.redis_client:
@@ -291,7 +291,7 @@ class ConversationContextService:
             logger.error(f"Failed to retrieve conversation context: {e}")
             return None
     
-    async def get_user_preferences(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_preferences(self, user_id: str) -> dict[str, Any]:
         """Get user preferences for context-aware responses"""
         
         if not self.redis_client:
@@ -322,7 +322,7 @@ class ConversationContextService:
     async def update_user_preferences(
         self,
         user_id: str,
-        preferences: Dict[str, Any]
+        preferences: dict[str, Any]
     ) -> bool:
         """Update user preferences"""
         
@@ -349,7 +349,7 @@ class ConversationContextService:
         conversation_id: str,
         max_context_messages: int = 10,
         include_summary: bool = True
-    ) -> Tuple[List[Dict[str, str]], Dict[str, Any]]:
+    ) -> tuple[list[dict[str, str]], dict[str, Any]]:
         """Generate context for AI model consumption"""
         
         context = await self.get_conversation_context(conversation_id, max_context_messages * 2)
@@ -382,7 +382,7 @@ class ConversationContextService:
         self,
         conversation_id: str,
         user_id: str,
-        tokens_used: Optional[Dict[str, int]] = None
+        tokens_used: dict[str, int] | None = None
     ):
         """Update conversation metadata"""
         
@@ -438,7 +438,7 @@ class ConversationContextService:
         self,
         user_id: str,
         limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get user's conversation history"""
         
         if not self.redis_client:
@@ -447,7 +447,7 @@ class ConversationContextService:
         try:
             # This would require indexing conversations by user
             # For now, return empty list - could be enhanced later
-            logger.info(f"Conversation history retrieval not fully implemented yet")
+            logger.info("Conversation history retrieval not fully implemented yet")
             return []
             
         except Exception as e:
@@ -456,7 +456,7 @@ class ConversationContextService:
 
 
 # Global instance
-_context_service: Optional[ConversationContextService] = None
+_context_service: ConversationContextService | None = None
 
 
 async def get_context_service() -> ConversationContextService:

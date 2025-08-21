@@ -1,13 +1,13 @@
 # backend/app/auth.py
 
-from passlib.context import CryptContext
-from jose import jwt
 from datetime import datetime, timedelta
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer
-from typing import Optional, Dict, Any
+from typing import Any
 
 import bcrypt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer
+from jose import jwt
+from passlib.context import CryptContext
 
 # Try to use bcrypt directly if passlib has issues
 try:
@@ -55,7 +55,7 @@ def create_access_token(data: dict, secret_key: str, algorithm: str, expires_del
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, secret_key, algorithm=algorithm)
 
-def verify_token(token: str) -> Optional[Dict[str, Any]]:
+def verify_token(token: str) -> dict[str, Any] | None:
     """
     Verify JWT token and return payload (helper function).
     
@@ -90,7 +90,7 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
     except Exception:
         return None
 
-async def get_current_user(token: str = Depends(security)) -> Dict[str, Any]:
+async def get_current_user(token: str = Depends(security)) -> dict[str, Any]:
     """
     Get current user from JWT token for route authentication.
     
@@ -188,7 +188,7 @@ async def get_current_user(token: str = Depends(security)) -> Dict[str, Any]:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-async def get_current_user_optional(token: Optional[str] = Depends(security)) -> Optional[Dict[str, Any]]:
+async def get_current_user_optional(token: str | None = Depends(security)) -> dict[str, Any] | None:
     """
     Get current user from JWT token, but don't raise exception if token is missing.
     Used for optional authentication endpoints.

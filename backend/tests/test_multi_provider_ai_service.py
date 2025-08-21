@@ -11,19 +11,18 @@ Test suite covering:
 - Performance monitoring integration
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
-from app.services.multi_provider_ai_service import (
-    MultiProviderAIService,
-    ModelProvider,
-    AIModelConfig,
-    AIProviderResponse,
-    get_multi_provider_ai_service
-)
+import pytest
+
 from app.services.ai_performance_service import AIProvider
+from app.services.multi_provider_ai_service import (
+    AIProviderResponse,
+    ModelProvider,
+    MultiProviderAIService,
+    get_multi_provider_ai_service,
+)
 
 
 class TestMultiProviderAIService:

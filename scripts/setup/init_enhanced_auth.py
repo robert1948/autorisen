@@ -9,8 +9,8 @@ This script sets up the enhanced authentication system with:
 - Verifies the system is working
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add the project root to Python path
@@ -22,11 +22,21 @@ sys.path.insert(0, str(project_root / "backend"))
 os.environ.setdefault("DATABASE_URL", "sqlite:///./capecontrol.db")
 os.environ.setdefault("SECRET_KEY", "dev-secret-key-change-in-production")
 
-from backend.app.database import engine, Base
-from backend.app.models_enhanced import UserV2, UserRole, Token, DeveloperEarning, PasswordReset, AuditLog
-from backend.app.auth_enhanced import auth_service
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+
+from sqlalchemy.orm import sessionmaker
+
+from backend.app.auth_enhanced import auth_service
+from backend.app.database import Base, engine
+from backend.app.models_enhanced import (
+    AuditLog,
+    DeveloperEarning,
+    PasswordReset,
+    Token,
+    UserRole,
+    UserV2,
+)
+
 
 def init_enhanced_auth():
     """Initialize the enhanced authentication system"""

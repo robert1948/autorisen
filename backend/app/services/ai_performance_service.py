@@ -4,14 +4,15 @@ Professional AI model performance tracking and optimization
 """
 
 import logging
-import time
-import psutil
 import threading
-from typing import Dict, Any, Optional, List, Callable
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass, asdict
-import json
+from typing import Any
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,8 @@ class PerformanceRecord:
     model_type: AIModelType
     metric_type: PerformanceMetric
     value: float
-    metadata: Dict[str, Any]
-    request_id: Optional[str] = None
+    metadata: dict[str, Any]
+    request_id: str | None = None
 
 class AIPerformanceMonitor:
     """Professional AI performance monitoring system"""
@@ -93,8 +94,8 @@ class AIPerformanceMonitor:
         model_type: AIModelType,
         metric_type: PerformanceMetric,
         value: float,
-        metadata: Optional[Dict[str, Any]] = None,
-        request_id: Optional[str] = None
+        metadata: dict[str, Any] | None = None,
+        request_id: str | None = None
     ) -> str:
         """Record a performance metric"""
         try:
@@ -153,7 +154,7 @@ class AIPerformanceMonitor:
             "timestamp": datetime.utcnow()
         }
         
-    def end_request_timing(self, request_id: str, metadata: Optional[Dict[str, Any]] = None) -> float:
+    def end_request_timing(self, request_id: str, metadata: dict[str, Any] | None = None) -> float:
         """End timing a request and record the metric"""
         if request_id not in self.active_requests:
             logger.warning(f"Request {request_id} not found in active requests")
@@ -172,7 +173,7 @@ class AIPerformanceMonitor:
         
         return response_time
     
-    def get_model_stats(self, model_type: Optional[AIModelType] = None) -> Dict[str, Any]:
+    def get_model_stats(self, model_type: AIModelType | None = None) -> dict[str, Any]:
         """Get performance statistics for models"""
         if model_type:
             return self.model_stats.get(model_type.value, {})
@@ -180,10 +181,10 @@ class AIPerformanceMonitor:
     
     def get_recent_metrics(
         self, 
-        model_type: Optional[AIModelType] = None,
-        metric_type: Optional[PerformanceMetric] = None,
+        model_type: AIModelType | None = None,
+        metric_type: PerformanceMetric | None = None,
         minutes: int = 60
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get recent performance metrics"""
         cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
         
@@ -209,7 +210,7 @@ class AIPerformanceMonitor:
             
         return filtered_metrics
     
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary"""
         return {
             "monitoring_started": self.start_time.isoformat(),
@@ -243,8 +244,8 @@ def record_ai_metric(
     model_type: AIModelType,
     metric_type: PerformanceMetric,
     value: float,
-    metadata: Optional[Dict[str, Any]] = None,
-    request_id: Optional[str] = None
+    metadata: dict[str, Any] | None = None,
+    request_id: str | None = None
 ) -> str:
     """Convenience function to record AI performance metric"""
     return get_ai_performance_monitor().record_metric(
@@ -276,15 +277,15 @@ def time_ai_request(model_type: AIModelType):
         return wrapper
     return decorator
 
-def get_model_performance_stats(model_type: Optional[AIModelType] = None) -> Dict[str, Any]:
+def get_model_performance_stats(model_type: AIModelType | None = None) -> dict[str, Any]:
     """Convenience function to get model performance statistics"""
     return get_ai_performance_monitor().get_model_stats(model_type)
 
 def get_recent_ai_metrics(
-    model_type: Optional[AIModelType] = None,
-    metric_type: Optional[PerformanceMetric] = None,
+    model_type: AIModelType | None = None,
+    metric_type: PerformanceMetric | None = None,
     minutes: int = 60
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Convenience function to get recent AI metrics"""
     return get_ai_performance_monitor().get_recent_metrics(model_type, metric_type, minutes)
 

@@ -2,8 +2,9 @@
 Simple integration test for CapeControl API
 """
 import os
-import requests
 import time
+
+import requests
 
 # Set environment variables
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens"

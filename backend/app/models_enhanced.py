@@ -9,11 +9,24 @@ This file implements the proposed secure authentication architecture with:
 - Proper relationships and constraints
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, Enum, Numeric, JSON
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 import enum
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
+from sqlalchemy.sql import func
+
 from app.database import Base
+
 
 # Define role enum for type safety
 class UserRole(str, enum.Enum):

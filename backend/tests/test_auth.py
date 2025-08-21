@@ -12,12 +12,12 @@ Tests cover all authentication endpoints with 80%+ coverage target:
 - Security validations
 """
 
-import pytest
 import os
-import json
-import uuid
 import time
-from unittest.mock import patch, MagicMock
+import uuid
+from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -27,9 +27,9 @@ os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-very-long-and-secure"
 os.environ["DATABASE_URL"] = "sqlite:///./test_auth.db"
 os.environ["DEBUG"] = "True"
 
-from app.main import app
-from app.database import get_db, Base
 from app import models
+from app.database import Base, get_db
+from app.main import app
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_auth.db"
@@ -552,7 +552,6 @@ class TestPerformanceBaseline:
     
     def test_registration_response_time(self):
         """Test that registration completes within reasonable time"""
-        import time
         
         user_data = get_unique_user_data("perf_reg")
         start_time = time.time()
@@ -564,7 +563,6 @@ class TestPerformanceBaseline:
     
     def test_login_response_time(self):
         """Test that login completes within reasonable time"""
-        import time
         
         # First register a user
         user_data = get_unique_user_data("perf_login")

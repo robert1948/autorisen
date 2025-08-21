@@ -16,9 +16,10 @@ Run this script to migrate the database.
 """
 
 import os
-import sys
 import sqlite3
+import sys
 from datetime import datetime
+
 
 def get_db_connection():
     """Get database connection"""
@@ -34,7 +35,6 @@ def get_db_connection():
     else:
         # PostgreSQL connection (for production)
         import psycopg2
-        from psycopg2.extras import RealDictCursor
         try:
             connection = psycopg2.connect(database_url, sslmode='require')
             return connection
@@ -130,7 +130,7 @@ def verify_migration_sqlite(cursor):
     ]
     
     existing_phase2 = []
-    print(f"\nVerification: Table structure:")
+    print("\nVerification: Table structure:")
     for col in columns:
         col_name = col[1]
         col_type = col[2]

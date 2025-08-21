@@ -10,22 +10,25 @@ API endpoints for managing AI personalization:
 """
 
 import logging
-from typing import Dict, List, Optional, Any
+import os
+
+# Import User directly from models.py to avoid circular import issues
+import sys
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Query
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from app.dependencies import get_current_user
 from app.services.ai_personalization_service import (
-    get_personalization_service,
-    UserPersonalityProfile,
-    LearningStyle,
     CommunicationStyle,
     ExpertiseLevel,
-    PersonalityTrait
+    LearningStyle,
+    PersonalityTrait,
+    get_personalization_service,
 )
-from app.dependencies import get_current_user
-# Import User directly from models.py to avoid circular import issues
-import sys, os
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from app.models import User
 
@@ -41,12 +44,12 @@ class PersonalityProfileResponse(BaseModel):
     communication_style: str
     expertise_level: str
     preferred_response_length: str
-    topics_of_interest: List[str]
-    personality_traits: List[str]
-    preferred_providers: List[str]
-    preferred_models: List[str]
-    response_preferences: Dict[str, Any]
-    learning_goals: List[str]
+    topics_of_interest: list[str]
+    personality_traits: list[str]
+    preferred_providers: list[str]
+    preferred_models: list[str]
+    response_preferences: dict[str, Any]
+    learning_goals: list[str]
     confidence_score: float
     created_at: str
     updated_at: str
@@ -54,15 +57,15 @@ class PersonalityProfileResponse(BaseModel):
 
 class UpdatePersonalityRequest(BaseModel):
     """Request model for updating personality preferences"""
-    learning_style: Optional[str] = Field(None, description="Preferred learning style")
-    communication_style: Optional[str] = Field(None, description="Preferred communication style")
-    expertise_level: Optional[str] = Field(None, description="User expertise level")
-    preferred_response_length: Optional[str] = Field(None, description="Preferred response length (short/medium/long)")
-    topics_of_interest: Optional[List[str]] = Field(None, description="Topics of interest")
-    personality_traits: Optional[List[str]] = Field(None, description="Preferred AI personality traits")
-    preferred_providers: Optional[List[str]] = Field(None, description="Preferred AI providers")
-    preferred_models: Optional[List[str]] = Field(None, description="Preferred AI models")
-    learning_goals: Optional[List[str]] = Field(None, description="Learning goals")
+    learning_style: str | None = Field(None, description="Preferred learning style")
+    communication_style: str | None = Field(None, description="Preferred communication style")
+    expertise_level: str | None = Field(None, description="User expertise level")
+    preferred_response_length: str | None = Field(None, description="Preferred response length (short/medium/long)")
+    topics_of_interest: list[str] | None = Field(None, description="Topics of interest")
+    personality_traits: list[str] | None = Field(None, description="Preferred AI personality traits")
+    preferred_providers: list[str] | None = Field(None, description="Preferred AI providers")
+    preferred_models: list[str] | None = Field(None, description="Preferred AI models")
+    learning_goals: list[str] | None = Field(None, description="Learning goals")
 
 
 class PersonalizationSettingsResponse(BaseModel):
@@ -71,16 +74,16 @@ class PersonalizationSettingsResponse(BaseModel):
     auto_adapt_enabled: bool
     learning_tracking_enabled: bool
     profile_confidence: float
-    last_updated: Optional[str]
+    last_updated: str | None
 
 
 class PersonalizedChatRequest(BaseModel):
     """Request model for personalized chat"""
     message: str = Field(..., description="User message")
-    conversation_id: Optional[str] = Field(None, description="Conversation ID")
-    model: Optional[str] = Field(None, description="Specific model to use")
-    temperature: Optional[float] = Field(None, ge=0.0, le=2.0, description="Response creativity")
-    max_tokens: Optional[int] = Field(None, ge=1, le=8192, description="Maximum response length")
+    conversation_id: str | None = Field(None, description="Conversation ID")
+    model: str | None = Field(None, description="Specific model to use")
+    temperature: float | None = Field(None, ge=0.0, le=2.0, description="Response creativity")
+    max_tokens: int | None = Field(None, ge=1, le=8192, description="Maximum response length")
     use_personalization: bool = Field(True, description="Apply personalization")
 
 
@@ -93,7 +96,7 @@ class PersonalizedChatResponse(BaseModel):
     personality_confidence: float
     conversation_id: str
     response_time_ms: int
-    tokens_used: Dict[str, int]
+    tokens_used: dict[str, int]
 
 
 @router.get("/profile", response_model=PersonalityProfileResponse)
@@ -251,8 +254,9 @@ async def personalized_chat(
 ):
     """Generate personalized AI response"""
     try:
-        from app.services.multi_provider_ai_service import MultiProviderAIService
         import uuid
+
+        from app.services.multi_provider_ai_service import MultiProviderAIService
         
         # Initialize services
         ai_service = MultiProviderAIService()
@@ -362,7 +366,7 @@ async def get_personality_traits():
 
 @router.post("/feedback")
 async def provide_personalization_feedback(
-    feedback_data: Dict[str, Any],
+    feedback_data: dict[str, Any],
     current_user: User = Depends(get_current_user)
 ):
     """Provide feedback on AI responses for personalization improvement"""

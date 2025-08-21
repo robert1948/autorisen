@@ -3,14 +3,15 @@ Preference Management API Routes
 Handles user preferences, settings, and customization options
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, validator
 import logging
+from typing import Any
 
-from ..database import get_db
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from ..auth.auth_enhanced import get_current_user
+from ..database import get_db
 from ..models.user import User
 
 logger = logging.getLogger(__name__)
@@ -18,17 +19,17 @@ logger = logging.getLogger(__name__)
 # Pydantic models for request/response
 class PreferenceValue(BaseModel):
     value: Any
-    data_type: Optional[str] = None
+    data_type: str | None = None
 
 class PreferencesUpdate(BaseModel):
-    preferences: Dict[str, Dict[str, PreferenceValue]]
+    preferences: dict[str, dict[str, PreferenceValue]]
 
 class PreferenceExport(BaseModel):
     format: str = "json"
     include_defaults: bool = True
 
 class PreferenceImport(BaseModel):
-    preferences_data: Dict[str, Any]
+    preferences_data: dict[str, Any]
     overwrite_existing: bool = False
 
 router = APIRouter(
@@ -42,8 +43,9 @@ def get_preference_manager(db: Session = Depends(get_db)):
     """Get preference manager instance"""
     try:
         # Import here to avoid circular imports
-        from ..services.preference_management import PreferenceManager
         import redis
+
+        from ..services.preference_management import PreferenceManager
         
         # Initialize Redis client (you may want to configure this via environment)
         redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
@@ -58,7 +60,7 @@ def get_preference_manager(db: Session = Depends(get_db)):
 
 @router.get("/")
 async def get_user_preferences(
-    category: Optional[str] = None,
+    category: str | None = None,
     current_user: User = Depends(get_current_user),
     pref_manager = Depends(get_preference_manager)
 ):
@@ -235,7 +237,7 @@ async def reset_category_preferences(
 
 @router.get("/templates")
 async def get_preference_templates(
-    category: Optional[str] = None,
+    category: str | None = None,
     pref_manager = Depends(get_preference_manager)
 ):
     """
@@ -406,7 +408,7 @@ async def get_preference_statistics(
         )
 
 # Background task functions
-async def log_preference_changes(user_id: str, preferences: Dict, results: Dict):
+async def log_preference_changes(user_id: str, preferences: dict, results: dict):
     """Log preference changes for analytics"""
     try:
         # This would integrate with your analytics system

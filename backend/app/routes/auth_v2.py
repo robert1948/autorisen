@@ -1,21 +1,18 @@
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-import os
 import re
 import time
-from typing import Optional
-from datetime import datetime
 import traceback
+from datetime import datetime
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.dependencies import get_db, get_current_user
-from app.auth import get_password_hash, verify_password, create_access_token
-from app.services.audit_service import get_audit_logger, AuditEventType, AuditLogLevel
+from app.auth import create_access_token, get_password_hash, verify_password
+from app.dependencies import get_current_user, get_db
+from app.services.audit_service import AuditEventType, get_audit_logger
 
 router = APIRouter()
 
@@ -66,7 +63,7 @@ async def get_user_profile(current_user: models.User = Depends(get_current_user)
             "company": current_user.company,
             "created_at": current_user.created_at.isoformat() if current_user.created_at else None
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch user profile"
@@ -259,9 +256,10 @@ async def register_production(user_data: schemas.UserCreateMinimal):
         print(f"🔍 Production registration for: {user_data.email}")
         
         # Import database components
-        from app.database import SessionLocal
-        from app.auth import get_password_hash
         import asyncio
+
+        from app.auth import get_password_hash
+        from app.database import SessionLocal
         
         # Normalize email
         normalized_email = user_data.email.lower().strip()
@@ -312,7 +310,7 @@ async def register_production(user_data: schemas.UserCreateMinimal):
                 "message": "User registered successfully"
             }
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             db.rollback()
             db.close()
             return {"status": "error", "message": "Database timeout - please try again"}
@@ -419,7 +417,7 @@ async def register_debug(request: Request):
         body = await request.body()
         content_type = request.headers.get("content-type", "")
         
-        print(f"🔍 Debug registration request:")
+        print("🔍 Debug registration request:")
         print(f"Content-Type: {content_type}")
         print(f"Body: {body.decode('utf-8') if body else 'Empty'}")
         print(f"Headers: {dict(request.headers)}")
@@ -624,15 +622,16 @@ async def log_registration_audit_task(user_id: str, email: str, role: str, user_
 async def send_welcome_email_task(user_data: dict):
     """Send welcome email with improved error handling and timeout protection."""
     try:
-        from app.email_service import email_service
         # Add timeout protection and graceful degradation
         import asyncio
+
+        from app.email_service import email_service
         await asyncio.wait_for(
             email_service.send_registration_notification(user_data), 
             timeout=10.0  # 10 second timeout
         )
         print(f"✅ Welcome email sent successfully for user: {user_data.get('email', 'unknown')}")
-    except asyncio.TimeoutError:
+    except TimeoutError:
         print(f"⏰ Welcome email timeout for user: {user_data.get('email', 'unknown')} - continuing anyway")
     except ImportError as e:
         print(f"📧 Email service not available: {e} - skipping email for user: {user_data.get('email', 'unknown')}")
@@ -719,7 +718,7 @@ async def register_step1(request: schemas.RegisterStep1Request, db: Session = De
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
         return {"success": True, "message": "Email validated successfully", "step": 1, "next_step": "/api/auth/register/step2"}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Step 1 validation failed")
 
 @router.post("/register/step2", response_model=schemas.UserOut, tags=["auth-v2"])
@@ -744,6 +743,6 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Email already registered")
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Registration failed")

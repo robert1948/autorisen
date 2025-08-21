@@ -1,15 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-import os
 import re
-from typing import Optional
 from datetime import datetime
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from app import models, schemas
+from app.auth import create_access_token, get_password_hash, verify_password
 from app.dependencies import get_db
-from app.auth import get_password_hash, verify_password, create_access_token
-from app.services.audit_service import get_audit_logger, AuditEventType, AuditLogLevel
+from app.services.audit_service import AuditEventType, get_audit_logger
 
 router = APIRouter()
 
@@ -402,7 +401,7 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
     """
     try:
         # Debug: Log incoming request data
-        print(f"🔍 Step2 Debug: Incoming request data:")
+        print("🔍 Step2 Debug: Incoming request data:")
         print(f"   - Email: '{request.email}'")
         print(f"   - Full name: '{request.full_name}'")
         print(f"   - User role: '{request.user_role}'")
@@ -410,7 +409,7 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
         
         # Validate required fields
         if not all([request.email, request.password, request.full_name]):
-            print(f"❌ Step2 Debug: Missing required fields")
+            print("❌ Step2 Debug: Missing required fields")
             raise HTTPException(
                 status_code=400,
                 detail="Email, password, and full name are required"
@@ -432,14 +431,14 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
             print(f"   - Existing user created: {existing_user.created_at}")
             raise HTTPException(
                 status_code=400,
-                detail=f"Email already registered"
+                detail="Email already registered"
             )
         
         # Create new user with production schema fields
         print(f"🔐 Step2 Debug: About to hash password for '{normalized_email}'")
         try:
             hashed_password = get_password_hash(request.password)
-            print(f"✅ Step2 Debug: Password hashed successfully")
+            print("✅ Step2 Debug: Password hashed successfully")
         except Exception as hash_error:
             print(f"❌ Step2 Debug: Password hashing failed: {hash_error}")
             raise HTTPException(
@@ -447,7 +446,7 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
                 detail=f"Password hashing failed: {str(hash_error)}"
             )
         
-        print(f"🔍 Step2 Debug: Creating user object...")
+        print("🔍 Step2 Debug: Creating user object...")
         
         # Map role to database-compatible values
         user_role = getattr(request, 'user_role', 'client')
@@ -471,19 +470,19 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
             terms_accepted_at=datetime.utcnow()  # Use 'terms_accepted_at' column name
         )
         
-        print(f"🔍 Step2 Debug: Adding user to database...")
+        print("🔍 Step2 Debug: Adding user to database...")
         db.add(db_user)
         
-        print(f"🔍 Step2 Debug: Committing transaction...")
+        print("🔍 Step2 Debug: Committing transaction...")
         db.commit()
         
-        print(f"🔍 Step2 Debug: Refreshing user object...")
+        print("🔍 Step2 Debug: Refreshing user object...")
         db.refresh(db_user)
         
         print(f"✅ Step2 Debug: User created successfully with ID: {db_user.id}")
         
         # Generate access token
-        print(f"🔍 Step2 Debug: Generating access token...")
+        print("🔍 Step2 Debug: Generating access token...")
         access_token = create_access_token(data={"sub": db_user.email})
         
         print(f"✅ Step2 Debug: Registration completed successfully for '{normalized_email}'")
@@ -499,7 +498,7 @@ async def register_step2(request: schemas.RegisterStep2Request, db: Session = De
         )
         
     except HTTPException:
-        print(f"❌ Step2 Debug: HTTPException raised")
+        print("❌ Step2 Debug: HTTPException raised")
         raise
     except IntegrityError as ie:
         db.rollback()

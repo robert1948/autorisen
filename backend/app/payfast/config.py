@@ -1,5 +1,6 @@
 import os
 
+
 def pf_base_url():
     return "https://sandbox.payfast.co.za" if os.getenv("PAYFAST_MODE","sandbox") != "live" \
            else "https://www.payfast.co.za"

@@ -11,24 +11,24 @@ API endpoints for managing and using advanced prompt templates:
 """
 
 import logging
-from typing import Dict, List, Optional, Any
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Query
+import os
+
+# Import User directly to avoid circular import issues
+import sys
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.services.advanced_prompting_service import (
-    get_prompting_service,
-    PromptTemplate,
-    PromptGenerationRequest,
-    GeneratedPrompt,
-    PromptCategory,
-    PromptRole,
-    PromptComplexity,
-    TemplateVersion
-)
 from app.dependencies import get_current_user
-# Import User directly to avoid circular import issues
-import sys, os
+from app.services.advanced_prompting_service import (
+    PromptCategory,
+    PromptComplexity,
+    PromptGenerationRequest,
+    PromptRole,
+    get_prompting_service,
+)
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from models import User
 
@@ -47,37 +47,37 @@ class TemplateResponse(BaseModel):
     complexity: str
     version: str
     template_content: str
-    variables: List[str]
-    requirements: Dict[str, Any]
+    variables: list[str]
+    requirements: dict[str, Any]
     effectiveness_score: float
     usage_count: int
     success_rate: float
     created_at: str
     updated_at: str
     created_by: str
-    tags: List[str]
+    tags: list[str]
     language: str
 
 
 class GeneratePromptRequest(BaseModel):
     """Request model for prompt generation"""
     template_id: str = Field(..., description="ID of the template to use")
-    context_variables: Optional[Dict[str, Any]] = Field(None, description="Variables to substitute in template")
+    context_variables: dict[str, Any] | None = Field(None, description="Variables to substitute in template")
     personalization_enabled: bool = Field(True, description="Enable personalization")
-    target_complexity: Optional[str] = Field(None, description="Target complexity level")
-    preferred_role: Optional[str] = Field(None, description="Preferred AI role")
-    conversation_id: Optional[str] = Field(None, description="Conversation ID for context")
+    target_complexity: str | None = Field(None, description="Target complexity level")
+    preferred_role: str | None = Field(None, description="Preferred AI role")
+    conversation_id: str | None = Field(None, description="Conversation ID for context")
 
 
 class GeneratePromptResponse(BaseModel):
     """Response model for generated prompts"""
     prompt_content: str
     template_used: str
-    variables_substituted: Dict[str, Any]
+    variables_substituted: dict[str, Any]
     personalization_applied: bool
     complexity_level: str
     role_used: str
-    generation_metadata: Dict[str, Any]
+    generation_metadata: dict[str, Any]
     generated_at: str
 
 
@@ -89,23 +89,23 @@ class CreateTemplateRequest(BaseModel):
     role: str = Field(..., description="AI role")
     complexity: str = Field(..., description="Complexity level")
     template_content: str = Field(..., description="Template content with Jinja2 variables")
-    variables: List[str] = Field(..., description="List of variables used in template")
-    tags: Optional[List[str]] = Field(None, description="Template tags")
+    variables: list[str] = Field(..., description="List of variables used in template")
+    tags: list[str] | None = Field(None, description="Template tags")
 
 
 class TemplatePerformanceRequest(BaseModel):
     """Request model for updating template performance"""
     success: bool = Field(..., description="Whether the template usage was successful")
-    user_rating: Optional[float] = Field(None, ge=1.0, le=5.0, description="User rating (1-5)")
-    response_time_ms: Optional[int] = Field(None, description="Response time in milliseconds")
+    user_rating: float | None = Field(None, ge=1.0, le=5.0, description="User rating (1-5)")
+    response_time_ms: int | None = Field(None, description="Response time in milliseconds")
 
 
-@router.get("/templates", response_model=List[TemplateResponse])
+@router.get("/templates", response_model=list[TemplateResponse])
 async def list_templates(
-    category: Optional[str] = Query(None, description="Filter by category"),
-    role: Optional[str] = Query(None, description="Filter by role"),
-    complexity: Optional[str] = Query(None, description="Filter by complexity"),
-    tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
+    category: str | None = Query(None, description="Filter by category"),
+    role: str | None = Query(None, description="Filter by role"),
+    complexity: str | None = Query(None, description="Filter by complexity"),
+    tags: str | None = Query(None, description="Filter by tags (comma-separated)"),
     current_user: User = Depends(get_current_user)
 ):
     """List available prompt templates with optional filtering"""
@@ -383,7 +383,7 @@ async def get_template_analytics(current_user: User = Depends(get_current_user))
 
 @router.get("/recommendations")
 async def get_template_recommendations(
-    category: Optional[str] = Query(None, description="Category for recommendations"),
+    category: str | None = Query(None, description="Category for recommendations"),
     limit: int = Query(5, ge=1, le=20, description="Number of recommendations"),
     current_user: User = Depends(get_current_user)
 ):
@@ -459,14 +459,15 @@ async def get_template_recommendations(
 async def chat_with_template(
     template_id: str,
     message: str,
-    context_variables: Optional[Dict[str, Any]] = None,
-    conversation_id: Optional[str] = None,
+    context_variables: dict[str, Any] | None = None,
+    conversation_id: str | None = None,
     current_user: User = Depends(get_current_user)
 ):
     """Generate a response using a template and multi-provider AI service"""
     try:
-        from app.services.multi_provider_ai_service import MultiProviderAIService
         import uuid
+
+        from app.services.multi_provider_ai_service import MultiProviderAIService
         
         # Initialize services
         prompting_service = await get_prompting_service()

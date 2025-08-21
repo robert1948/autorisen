@@ -11,19 +11,25 @@ Comprehensive test suite for the enhanced health check system:
 - Performance monitoring
 """
 
-import pytest
-import asyncio
-import time
-from unittest.mock import Mock, patch, MagicMock
-from fastapi.testclient import TestClient
-import sys
 import os
+import sys
+import time
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Add the backend directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from app.main import app
-from app.services.health_service import HealthService, HealthStatus, ServiceType, HealthCheckResult, EndpointHealthCheck
+from app.services.health_service import (
+    EndpointHealthCheck,
+    HealthCheckResult,
+    HealthService,
+    HealthStatus,
+    ServiceType,
+)
 
 client = TestClient(app)
 

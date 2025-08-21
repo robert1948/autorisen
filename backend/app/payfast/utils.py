@@ -1,7 +1,10 @@
 import hashlib
 import urllib.parse
+
 import httpx
+
 from .config import PAYFAST_CFG
+
 
 def _normalize(params: dict) -> dict:
     # drop None and empty strings

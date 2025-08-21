@@ -3,21 +3,21 @@ Task 2.2.4: Personalized Dashboards - API Routes
 REST API endpoints for personalized dashboard management and customization.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query, Body
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from ..services.personalized_dashboards import (
-    dashboard_manager,
     DashboardRole,
     LayoutType,
-    WidgetType,
-    WidgetSize,
+    UserDashboard,
     WidgetConfig,
-    DashboardLayout,
-    UserDashboard
+    WidgetSize,
+    WidgetType,
+    dashboard_manager,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,13 +32,13 @@ class WidgetConfigModel(BaseModel):
     widget_type: str = Field(..., description="Widget type")
     title: str = Field(..., description="Widget title")
     size: str = Field(..., description="Widget size")
-    position: Tuple[int, int] = Field(..., description="Widget position (row, column)")
-    settings: Dict[str, Any] = Field(default_factory=dict, description="Widget settings")
+    position: tuple[int, int] = Field(..., description="Widget position (row, column)")
+    settings: dict[str, Any] = Field(default_factory=dict, description="Widget settings")
     is_visible: bool = Field(default=True, description="Widget visibility")
     is_moveable: bool = Field(default=True, description="Whether widget can be moved")
     is_resizable: bool = Field(default=True, description="Whether widget can be resized")
     refresh_interval: int = Field(default=300, description="Refresh interval in seconds")
-    permissions: List[str] = Field(default=["read"], description="Widget permissions")
+    permissions: list[str] = Field(default=["read"], description="Widget permissions")
 
 class DashboardLayoutModel(BaseModel):
     """Dashboard layout model"""
@@ -47,11 +47,11 @@ class DashboardLayoutModel(BaseModel):
     layout_type: str = Field(..., description="Layout type")
     columns: int = Field(..., description="Number of columns")
     rows: int = Field(..., description="Number of rows")
-    widgets: List[WidgetConfigModel] = Field(..., description="Layout widgets")
+    widgets: list[WidgetConfigModel] = Field(..., description="Layout widgets")
     theme: str = Field(default="default", description="Layout theme")
     is_responsive: bool = Field(default=True, description="Responsive layout")
-    created_at: Optional[str] = Field(default=None, description="Creation timestamp")
-    updated_at: Optional[str] = Field(default=None, description="Update timestamp")
+    created_at: str | None = Field(default=None, description="Creation timestamp")
+    updated_at: str | None = Field(default=None, description="Update timestamp")
 
 class UserDashboardModel(BaseModel):
     """User dashboard model"""
@@ -59,50 +59,50 @@ class UserDashboardModel(BaseModel):
     dashboard_id: str = Field(..., description="Dashboard identifier")
     role: str = Field(..., description="User role")
     active_layout: str = Field(..., description="Active layout ID")
-    layouts: List[DashboardLayoutModel] = Field(..., description="Available layouts")
-    preferences: Dict[str, Any] = Field(default_factory=dict, description="User preferences")
-    usage_stats: Dict[str, Any] = Field(default_factory=dict, description="Usage statistics")
+    layouts: list[DashboardLayoutModel] = Field(..., description="Available layouts")
+    preferences: dict[str, Any] = Field(default_factory=dict, description="User preferences")
+    usage_stats: dict[str, Any] = Field(default_factory=dict, description="Usage statistics")
     personalization_level: float = Field(..., description="Personalization level (0.0-1.0)")
-    created_at: Optional[str] = Field(default=None, description="Creation timestamp")
-    last_accessed: Optional[str] = Field(default=None, description="Last access timestamp")
+    created_at: str | None = Field(default=None, description="Creation timestamp")
+    last_accessed: str | None = Field(default=None, description="Last access timestamp")
 
 class CreateDashboardRequest(BaseModel):
     """Request to create a new dashboard"""
-    user_profile: Dict[str, Any] = Field(..., description="User profile information")
-    usage_history: List[Dict[str, Any]] = Field(default_factory=list, description="User usage history")
-    role_override: Optional[str] = Field(default=None, description="Override automatic role detection")
+    user_profile: dict[str, Any] = Field(..., description="User profile information")
+    usage_history: list[dict[str, Any]] = Field(default_factory=list, description="User usage history")
+    role_override: str | None = Field(default=None, description="Override automatic role detection")
 
 class UpdateDashboardRequest(BaseModel):
     """Request to update dashboard"""
-    updates: Dict[str, Any] = Field(..., description="Dashboard updates")
+    updates: dict[str, Any] = Field(..., description="Dashboard updates")
 
 class AdaptDashboardRequest(BaseModel):
     """Request to adapt dashboard based on interaction"""
-    interaction_data: Dict[str, Any] = Field(..., description="Interaction data")
+    interaction_data: dict[str, Any] = Field(..., description="Interaction data")
 
 class WidgetInteractionRequest(BaseModel):
     """Widget interaction tracking"""
     widget_id: str = Field(..., description="Widget ID")
     widget_type: str = Field(..., description="Widget type")
     interaction_type: str = Field(..., description="Interaction type (click, resize, move, etc.)")
-    duration_seconds: Optional[float] = Field(default=None, description="Interaction duration")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    duration_seconds: float | None = Field(default=None, description="Interaction duration")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 class DashboardAnalyticsResponse(BaseModel):
     """Dashboard analytics response"""
-    dashboard_info: Dict[str, Any] = Field(..., description="Dashboard information")
-    usage_analytics: Dict[str, Any] = Field(..., description="Usage analytics")
-    personalization_metrics: Dict[str, Any] = Field(..., description="Personalization metrics")
+    dashboard_info: dict[str, Any] = Field(..., description="Dashboard information")
+    usage_analytics: dict[str, Any] = Field(..., description="Usage analytics")
+    personalization_metrics: dict[str, Any] = Field(..., description="Personalization metrics")
 
 class ExportDashboardResponse(BaseModel):
     """Dashboard export response"""
-    dashboard: Dict[str, Any] = Field(..., description="Dashboard data")
+    dashboard: dict[str, Any] = Field(..., description="Dashboard data")
     export_timestamp: str = Field(..., description="Export timestamp")
     version: str = Field(..., description="Export version")
 
 class ImportDashboardRequest(BaseModel):
     """Dashboard import request"""
-    dashboard_data: Dict[str, Any] = Field(..., description="Dashboard data to import")
+    dashboard_data: dict[str, Any] = Field(..., description="Dashboard data to import")
 
 # API Endpoints
 
@@ -226,7 +226,7 @@ async def adapt_dashboard(dashboard_id: str, request: AdaptDashboardRequest) -> 
         )
 
 @router.post("/{dashboard_id}/track-interaction")
-async def track_widget_interaction(dashboard_id: str, interaction: WidgetInteractionRequest) -> Dict[str, Any]:
+async def track_widget_interaction(dashboard_id: str, interaction: WidgetInteractionRequest) -> dict[str, Any]:
     """
     Track widget interaction for analytics and adaptation.
     
@@ -320,8 +320,8 @@ async def export_dashboard(dashboard_id: str) -> ExportDashboardResponse:
             detail=f"Failed to export dashboard: {str(e)}"
         )
 
-@router.post("/import", response_model=Dict[str, str])
-async def import_dashboard(request: ImportDashboardRequest) -> Dict[str, str]:
+@router.post("/import", response_model=dict[str, str])
+async def import_dashboard(request: ImportDashboardRequest) -> dict[str, str]:
     """
     Import dashboard configuration from exported data.
     
@@ -352,8 +352,8 @@ async def import_dashboard(request: ImportDashboardRequest) -> Dict[str, str]:
             detail=f"Failed to import dashboard: {str(e)}"
         )
 
-@router.get("/roles/available", response_model=List[Dict[str, str]])
-async def get_available_roles() -> List[Dict[str, str]]:
+@router.get("/roles/available", response_model=list[dict[str, str]])
+async def get_available_roles() -> list[dict[str, str]]:
     """
     Get list of available dashboard roles.
     
@@ -413,8 +413,8 @@ async def get_available_roles() -> List[Dict[str, str]]:
             detail=f"Failed to get available roles: {str(e)}"
         )
 
-@router.get("/widget-types/available", response_model=List[Dict[str, str]])
-async def get_available_widget_types() -> List[Dict[str, str]]:
+@router.get("/widget-types/available", response_model=list[dict[str, str]])
+async def get_available_widget_types() -> list[dict[str, str]]:
     """
     Get list of available widget types.
     
@@ -534,8 +534,8 @@ async def get_available_widget_types() -> List[Dict[str, str]]:
             detail=f"Failed to get available widget types: {str(e)}"
         )
 
-@router.get("/layouts/available", response_model=List[Dict[str, str]])
-async def get_available_layout_types() -> List[Dict[str, str]]:
+@router.get("/layouts/available", response_model=list[dict[str, str]])
+async def get_available_layout_types() -> list[dict[str, str]]:
     """
     Get list of available layout types.
     
@@ -585,8 +585,8 @@ async def get_available_layout_types() -> List[Dict[str, str]]:
             detail=f"Failed to get available layout types: {str(e)}"
         )
 
-@router.post("/{dashboard_id}/widgets", response_model=Dict[str, Any])
-async def add_widget_to_dashboard(dashboard_id: str, widget_config: WidgetConfigModel) -> Dict[str, Any]:
+@router.post("/{dashboard_id}/widgets", response_model=dict[str, Any])
+async def add_widget_to_dashboard(dashboard_id: str, widget_config: WidgetConfigModel) -> dict[str, Any]:
     """
     Add a new widget to a dashboard.
     
@@ -652,8 +652,8 @@ async def add_widget_to_dashboard(dashboard_id: str, widget_config: WidgetConfig
             detail=f"Failed to add widget: {str(e)}"
         )
 
-@router.delete("/{dashboard_id}/widgets/{widget_id}", response_model=Dict[str, Any])
-async def remove_widget_from_dashboard(dashboard_id: str, widget_id: str) -> Dict[str, Any]:
+@router.delete("/{dashboard_id}/widgets/{widget_id}", response_model=dict[str, Any])
+async def remove_widget_from_dashboard(dashboard_id: str, widget_id: str) -> dict[str, Any]:
     """
     Remove a widget from a dashboard.
     
@@ -716,8 +716,8 @@ async def remove_widget_from_dashboard(dashboard_id: str, widget_id: str) -> Dic
             detail=f"Failed to remove widget: {str(e)}"
         )
 
-@router.get("/health", response_model=Dict[str, Any])
-async def health_check() -> Dict[str, Any]:
+@router.get("/health", response_model=dict[str, Any])
+async def health_check() -> dict[str, Any]:
     """
     Health check endpoint for the personalized dashboard service.
     

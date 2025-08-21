@@ -1,14 +1,15 @@
 """Health Routes"""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-import time
-import psutil
 import sys
+import time
 from datetime import datetime
 
-from app.dependencies import get_db
+import psutil
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.database import engine
+from app.dependencies import get_db
 
 router = APIRouter()
 

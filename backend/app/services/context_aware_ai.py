@@ -3,23 +3,19 @@ Task 2.2.3: Context-Aware AI Responses
 Advanced AI response generation using conversation history, user profiles, and contextual intelligence.
 """
 
-import json
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
-import logging
-from collections import defaultdict, Counter
-import re
 import hashlib
+import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
 
 # Mock imports for dependencies that would be available in production
 try:
     import numpy as np
+    from sklearn.cluster import KMeans
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
-    from sklearn.cluster import KMeans
 except ImportError:
     # Fallback for environments without ML libraries
     np = None
@@ -50,14 +46,14 @@ class ResponseStrategy(Enum):
 @dataclass
 class ContextWindow:
     """Represents a context window for AI processing"""
-    messages: List[Dict[str, Any]]
+    messages: list[dict[str, Any]]
     timeframe: timedelta
     relevance_score: float
     topic_focus: str
     emotional_tone: str
     user_engagement: float
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'messages': self.messages,
             'timeframe_seconds': self.timeframe.total_seconds(),
@@ -74,14 +70,14 @@ class UserContext:
     communication_style: str
     learning_style: str
     expertise_level: str
-    interests: List[str]
-    conversation_patterns: Dict[str, Any]
-    recent_topics: List[str]
+    interests: list[str]
+    conversation_patterns: dict[str, Any]
+    recent_topics: list[str]
     preferred_response_length: str
     emotional_state: str
-    interaction_history: Dict[str, Any]
+    interaction_history: dict[str, Any]
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 @dataclass
@@ -90,12 +86,12 @@ class ResponseContext:
     query: str
     conversation_context: ContextWindow
     user_context: UserContext
-    temporal_context: Dict[str, Any]
-    topic_context: Dict[str, Any]
+    temporal_context: dict[str, Any]
+    topic_context: dict[str, Any]
     strategy: ResponseStrategy
-    constraints: Dict[str, Any]
+    constraints: dict[str, Any]
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'query': self.query,
             'conversation_context': self.conversation_context.to_dict(),
@@ -120,7 +116,7 @@ class ContextAnalyzer:
             'confused': ['confused', 'unclear', 'puzzled', 'lost', 'uncertain']
         }
     
-    async def analyze_conversation_context(self, messages: List[Dict[str, Any]], 
+    async def analyze_conversation_context(self, messages: list[dict[str, Any]], 
                                          timeframe: timedelta = timedelta(hours=2)) -> ContextWindow:
         """Analyze conversation context from recent messages"""
         try:
@@ -173,8 +169,8 @@ class ContextAnalyzer:
                 user_engagement=0.5
             )
     
-    async def analyze_user_context(self, user_profile: Dict[str, Any], 
-                                  conversation_history: List[Dict[str, Any]]) -> UserContext:
+    async def analyze_user_context(self, user_profile: dict[str, Any], 
+                                  conversation_history: list[dict[str, Any]]) -> UserContext:
         """Analyze user-specific context from profile and history"""
         try:
             # Extract user preferences
@@ -227,7 +223,7 @@ class ContextAnalyzer:
                 interaction_history={}
             )
     
-    async def _extract_topic_focus(self, messages: List[Dict[str, Any]]) -> str:
+    async def _extract_topic_focus(self, messages: list[dict[str, Any]]) -> str:
         """Extract the main topic focus from messages"""
         try:
             if not messages:
@@ -259,7 +255,7 @@ class ContextAnalyzer:
         except Exception:
             return "general"
     
-    async def _analyze_emotional_tone(self, messages: List[Dict[str, Any]]) -> str:
+    async def _analyze_emotional_tone(self, messages: list[dict[str, Any]]) -> str:
         """Analyze the emotional tone of the conversation"""
         try:
             if not messages:
@@ -282,7 +278,7 @@ class ContextAnalyzer:
         except Exception:
             return "neutral"
     
-    async def _calculate_relevance_score(self, messages: List[Dict[str, Any]]) -> float:
+    async def _calculate_relevance_score(self, messages: list[dict[str, Any]]) -> float:
         """Calculate relevance score based on message quality and coherence"""
         try:
             if not messages:
@@ -301,7 +297,7 @@ class ContextAnalyzer:
         except Exception:
             return 0.5
     
-    async def _calculate_user_engagement(self, messages: List[Dict[str, Any]]) -> float:
+    async def _calculate_user_engagement(self, messages: list[dict[str, Any]]) -> float:
         """Calculate user engagement level"""
         try:
             if not messages:
@@ -325,7 +321,7 @@ class ContextAnalyzer:
         except Exception:
             return 0.5
     
-    async def _analyze_conversation_patterns(self, history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _analyze_conversation_patterns(self, history: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze user's conversation patterns"""
         try:
             if not history:
@@ -345,7 +341,7 @@ class ContextAnalyzer:
         except Exception:
             return {}
     
-    async def _extract_recent_topics(self, history: List[Dict[str, Any]]) -> List[str]:
+    async def _extract_recent_topics(self, history: list[dict[str, Any]]) -> list[str]:
         """Extract recent conversation topics"""
         try:
             if not history:
@@ -369,7 +365,7 @@ class ContextAnalyzer:
         except Exception:
             return ['general']
     
-    async def _determine_response_length_preference(self, history: List[Dict[str, Any]]) -> str:
+    async def _determine_response_length_preference(self, history: list[dict[str, Any]]) -> str:
         """Determine user's preferred response length"""
         try:
             if not history:
@@ -395,7 +391,7 @@ class ContextAnalyzer:
         except Exception:
             return 'medium'
     
-    async def _analyze_current_emotional_state(self, history: List[Dict[str, Any]]) -> str:
+    async def _analyze_current_emotional_state(self, history: list[dict[str, Any]]) -> str:
         """Analyze user's current emotional state"""
         try:
             if not history:
@@ -415,7 +411,7 @@ class ContextAnalyzer:
         except Exception:
             return 'neutral'
     
-    async def _build_interaction_history(self, history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _build_interaction_history(self, history: list[dict[str, Any]]) -> dict[str, Any]:
         """Build interaction history summary"""
         try:
             if not history:
@@ -447,7 +443,7 @@ class ResponseGenerator:
             ResponseStrategy.EDUCATIONAL: self._create_educational_prompt,
         }
     
-    async def generate_context_aware_response(self, context: ResponseContext) -> Dict[str, Any]:
+    async def generate_context_aware_response(self, context: ResponseContext) -> dict[str, Any]:
         """Generate a context-aware AI response"""
         try:
             # Select appropriate strategy based on context
@@ -634,7 +630,7 @@ The user's current emotional state is {context.user_context.emotional_state}, so
         except Exception:
             return "Context Information: General conversation context available."
     
-    async def _generate_response_metadata(self, context: ResponseContext, strategy: ResponseStrategy) -> Dict[str, Any]:
+    async def _generate_response_metadata(self, context: ResponseContext, strategy: ResponseStrategy) -> dict[str, Any]:
         """Generate metadata for the response"""
         return {
             'strategy_used': strategy.value,
@@ -708,9 +704,9 @@ class ContextAwareAIService:
     
     async def generate_response(self, 
                                query: str,
-                               user_profile: Dict[str, Any],
-                               conversation_history: List[Dict[str, Any]],
-                               additional_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                               user_profile: dict[str, Any],
+                               conversation_history: list[dict[str, Any]],
+                               additional_context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Generate a context-aware AI response"""
         start_time = datetime.utcnow()
         
@@ -819,7 +815,7 @@ class ContextAwareAIService:
                 'from_cache': False
             }
     
-    async def get_context_analysis(self, user_id: str, conversation_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def get_context_analysis(self, user_id: str, conversation_history: list[dict[str, Any]]) -> dict[str, Any]:
         """Get detailed context analysis for a user and conversation"""
         try:
             # Mock user profile for analysis
@@ -860,7 +856,7 @@ class ContextAwareAIService:
                 'quality_score': 0.0
             }
     
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get service performance metrics"""
         try:
             cache_hit_rate = (
@@ -906,7 +902,7 @@ class ContextAwareAIService:
         else:
             return 'night'
     
-    def _calculate_session_duration(self, conversation_history: List[Dict[str, Any]]) -> float:
+    def _calculate_session_duration(self, conversation_history: list[dict[str, Any]]) -> float:
         """Calculate current session duration in minutes"""
         try:
             if not conversation_history:
@@ -921,7 +917,7 @@ class ContextAwareAIService:
         except Exception:
             return 0.0
     
-    async def _analyze_topic_transitions(self, conversation_history: List[Dict[str, Any]]) -> List[str]:
+    async def _analyze_topic_transitions(self, conversation_history: list[dict[str, Any]]) -> list[str]:
         """Analyze how topics have changed throughout the conversation"""
         try:
             if len(conversation_history) < 5:
@@ -974,7 +970,7 @@ class ContextAwareAIService:
         except Exception as e:
             logger.error(f"Error updating performance metrics: {e}")
     
-    async def _generate_quality_indicators(self, context: ResponseContext) -> Dict[str, Any]:
+    async def _generate_quality_indicators(self, context: ResponseContext) -> dict[str, Any]:
         """Generate quality indicators for the response"""
         try:
             return {
@@ -988,7 +984,7 @@ class ContextAwareAIService:
         except Exception:
             return {}
     
-    async def _generate_follow_up_suggestions(self, context: ResponseContext) -> List[str]:
+    async def _generate_follow_up_suggestions(self, context: ResponseContext) -> list[str]:
         """Generate follow-up suggestions based on context"""
         try:
             suggestions = []
@@ -1025,7 +1021,7 @@ class ContextAwareAIService:
             return []
     
     async def _generate_context_recommendations(self, conv_context: ContextWindow, 
-                                               user_context: UserContext) -> List[str]:
+                                               user_context: UserContext) -> list[str]:
         """Generate recommendations for improving context"""
         try:
             recommendations = []

@@ -6,24 +6,25 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
-from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
-import logging
-import asyncio
-import io
 import base64
-import json
+import io
+import logging
 from datetime import datetime
+from typing import Any, Union
 
-from ..services.voice_service import (
-    VoiceService, VoiceProvider, AudioFormat, VoiceGender, VoiceProfile,
-    SpeechToTextResult, TextToSpeechResult, VoiceAnalytics,
-    create_voice_service, get_supported_audio_formats, get_supported_languages
-)
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
+
 from ..middleware.auth import get_current_user
-from ..middleware.rate_limiting import RateLimitMiddleware
+from ..services.voice_service import (
+    AudioFormat,
+    VoiceProvider,
+    VoiceService,
+    create_voice_service,
+    get_supported_audio_formats,
+    get_supported_languages,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,21 +32,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/voice", tags=["voice"])
 
 # Voice service instance (will be initialized on startup)
-voice_service: Optional[VoiceService] = None
+voice_service: VoiceService | None = None
 
 # Request/Response models
 class SpeechToTextRequest(BaseModel):
     audio_data: str = Field(..., description="Base64 encoded audio data")
     audio_format: str = Field(default="wav", description="Audio format")
     language: str = Field(default="en-US", description="Language code")
-    provider: Optional[str] = Field(None, description="Preferred provider")
-    session_id: Optional[str] = Field(None, description="Session ID for analytics")
+    provider: str | None = Field(None, description="Preferred provider")
+    session_id: str | None = Field(None, description="Session ID for analytics")
 
 class TextToSpeechRequest(BaseModel):
     text: str = Field(..., description="Text to convert to speech", max_length=5000)
-    voice_profile: Optional[str] = Field(None, description="Voice profile ID")
+    voice_profile: str | None = Field(None, description="Voice profile ID")
     audio_format: str = Field(default="mp3", description="Output audio format")
-    session_id: Optional[str] = Field(None, description="Session ID for analytics")
+    session_id: str | None = Field(None, description="Session ID for analytics")
 
 class VoiceProfileResponse(BaseModel):
     provider: str
@@ -64,7 +65,7 @@ class SpeechToTextResponse(BaseModel):
     language: str
     duration: float
     processing_time: float
-    alternatives: Optional[List[Dict[str, Any]]] = None
+    alternatives: list[dict[str, Any]] | None = None
     timestamp: datetime
 
 class TextToSpeechResponse(BaseModel):
@@ -87,17 +88,17 @@ class VoiceAnalyticsResponse(BaseModel):
     total_audio_duration: float
     total_processing_time: float
     average_confidence: float
-    preferred_provider: Optional[str]
-    preferred_voice: Optional[str]
-    language_distribution: Dict[str, int]
+    preferred_provider: str | None
+    preferred_voice: str | None
+    language_distribution: dict[str, int]
     error_count: int
     success_rate: float
 
 class VoiceConfigResponse(BaseModel):
-    supported_formats: List[str]
-    supported_languages: List[str]
-    available_providers: List[str]
-    voice_profiles: List[VoiceProfileResponse]
+    supported_formats: list[str]
+    supported_languages: list[str]
+    available_providers: list[str]
+    voice_profiles: list[VoiceProfileResponse]
 
 # Dependency to get voice service
 async def get_voice_service() -> VoiceService:
@@ -165,7 +166,7 @@ async def get_voice_config(
 @router.post("/speech-to-text", response_model=SpeechToTextResponse)
 async def speech_to_text(
     request: SpeechToTextRequest,
-    current_user: Dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Convert speech audio to text"""
@@ -173,7 +174,7 @@ async def speech_to_text(
         # Decode audio data
         try:
             audio_data = base64.b64decode(request.audio_data)
-        except Exception as e:
+        except Exception:
             raise HTTPException(status_code=400, detail="Invalid base64 audio data")
         
         # Validate audio format
@@ -220,7 +221,7 @@ async def speech_to_text(
 @router.post("/text-to-speech", response_model=TextToSpeechResponse)
 async def text_to_speech(
     request: TextToSpeechRequest,
-    current_user: Dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Convert text to speech audio"""
@@ -269,9 +270,9 @@ async def text_to_speech(
 async def speech_to_text_upload(
     audio_file: UploadFile = File(...),
     language: str = Form(default="en-US"),
-    provider: Optional[str] = Form(None),
-    session_id: Optional[str] = Form(None),
-    current_user: Dict = Depends(get_current_user),
+    provider: str | None = Form(None),
+    session_id: str | None = Form(None),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Convert uploaded audio file to text"""
@@ -330,7 +331,7 @@ async def speech_to_text_upload(
 @router.post("/text-to-speech/stream")
 async def text_to_speech_stream(
     request: TextToSpeechRequest,
-    current_user: Dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Convert text to speech and stream audio response"""
@@ -381,9 +382,9 @@ async def text_to_speech_stream(
         logger.error(f"Streaming TTS error: {e}")
         raise HTTPException(status_code=500, detail="Speech synthesis streaming failed")
 
-@router.get("/profiles", response_model=List[VoiceProfileResponse])
+@router.get("/profiles", response_model=list[VoiceProfileResponse])
 async def get_voice_profiles(
-    provider: Optional[str] = Query(None, description="Filter by provider"),
+    provider: str | None = Query(None, description="Filter by provider"),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Get available voice profiles"""
@@ -417,10 +418,10 @@ async def get_voice_profiles(
         logger.error(f"Get voice profiles error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get voice profiles")
 
-@router.get("/analytics", response_model=Union[VoiceAnalyticsResponse, Dict[str, VoiceAnalyticsResponse]])
+@router.get("/analytics", response_model=Union[VoiceAnalyticsResponse, dict[str, VoiceAnalyticsResponse]])
 async def get_voice_analytics(
-    session_id: Optional[str] = Query(None, description="Specific session ID"),
-    current_user: Dict = Depends(get_current_user),
+    session_id: str | None = Query(None, description="Specific session ID"),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Get voice interaction analytics"""
@@ -473,9 +474,9 @@ async def get_voice_analytics(
         logger.error(f"Get analytics error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get analytics")
 
-@router.get("/performance", response_model=Dict[str, Any])
+@router.get("/performance", response_model=dict[str, Any])
 async def get_performance_metrics(
-    current_user: Dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Get voice service performance metrics"""
@@ -489,7 +490,7 @@ async def get_performance_metrics(
 
 @router.post("/cache/clear")
 async def clear_voice_cache(
-    current_user: Dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Clear voice service caches"""
@@ -523,7 +524,7 @@ async def voice_health_check(
 @router.post("/test/echo")
 async def voice_echo_test(
     request: SpeechToTextRequest,
-    current_user: Dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     service: VoiceService = Depends(get_voice_service)
 ):
     """Test voice system with speech-to-text followed by text-to-speech"""
@@ -531,7 +532,7 @@ async def voice_echo_test(
         # Decode audio data
         try:
             audio_data = base64.b64decode(request.audio_data)
-        except Exception as e:
+        except Exception:
             raise HTTPException(status_code=400, detail="Invalid base64 audio data")
         
         # Speech-to-text
@@ -570,8 +571,9 @@ async def voice_echo_test(
         raise HTTPException(status_code=500, detail="Voice echo test failed")
 
 # WebSocket endpoint for real-time voice interaction
-from fastapi import WebSocket
 import websockets
+from fastapi import WebSocket
+
 
 @router.websocket("/ws/realtime")
 async def voice_websocket(

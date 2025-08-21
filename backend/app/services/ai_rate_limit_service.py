@@ -13,15 +13,14 @@ Features:
 - Comprehensive monitoring and alerting
 """
 
-import asyncio
 import json
+import logging
 import os
 import time
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
-import logging
+from typing import Any
 
 try:
     import redis.asyncio as redis
@@ -44,8 +43,8 @@ class RateLimit:
     limit: int  # Max requests/tokens per window
     window: int  # Time window in seconds
     type: RateLimitType
-    provider: Optional[str] = None
-    user_tier: Optional[str] = "free"  # free, premium, enterprise
+    provider: str | None = None
+    user_tier: str | None = "free"  # free, premium, enterprise
 
 @dataclass
 class RateLimitResult:
@@ -54,15 +53,15 @@ class RateLimitResult:
     remaining: int
     reset_time: datetime
     limit_type: RateLimitType
-    retry_after: Optional[int] = None
-    error_message: Optional[str] = None
+    retry_after: int | None = None
+    error_message: str | None = None
 
 class AIRateLimitService:
     """
     Production AI rate limiting service with Redis backend
     """
     
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: str | None = None):
         self.redis_url = redis_url or os.getenv('REDIS_URL', 'redis://localhost:6379')
         self.redis_client = None
         self.fallback_cache = {}  # In-memory fallback when Redis unavailable
@@ -336,7 +335,7 @@ class AIRateLimitService:
         except Exception as e:
             logger.error(f"Failed to record usage analytics: {e}")
     
-    async def get_user_usage_stats(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_usage_stats(self, user_id: str) -> dict[str, Any]:
         """Get current usage statistics for a user"""
         try:
             stats = {

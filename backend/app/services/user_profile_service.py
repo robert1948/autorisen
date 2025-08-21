@@ -6,25 +6,17 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-import asyncio
 import json
 import logging
-import time
-from typing import Dict, List, Optional, Any, Union, Tuple
-from dataclasses import dataclass, asdict, field
-from enum import Enum
-from datetime import datetime, timedelta
-import hashlib
 import uuid
-
-# Database imports
-from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, Float, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 # Pydantic models for validation
-from pydantic import BaseModel, Field, validator
-import bcrypt
+
+# Database imports
 
 logger = logging.getLogger(__name__)
 
@@ -73,14 +65,14 @@ class UserPreferences:
     language: str = "en-US"
     timezone: str = "UTC"
     theme: str = "light"
-    notification_settings: Dict[str, bool] = field(default_factory=lambda: {
+    notification_settings: dict[str, bool] = field(default_factory=lambda: {
         "email_notifications": True,
         "push_notifications": True,
         "ai_suggestions": True,
         "system_updates": True,
         "marketing": False
     })
-    ai_settings: Dict[str, Any] = field(default_factory=lambda: {
+    ai_settings: dict[str, Any] = field(default_factory=lambda: {
         "preferred_provider": "auto",
         "response_length": "medium",
         "formality_level": "balanced",
@@ -88,7 +80,7 @@ class UserPreferences:
         "fact_checking": True,
         "citations": True
     })
-    privacy_settings: Dict[str, str] = field(default_factory=lambda: {
+    privacy_settings: dict[str, str] = field(default_factory=lambda: {
         "profile_visibility": "public",
         "activity_tracking": "enabled",
         "data_sharing": "minimal",
@@ -101,9 +93,9 @@ class UserBehaviorMetrics:
     session_count: int = 0
     total_time_spent: float = 0.0
     average_session_length: float = 0.0
-    last_activity: Optional[datetime] = None
-    favorite_features: List[str] = field(default_factory=list)
-    usage_patterns: Dict[str, int] = field(default_factory=dict)
+    last_activity: datetime | None = None
+    favorite_features: list[str] = field(default_factory=list)
+    usage_patterns: dict[str, int] = field(default_factory=dict)
     interaction_quality: float = 0.0
     engagement_score: float = 0.0
     retention_score: float = 0.0
@@ -114,18 +106,18 @@ class AIInteractionProfile:
     total_conversations: int = 0
     average_messages_per_conversation: float = 0.0
     preferred_conversation_length: str = "medium"
-    topic_interests: List[str] = field(default_factory=list)
-    skill_assessments: Dict[str, float] = field(default_factory=dict)
-    learning_progress: Dict[str, float] = field(default_factory=dict)
-    feedback_patterns: Dict[str, int] = field(default_factory=dict)
+    topic_interests: list[str] = field(default_factory=list)
+    skill_assessments: dict[str, float] = field(default_factory=dict)
+    learning_progress: dict[str, float] = field(default_factory=dict)
+    feedback_patterns: dict[str, int] = field(default_factory=dict)
     personalization_effectiveness: float = 0.0
 
 @dataclass
 class UserAchievements:
     """User achievements and milestones"""
-    badges: List[str] = field(default_factory=list)
-    milestones: Dict[str, datetime] = field(default_factory=dict)
-    streaks: Dict[str, int] = field(default_factory=dict)
+    badges: list[str] = field(default_factory=list)
+    milestones: dict[str, datetime] = field(default_factory=dict)
+    streaks: dict[str, int] = field(default_factory=dict)
     points: int = 0
     level: int = 1
     experience: int = 0
@@ -133,18 +125,18 @@ class UserAchievements:
 @dataclass
 class SocialConnections:
     """User social connections and network"""
-    friends: List[str] = field(default_factory=list)
-    followers: List[str] = field(default_factory=list)
-    following: List[str] = field(default_factory=list)
-    groups: List[str] = field(default_factory=list)
-    shared_interests: Dict[str, List[str]] = field(default_factory=dict)
+    friends: list[str] = field(default_factory=list)
+    followers: list[str] = field(default_factory=list)
+    following: list[str] = field(default_factory=list)
+    groups: list[str] = field(default_factory=list)
+    shared_interests: dict[str, list[str]] = field(default_factory=dict)
 
 class EnhancedUserProfile:
     """
     Comprehensive user profile with advanced personalization and analytics
     """
     
-    def __init__(self, user_id: str, profile_data: Dict[str, Any] = None):
+    def __init__(self, user_id: str, profile_data: dict[str, Any] = None):
         """Initialize enhanced user profile"""
         self.user_id = user_id
         self.profile_id = str(uuid.uuid4())
@@ -233,7 +225,7 @@ class EnhancedUserProfile:
         self.analytics_data['profile_completeness'] = completeness
         return completeness
     
-    def update_behavior_metrics(self, session_data: Dict[str, Any]):
+    def update_behavior_metrics(self, session_data: dict[str, Any]):
         """Update user behavior metrics"""
         metrics = self.behavior_metrics
         
@@ -260,7 +252,7 @@ class EnhancedUserProfile:
         
         self.updated_at = datetime.utcnow()
     
-    def update_ai_interaction_profile(self, conversation_data: Dict[str, Any]):
+    def update_ai_interaction_profile(self, conversation_data: dict[str, Any]):
         """Update AI interaction profile"""
         profile = self.ai_interaction_profile
         
@@ -293,7 +285,7 @@ class EnhancedUserProfile:
         
         self.updated_at = datetime.utcnow()
     
-    def add_achievement(self, achievement_type: str, achievement_data: Dict[str, Any]):
+    def add_achievement(self, achievement_type: str, achievement_data: dict[str, Any]):
         """Add user achievement"""
         achievements = self.achievements
         
@@ -323,7 +315,7 @@ class EnhancedUserProfile:
         
         self.updated_at = datetime.utcnow()
     
-    def update_social_connections(self, connection_type: str, user_ids: List[str], action: str = "add"):
+    def update_social_connections(self, connection_type: str, user_ids: list[str], action: str = "add"):
         """Update social connections"""
         connections = self.social_connections
         
@@ -346,7 +338,7 @@ class EnhancedUserProfile:
         
         self.updated_at = datetime.utcnow()
     
-    def get_personalization_settings(self) -> Dict[str, Any]:
+    def get_personalization_settings(self) -> dict[str, Any]:
         """Get personalization settings for AI interactions"""
         return {
             'language': self.preferences.language,
@@ -366,7 +358,7 @@ class EnhancedUserProfile:
             }
         }
     
-    def generate_user_insights(self) -> Dict[str, Any]:
+    def generate_user_insights(self) -> dict[str, Any]:
         """Generate insights about user behavior and preferences"""
         insights = {
             'engagement_analysis': {
@@ -457,7 +449,7 @@ class EnhancedUserProfile:
         
         return min(1.0, effectiveness)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert profile to dictionary"""
         return {
             'user_id': self.user_id,
@@ -490,7 +482,7 @@ class EnhancedUserProfile:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'EnhancedUserProfile':
+    def from_dict(cls, data: dict[str, Any]) -> 'EnhancedUserProfile':
         """Create profile from dictionary"""
         profile = cls(data['user_id'], data)
         
@@ -509,7 +501,7 @@ class UserProfileService:
     Service for managing enhanced user profiles with advanced features
     """
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize user profile service"""
         self.config = config
         self.profiles = {}  # In-memory storage for demo
@@ -528,7 +520,7 @@ class UserProfileService:
         
         logger.info("Enhanced user profile service initialized")
     
-    async def create_profile(self, user_id: str, profile_data: Dict[str, Any]) -> EnhancedUserProfile:
+    async def create_profile(self, user_id: str, profile_data: dict[str, Any]) -> EnhancedUserProfile:
         """Create new enhanced user profile"""
         try:
             profile = EnhancedUserProfile(user_id, profile_data)
@@ -546,11 +538,11 @@ class UserProfileService:
             logger.error(f"Failed to create profile for user {user_id}: {e}")
             raise
     
-    async def get_profile(self, user_id: str) -> Optional[EnhancedUserProfile]:
+    async def get_profile(self, user_id: str) -> EnhancedUserProfile | None:
         """Get user profile"""
         return self.profiles.get(user_id)
     
-    async def update_profile(self, user_id: str, updates: Dict[str, Any]) -> Optional[EnhancedUserProfile]:
+    async def update_profile(self, user_id: str, updates: dict[str, Any]) -> EnhancedUserProfile | None:
         """Update user profile"""
         try:
             profile = self.profiles.get(user_id)
@@ -580,7 +572,7 @@ class UserProfileService:
             logger.error(f"Failed to update profile for user {user_id}: {e}")
             raise
     
-    async def track_user_behavior(self, user_id: str, behavior_data: Dict[str, Any]):
+    async def track_user_behavior(self, user_id: str, behavior_data: dict[str, Any]):
         """Track user behavior and update metrics"""
         try:
             profile = self.profiles.get(user_id)
@@ -606,7 +598,7 @@ class UserProfileService:
             logger.error(f"Failed to track behavior for user {user_id}: {e}")
             raise
     
-    async def get_personalization_settings(self, user_id: str) -> Dict[str, Any]:
+    async def get_personalization_settings(self, user_id: str) -> dict[str, Any]:
         """Get personalization settings for user"""
         try:
             profile = self.profiles.get(user_id)
@@ -622,7 +614,7 @@ class UserProfileService:
             logger.error(f"Failed to get personalization settings for user {user_id}: {e}")
             return {}
     
-    async def generate_user_insights(self, user_id: str) -> Dict[str, Any]:
+    async def generate_user_insights(self, user_id: str) -> dict[str, Any]:
         """Generate comprehensive user insights"""
         try:
             profile = self.profiles.get(user_id)
@@ -638,7 +630,7 @@ class UserProfileService:
             logger.error(f"Failed to generate insights for user {user_id}: {e}")
             return {}
     
-    async def get_user_recommendations(self, user_id: str, recommendation_type: str = "general") -> List[Dict[str, Any]]:
+    async def get_user_recommendations(self, user_id: str, recommendation_type: str = "general") -> list[dict[str, Any]]:
         """Generate personalized recommendations for user"""
         try:
             profile = self.profiles.get(user_id)
@@ -711,7 +703,7 @@ class UserProfileService:
             logger.error(f"Failed to generate recommendations for user {user_id}: {e}")
             return []
     
-    async def get_profile_analytics(self, user_id: str = None) -> Dict[str, Any]:
+    async def get_profile_analytics(self, user_id: str = None) -> dict[str, Any]:
         """Get profile analytics"""
         try:
             if user_id:
@@ -755,7 +747,7 @@ class UserProfileService:
             logger.error(f"Failed to get profile analytics: {e}")
             return {}
     
-    async def search_profiles(self, query: Dict[str, Any]) -> List[EnhancedUserProfile]:
+    async def search_profiles(self, query: dict[str, Any]) -> list[EnhancedUserProfile]:
         """Search profiles based on criteria"""
         try:
             results = []
@@ -805,7 +797,7 @@ class UserProfileService:
             logger.error(f"Profile search failed: {e}")
             return []
     
-    async def export_profile_data(self, user_id: str, format: str = "json") -> Union[str, Dict[str, Any]]:
+    async def export_profile_data(self, user_id: str, format: str = "json") -> str | dict[str, Any]:
         """Export user profile data"""
         try:
             profile = self.profiles.get(user_id)
@@ -823,7 +815,7 @@ class UserProfileService:
             logger.error(f"Failed to export profile data for user {user_id}: {e}")
             return {}
     
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check service health"""
         try:
             return {
@@ -841,11 +833,11 @@ class UserProfileService:
             return {'status': 'unhealthy', 'error': str(e)}
 
 # Utility functions
-def create_user_profile_service(config: Dict[str, Any]) -> UserProfileService:
+def create_user_profile_service(config: dict[str, Any]) -> UserProfileService:
     """Factory function to create user profile service"""
     return UserProfileService(config)
 
-def generate_sample_profile_data(user_id: str) -> Dict[str, Any]:
+def generate_sample_profile_data(user_id: str) -> dict[str, Any]:
     """Generate sample profile data for testing"""
     return {
         'username': f'user_{user_id}',

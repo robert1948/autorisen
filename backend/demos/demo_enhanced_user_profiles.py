@@ -10,8 +10,6 @@ import asyncio
 import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,8 +18,12 @@ logger = logging.getLogger(__name__)
 # Import the profile system components
 try:
     from app.services.user_profile_service import (
-        UserProfileService, EnhancedUserProfile, UserRole, UserStatus,
-        create_user_profile_service, generate_sample_profile_data
+        EnhancedUserProfile,
+        UserProfileService,
+        UserRole,
+        UserStatus,
+        create_user_profile_service,
+        generate_sample_profile_data,
     )
     print("✅ Successfully imported enhanced user profile system components")
 except ImportError as e:
@@ -157,7 +159,7 @@ class EnhancedUserProfileDemo:
         # Test 3: Profile retrieval
         retrieved_profile = await self.service.get_profile(user_id)
         assert retrieved_profile.user_id == user_id
-        print(f"   ✓ Successfully retrieved profile")
+        print("   ✓ Successfully retrieved profile")
         
         # Test 4: Profile update
         updates = {
@@ -171,7 +173,7 @@ class EnhancedUserProfileDemo:
         assert 'innovation' in updated_profile.interests
         assert updated_profile.location == 'New York, NY'
         
-        print(f"   ✓ Successfully updated profile")
+        print("   ✓ Successfully updated profile")
         print(f"   ✓ New bio: {updated_profile.bio[:50]}...")
         
         # Test 5: Profile completeness calculation
@@ -308,7 +310,7 @@ class EnhancedUserProfileDemo:
         assert 'skill_levels' in settings
         assert settings['communication_style'] == 'technical'
         
-        print(f"   ✓ Personalization settings retrieved")
+        print("   ✓ Personalization settings retrieved")
         print(f"   ✓ Communication style: {settings['communication_style']}")
         print(f"   ✓ Learning style: {settings['learning_style']}")
         print(f"   ✓ Skill levels tracked: {len(settings['skill_levels'])}")
@@ -361,7 +363,7 @@ class EnhancedUserProfileDemo:
         assert achievement_analysis['badges_earned'] == 3
         assert achievement_analysis['level'] >= 1
         
-        print(f"   ✓ Achievement analytics generated")
+        print("   ✓ Achievement analytics generated")
         print(f"   ✓ Achievement level assessment: Level {achievement_analysis['level']}")
         
         self.demo_results['passed_tests'] += 1
@@ -395,7 +397,7 @@ class EnhancedUserProfileDemo:
         
         # Add followers
         profile.update_social_connections('followers', [social_users[2]], 'add')
-        print(f"   ✓ Added 1 follower")
+        print("   ✓ Added 1 follower")
         
         # Add following
         profile.update_social_connections('following', social_users, 'add')
@@ -403,7 +405,7 @@ class EnhancedUserProfileDemo:
         
         # Create a group
         profile.update_social_connections('groups', ['ai_enthusiasts', 'tech_innovators'], 'add')
-        print(f"   ✓ Joined 2 groups")
+        print("   ✓ Joined 2 groups")
         
         connections = profile.social_connections
         
@@ -477,7 +479,7 @@ class EnhancedUserProfileDemo:
                 next_engagement = active_users[i + 1].behavior_metrics.engagement_score
                 assert current_engagement >= next_engagement
         
-        print(f"   ✓ Search results properly ordered by engagement")
+        print("   ✓ Search results properly ordered by engagement")
         
         self.demo_results['passed_tests'] += 1
         self.demo_results['total_tests'] += 1
@@ -549,7 +551,7 @@ class EnhancedUserProfileDemo:
         for field in required_fields:
             assert field in system_analytics
         
-        print(f"   ✓ System analytics generated")
+        print("   ✓ System analytics generated")
         print(f"   ✓ Total profiles: {system_analytics['total_profiles']}")
         print(f"   ✓ Active profiles: {system_analytics['active_profiles']}")
         print(f"   ✓ Average completeness: {system_analytics['average_completeness']:.1f}%")
@@ -600,7 +602,7 @@ class EnhancedUserProfileDemo:
         exported_data = json.loads(json_export)
         assert exported_data['user_id'] == user_id
         
-        print(f"   ✓ JSON export successful")
+        print("   ✓ JSON export successful")
         print(f"   ✓ Export size: {len(json_export)} characters")
         
         # Test dict export
@@ -609,7 +611,7 @@ class EnhancedUserProfileDemo:
         assert isinstance(dict_export, dict)
         assert dict_export['user_id'] == user_id
         
-        print(f"   ✓ Dictionary export successful")
+        print("   ✓ Dictionary export successful")
         print(f"   ✓ Export contains {len(dict_export)} fields")
         
         # Test data completeness in export
@@ -621,12 +623,12 @@ class EnhancedUserProfileDemo:
         for field in expected_fields:
             assert field in dict_export
         
-        print(f"   ✓ All expected fields present in export")
+        print("   ✓ All expected fields present in export")
         
         # Test privacy settings
         privacy_settings = profile.preferences.privacy_settings
         
-        print(f"   ✓ Privacy settings:")
+        print("   ✓ Privacy settings:")
         print(f"     → Profile visibility: {privacy_settings['profile_visibility']}")
         print(f"     → Data sharing: {privacy_settings['data_sharing']}")
         print(f"     → Analytics: {privacy_settings['analytics']}")
@@ -694,7 +696,7 @@ class EnhancedUserProfileDemo:
         
         # Performance metrics
         metrics = self.service.performance_metrics
-        print(f"   ✓ Service performance metrics:")
+        print("   ✓ Service performance metrics:")
         for metric, value in metrics.items():
             print(f"     → {metric}: {value}")
         
@@ -724,7 +726,7 @@ class EnhancedUserProfileDemo:
         print("=" * 60)
         
         # Test Summary
-        print(f"\n🎯 TEST SUMMARY:")
+        print("\n🎯 TEST SUMMARY:")
         print(f"   Total Tests: {self.demo_results['total_tests']}")
         print(f"   Passed: {self.demo_results['passed_tests']}")
         print(f"   Failed: {self.demo_results['failed_tests']}")
@@ -732,7 +734,7 @@ class EnhancedUserProfileDemo:
         
         # System Health Check
         health = await self.service.health_check()
-        print(f"\n🏥 SYSTEM HEALTH:")
+        print("\n🏥 SYSTEM HEALTH:")
         print(f"   Status: {health['status']}")
         print(f"   Total Profiles: {health['total_profiles']}")
         print(f"   Active Profiles: {health['active_profiles']}")
@@ -741,7 +743,7 @@ class EnhancedUserProfileDemo:
         # Performance Summary
         perf = self.demo_results.get('performance_metrics', {})
         if perf:
-            print(f"\n⚡ PERFORMANCE METRICS:")
+            print("\n⚡ PERFORMANCE METRICS:")
             print(f"   Batch Creation: {perf.get('avg_creation_time_ms', 0):.2f}ms per profile")
             print(f"   Concurrent Operations: {perf.get('avg_operation_time_ms', 0):.2f}ms per operation")
             print(f"   Search Performance: {perf.get('search_time_ms', 0):.2f}ms")
@@ -749,12 +751,12 @@ class EnhancedUserProfileDemo:
         
         # Service Metrics
         service_metrics = self.service.performance_metrics
-        print(f"\n📈 SERVICE METRICS:")
+        print("\n📈 SERVICE METRICS:")
         for metric, value in service_metrics.items():
             print(f"   {metric.replace('_', ' ').title()}: {value}")
         
         # Feature Coverage
-        print(f"\n🔧 FEATURE COVERAGE:")
+        print("\n🔧 FEATURE COVERAGE:")
         features_tested = [
             "✅ Profile Creation & Management",
             "✅ Behavior Tracking & Analytics", 
@@ -772,7 +774,7 @@ class EnhancedUserProfileDemo:
             print(f"   {feature}")
         
         # Data Quality Assessment
-        print(f"\n📊 DATA QUALITY ASSESSMENT:")
+        print("\n📊 DATA QUALITY ASSESSMENT:")
         
         total_users = len(self.test_users)
         if total_users > 0:
@@ -798,7 +800,7 @@ class EnhancedUserProfileDemo:
                 print(f"   Data Quality Score: {(avg_completeness + avg_engagement * 100) / 2:.1f}%")
         
         # Recommendations
-        print(f"\n💡 RECOMMENDATIONS:")
+        print("\n💡 RECOMMENDATIONS:")
         
         success_rate = (self.demo_results['passed_tests']/self.demo_results['total_tests']*100)
         
@@ -816,7 +818,7 @@ class EnhancedUserProfileDemo:
             print("   → Address critical failures")
             print("   → Conduct additional testing")
         
-        print(f"\n🏁 Demo completed successfully!")
+        print("\n🏁 Demo completed successfully!")
         print(f"   Enhanced User Profile System validation: {'PASSED' if success_rate >= 90 else 'NEEDS REVIEW'}")
         
         return self.demo_results

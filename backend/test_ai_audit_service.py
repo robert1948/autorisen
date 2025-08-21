@@ -10,23 +10,17 @@ Tests all functionality including:
 - High availability features
 """
 
-import pytest
 import asyncio
-import json
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-
-import sys
 import os
+import sys
+from datetime import datetime
+
+import pytest
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from services.ai_audit_service import (
-    AIAuditService, 
-    AuditEntry, 
-    AuditEventType, 
-    ComplianceLevel,
-    AIAuditLog
-)
+from services.ai_audit_service import AIAuditService, AuditEntry, AuditEventType, ComplianceLevel
+
 
 class TestAIAuditService:
     """Test suite for AI Audit Service"""

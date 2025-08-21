@@ -3,18 +3,15 @@ Analytics Service for Performance Analytics Dashboard
 Handles system metrics, user behavior tracking, and performance analysis.
 """
 import asyncio
-import psutil
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_
-from app.models.analytics import AnalyticsEvent, SystemMetrics, UserSession, APIUsageStats
-from app.models import User
-from app.database import get_db
 import logging
-import json
-import uuid
+from datetime import datetime, timedelta
+from typing import Any
+
+import psutil
+from sqlalchemy import and_, desc, func
+from sqlalchemy.orm import Session
+
+from app.models.analytics import AnalyticsEvent, SystemMetrics, UserSession
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +23,7 @@ class AnalyticsService:
         self.request_count = 0
         self.active_sessions = {}
         
-    async def record_system_metrics(self, db: Session) -> Dict[str, float]:
+    async def record_system_metrics(self, db: Session) -> dict[str, float]:
         """Record current system performance metrics"""
         try:
             # Get system metrics
@@ -60,11 +57,11 @@ class AnalyticsService:
             logger.error(f"Error recording system metrics: {e}")
             return {}
     
-    async def record_user_event(self, db: Session, user_id: Optional[str], event_type: str, 
-                               event_category: str, event_data: Optional[Dict] = None,
-                               endpoint: Optional[str] = None, method: Optional[str] = None,
-                               status_code: Optional[int] = None, duration_ms: Optional[float] = None,
-                               ip_address: Optional[str] = None, user_agent: Optional[str] = None):
+    async def record_user_event(self, db: Session, user_id: str | None, event_type: str, 
+                               event_category: str, event_data: dict | None = None,
+                               endpoint: str | None = None, method: str | None = None,
+                               status_code: int | None = None, duration_ms: float | None = None,
+                               ip_address: str | None = None, user_agent: str | None = None):
         """Record a user interaction event"""
         try:
             event = AnalyticsEvent(
@@ -87,7 +84,7 @@ class AnalyticsService:
         except Exception as e:
             logger.error(f"Error recording user event: {e}")
     
-    async def get_dashboard_data(self, db: Session, hours: int = 24) -> Dict[str, Any]:
+    async def get_dashboard_data(self, db: Session, hours: int = 24) -> dict[str, Any]:
         """Get comprehensive dashboard data for the specified time period"""
         try:
             cutoff_time = datetime.utcnow() - timedelta(hours=hours)
@@ -223,7 +220,7 @@ class AnalyticsService:
                 'last_updated': datetime.utcnow().isoformat()
             }
     
-    async def get_real_time_metrics(self) -> Dict[str, Any]:
+    async def get_real_time_metrics(self) -> dict[str, Any]:
         """Get real-time system metrics without database storage"""
         try:
             cpu_percent = psutil.cpu_percent(interval=0.1)

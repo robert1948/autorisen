@@ -13,23 +13,33 @@ This module implements the secure authentication API endpoints:
 - GET /developer/earnings: Fetch revenue share data (developers only)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from typing import List, Optional
 from datetime import datetime
 
-from app.models import User
-from app.models_enhanced import DeveloperEarning, UserRole
-from app.schemas_enhanced import (
-    UserCreate, UserLogin, UserResponse, TokenResponse, TokenRefresh,
-    PasswordResetRequest, PasswordResetConfirm, PasswordResetResponse,
-    DeveloperEarningsSummary, DeveloperEarningResponse, UserUpdate,
-    PasswordChange, ApiResponse, ErrorResponse, Phase2ProfileComplete
-)
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
+
 from app.auth_enhanced import auth_service
 from app.dependencies import get_db
 from app.email_service import email_service
+from app.models import User
+from app.models_enhanced import DeveloperEarning, UserRole
+from app.schemas_enhanced import (
+    ApiResponse,
+    DeveloperEarningResponse,
+    DeveloperEarningsSummary,
+    PasswordChange,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    PasswordResetResponse,
+    Phase2ProfileComplete,
+    TokenRefresh,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="/api/enhanced", tags=["enhanced-authentication"])
 security = HTTPBearer()
@@ -778,7 +788,7 @@ def get_developer_earnings(
             earnings=[DeveloperEarningResponse.from_orm(e) for e in earnings]
         )
         
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch developer earnings"

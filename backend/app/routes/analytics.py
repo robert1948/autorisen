@@ -2,15 +2,17 @@
 Analytics API Routes for Performance Dashboard
 Provides endpoints for system metrics, user analytics, and performance data.
 """
+import logging
+from datetime import datetime, timedelta
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+
 from app.database import get_db
-from app.services.analytics_service import analytics_service
-from app.routes.auth_v2 import get_current_user
 from app.models import User
-import logging
+from app.routes.auth_v2 import get_current_user
+from app.services.analytics_service import analytics_service
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ async def get_analytics_dashboard(
     hours: int = Query(24, ge=1, le=168, description="Hours of data to retrieve (1-168)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get comprehensive analytics dashboard data including:
     - System performance metrics
@@ -55,7 +57,7 @@ async def get_analytics_dashboard(
 @router.get("/metrics/realtime", summary="Get real-time system metrics")
 async def get_realtime_metrics(
     current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get real-time system performance metrics without database queries.
     Updates every few seconds for live monitoring.
@@ -82,17 +84,18 @@ async def get_realtime_metrics(
 @router.get("/system/performance", summary="Get system performance history")
 async def get_system_performance(
     hours: int = Query(24, ge=1, le=168),
-    metric_type: Optional[str] = Query(None, description="Filter by metric type (cpu_usage, memory_usage, etc.)"),
+    metric_type: str | None = Query(None, description="Filter by metric type (cpu_usage, memory_usage, etc.)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get historical system performance data"""
     try:
         if current_user.role not in ['ADMIN', 'DEVELOPER']:
             raise HTTPException(status_code=403, detail="Analytics access requires admin or developer role")
         
+        from sqlalchemy import desc
+
         from app.models.analytics import SystemMetrics
-        from sqlalchemy import and_, desc
         
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         
@@ -133,17 +136,18 @@ async def get_system_performance(
 @router.get("/users/activity", summary="Get user activity analytics")
 async def get_user_activity(
     hours: int = Query(24, ge=1, le=168),
-    event_type: Optional[str] = Query(None, description="Filter by event type"),
+    event_type: str | None = Query(None, description="Filter by event type"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get user activity and behavior analytics"""
     try:
         if current_user.role != 'ADMIN':
             raise HTTPException(status_code=403, detail="User activity analytics requires admin role")
         
+        from sqlalchemy import desc, func
+
         from app.models.analytics import AnalyticsEvent
-        from sqlalchemy import and_, desc, func
         
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         
@@ -205,10 +209,10 @@ async def get_user_activity(
 
 @router.post("/record/event", summary="Record a custom analytics event")
 async def record_custom_event(
-    event_data: Dict[str, Any],
+    event_data: dict[str, Any],
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Record a custom analytics event for tracking specific user actions"""
     try:
         required_fields = ['event_type', 'event_category']

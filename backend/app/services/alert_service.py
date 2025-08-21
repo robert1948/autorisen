@@ -12,19 +12,19 @@ Comprehensive alert system providing:
 - Automated incident response
 """
 
-import logging
 import asyncio
-import smtplib
 import json
-import time
+import logging
 import os
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
+import smtplib
+import time
 from collections import defaultdict, deque
-from email.mime.text import MIMEText
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum
+from typing import Any
 
 # ---- Optional dependency: aiohttp (defensive import) ------------------------
 try:
@@ -33,8 +33,8 @@ except ModuleNotFoundError:
     aiohttp = None  # type: ignore
 
 from app.database import get_db
-from app.services.audit_service import get_audit_logger, AuditEventType
-from app.services.error_tracker import get_error_tracker, ErrorSeverity, ErrorCategory  # noqa: F401
+from app.services.audit_service import AuditEventType, get_audit_logger
+from app.services.error_tracker import ErrorCategory, ErrorSeverity, get_error_tracker  # noqa: F401
 
 # NOTE: Do NOT import get_health_service at module load to avoid circular import.
 # from app.services.health_service import get_health_service, HealthStatus
@@ -89,11 +89,11 @@ class AlertRule:
     condition: str  # JSON-ish condition or DSL fragment
     threshold: float
     duration: int  # seconds
-    channels: List[AlertChannel]
+    channels: list[AlertChannel]
     enabled: bool = True
     cooldown: int = 300  # 5 minutes cooldown between alerts
     escalation_time: int = 1800  # 30 minutes to escalate
-    tags: List[str] = None
+    tags: list[str] = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -111,12 +111,12 @@ class Alert:
     description: str
     timestamp: datetime
     status: AlertStatus = AlertStatus.ACTIVE
-    source_data: Dict[str, Any] = None
-    tags: List[str] = None
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[datetime] = None
-    resolved_at: Optional[datetime] = None
-    escalated_at: Optional[datetime] = None
+    source_data: dict[str, Any] = None
+    tags: list[str] = None
+    acknowledged_by: str | None = None
+    acknowledged_at: datetime | None = None
+    resolved_at: datetime | None = None
+    escalated_at: datetime | None = None
 
     def __post_init__(self):
         if self.source_data is None:
@@ -130,7 +130,7 @@ class NotificationChannel:
     """Notification channel configuration"""
     name: str
     channel_type: AlertChannel
-    config: Dict[str, Any]
+    config: dict[str, Any]
     enabled: bool = True
     rate_limit: int = 60  # seconds between notifications
 
@@ -145,13 +145,13 @@ class AlertSystem:
         self._health_service = None  # lazy-loaded to avoid circular import
 
         # Alert storage and management
-        self.active_alerts: Dict[str, Alert] = {}
+        self.active_alerts: dict[str, Alert] = {}
         self.alert_history = deque(maxlen=1000)
-        self.alert_rules: Dict[str, AlertRule] = {}
-        self.notification_channels: Dict[str, NotificationChannel] = {}
+        self.alert_rules: dict[str, AlertRule] = {}
+        self.notification_channels: dict[str, NotificationChannel] = {}
 
         # Rate limiting and cooldowns
-        self.last_alert_times: Dict[str, datetime] = {}
+        self.last_alert_times: dict[str, datetime] = {}
         self.alert_counts = defaultdict(int)
 
         # Background tasks
@@ -378,8 +378,8 @@ class AlertSystem:
         rule_name: str,
         title: str,
         description: str,
-        source_data: Dict[str, Any] = None
-    ) -> Optional[str]:
+        source_data: dict[str, Any] = None
+    ) -> str | None:
         """Create a new alert"""
         if rule_name not in self.alert_rules:
             self.logger.error(f"Alert rule not found: {rule_name}")
@@ -707,7 +707,7 @@ LocalStorm Alert System
         except Exception as e:
             self.logger.error(f"Error checking alert conditions: {e}")
 
-    def _evaluate_condition(self, rule: AlertRule, data: Dict[str, Any]) -> bool:
+    def _evaluate_condition(self, rule: AlertRule, data: dict[str, Any]) -> bool:
         """Evaluate if alert condition is met (simple DSL)"""
         try:
             condition = rule.condition
@@ -736,7 +736,7 @@ LocalStorm Alert System
             self.logger.error(f"Error evaluating condition: {e}")
             return False
 
-    def _generate_alert_title(self, rule: AlertRule, data: Dict[str, Any]) -> str:
+    def _generate_alert_title(self, rule: AlertRule, data: dict[str, Any]) -> str:
         """Generate alert title based on rule and data"""
         if rule.alert_type == AlertType.ERROR_RATE:
             return f"High Error Rate: {data.get('error_rate', 0):.1f}%"
@@ -755,7 +755,7 @@ LocalStorm Alert System
             return f"Security Threat Detected: {data.get('security_events', 0)} events"
         return f"Alert: {rule.name}"
 
-    def _generate_alert_description(self, rule: AlertRule, data: Dict[str, Any]) -> str:
+    def _generate_alert_description(self, rule: AlertRule, data: dict[str, Any]) -> str:
         """Generate alert description with context"""
         base_desc = f"Alert rule '{rule.name}' triggered. "
 
@@ -824,12 +824,12 @@ LocalStorm Alert System
 
     def get_active_alerts(
         self,
-        severity: Optional[AlertSeverity] = None,
-        alert_type: Optional[AlertType] = None,
-        tags: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
+        severity: AlertSeverity | None = None,
+        alert_type: AlertType | None = None,
+        tags: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         """Get active alerts with optional filtering"""
-        alerts: List[Dict[str, Any]] = []
+        alerts: list[dict[str, Any]] = []
         for alert in self.active_alerts.values():
             if severity and alert.severity != severity:
                 continue
@@ -840,7 +840,7 @@ LocalStorm Alert System
             alerts.append(asdict(alert))
         return alerts
 
-    def get_alert_statistics(self) -> Dict[str, Any]:
+    def get_alert_statistics(self) -> dict[str, Any]:
         """Get alert system statistics"""
         severity_counts = defaultdict(int)
         type_counts = defaultdict(int)
@@ -869,7 +869,7 @@ LocalStorm Alert System
 
 
 # Global alert system instance
-_alert_system_instance: Optional[AlertSystem] = None
+_alert_system_instance: AlertSystem | None = None
 
 def get_alert_system() -> AlertSystem:
     """Get global alert system instance"""

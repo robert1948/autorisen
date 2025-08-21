@@ -6,31 +6,29 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-import pytest
 import asyncio
 import json
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Dict, List, Any
+import os
 
 # Import the conversation management components
 import sys
-import os
+from datetime import datetime
+
+import pytest
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.conversation_manager import (
-    ConversationManager,
-    EnhancedConversation,
     ConversationMessage,
-    ConversationThread,
-    ConversationSummary,
-    ConversationAnalytics,
-    MessageRole,
-    ConversationType,
     ConversationStatus,
+    ConversationThread,
+    ConversationType,
+    EnhancedConversation,
+    MessageRole,
     ThreadingStrategy,
-    create_conversation_manager
+    create_conversation_manager,
 )
+
 
 class TestConversationMessage:
     """Test suite for ConversationMessage class"""
@@ -1026,7 +1024,7 @@ def run_performance_benchmarks():
         conv_time = await benchmark_conversation_creation()
         msg_time = await benchmark_message_processing()
         
-        print(f"\nSummary:")
+        print("\nSummary:")
         print(f"- Conversation creation: {conv_time:.2f}s for 100 conversations")
         print(f"- Message processing: {msg_time:.2f}s for 1000 messages")
         

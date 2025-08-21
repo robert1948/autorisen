@@ -3,17 +3,16 @@ Developer Earnings Service
 Calculates and manages developer earnings from platform transactions.
 """
 
-import stripe
-from typing import Dict, List, Optional, Any
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Any
+
+import stripe
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
 
 from app.config import settings
-from app.models.payment import PaymentAnalyticsEvent as PaymentAnalytics, Subscription
 from app.models import User
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class DeveloperEarningsService:
         self.platform_commission_rate = Decimal('0.20')  # 20% platform commission
         self.developer_share_rate = Decimal('0.80')  # 80% goes to developer
     
-    async def get_developer_earnings_summary(self, developer_id: str, db: Session) -> Dict[str, Any]:
+    async def get_developer_earnings_summary(self, developer_id: str, db: Session) -> dict[str, Any]:
         """Get comprehensive earnings summary for a developer"""
         try:
             # Get developer info
@@ -65,7 +64,7 @@ class DeveloperEarningsService:
             logger.error(f"Error getting developer earnings summary: {e}")
             return await self._get_mock_earnings_data(developer_id)
     
-    def get_total_earnings(self, user_id: int, db: Session) -> Dict[str, Any]:
+    def get_total_earnings(self, user_id: int, db: Session) -> dict[str, Any]:
         """Calculate total earnings for a developer."""
         try:
             # For now, use mock data since PaymentAnalytics table structure is not ready
@@ -106,7 +105,7 @@ class DeveloperEarningsService:
                 'pending_payout': {'amount_cents': 0, 'formatted': '$0.00'}
             }
     
-    async def _calculate_period_earnings(self, developer_id: str, start_date: datetime, end_date: datetime, db: Session) -> Dict[str, Any]:
+    async def _calculate_period_earnings(self, developer_id: str, start_date: datetime, end_date: datetime, db: Session) -> dict[str, Any]:
         """Calculate earnings for a specific time period"""
         try:
             # Mock calculation since PaymentAnalytics structure is not ready
@@ -147,7 +146,7 @@ class DeveloperEarningsService:
                 'period': {'start': start_date.isoformat(), 'end': end_date.isoformat()}
             }
     
-    async def _get_recent_transactions(self, developer_id: str, db: Session, limit: int = 10) -> List[Dict[str, Any]]:
+    async def _get_recent_transactions(self, developer_id: str, db: Session, limit: int = 10) -> list[dict[str, Any]]:
         """Get recent transactions for developer"""
         try:
             # Mock transaction data since PaymentAnalytics structure is not ready
@@ -177,7 +176,7 @@ class DeveloperEarningsService:
             logger.error(f"Error getting recent transactions: {e}")
             return []
     
-    async def _get_earnings_chart_data(self, developer_id: str, db: Session) -> Dict[str, Any]:
+    async def _get_earnings_chart_data(self, developer_id: str, db: Session) -> dict[str, Any]:
         """Get earnings data for charts (last 30 days)"""
         try:
             end_date = datetime.utcnow()
@@ -212,7 +211,7 @@ class DeveloperEarningsService:
             logger.error(f"Error getting earnings chart data: {e}")
             return {'daily_earnings': [], 'period': {'start': '', 'end': ''}}
     
-    async def _get_payout_status(self, developer_id: str) -> Dict[str, Any]:
+    async def _get_payout_status(self, developer_id: str) -> dict[str, Any]:
         """Get payout status and next payout date"""
         try:
             # In a real implementation, this would integrate with Stripe Connect
@@ -239,7 +238,7 @@ class DeveloperEarningsService:
                 'payout_method': 'none'
             }
     
-    async def _get_performance_metrics(self, developer_id: str, db: Session) -> Dict[str, Any]:
+    async def _get_performance_metrics(self, developer_id: str, db: Session) -> dict[str, Any]:
         """Get developer performance metrics"""
         try:
             # Mock performance metrics since PaymentAnalytics structure is not ready
@@ -270,7 +269,7 @@ class DeveloperEarningsService:
                 'churn_rate': 0.0
             }
     
-    async def _get_mock_earnings_data(self, developer_id: str) -> Dict[str, Any]:
+    async def _get_mock_earnings_data(self, developer_id: str) -> dict[str, Any]:
         """Return mock earnings data when real data is not available"""
         now = datetime.utcnow()
         

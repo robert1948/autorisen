@@ -3,15 +3,15 @@ Password Reset API Routes
 RESTful endpoints for password reset functionality
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr, field_validator
 import re
-from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr, field_validator
+from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
+from app.services.audit_service import AuditEventType, get_audit_logger
 from app.services.password_reset_service import password_reset_service
-from app.services.audit_service import get_audit_logger, AuditEventType
 
 router = APIRouter(prefix="/api/auth", tags=["password-reset"])
 

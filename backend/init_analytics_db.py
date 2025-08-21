@@ -2,14 +2,14 @@
 Initialize Analytics Tables for Performance Dashboard
 This script creates the analytics tables in the database.
 """
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import engine, Base
-from app.models.analytics import AnalyticsEvent, SystemMetrics, UserSession, APIUsageStats
-from app.models import User
 import logging
+
+from app.database import Base, engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -3,9 +3,8 @@ Task 1.2.2 AI-Specific Rate Limits Tests
 Comprehensive test suite for AI endpoint rate limiting functionality
 """
 
-import pytest
-import time
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

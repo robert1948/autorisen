@@ -8,18 +8,19 @@ Quick validation script to test input sanitization functionality.
 Tests core features without requiring complex test setup.
 """
 
-import sys
 import os
+import sys
 
 # Add the app directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
 from app.utils.input_sanitization import (
-    InputSanitizer, 
+    InputSanitizer,
     SanitizationLevel,
-    sanitize_text, 
-    validate_ai_prompt
+    sanitize_text,
+    validate_ai_prompt,
 )
+
 
 def test_basic_functionality():
     """Test basic input sanitization features"""
@@ -29,7 +30,7 @@ def test_basic_functionality():
     # Test 1: Basic sanitization
     print("\n1. Basic Sanitization Test")
     result = sanitize_text("Hello <b>world</b>!", level="basic")
-    print(f"   Input: 'Hello <b>world</b>!'")
+    print("   Input: 'Hello <b>world</b>!'")
     print(f"   Output: '{result['sanitized']}'")
     print(f"   Safe: {result['is_safe']}")
     print("   ✅ PASS" if result['sanitized'] == "Hello &lt;b&gt;world&lt;/b&gt;!" else "   ❌ FAIL")

@@ -8,20 +8,21 @@ Tests validate complete integration between Authentication V2 and CapeAI service
 Success Criteria: End-to-end API tests pass with proper authentication and data flow.
 """
 
-import pytest
-import json
-import uuid
-import time
-from typing import Dict, Any, Optional
 import os
 import sys
+import time
+import uuid
+from typing import Any
+
+import pytest
 
 # Add the backend directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from fastapi.testclient import TestClient
+
+from app.database import SessionLocal, engine
 from app.main import app
-from app.database import engine, SessionLocal
 from app.models import Base, User, UserProfile
 
 # Test configuration
@@ -72,7 +73,7 @@ class TestIntegrationWorkflows:
         timestamp = int(time.time())
         return f"test_{timestamp}_{uuid.uuid4().hex[:8]}@example.com"
         
-    def create_test_user_data(self, **overrides) -> Dict[str, Any]:
+    def create_test_user_data(self, **overrides) -> dict[str, Any]:
         """Create test user data with required fields"""
         data = {
             "email": self.create_unique_email(),
@@ -88,7 +89,7 @@ class TestIntegrationWorkflows:
         data.update(overrides)
         return data
     
-    def register_user(self, user_data: Optional[Dict] = None) -> Dict[str, Any]:
+    def register_user(self, user_data: dict | None = None) -> dict[str, Any]:
         """Register a test user and return response data"""
         if user_data is None:
             user_data = self.create_test_user_data()
@@ -105,7 +106,7 @@ class TestIntegrationWorkflows:
         else:
             raise Exception(f"User registration failed: {response.status_code} - {response.text}")
             
-    def login_user(self, email: str, password: str) -> Dict[str, Any]:
+    def login_user(self, email: str, password: str) -> dict[str, Any]:
         """Login test user and return tokens"""
         response = self.client.post(
             f"{TEST_API_PREFIX}/auth/v2/login",
@@ -117,7 +118,7 @@ class TestIntegrationWorkflows:
         else:
             raise Exception(f"User login failed: {response.status_code} - {response.text}")
 
-    def get_auth_headers(self, token: str) -> Dict[str, str]:
+    def get_auth_headers(self, token: str) -> dict[str, str]:
         """Get authentication headers for API requests"""
         return {"Authorization": f"Bearer {token}"}
     
@@ -207,7 +208,7 @@ class TestIntegrationWorkflows:
         login_data = response.json()
         assert "access_token" in login_data
         assert "token_type" in login_data
-        print(f"✅ Login successful: token received")
+        print("✅ Login successful: token received")
         
         return login_data["access_token"]
         
@@ -419,8 +420,8 @@ def test_task_1_1_4_integration_workflows():
     print()
     
     # Use pytest to run the test class properly
+
     import pytest
-    import sys
     
     # Run the test class using pytest
     exit_code = pytest.main([__file__ + "::TestIntegrationWorkflows", "-v", "-s"])

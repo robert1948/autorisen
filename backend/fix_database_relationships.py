@@ -9,19 +9,17 @@ Fixes database relationship issues identified in production logs:
 3. Add missing indexes for performance
 """
 
-import sys
 import os
-import asyncio
-from sqlalchemy import create_engine, text, MetaData, inspect
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
+import sys
+
+from sqlalchemy import inspect, text
 
 # Add backend to path
 sys.path.append(os.path.dirname(__file__))
 
 try:
     from app.database import DATABASE_URL, engine
-    from app.models import User, Conversation, ConversationMessage, UserProfile
+    from app.models import Conversation, ConversationMessage, User, UserProfile
     from app.models.audit_log import AuditLog
     print("✅ Successfully imported models")
 except ImportError as e:

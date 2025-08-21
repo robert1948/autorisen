@@ -1,14 +1,16 @@
 """Cape_ai Routes"""
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+
 from app.services.cape_ai_service import get_cape_ai_service
 
 router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
-    context: Optional[Dict[str, Any]] = None
+    context: dict[str, Any] | None = None
 
 class ChatResponse(BaseModel):
     response: str

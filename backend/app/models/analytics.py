@@ -2,11 +2,13 @@
 Analytics models for performance tracking and user behavior analysis.
 Created for Performance Analytics Dashboard implementation.
 """
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey, JSON
-from sqlalchemy.orm import relationship
-from app.database import Base
 import uuid
+from datetime import datetime
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+
+from app.database import Base
+
 
 class AnalyticsEvent(Base):
     """Track user events and system interactions"""

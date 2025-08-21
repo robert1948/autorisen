@@ -12,15 +12,13 @@ Service layer for the performance dashboard providing:
 """
 
 import asyncio
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from collections import defaultdict
-import json
+from typing import Any
 
-from app.middleware.monitoring import metrics_collector, health_check_detailed
-from app.services.error_tracker import get_error_tracker
+from app.middleware.monitoring import health_check_detailed, metrics_collector
 from app.services.audit_service import get_audit_logger
+from app.services.error_tracker import get_error_tracker
 
 
 @dataclass
@@ -30,10 +28,10 @@ class DashboardWidget:
     title: str
     type: str  # 'metric', 'chart', 'status', 'alert'
     value: Any
-    unit: Optional[str] = None
-    trend: Optional[str] = None  # 'up', 'down', 'stable'
-    status: Optional[str] = None  # 'healthy', 'warning', 'critical'
-    metadata: Dict[str, Any] = None
+    unit: str | None = None
+    trend: str | None = None  # 'up', 'down', 'stable'
+    status: str | None = None  # 'healthy', 'warning', 'critical'
+    metadata: dict[str, Any] = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -45,10 +43,10 @@ class DashboardData:
     """Complete dashboard data structure"""
     timestamp: str
     system_status: str
-    widgets: List[DashboardWidget]
-    alerts: List[Dict[str, Any]]
-    performance_summary: Dict[str, Any]
-    trends: Dict[str, Any]
+    widgets: list[DashboardWidget]
+    alerts: list[dict[str, Any]]
+    performance_summary: dict[str, Any]
+    trends: dict[str, Any]
 
 
 class DashboardService:
@@ -119,7 +117,7 @@ class DashboardService:
         
         return dashboard_data
     
-    async def get_real_time_dashboard(self) -> Dict[str, Any]:
+    async def get_real_time_dashboard(self) -> dict[str, Any]:
         """Get real-time dashboard data (minimal cache)"""
         cache_key = "real_time_dashboard"
         
@@ -158,7 +156,7 @@ class DashboardService:
         
         return real_time_data
     
-    async def get_performance_charts(self, hours: int = 24) -> Dict[str, Any]:
+    async def get_performance_charts(self, hours: int = 24) -> dict[str, Any]:
         """Get performance chart data for visualization"""
         cache_key = f"performance_charts_{hours}"
         
@@ -198,7 +196,7 @@ class DashboardService:
         
         return charts_data
     
-    async def get_endpoint_analytics(self) -> Dict[str, Any]:
+    async def get_endpoint_analytics(self) -> dict[str, Any]:
         """Get detailed endpoint performance analytics"""
         cache_key = "endpoint_analytics"
         
@@ -262,7 +260,7 @@ class DashboardService:
         
         return analytics
     
-    def _is_cached(self, key: str, ttl_seconds: Optional[int] = None) -> bool:
+    def _is_cached(self, key: str, ttl_seconds: int | None = None) -> bool:
         """Check if data is cached and still valid"""
         if key not in self._cache:
             return False
@@ -274,11 +272,11 @@ class DashboardService:
         
         return datetime.utcnow() < cache_time
     
-    async def _get_health_overview(self) -> Dict[str, Any]:
+    async def _get_health_overview(self) -> dict[str, Any]:
         """Get system health overview"""
         return await health_check_detailed()
     
-    async def _get_performance_overview(self, hours: int) -> Dict[str, Any]:
+    async def _get_performance_overview(self, hours: int) -> dict[str, Any]:
         """Get performance metrics overview"""
         stats = metrics_collector.get_statistics()
         
@@ -290,7 +288,7 @@ class DashboardService:
             "requests_per_hour": stats.get("request_count", 0) / max(hours, 1)
         }
     
-    async def _get_error_overview(self, hours: int) -> Dict[str, Any]:
+    async def _get_error_overview(self, hours: int) -> dict[str, Any]:
         """Get error tracking overview"""
         try:
             error_stats = self.error_tracker.get_error_statistics(hours=hours)
@@ -298,7 +296,7 @@ class DashboardService:
         except Exception:
             return {}
     
-    async def _get_system_overview(self) -> Dict[str, Any]:
+    async def _get_system_overview(self) -> dict[str, Any]:
         """Get system metrics overview"""
         try:
             import psutil
@@ -316,7 +314,7 @@ class DashboardService:
         except Exception:
             return {}
     
-    def _create_system_widgets(self, system_data: Dict[str, Any]) -> List[DashboardWidget]:
+    def _create_system_widgets(self, system_data: dict[str, Any]) -> list[DashboardWidget]:
         """Create system monitoring widgets"""
         widgets = []
         
@@ -364,7 +362,7 @@ class DashboardService:
         
         return widgets
     
-    def _create_performance_widgets(self, performance_data: Dict[str, Any]) -> List[DashboardWidget]:
+    def _create_performance_widgets(self, performance_data: dict[str, Any]) -> list[DashboardWidget]:
         """Create performance monitoring widgets"""
         widgets = []
         
@@ -412,7 +410,7 @@ class DashboardService:
         
         return widgets
     
-    def _create_error_widgets(self, error_data: Dict[str, Any]) -> List[DashboardWidget]:
+    def _create_error_widgets(self, error_data: dict[str, Any]) -> list[DashboardWidget]:
         """Create error tracking widgets"""
         widgets = []
         
@@ -432,7 +430,7 @@ class DashboardService:
         
         return widgets
     
-    def _create_health_widgets(self, health_data: Dict[str, Any]) -> List[DashboardWidget]:
+    def _create_health_widgets(self, health_data: dict[str, Any]) -> list[DashboardWidget]:
         """Create health monitoring widgets"""
         widgets = []
         
@@ -449,7 +447,7 @@ class DashboardService:
         
         return widgets
     
-    async def _get_dashboard_alerts(self) -> List[Dict[str, Any]]:
+    async def _get_dashboard_alerts(self) -> list[dict[str, Any]]:
         """Get active alerts for dashboard"""
         alerts = []
         
@@ -507,7 +505,7 @@ class DashboardService:
         
         return alerts
     
-    def _create_performance_summary(self, performance_data: Dict[str, Any], error_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_performance_summary(self, performance_data: dict[str, Any], error_data: dict[str, Any]) -> dict[str, Any]:
         """Create performance summary for dashboard"""
         return {
             "overall_health": "good" if performance_data.get("error_rate", 0) < 1 else "fair",
@@ -520,7 +518,7 @@ class DashboardService:
             "recommendations": self._generate_recommendations(performance_data, error_data)
         }
     
-    def _generate_recommendations(self, performance_data: Dict[str, Any], error_data: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, performance_data: dict[str, Any], error_data: dict[str, Any]) -> list[str]:
         """Generate performance recommendations"""
         recommendations = []
         
@@ -538,7 +536,7 @@ class DashboardService:
         
         return recommendations
     
-    async def _calculate_trends(self, hours: int) -> Dict[str, Any]:
+    async def _calculate_trends(self, hours: int) -> dict[str, Any]:
         """Calculate performance trends"""
         # This would analyze historical data to determine trends
         # For now, return placeholder trends
@@ -578,7 +576,7 @@ class DashboardService:
         
         return float(recent_count)
     
-    def _aggregate_metrics_by_time(self, metrics: List[Dict], time_buckets: List[datetime]) -> List[float]:
+    def _aggregate_metrics_by_time(self, metrics: list[dict], time_buckets: list[datetime]) -> list[float]:
         """Aggregate metrics data by time buckets"""
         if not metrics:
             return [0.0] * len(time_buckets)
@@ -600,7 +598,7 @@ class DashboardService:
         
         return aggregated
     
-    def _get_response_time_chart_data(self, time_buckets: List[datetime]) -> List[float]:
+    def _get_response_time_chart_data(self, time_buckets: list[datetime]) -> list[float]:
         """Get response time chart data"""
         # This would aggregate response time data from metrics
         # For now, return placeholder data

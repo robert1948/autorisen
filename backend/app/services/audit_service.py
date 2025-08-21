@@ -10,19 +10,16 @@ Comprehensive audit logging service that provides:
 - User activity tracking
 """
 
-import json
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, or_, func
-from fastapi import Request
-import hashlib
 import re
-from user_agents import parse
+from datetime import datetime, timedelta
+from typing import Any
 
-from app.models.audit_log import AuditLog, AuditEventType, AuditLogLevel
-from app.database import get_db
+from fastapi import Request
+from sqlalchemy import and_, desc, func
+from sqlalchemy.orm import Session
+
+from app.models.audit_log import AuditEventType, AuditLog, AuditLogLevel
 
 
 class AuditLogger:
@@ -62,14 +59,14 @@ class AuditLogger:
                   db: Session,
                   event_type: AuditEventType,
                   event_category: str,
-                  request: Optional[Request] = None,
-                  user_id: Optional[str] = None,
-                  user_email: Optional[str] = None,
-                  user_role: Optional[str] = None,
-                  event_description: Optional[str] = None,
+                  request: Request | None = None,
+                  user_id: str | None = None,
+                  user_email: str | None = None,
+                  user_role: str | None = None,
+                  event_description: str | None = None,
                   success: bool = True,
-                  error_message: Optional[str] = None,
-                  metadata: Optional[Dict[str, Any]] = None,
+                  error_message: str | None = None,
+                  metadata: dict[str, Any] | None = None,
                   event_level: AuditLogLevel = AuditLogLevel.INFO,
                   **kwargs) -> AuditLog:
         """
@@ -150,12 +147,12 @@ class AuditLogger:
                                 db: Session,
                                 event_type: AuditEventType,
                                 request: Request,
-                                user_id: Optional[str] = None,
-                                user_email: Optional[str] = None,
-                                user_role: Optional[str] = None,
+                                user_id: str | None = None,
+                                user_email: str | None = None,
+                                user_role: str | None = None,
                                 success: bool = True,
-                                error_message: Optional[str] = None,
-                                additional_data: Optional[Dict[str, Any]] = None) -> AuditLog:
+                                error_message: str | None = None,
+                                additional_data: dict[str, Any] | None = None) -> AuditLog:
         """
         Log authentication-related events
         """
@@ -184,9 +181,9 @@ class AuditLogger:
                           event_type: AuditEventType,
                           request: Request,
                           event_description: str,
-                          threat_indicators: Optional[List[str]] = None,
-                          user_id: Optional[str] = None,
-                          additional_data: Optional[Dict[str, Any]] = None) -> AuditLog:
+                          threat_indicators: list[str] | None = None,
+                          user_id: str | None = None,
+                          additional_data: dict[str, Any] | None = None) -> AuditLog:
         """
         Log security-related events with enhanced context
         """
@@ -215,10 +212,10 @@ class AuditLogger:
                     request: Request,
                     user_id: str,
                     user_email: str,
-                    prompt_data: Optional[Dict[str, Any]] = None,
-                    response_data: Optional[Dict[str, Any]] = None,
+                    prompt_data: dict[str, Any] | None = None,
+                    response_data: dict[str, Any] | None = None,
                     moderation_applied: bool = False,
-                    processing_time_ms: Optional[int] = None) -> AuditLog:
+                    processing_time_ms: int | None = None) -> AuditLog:
         """
         Log AI service events with detailed context
         """
@@ -248,7 +245,7 @@ class AuditLogger:
                          request: Request,
                          user_id: str,
                          user_email: str,
-                         changes_made: Optional[Dict[str, Any]] = None,
+                         changes_made: dict[str, Any] | None = None,
                          data_sensitivity: str = "internal") -> AuditLog:
         """
         Log profile and account-related events
@@ -274,7 +271,7 @@ class AuditLogger:
                          db: Session,
                          user_id: str,
                          days: int = 30,
-                         event_categories: Optional[List[str]] = None) -> List[AuditLog]:
+                         event_categories: list[str] | None = None) -> list[AuditLog]:
         """
         Get user activity logs for a specific time period
         """
@@ -295,7 +292,7 @@ class AuditLogger:
     def get_security_events(self,
                            db: Session,
                            hours: int = 24,
-                           severity_level: Optional[AuditLogLevel] = None) -> List[AuditLog]:
+                           severity_level: AuditLogLevel | None = None) -> list[AuditLog]:
         """
         Get recent security events for monitoring
         """
@@ -316,7 +313,7 @@ class AuditLogger:
     def get_failed_authentication_attempts(self,
                                          db: Session,
                                          hours: int = 1,
-                                         ip_address: Optional[str] = None) -> List[AuditLog]:
+                                         ip_address: str | None = None) -> list[AuditLog]:
         """
         Get failed authentication attempts for brute force detection
         """
@@ -333,7 +330,7 @@ class AuditLogger:
         
         return db.query(AuditLog).filter(and_(*filters)).all()
     
-    def get_audit_statistics(self, db: Session, days: int = 7) -> Dict[str, Any]:
+    def get_audit_statistics(self, db: Session, days: int = 7) -> dict[str, Any]:
         """
         Get audit statistics for dashboard and monitoring
         """
@@ -410,10 +407,10 @@ class AuditLogger:
     def _calculate_risk_score(self,
                              event_type: AuditEventType,
                              success: bool,
-                             ip_address: Optional[str] = None,
-                             user_agent: Optional[str] = None,
-                             endpoint: Optional[str] = None,
-                             metadata: Optional[Dict[str, Any]] = None) -> int:
+                             ip_address: str | None = None,
+                             user_agent: str | None = None,
+                             endpoint: str | None = None,
+                             metadata: dict[str, Any] | None = None) -> int:
         """
         Calculate risk score for the event (0-100)
         """
@@ -465,7 +462,7 @@ class AuditLogger:
                         event_type: AuditEventType,
                         component: str,
                         status: str,
-                        metadata: Optional[Dict[str, Any]] = None,
+                        metadata: dict[str, Any] | None = None,
                         event_level: AuditLogLevel = AuditLogLevel.INFO) -> AuditLog:
         """
         Log system-level events (alerts, configuration changes, etc.)

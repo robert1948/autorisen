@@ -7,8 +7,8 @@ Supports environment-specific configurations and feature toggles.
 """
 
 import os
-from typing import Dict, Any, List
-from enum import Enum
+from typing import Any
+
 
 class ContentModerationConfig:
     """Configuration settings for content moderation system"""
@@ -50,7 +50,7 @@ class ContentModerationConfig:
     MAX_MODERATIONS_PER_HOUR: int = int(os.getenv("MAX_MODERATIONS_PER_HOUR", "1000"))
     
     @classmethod
-    def get_environment_config(cls) -> Dict[str, Any]:
+    def get_environment_config(cls) -> dict[str, Any]:
         """Get environment-specific configuration"""
         environment = os.getenv("ENVIRONMENT", "development").lower()
         
@@ -83,7 +83,7 @@ class ContentModerationConfig:
         return configs.get(environment, configs["development"])
     
     @classmethod
-    def get_endpoint_configs(cls) -> Dict[str, Dict[str, Any]]:
+    def get_endpoint_configs(cls) -> dict[str, dict[str, Any]]:
         """Get endpoint-specific moderation configurations"""
         base_config = cls.get_environment_config()
         
@@ -144,7 +144,7 @@ class ContentModerationConfig:
         }
     
     @classmethod
-    def get_violation_rules(cls) -> Dict[str, Any]:
+    def get_violation_rules(cls) -> dict[str, Any]:
         """Get violation-specific rules and actions"""
         return {
             "hate_speech": {
@@ -226,7 +226,7 @@ class ContentModerationConfig:
         }
     
     @classmethod
-    def get_disclaimer_templates(cls) -> Dict[str, str]:
+    def get_disclaimer_templates(cls) -> dict[str, str]:
         """Get disclaimer templates for different content types"""
         return {
             "medical": (
@@ -262,7 +262,7 @@ class ContentModerationConfig:
         }
     
     @classmethod
-    def validate_config(cls) -> Dict[str, Any]:
+    def validate_config(cls) -> dict[str, Any]:
         """Validate current configuration and return status"""
         issues = []
         warnings = []

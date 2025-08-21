@@ -7,8 +7,10 @@ This script updates the users_v2 table role constraint to accept uppercase enum 
 """
 
 import os
-import psycopg2
 from urllib.parse import urlparse
+
+import psycopg2
+
 
 def fix_enum_constraint():
     """Update the role check constraint to use uppercase values"""

@@ -5,11 +5,9 @@ Professional error monitoring and alerting system
 
 import logging
 import traceback
-from typing import Dict, Any, Optional, List
 from datetime import datetime
 from enum import Enum
-import json
-import os
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +42,8 @@ class ErrorTracker:
         error: Exception, 
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         category: ErrorCategory = ErrorCategory.UNKNOWN,
-        context: Optional[Dict[str, Any]] = None,
-        user_id: Optional[str] = None
+        context: dict[str, Any] | None = None,
+        user_id: str | None = None
     ) -> str:
         """Track an error with full context"""
         try:
@@ -86,7 +84,7 @@ class ErrorTracker:
             logger.error(f"Failed to track error: {e}")
             return "error_tracking_failed"
     
-    def get_error_stats(self) -> Dict[str, Any]:
+    def get_error_stats(self) -> dict[str, Any]:
         """Get error statistics"""
         return {
             "total_errors": len(self.errors),
@@ -95,7 +93,7 @@ class ErrorTracker:
             "is_enabled": self.is_enabled
         }
     
-    def get_errors_by_severity(self, severity: ErrorSeverity) -> List[Dict[str, Any]]:
+    def get_errors_by_severity(self, severity: ErrorSeverity) -> list[dict[str, Any]]:
         """Get errors by severity level"""
         return [error for error in self.errors if error.get("severity") == severity.value]
     
@@ -121,27 +119,27 @@ def track_error(
     error: Exception,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     category: ErrorCategory = ErrorCategory.UNKNOWN,
-    context: Optional[Dict[str, Any]] = None,
-    user_id: Optional[str] = None
+    context: dict[str, Any] | None = None,
+    user_id: str | None = None
 ) -> str:
     """Convenience function to track an error"""
     return get_error_tracker().track_error(error, severity, category, context, user_id)
 
-def get_error_stats() -> Dict[str, Any]:
+def get_error_stats() -> dict[str, Any]:
     """Convenience function to get error statistics"""
     return get_error_tracker().get_error_stats()
 
 # Additional utility functions
-def handle_api_error(error: Exception, endpoint: str, user_id: Optional[str] = None) -> str:
+def handle_api_error(error: Exception, endpoint: str, user_id: str | None = None) -> str:
     """Handle API-specific errors"""
     context = {"endpoint": endpoint, "error_source": "api"}
     return track_error(error, ErrorSeverity.HIGH, ErrorCategory.SYSTEM, context, user_id)
 
-def handle_auth_error(error: Exception, user_id: Optional[str] = None) -> str:
+def handle_auth_error(error: Exception, user_id: str | None = None) -> str:
     """Handle authentication-specific errors"""
     return track_error(error, ErrorSeverity.HIGH, ErrorCategory.AUTHENTICATION, user_id=user_id)
 
-def handle_db_error(error: Exception, operation: str, user_id: Optional[str] = None) -> str:
+def handle_db_error(error: Exception, operation: str, user_id: str | None = None) -> str:
     """Handle database-specific errors"""
     context = {"operation": operation, "error_source": "database"}
     return track_error(error, ErrorSeverity.CRITICAL, ErrorCategory.DATABASE, context, user_id)

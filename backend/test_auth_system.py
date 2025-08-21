@@ -10,11 +10,9 @@ Comprehensive testing for the CapeControl authentication system including:
 """
 
 import asyncio
-import httpx
-import json
-import pytest
-from datetime import datetime, timedelta
 import logging
+
+import httpx
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

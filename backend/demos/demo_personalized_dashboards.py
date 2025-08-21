@@ -6,10 +6,10 @@ Demonstrates intelligent, context-aware user interfaces with role-specific custo
 
 import asyncio
 import json
+import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
-import logging
+from typing import Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,15 +18,18 @@ logger = logging.getLogger(__name__)
 # Import the personalized dashboard service
 try:
     from app.services.personalized_dashboards import (
-        DashboardManager, DashboardRole, WidgetType, WidgetSize,
-        LayoutType, dashboard_manager
+        DashboardManager,
+        DashboardRole,
+        LayoutType,
+        WidgetSize,
+        WidgetType,
+        dashboard_manager,
     )
     print("✅ Successfully imported personalized dashboard service")
 except ImportError as e:
     print(f"❌ Import error: {e}")
     # Create mock classes for demo purposes
     from enum import Enum
-    from dataclasses import dataclass
     
     class DashboardRole(Enum):
         DEVELOPER = "developer"
@@ -140,7 +143,7 @@ class PersonalizedDashboardValidator:
             ]
         }
     
-    async def run_validation(self) -> Dict[str, Any]:
+    async def run_validation(self) -> dict[str, Any]:
         """Run comprehensive validation of personalized dashboards"""
         print("\n🚀 Starting Task 2.2.4 Personalized Dashboards Validation")
         print("=" * 70)
@@ -195,7 +198,7 @@ class PersonalizedDashboardValidator:
         
         return validation_results
     
-    async def _test_role_based_creation(self, results: Dict[str, Any]):
+    async def _test_role_based_creation(self, results: dict[str, Any]):
         """Test dashboard creation for different user roles"""
         test_start = time.time()
         
@@ -256,7 +259,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _test_personalization_engine(self, results: Dict[str, Any]):
+    async def _test_personalization_engine(self, results: dict[str, Any]):
         """Test dashboard personalization capabilities"""
         test_start = time.time()
         
@@ -329,7 +332,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _test_adaptive_behavior(self, results: Dict[str, Any]):
+    async def _test_adaptive_behavior(self, results: dict[str, Any]):
         """Test dashboard adaptation to user behavior"""
         test_start = time.time()
         
@@ -378,7 +381,7 @@ class PersonalizedDashboardValidator:
                 results['tests'].append({
                     'test_name': 'Adaptive Dashboard Behavior',
                     'status': 'passed',
-                    'details': f'Dashboard adapted based on usage patterns',
+                    'details': 'Dashboard adapted based on usage patterns',
                     'execution_time': time.time() - test_start,
                     'initial_widgets': initial_widgets,
                     'adapted_widgets': adapted_widgets,
@@ -395,7 +398,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _test_widget_management(self, results: Dict[str, Any]):
+    async def _test_widget_management(self, results: dict[str, Any]):
         """Test dynamic widget management"""
         test_start = time.time()
         
@@ -439,7 +442,7 @@ class PersonalizedDashboardValidator:
             analytics = await dashboard_manager.get_dashboard_analytics(dashboard.dashboard_id)
             
             if analytics:
-                print(f"    📊 Dashboard analytics available")
+                print("    📊 Dashboard analytics available")
                 print(f"      - Total interactions tracked: {analytics.get('usage_analytics', {}).get('total_interactions', 0)}")
                 print(f"      - Widget count: {analytics.get('dashboard_info', {}).get('widget_count', 0)}")
             
@@ -462,7 +465,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _test_performance_optimization(self, results: Dict[str, Any]):
+    async def _test_performance_optimization(self, results: dict[str, Any]):
         """Test dashboard performance optimization"""
         test_start = time.time()
         
@@ -509,8 +512,9 @@ class PersonalizedDashboardValidator:
             print(f"    📊 Max creation time: {max_create_time:.3f}s")
             
             # Test memory efficiency
-            import psutil
             import os
+
+            import psutil
             
             process = psutil.Process(os.getpid())
             memory_usage = process.memory_info().rss / 1024 / 1024  # MB
@@ -551,7 +555,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _test_dashboard_analytics(self, results: Dict[str, Any]):
+    async def _test_dashboard_analytics(self, results: dict[str, Any]):
         """Test dashboard analytics and insights"""
         test_start = time.time()
         
@@ -584,7 +588,7 @@ class PersonalizedDashboardValidator:
                 usage_analytics = analytics.get('usage_analytics', {})
                 personalization_metrics = analytics.get('personalization_metrics', {})
                 
-                print(f"    📊 Dashboard Analytics:")
+                print("    📊 Dashboard Analytics:")
                 print(f"      - Role: {dashboard_info.get('role', 'unknown')}")
                 print(f"      - Widget Count: {dashboard_info.get('widget_count', 0)}")
                 print(f"      - Personalization Level: {dashboard_info.get('personalization_level', 0):.2f}")
@@ -612,7 +616,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _test_import_export(self, results: Dict[str, Any]):
+    async def _test_import_export(self, results: dict[str, Any]):
         """Test dashboard import/export functionality"""
         test_start = time.time()
         
@@ -643,7 +647,7 @@ class PersonalizedDashboardValidator:
             if not export_data:
                 raise Exception("Dashboard export failed")
             
-            print(f"    📤 Dashboard exported successfully")
+            print("    📤 Dashboard exported successfully")
             print(f"      - Export size: {len(json.dumps(export_data))} bytes")
             print(f"      - Export timestamp: {export_data.get('export_timestamp', 'unknown')}")
             
@@ -692,7 +696,7 @@ class PersonalizedDashboardValidator:
                 'execution_time': time.time() - test_start
             })
     
-    async def _validate_role_characteristics(self, dashboards: Dict[str, Any]):
+    async def _validate_role_characteristics(self, dashboards: dict[str, Any]):
         """Validate role-specific dashboard characteristics"""
         for role_name, dashboard in dashboards.items():
             layout = dashboard.layouts[0]
@@ -702,15 +706,15 @@ class PersonalizedDashboardValidator:
             
             if role_name == 'developer':
                 assert 'project_status' in widget_types or 'system_status' in widget_types
-                print(f"      ✅ Developer dashboard has development-focused widgets")
+                print("      ✅ Developer dashboard has development-focused widgets")
             elif role_name == 'business_user':
                 assert 'analytics_chart' in widget_types or 'tasks' in widget_types  
-                print(f"      ✅ Business dashboard has business-focused widgets")
+                print("      ✅ Business dashboard has business-focused widgets")
             elif role_name == 'analyst':
                 assert 'analytics_chart' in widget_types
-                print(f"      ✅ Analyst dashboard has analytics-focused widgets")
+                print("      ✅ Analyst dashboard has analytics-focused widgets")
     
-    async def _analyze_role_differences(self, dashboards: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_role_differences(self, dashboards: dict[str, Any]) -> dict[str, Any]:
         """Analyze differences between role-based dashboards"""
         analysis = {}
         
@@ -726,7 +730,7 @@ class PersonalizedDashboardValidator:
         
         return analysis
     
-    async def _calculate_personalization_accuracy(self, tests: List[Dict[str, Any]]) -> float:
+    async def _calculate_personalization_accuracy(self, tests: list[dict[str, Any]]) -> float:
         """Calculate personalization accuracy score"""
         if not tests:
             return 0.0
@@ -744,7 +748,7 @@ class PersonalizedDashboardValidator:
         
         return accuracy_score
     
-    async def _assess_analytics_quality(self, analytics: Dict[str, Any]) -> float:
+    async def _assess_analytics_quality(self, analytics: dict[str, Any]) -> float:
         """Assess quality of analytics data"""
         quality_score = 0.0
         
@@ -763,7 +767,7 @@ class PersonalizedDashboardValidator:
         
         return quality_score
     
-    async def _calculate_summary_metrics(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _calculate_summary_metrics(self, results: dict[str, Any]) -> dict[str, Any]:
         """Calculate overall validation summary"""
         tests = results.get('tests', [])
         
@@ -829,7 +833,7 @@ async def main():
         print(f"🏆 Status: {summary.get('validation_status', 'UNKNOWN')}")
         
         # Detailed test results
-        print(f"\n📋 DETAILED TEST RESULTS:")
+        print("\n📋 DETAILED TEST RESULTS:")
         print("-" * 50)
         
         for test in results.get('tests', []):
@@ -865,7 +869,7 @@ async def main():
         print("✅ Multi-theme support with role-appropriate styling")
         print("✅ Responsive layout system for different screen sizes")
         
-        print(f"\n🎉 Task 2.2.4 Personalized Dashboards validation completed!")
+        print("\n🎉 Task 2.2.4 Personalized Dashboards validation completed!")
         print(f"Overall Status: {summary.get('validation_status', 'UNKNOWN')}")
         
         return results

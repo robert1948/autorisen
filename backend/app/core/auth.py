@@ -4,11 +4,13 @@ Centralized authentication and authorization utilities
 """
 
 import logging
-from typing import Optional, Dict, Any
-from fastapi import HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
 from datetime import datetime, timedelta
+from typing import Any
+
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -37,7 +39,7 @@ class AuthorizationError(HTTPException):
             detail=detail,
         )
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """Create JWT access token"""
     try:
         to_encode = data.copy()
@@ -53,7 +55,7 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         logger.error(f"Token creation error: {e}")
         raise AuthenticationError("Failed to create access token")
 
-def verify_token(token: str) -> Dict[str, Any]:
+def verify_token(token: str) -> dict[str, Any]:
     """Verify JWT token and return payload"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -67,7 +69,7 @@ def verify_token(token: str) -> Dict[str, Any]:
         logger.error(f"JWT verification error: {e}")
         raise AuthenticationError("Invalid token")
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict[str, Any]:
     """
     Get current user from JWT token
     This is the main function that routes are importing
@@ -100,7 +102,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         logger.error(f"Authentication error: {e}")
         raise AuthenticationError("Authentication failed")
 
-async def get_current_active_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_current_active_user(current_user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:
     """Get current active user (extends get_current_user)"""
     if not current_user.get("is_active", False):
         raise AuthenticationError("User account is inactive")
@@ -108,7 +110,7 @@ async def get_current_active_user(current_user: Dict[str, Any] = Depends(get_cur
 
 async def require_role(required_role: str):
     """Dependency to require specific role"""
-    async def role_checker(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    async def role_checker(current_user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:
         user_role = current_user.get("role", "user")
         if user_role != required_role and user_role != "admin":  # Admin can access everything
             raise AuthorizationError(f"Role '{required_role}' required")
@@ -117,7 +119,7 @@ async def require_role(required_role: str):
 
 async def require_permission(required_permission: str):
     """Dependency to require specific permission"""
-    async def permission_checker(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    async def permission_checker(current_user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:
         permissions = current_user.get("permissions", [])
         if required_permission not in permissions and "admin" not in permissions:
             raise AuthorizationError(f"Permission '{required_permission}' required")

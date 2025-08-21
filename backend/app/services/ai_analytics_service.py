@@ -13,21 +13,17 @@ Comprehensive AI analytics and quality metrics tracking system:
 - A/B testing for AI configurations
 """
 
-import logging
 import asyncio
-import json
-from typing import Dict, List, Optional, Any, Tuple, Union
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
+import logging
 import statistics
-import hashlib
 from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
 
 # Import services for data collection
 from app.services.conversation_context_service import get_context_service
-from app.services.ai_personalization_service import get_personalization_service
-from app.services.advanced_prompting_service import get_prompting_service
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +68,8 @@ class AnalyticsPeriod(str, Enum):
 class QualityScore:
     """AI response quality scoring"""
     overall_score: float  # 0-1
-    dimension_scores: Dict[QualityDimension, float]
-    factors: Dict[str, Any]
+    dimension_scores: dict[QualityDimension, float]
+    factors: dict[str, Any]
     calculated_at: datetime
     evaluation_method: str
 
@@ -89,19 +85,19 @@ class ResponseAnalytics:
     timestamp: datetime
     
     # Quality metrics
-    quality_score: Optional[QualityScore]
-    user_rating: Optional[float]  # 1-5 stars
-    user_feedback: Optional[str]
+    quality_score: QualityScore | None
+    user_rating: float | None  # 1-5 stars
+    user_feedback: str | None
     
     # Performance metrics
     response_time_ms: int
-    tokens_used: Dict[str, int]  # input/output tokens
+    tokens_used: dict[str, int]  # input/output tokens
     cost_estimate: float
     
     # Context metrics
     conversation_turn: int
     personalization_applied: bool
-    template_used: Optional[str]
+    template_used: str | None
     
     # Engagement metrics
     follow_up_generated: bool
@@ -115,7 +111,7 @@ class ConversationAnalytics:
     conversation_id: str
     user_id: str
     start_time: datetime
-    end_time: Optional[datetime]
+    end_time: datetime | None
     
     # Conversation metrics
     total_turns: int
@@ -125,12 +121,12 @@ class ConversationAnalytics:
     
     # Quality metrics
     avg_quality_score: float
-    user_satisfaction_rating: Optional[float]
-    goal_achieved: Optional[bool]
+    user_satisfaction_rating: float | None
+    goal_achieved: bool | None
     
     # Engagement metrics
     conversation_length_minutes: float
-    user_dropout_point: Optional[int]
+    user_dropout_point: int | None
     successful_completion: bool
 
 
@@ -167,9 +163,9 @@ class AIAnalyticsService:
     """Comprehensive AI analytics and quality metrics service"""
     
     def __init__(self):
-        self.response_analytics: Dict[str, ResponseAnalytics] = {}
-        self.conversation_analytics: Dict[str, ConversationAnalytics] = {}
-        self.model_performance: Dict[str, ModelPerformanceMetrics] = {}
+        self.response_analytics: dict[str, ResponseAnalytics] = {}
+        self.conversation_analytics: dict[str, ConversationAnalytics] = {}
+        self.model_performance: dict[str, ModelPerformanceMetrics] = {}
         self.quality_evaluators = []
         
         # Initialize analytics collectors
@@ -202,11 +198,11 @@ class AIAnalyticsService:
         response_content: str,
         prompt_content: str,
         response_time_ms: int,
-        tokens_used: Dict[str, int],
+        tokens_used: dict[str, int],
         cost_estimate: float,
         conversation_turn: int,
         personalization_applied: bool = False,
-        template_used: Optional[str] = None
+        template_used: str | None = None
     ) -> ResponseAnalytics:
         """Record analytics for an AI response"""
         
@@ -309,7 +305,7 @@ class AIAnalyticsService:
                 evaluation_method="fallback"
             )
     
-    async def _evaluate_relevance(self, response: str, prompt: str, context: Dict) -> Tuple[QualityDimension, float, Dict]:
+    async def _evaluate_relevance(self, response: str, prompt: str, context: dict) -> tuple[QualityDimension, float, dict]:
         """Evaluate response relevance to user query"""
         
         # Simple keyword matching for relevance
@@ -334,7 +330,7 @@ class AIAnalyticsService:
         
         return QualityDimension.RELEVANCE, relevance_score, factors
     
-    async def _evaluate_accuracy(self, response: str, prompt: str, context: Dict) -> Tuple[QualityDimension, float, Dict]:
+    async def _evaluate_accuracy(self, response: str, prompt: str, context: dict) -> tuple[QualityDimension, float, dict]:
         """Evaluate response accuracy (simplified heuristic-based)"""
         
         # Heuristic accuracy evaluation
@@ -364,7 +360,7 @@ class AIAnalyticsService:
         
         return QualityDimension.ACCURACY, accuracy_score, factors
     
-    async def _evaluate_completeness(self, response: str, prompt: str, context: Dict) -> Tuple[QualityDimension, float, Dict]:
+    async def _evaluate_completeness(self, response: str, prompt: str, context: dict) -> tuple[QualityDimension, float, dict]:
         """Evaluate response completeness"""
         
         # Basic completeness evaluation
@@ -395,7 +391,7 @@ class AIAnalyticsService:
         
         return QualityDimension.COMPLETENESS, completeness_score, factors
     
-    async def _evaluate_clarity(self, response: str, prompt: str, context: Dict) -> Tuple[QualityDimension, float, Dict]:
+    async def _evaluate_clarity(self, response: str, prompt: str, context: dict) -> tuple[QualityDimension, float, dict]:
         """Evaluate response clarity and readability"""
         
         # Simple clarity evaluation
@@ -426,7 +422,7 @@ class AIAnalyticsService:
         
         return QualityDimension.CLARITY, clarity_score, factors
     
-    async def _evaluate_helpfulness(self, response: str, prompt: str, context: Dict) -> Tuple[QualityDimension, float, Dict]:
+    async def _evaluate_helpfulness(self, response: str, prompt: str, context: dict) -> tuple[QualityDimension, float, dict]:
         """Evaluate response helpfulness"""
         
         # Basic helpfulness evaluation
@@ -546,8 +542,8 @@ class AIAnalyticsService:
     async def record_user_feedback(
         self, 
         response_id: str, 
-        user_rating: Optional[float], 
-        feedback: Optional[str]
+        user_rating: float | None, 
+        feedback: str | None
     ):
         """Record user feedback for a response"""
         
@@ -563,8 +559,8 @@ class AIAnalyticsService:
     async def get_analytics_dashboard(
         self,
         period: AnalyticsPeriod,
-        user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        user_id: str | None = None
+    ) -> dict[str, Any]:
         """Generate comprehensive analytics dashboard data"""
         
         try:
@@ -631,7 +627,7 @@ class AIAnalyticsService:
             logger.error(f"Failed to generate analytics dashboard: {e}")
             return self._empty_dashboard()
     
-    async def _calculate_overview_metrics(self, responses: List[ResponseAnalytics]) -> Dict[str, Any]:
+    async def _calculate_overview_metrics(self, responses: list[ResponseAnalytics]) -> dict[str, Any]:
         """Calculate overview metrics"""
         
         total_responses = len(responses)
@@ -654,7 +650,7 @@ class AIAnalyticsService:
             "response_rate": len(user_ratings) / max(total_responses, 1)
         }
     
-    async def _calculate_quality_metrics(self, responses: List[ResponseAnalytics]) -> Dict[str, Any]:
+    async def _calculate_quality_metrics(self, responses: list[ResponseAnalytics]) -> dict[str, Any]:
         """Calculate quality metrics breakdown"""
         
         quality_responses = [r for r in responses if r.quality_score]
@@ -687,7 +683,7 @@ class AIAnalyticsService:
             "quality_distribution": quality_distribution
         }
     
-    async def _calculate_performance_metrics(self, responses: List[ResponseAnalytics]) -> Dict[str, Any]:
+    async def _calculate_performance_metrics(self, responses: list[ResponseAnalytics]) -> dict[str, Any]:
         """Calculate performance metrics"""
         
         response_times = [r.response_time_ms for r in responses]
@@ -700,7 +696,7 @@ class AIAnalyticsService:
             "slow_responses": len([t for t in response_times if t > 5000])   # Over 5 seconds
         }
     
-    async def _calculate_usage_metrics(self, responses: List[ResponseAnalytics]) -> Dict[str, Any]:
+    async def _calculate_usage_metrics(self, responses: list[ResponseAnalytics]) -> dict[str, Any]:
         """Calculate usage metrics"""
         
         # Provider distribution
@@ -729,7 +725,7 @@ class AIAnalyticsService:
             "personalization_rate": personalized_count / max(len(responses), 1)
         }
     
-    async def _calculate_cost_metrics(self, responses: List[ResponseAnalytics]) -> Dict[str, Any]:
+    async def _calculate_cost_metrics(self, responses: list[ResponseAnalytics]) -> dict[str, Any]:
         """Calculate cost metrics"""
         
         total_cost = sum(r.cost_estimate for r in responses)
@@ -742,7 +738,7 @@ class AIAnalyticsService:
             "avg_cost_per_token": round(total_cost / max(total_tokens, 1), 6)
         }
     
-    async def _get_model_comparison(self, responses: List[ResponseAnalytics]) -> List[Dict[str, Any]]:
+    async def _get_model_comparison(self, responses: list[ResponseAnalytics]) -> list[dict[str, Any]]:
         """Get model performance comparison"""
         
         model_stats = defaultdict(lambda: {
@@ -778,7 +774,7 @@ class AIAnalyticsService:
         
         return sorted(comparison, key=lambda x: x["avg_quality_score"], reverse=True)
     
-    async def _calculate_trend_data(self, responses: List[ResponseAnalytics], period: AnalyticsPeriod) -> Dict[str, List]:
+    async def _calculate_trend_data(self, responses: list[ResponseAnalytics], period: AnalyticsPeriod) -> dict[str, list]:
         """Calculate trend data over time"""
         
         # Group responses by time intervals
@@ -824,7 +820,7 @@ class AIAnalyticsService:
             "response_time_trend": response_time_trend
         }
     
-    def _empty_dashboard(self) -> Dict[str, Any]:
+    def _empty_dashboard(self) -> dict[str, Any]:
         """Return empty dashboard structure"""
         return {
             "period": "day",

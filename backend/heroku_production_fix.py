@@ -11,7 +11,7 @@ Fixes for production Heroku deployment issues:
 
 import os
 import sys
-from typing import Optional
+
 
 def fix_model_imports():
     """Fix model import issues for production"""

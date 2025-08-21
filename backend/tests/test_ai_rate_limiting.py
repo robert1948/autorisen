@@ -6,18 +6,14 @@ Comprehensive tests for the AI rate limiting functionality
 """
 
 import asyncio
+
 import pytest
-import time
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
 
 from app.services.ai_rate_limit_service import (
     AIRateLimitService,
-    RateLimit,
-    RateLimitType,
-    RateLimitResult,
-    check_ai_rate_limit
+    check_ai_rate_limit,
 )
+
 
 class TestAIRateLimitService:
     """Test the AI rate limiting service"""

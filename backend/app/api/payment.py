@@ -3,19 +3,18 @@ Payment API endpoints for Cape Control
 Handles subscription, credit purchase, and payment management
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, List
-import logging
-import json
+from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.routes.auth_enhanced import get_current_user
 from app.models import User
+from app.models.payment import CREDIT_PACKS, SUBSCRIPTION_TIERS
+from app.routes.auth_enhanced import get_current_user
 from app.services.stripe_service import StripeService, WebhookService
-from app.models.payment import SUBSCRIPTION_TIERS, CREDIT_PACKS
 
 router = APIRouter(prefix="/api/payment", tags=["Payment"])
 logger = logging.getLogger(__name__)
@@ -27,9 +26,9 @@ class SubscriptionRequest(BaseModel):
     payment_method_id: str = Field(..., description="Stripe payment method ID")
 
 class SubscriptionResponse(BaseModel):
-    subscription_id: Optional[str]
+    subscription_id: str | None
     status: str
-    client_secret: Optional[str]
+    client_secret: str | None
     tier: str
 
 class CreditPurchaseRequest(BaseModel):
@@ -39,26 +38,26 @@ class CreditPurchaseRequest(BaseModel):
 class CreditPurchaseResponse(BaseModel):
     payment_intent_id: str
     status: str
-    credits_added: Optional[int]
-    client_secret: Optional[str]
+    credits_added: int | None
+    client_secret: str | None
 
 class SubscriptionStatusResponse(BaseModel):
     tier: str
     status: str
-    start_date: Optional[str]
-    end_date: Optional[str]
-    features: List[str]
+    start_date: str | None
+    end_date: str | None
+    features: list[str]
     api_calls_limit: int
 
 class CreditBalanceResponse(BaseModel):
     balance: int
-    recent_transactions: List[Dict]
+    recent_transactions: list[dict]
 
 class CustomAgentRequest(BaseModel):
     description: str = Field(..., min_length=10, max_length=2000)
-    requirements: Optional[Dict] = None
-    budget_range: Optional[str] = None
-    timeline: Optional[str] = None
+    requirements: dict | None = None
+    budget_range: str | None = None
+    timeline: str | None = None
 
 # Subscription endpoints
 
@@ -238,7 +237,7 @@ async def get_credit_balance(
 async def deduct_credits(
     amount: int,
     description: str,
-    agent_id: Optional[str] = None,
+    agent_id: str | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

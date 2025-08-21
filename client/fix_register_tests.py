@@ -2,7 +2,7 @@
 import re
 
 # Read the file
-with open('src/test/Register.test.jsx', 'r') as f:
+with open('src/test/Register.test.jsx') as f:
     content = f.read()
 
 # Replace all render patterns - more comprehensive approach

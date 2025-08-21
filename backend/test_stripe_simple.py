@@ -14,7 +14,7 @@ except ImportError:
 
 # Test 2: Can we import FastAPI components?
 try:
-    from fastapi import FastAPI, APIRouter
+    from fastapi import APIRouter, FastAPI
     print("✅ FastAPI imported successfully")
 except ImportError:
     print("❌ FastAPI not installed. Run: pip install fastapi")
@@ -41,16 +41,17 @@ except Exception as e:
 
 # Test 4: Check environment variables
 import os
+
 stripe_publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
 stripe_secret_key = os.getenv('STRIPE_SECRET_KEY')
 
 if stripe_publishable_key:
-    print(f"✅ STRIPE_PUBLISHABLE_KEY configured")
+    print("✅ STRIPE_PUBLISHABLE_KEY configured")
 else:
     print("⚠️  STRIPE_PUBLISHABLE_KEY not set (required for production)")
 
 if stripe_secret_key:
-    print(f"✅ STRIPE_SECRET_KEY configured")
+    print("✅ STRIPE_SECRET_KEY configured")
 else:
     print("⚠️  STRIPE_SECRET_KEY not set (required for production)")
 

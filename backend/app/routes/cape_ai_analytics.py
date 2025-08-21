@@ -3,15 +3,14 @@ CapeAI Analytics API Routes
 Based on Phase 2.1.6 AI Analytics completion
 Provides comprehensive AI interaction analytics and insights
 """
+import logging
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
-import json
-import logging
 
-from ..database import get_db
 from ..auth.auth_enhanced import get_current_user
+from ..database import get_db
 from ..models.user import User
 from ..services.cape_ai_service import CapeAIService
 
@@ -419,7 +418,7 @@ async def get_interaction_history(
     user_id: str,
     days: int = Query(30, description="Number of days to retrieve", ge=1, le=365),
     limit: int = Query(50, description="Maximum interactions to return", ge=1, le=500),
-    provider: Optional[str] = Query(None, description="Filter by provider (openai, claude, gemini)"),
+    provider: str | None = Query(None, description="Filter by provider (openai, claude, gemini)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):

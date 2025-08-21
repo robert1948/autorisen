@@ -12,20 +12,21 @@ Sophisticated prompt template system for AI interactions:
 - Multi-language prompt support
 """
 
-import logging
-import json
-import asyncio
-from typing import Dict, List, Optional, Any, Tuple, Union
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
 import hashlib
+import logging
 import re
-from jinja2 import Template, Environment, BaseLoader
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from jinja2 import BaseLoader, Environment
 
 # Import personalization service for template customization
-from app.services.ai_personalization_service import get_personalization_service, UserPersonalityProfile
-from app.services.conversation_context_service import get_context_service, ContextType
+from app.services.ai_personalization_service import (
+    get_personalization_service,
+)
+from app.services.conversation_context_service import get_context_service
 
 logger = logging.getLogger(__name__)
 
@@ -85,18 +86,18 @@ class PromptTemplate:
     complexity: PromptComplexity
     version: TemplateVersion
     template_content: str
-    variables: List[str]  # Variables that can be substituted
-    requirements: Dict[str, Any]  # Requirements for using this template
+    variables: list[str]  # Variables that can be substituted
+    requirements: dict[str, Any]  # Requirements for using this template
     effectiveness_score: float  # Performance metric (0-1)
     usage_count: int
     success_rate: float  # Success rate based on user feedback
     created_at: datetime
     updated_at: datetime
     created_by: str
-    tags: List[str]
+    tags: list[str]
     language: str = "en"
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage"""
         return {
             'template_id': self.template_id,
@@ -120,7 +121,7 @@ class PromptTemplate:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'PromptTemplate':
+    def from_dict(cls, data: dict[str, Any]) -> 'PromptTemplate':
         """Create from dictionary"""
         return cls(
             template_id=data['template_id'],
@@ -148,12 +149,12 @@ class PromptTemplate:
 class PromptGenerationRequest:
     """Request for generating a prompt from template"""
     template_id: str
-    user_id: Optional[str] = None
-    context_variables: Optional[Dict[str, Any]] = None
+    user_id: str | None = None
+    context_variables: dict[str, Any] | None = None
     personalization_enabled: bool = True
-    target_complexity: Optional[PromptComplexity] = None
-    preferred_role: Optional[PromptRole] = None
-    conversation_id: Optional[str] = None
+    target_complexity: PromptComplexity | None = None
+    preferred_role: PromptRole | None = None
+    conversation_id: str | None = None
 
 
 @dataclass
@@ -161,11 +162,11 @@ class GeneratedPrompt:
     """Result of prompt generation"""
     prompt_content: str
     template_used: str
-    variables_substituted: Dict[str, Any]
+    variables_substituted: dict[str, Any]
     personalization_applied: bool
     complexity_level: PromptComplexity
     role_used: PromptRole
-    generation_metadata: Dict[str, Any]
+    generation_metadata: dict[str, Any]
     generated_at: datetime
 
 
@@ -201,7 +202,7 @@ class AdvancedPromptingService:
         
         logger.info(f"Loaded {len(default_templates)} default prompt templates")
     
-    def _create_default_templates(self) -> List[PromptTemplate]:
+    def _create_default_templates(self) -> list[PromptTemplate]:
         """Create comprehensive default template library"""
         templates = []
         
@@ -487,7 +488,7 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
         
         return templates
     
-    async def get_template(self, template_id: str) -> Optional[PromptTemplate]:
+    async def get_template(self, template_id: str) -> PromptTemplate | None:
         """Get a specific template by ID"""
         template = self.templates.get(template_id)
         if template:
@@ -497,11 +498,11 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
     
     async def list_templates(
         self,
-        category: Optional[PromptCategory] = None,
-        role: Optional[PromptRole] = None,
-        complexity: Optional[PromptComplexity] = None,
-        tags: Optional[List[str]] = None
-    ) -> List[PromptTemplate]:
+        category: PromptCategory | None = None,
+        role: PromptRole | None = None,
+        complexity: PromptComplexity | None = None,
+        tags: list[str] | None = None
+    ) -> list[PromptTemplate]:
         """List templates with optional filtering"""
         templates = list(self.templates.values())
         
@@ -594,8 +595,8 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
         self,
         user_id: str,
         template: PromptTemplate,
-        conversation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        conversation_id: str | None = None
+    ) -> dict[str, Any]:
         """Get personalization context variables"""
         context = {}
         
@@ -637,7 +638,7 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
         
         return context
     
-    async def _get_conversation_context(self, user_id: str, conversation_id: str) -> Dict[str, Any]:
+    async def _get_conversation_context(self, user_id: str, conversation_id: str) -> dict[str, Any]:
         """Get conversation context variables"""
         context = {}
         
@@ -667,9 +668,9 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
     async def _adjust_template_for_user(
         self,
         template: PromptTemplate,
-        user_id: Optional[str],
-        target_complexity: Optional[PromptComplexity],
-        preferred_role: Optional[PromptRole]
+        user_id: str | None,
+        target_complexity: PromptComplexity | None,
+        preferred_role: PromptRole | None
     ) -> PromptTemplate:
         """Adjust template based on user preferences"""
         adjusted_template = template
@@ -717,9 +718,9 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
         role: PromptRole,
         complexity: PromptComplexity,
         template_content: str,
-        variables: List[str],
+        variables: list[str],
         created_by: str,
-        tags: Optional[List[str]] = None
+        tags: list[str] | None = None
     ) -> PromptTemplate:
         """Create a new custom template"""
         template_id = f"custom_{hashlib.md5(f'{name}_{created_by}_{datetime.now()}'.encode()).hexdigest()[:8]}"
@@ -760,8 +761,8 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
         self,
         template_id: str,
         success: bool,
-        user_rating: Optional[float] = None,
-        response_time_ms: Optional[int] = None
+        user_rating: float | None = None,
+        response_time_ms: int | None = None
     ):
         """Update template performance metrics"""
         if template_id not in self.template_performance:
@@ -789,7 +790,7 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
                     avg_rating = perf['total_rating'] / perf['success_count'] if perf['success_count'] > 0 else 0
                     template.effectiveness_score = (template.success_rate * 0.7) + (avg_rating / 5.0 * 0.3)
     
-    async def get_template_analytics(self) -> Dict[str, Any]:
+    async def get_template_analytics(self) -> dict[str, Any]:
         """Get comprehensive template analytics"""
         total_templates = len(self.templates)
         total_usage = sum(perf['usage_count'] for perf in self.template_performance.values())
@@ -841,7 +842,7 @@ I'm committed to helping you conduct thorough, reliable research that meets the 
 
 
 # Global instance
-_prompting_service: Optional[AdvancedPromptingService] = None
+_prompting_service: AdvancedPromptingService | None = None
 
 
 async def get_prompting_service() -> AdvancedPromptingService:

@@ -8,18 +8,14 @@ without full app dependencies.
 
 import asyncio
 import logging
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
 
 # Import our service
 from app.services.advanced_prompting_service import (
     AdvancedPromptingService,
-    PromptTemplate,
-    PromptGenerationRequest,
     PromptCategory,
-    PromptRole,
     PromptComplexity,
-    TemplateVersion
+    PromptGenerationRequest,
+    PromptRole,
 )
 
 logging.basicConfig(level=logging.INFO)

@@ -6,35 +6,29 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-import asyncio
-import json
+import hashlib
+import io
 import logging
 import time
-from typing import Dict, List, Optional, Any, Union, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-import io
-import base64
-import hashlib
-from datetime import datetime, timedelta
+from typing import Any
 
-# Audio processing imports
-import wave
-import audioop
-from pydub import AudioSegment
-from pydub.utils import make_chunks
+import openai
+import pyttsx3
 
 # Speech recognition imports
 import speech_recognition as sr
-from google.cloud import speech
-import openai
-import requests
 
 # Text-to-speech imports
-from google.cloud import texttospeech
-import pyttsx3
+from google.cloud import speech, texttospeech
+
+# Audio processing imports
+from pydub import AudioSegment
+
 try:
-    from elevenlabs import client, Voice, VoiceSettings, set_api_key
+    from elevenlabs import Voice, VoiceSettings, client, set_api_key
     ELEVENLABS_AVAILABLE = True
 except ImportError:
     ELEVENLABS_AVAILABLE = False
@@ -79,8 +73,8 @@ class VoiceProfile:
     volume: float = 1.0
     stability: float = 0.5
     similarity_boost: float = 0.75
-    style: Optional[str] = None
-    emotion: Optional[str] = None
+    style: str | None = None
+    emotion: str | None = None
 
 @dataclass
 class SpeechToTextResult:
@@ -91,7 +85,7 @@ class SpeechToTextResult:
     language: str
     duration: float
     processing_time: float
-    alternatives: List[Dict[str, Any]] = None
+    alternatives: list[dict[str, Any]] = None
     timestamp: datetime = None
     
     def __post_init__(self):
@@ -128,9 +122,9 @@ class VoiceAnalytics:
     total_audio_duration: float = 0.0
     total_processing_time: float = 0.0
     average_confidence: float = 0.0
-    preferred_provider: Optional[VoiceProvider] = None
-    preferred_voice: Optional[str] = None
-    language_distribution: Dict[str, int] = None
+    preferred_provider: VoiceProvider | None = None
+    preferred_voice: str | None = None
+    language_distribution: dict[str, int] = None
     error_count: int = 0
     success_rate: float = 1.0
     
@@ -144,7 +138,7 @@ class VoiceService:
     capabilities with multi-provider support and advanced features
     """
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize voice service with configuration"""
         self.config = config
         self.analytics = {}  # session_id -> VoiceAnalytics
@@ -217,7 +211,7 @@ class VoiceService:
         except Exception as e:
             logger.warning(f"Failed to initialize System TTS: {e}")
     
-    def _initialize_voice_profiles(self) -> Dict[str, VoiceProfile]:
+    def _initialize_voice_profiles(self) -> dict[str, VoiceProfile]:
         """Initialize available voice profiles"""
         profiles = {}
         
@@ -275,9 +269,9 @@ class VoiceService:
         audio_data: bytes,
         audio_format: AudioFormat = AudioFormat.WAV,
         language: str = "en-US",
-        provider: Optional[VoiceProvider] = None,
-        session_id: Optional[str] = None,
-        user_id: Optional[str] = None
+        provider: VoiceProvider | None = None,
+        session_id: str | None = None,
+        user_id: str | None = None
     ) -> SpeechToTextResult:
         """
         Convert speech audio to text using specified or best available provider
@@ -293,7 +287,7 @@ class VoiceService:
             audio_hash = hashlib.md5(audio_data).hexdigest()
             if audio_hash in self.recognition_cache:
                 cached_result = self.recognition_cache[audio_hash]
-                logger.info(f"Using cached speech recognition result")
+                logger.info("Using cached speech recognition result")
                 return cached_result
             
             # Preprocess audio
@@ -339,10 +333,10 @@ class VoiceService:
     async def text_to_speech(
         self,
         text: str,
-        voice_profile: Optional[Union[str, VoiceProfile]] = None,
+        voice_profile: str | VoiceProfile | None = None,
         audio_format: AudioFormat = AudioFormat.MP3,
-        session_id: Optional[str] = None,
-        user_id: Optional[str] = None
+        session_id: str | None = None,
+        user_id: str | None = None
     ) -> TextToSpeechResult:
         """
         Convert text to speech audio using specified voice profile
@@ -360,7 +354,7 @@ class VoiceService:
             text_hash = hashlib.md5(f"{text}_{voice_profile.voice_id}".encode()).hexdigest()
             if text_hash in self.audio_cache:
                 cached_audio = self.audio_cache[text_hash]
-                logger.info(f"Using cached TTS audio")
+                logger.info("Using cached TTS audio")
                 return cached_audio
             
             # Generate speech
@@ -442,7 +436,7 @@ class VoiceService:
         audio_data: bytes,
         provider: VoiceProvider,
         language: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Perform speech recognition using specified provider"""
         
         if provider == VoiceProvider.GOOGLE_CLOUD and VoiceProvider.GOOGLE_CLOUD in self.providers:
@@ -455,7 +449,7 @@ class VoiceService:
             # Fallback to system recognition
             return await self._system_speech_to_text(audio_data, language)
     
-    async def _google_speech_to_text(self, audio_data: bytes, language: str) -> Dict[str, Any]:
+    async def _google_speech_to_text(self, audio_data: bytes, language: str) -> dict[str, Any]:
         """Google Cloud Speech-to-Text"""
         try:
             client = self.providers[VoiceProvider.GOOGLE_CLOUD]['speech_client']
@@ -494,7 +488,7 @@ class VoiceService:
             logger.error(f"Google Speech-to-Text failed: {e}")
             raise
     
-    async def _openai_speech_to_text(self, audio_data: bytes, language: str) -> Dict[str, Any]:
+    async def _openai_speech_to_text(self, audio_data: bytes, language: str) -> dict[str, Any]:
         """OpenAI Whisper Speech-to-Text"""
         try:
             # Save audio to temporary file
@@ -518,7 +512,7 @@ class VoiceService:
             logger.error(f"OpenAI Whisper failed: {e}")
             raise
     
-    async def _system_speech_to_text(self, audio_data: bytes, language: str) -> Dict[str, Any]:
+    async def _system_speech_to_text(self, audio_data: bytes, language: str) -> dict[str, Any]:
         """System speech recognition fallback"""
         try:
             recognizer = sr.Recognizer()
@@ -661,7 +655,7 @@ class VoiceService:
         # Fallback
         return VoiceProvider.SYSTEM_TTS
     
-    def _select_best_voice_profile(self, user_id: Optional[str] = None) -> VoiceProfile:
+    def _select_best_voice_profile(self, user_id: str | None = None) -> VoiceProfile:
         """Select best voice profile for user"""
         # Check user preferences
         if user_id and user_id in self.analytics:
@@ -758,19 +752,19 @@ class VoiceService:
             total_time = perf['average_time'] * (perf['requests'] - 1)
             perf['average_time'] = (total_time + processing_time) / perf['requests']
     
-    async def get_voice_profiles(self, provider: Optional[VoiceProvider] = None) -> List[VoiceProfile]:
+    async def get_voice_profiles(self, provider: VoiceProvider | None = None) -> list[VoiceProfile]:
         """Get available voice profiles"""
         if provider:
             return [profile for profile in self.voice_profiles.values() if profile.provider == provider]
         return list(self.voice_profiles.values())
     
-    async def get_analytics(self, session_id: Optional[str] = None) -> Union[VoiceAnalytics, Dict[str, VoiceAnalytics]]:
+    async def get_analytics(self, session_id: str | None = None) -> VoiceAnalytics | dict[str, VoiceAnalytics]:
         """Get voice analytics"""
         if session_id:
             return self.analytics.get(session_id)
         return self.analytics
     
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics"""
         return self.performance_metrics
     
@@ -780,7 +774,7 @@ class VoiceService:
         self.recognition_cache.clear()
         logger.info("Voice service caches cleared")
     
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check service health"""
         health = {
             'status': 'healthy',
@@ -803,15 +797,15 @@ class VoiceService:
         return health
 
 # Utility functions
-def create_voice_service(config: Dict[str, Any]) -> VoiceService:
+def create_voice_service(config: dict[str, Any]) -> VoiceService:
     """Factory function to create voice service"""
     return VoiceService(config)
 
-def get_supported_audio_formats() -> List[str]:
+def get_supported_audio_formats() -> list[str]:
     """Get list of supported audio formats"""
     return [format.value for format in AudioFormat]
 
-def get_supported_languages() -> List[str]:
+def get_supported_languages() -> list[str]:
     """Get list of supported languages"""
     return [
         "en-US", "en-GB", "es-ES", "fr-FR", "de-DE", "it-IT", "pt-BR",

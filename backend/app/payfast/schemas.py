@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, condecimal
 
+
 class CreateCheckoutIn(BaseModel):
     m_payment_id: str = Field(..., description="Your internal order id")
     amount: condecimal(gt=0)      # Decimal string OK

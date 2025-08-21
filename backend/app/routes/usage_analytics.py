@@ -3,15 +3,16 @@ Usage Analytics Enhancement API Routes
 Provides detailed usage tracking and analytics for user behavior analysis
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
-from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, validator
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+from typing import Any
 
-from ..database import get_db
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from pydantic import BaseModel, validator
+from sqlalchemy.orm import Session
+
 from ..auth.auth_enhanced import get_current_user
+from ..database import get_db
 from ..models.user import User
 
 logger = logging.getLogger(__name__)
@@ -20,10 +21,10 @@ logger = logging.getLogger(__name__)
 class EventTrackingRequest(BaseModel):
     event_type: str
     event_name: str
-    event_data: Dict[str, Any] = {}
-    session_id: Optional[str] = None
-    page_url: Optional[str] = None
-    user_agent: Optional[str] = None
+    event_data: dict[str, Any] = {}
+    session_id: str | None = None
+    page_url: str | None = None
+    user_agent: str | None = None
     
     @validator('event_type')
     def validate_event_type(cls, v):
@@ -33,14 +34,14 @@ class EventTrackingRequest(BaseModel):
         return v
 
 class BulkEventTrackingRequest(BaseModel):
-    events: List[EventTrackingRequest]
-    session_id: Optional[str] = None
+    events: list[EventTrackingRequest]
+    session_id: str | None = None
 
 class AnalyticsQuery(BaseModel):
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    event_types: Optional[List[str]] = None
-    group_by: Optional[str] = "day"  # day, hour, week, month
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    event_types: list[str] | None = None
+    group_by: str | None = "day"  # day, hour, week, month
     
     @validator('group_by')
     def validate_group_by(cls, v):
@@ -60,8 +61,9 @@ def get_analytics_service(db: Session = Depends(get_db)):
     """Get analytics service instance"""
     try:
         # Import here to avoid circular imports
-        from ..services.usage_analytics_enhancement import UsageAnalyticsService
         import redis
+
+        from ..services.usage_analytics_enhancement import UsageAnalyticsService
         
         # Initialize Redis client
         redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
@@ -249,9 +251,9 @@ async def get_analytics_summary(
 
 @router.get("/detailed")
 async def get_detailed_analytics(
-    start_date: Optional[datetime] = Query(None, description="Start date for analysis"),
-    end_date: Optional[datetime] = Query(None, description="End date for analysis"),
-    event_types: Optional[str] = Query(None, description="Comma-separated event types to filter"),
+    start_date: datetime | None = Query(None, description="Start date for analysis"),
+    end_date: datetime | None = Query(None, description="End date for analysis"),
+    event_types: str | None = Query(None, description="Comma-separated event types to filter"),
     group_by: str = Query("day", description="Group results by: hour, day, week, month"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
     current_user: User = Depends(get_current_user),

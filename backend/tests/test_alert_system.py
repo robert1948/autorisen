@@ -10,22 +10,22 @@ Comprehensive tests for alert system functionality:
 - Performance and reliability testing
 """
 
-import pytest
 import asyncio
-import json
-from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.alert_service import (
-    get_alert_system,
+    AlertChannel,
     AlertRule,
     AlertSeverity,
-    AlertType,
-    AlertChannel,
     AlertStatus,
-    NotificationChannel
+    AlertType,
+    NotificationChannel,
+    get_alert_system,
 )
 
 

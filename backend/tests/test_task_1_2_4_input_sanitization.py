@@ -15,16 +15,15 @@ Success Criteria:
 - Performance remains acceptable under load
 """
 
-import pytest
-import asyncio
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
-import json
-import time
-from typing import Dict, Any
 
 # Set test environment
 import os
+import time
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-very-long-and-secure"
 os.environ["DATABASE_URL"] = "sqlite:///./test_input_sanitization.db"
 os.environ["OPENAI_API_KEY"] = "test-openai-key-sk-1234567890abcdef"
@@ -34,10 +33,9 @@ os.environ["DEBUG"] = "False"
 
 from app.main import app
 from app.utils.input_sanitization import (
-    InputSanitizer, 
+    InputSanitizer,
     SanitizationLevel,
-    sanitize_text,
-    validate_ai_prompt
+    validate_ai_prompt,
 )
 
 # Test client
@@ -468,7 +466,7 @@ def test_sanitization_benchmark():
         # Each sanitization should complete in reasonable time
         assert avg_time < 0.01, f"{test_name} too slow: {avg_time:.4f}s per sanitization"
     
-    print(f"\nSanitization Performance Benchmark:")
+    print("\nSanitization Performance Benchmark:")
     for test_name, avg_time in results.items():
         print(f"  {test_name}: {avg_time:.4f}s per sanitization")
 

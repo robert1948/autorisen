@@ -12,21 +12,19 @@ Comprehensive test suite for AI personalization system:
 - Personalization API endpoints
 """
 
-import pytest
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from datetime import datetime
+
+import pytest
 
 # Test the AI Personalization Service
 from app.services.ai_personalization_service import (
     AIPersonalizationService,
-    UserPersonalityProfile,
-    LearningStyle,
     CommunicationStyle,
     ExpertiseLevel,
+    LearningStyle,
     PersonalityTrait,
-    get_personalization_service
+    UserPersonalityProfile,
 )
 
 
@@ -382,7 +380,6 @@ class TestPersonalizationIntegration:
     
     async def test_context_personalization_integration(self):
         """Test integration with context enhancement service"""
-        from app.services.conversation_context_service import ContextType
         
         # Mock context service
         class MockContextService:

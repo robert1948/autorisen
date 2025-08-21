@@ -3,16 +3,12 @@ Comprehensive Test Suite for CapeAI Enterprise Platform
 Clean Enterprise-Grade Testing Suite
 """
 
-import pytest
-import asyncio
-import os
-import sys
 import importlib
-import tempfile
-import json
-from typing import Dict, List, Any, Optional
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
-from pathlib import Path
+import os
+from unittest.mock import Mock, patch
+
+import pytest
+
 
 class TestCriticalImports:
     """Test critical import functionality"""
@@ -57,7 +53,7 @@ class TestDatabaseModels:
         try:
             # Import specific models instead of using wildcard
             import app.models as models_module
-            from app.models import User, UserProfile, AuditLog
+            from app.models import AuditLog, User, UserProfile
             available_models = [name for name in dir(models_module) 
                               if not name.startswith('_') and name[0].isupper()]
             
@@ -80,7 +76,7 @@ class TestDatabaseModels:
             expected_attrs = ['id', 'email', 'username']
             
             found_attrs = [attr for attr in expected_attrs if attr in user_attrs]
-            assert len(found_attrs) > 0, f"User model should have some expected attributes"
+            assert len(found_attrs) > 0, "User model should have some expected attributes"
                 
         except ImportError:
             pytest.skip("User model not available")
@@ -92,8 +88,9 @@ class TestDatabaseModels:
         """Test individual model structure"""
         try:
             import app.models as models_module
+
             # Import specific models instead of using wildcard
-            from app.models import User, UserProfile, AuditLog
+            from app.models import AuditLog, User, UserProfile
             
             model_class = getattr(models_module, model_name, None)
             
@@ -271,7 +268,7 @@ class TestEnvironmentConfiguration:
         
         for env_path in env_paths:
             if os.path.exists(env_path):
-                with open(env_path, "r") as f:
+                with open(env_path) as f:
                     env_content = f.read()
                     if f"{env_var}=" in env_content:
                         return
@@ -360,14 +357,12 @@ class TestApplicationHealth:
         
         # Test database connectivity
         try:
-            from app.database import get_db
             health_status["database"] = "healthy"
         except Exception:
             health_status["database"] = "unhealthy"
         
         # Test Redis connectivity (mocked)
         try:
-            import redis
             with patch('redis.Redis') as mock_redis:
                 mock_redis.return_value.ping.return_value = True
                 health_status["redis"] = "healthy"

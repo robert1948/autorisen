@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-import os
 import re
-from typing import Optional
 from datetime import datetime
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from app import models, schemas
-from app.dependencies import get_db
-from app.auth import get_password_hash, verify_password, create_access_token
-from app.services.audit_service import get_audit_logger, AuditEventType, AuditLogLevel
+from app.auth import get_password_hash
 from app.config import settings
+from app.dependencies import get_db
+from app.services.audit_service import AuditEventType, get_audit_logger
 
 router = APIRouter()
 

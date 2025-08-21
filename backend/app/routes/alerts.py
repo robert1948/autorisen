@@ -11,27 +11,28 @@ RESTful API endpoints for alert system management:
 - Real-time alert streaming
 """
 
-from typing import Dict, Any, List, Optional
+import asyncio
+import json
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
+from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import json
-import asyncio
 
-from app.database import get_db
 from app.core.auth import get_current_user
+from app.database import get_db
 from app.services.alert_service import (
-    get_alert_system, 
-    AlertRule, 
-    AlertSeverity, 
-    AlertType, 
     AlertChannel,
+    AlertRule,
+    AlertSeverity,
     AlertStatus,
-    NotificationChannel
+    AlertType,
+    NotificationChannel,
+    get_alert_system,
 )
-from app.services.audit_service import get_audit_logger, AuditEventType
+from app.services.audit_service import AuditEventType, get_audit_logger
 
 
 # Pydantic models for API
@@ -42,38 +43,38 @@ class AlertRuleCreate(BaseModel):
     condition: str
     threshold: float
     duration: int
-    channels: List[AlertChannel]
+    channels: list[AlertChannel]
     enabled: bool = True
     cooldown: int = 300
     escalation_time: int = 1800
-    tags: List[str] = []
+    tags: list[str] = []
 
 
 class AlertRuleUpdate(BaseModel):
-    alert_type: Optional[AlertType] = None
-    severity: Optional[AlertSeverity] = None
-    condition: Optional[str] = None
-    threshold: Optional[float] = None
-    duration: Optional[int] = None
-    channels: Optional[List[AlertChannel]] = None
-    enabled: Optional[bool] = None
-    cooldown: Optional[int] = None
-    escalation_time: Optional[int] = None
-    tags: Optional[List[str]] = None
+    alert_type: AlertType | None = None
+    severity: AlertSeverity | None = None
+    condition: str | None = None
+    threshold: float | None = None
+    duration: int | None = None
+    channels: list[AlertChannel] | None = None
+    enabled: bool | None = None
+    cooldown: int | None = None
+    escalation_time: int | None = None
+    tags: list[str] | None = None
 
 
 class NotificationChannelCreate(BaseModel):
     name: str
     channel_type: AlertChannel
-    config: Dict[str, Any]
+    config: dict[str, Any]
     enabled: bool = True
     rate_limit: int = 60
 
 
 class NotificationChannelUpdate(BaseModel):
-    config: Optional[Dict[str, Any]] = None
-    enabled: Optional[bool] = None
-    rate_limit: Optional[int] = None
+    config: dict[str, Any] | None = None
+    enabled: bool | None = None
+    rate_limit: int | None = None
 
 
 class AlertAcknowledge(BaseModel):
@@ -81,17 +82,17 @@ class AlertAcknowledge(BaseModel):
 
 
 class AlertFilter(BaseModel):
-    severity: Optional[AlertSeverity] = None
-    alert_type: Optional[AlertType] = None
-    status: Optional[AlertStatus] = None
-    tags: Optional[List[str]] = None
+    severity: AlertSeverity | None = None
+    alert_type: AlertType | None = None
+    status: AlertStatus | None = None
+    tags: list[str] | None = None
 
 
 class ManualAlert(BaseModel):
     rule_name: str
     title: str
     description: str
-    source_data: Optional[Dict[str, Any]] = None
+    source_data: dict[str, Any] | None = None
 
 
 # Create router
@@ -122,9 +123,9 @@ async def get_alert_system_status(
 
 @router.get("/active", summary="Get active alerts")
 async def get_active_alerts(
-    severity: Optional[AlertSeverity] = Query(None),
-    alert_type: Optional[AlertType] = Query(None),
-    tags: Optional[str] = Query(None, description="Comma-separated tags"),
+    severity: AlertSeverity | None = Query(None),
+    alert_type: AlertType | None = Query(None),
+    tags: str | None = Query(None, description="Comma-separated tags"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):

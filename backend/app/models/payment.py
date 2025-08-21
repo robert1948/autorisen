@@ -3,13 +3,26 @@ Payment system models for Cape Control platform
 Based on the comprehensive payment specification
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, CheckConstraint, Index, DECIMAL
-from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID as PostgresUUID, JSONB
-from sqlalchemy.orm import relationship
-from sqlalchemy.types import TypeDecorator, CHAR
 import uuid
+
+from sqlalchemy import (
+    DECIMAL,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from sqlalchemy.types import CHAR, TypeDecorator
+
 from app.database import Base
+
 
 # UUID type that works with both SQLite and PostgreSQL
 class GUID(TypeDecorator):

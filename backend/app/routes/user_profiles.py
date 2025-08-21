@@ -6,21 +6,20 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-import asyncio
-import json
-import logging
-from typing import Dict, List, Optional, Any
-from datetime import datetime
-
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form, Query
-from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field, validator
 import io
+import logging
+from typing import Any
+
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 # Import the enhanced user profile service
 from ..services.user_profile_service import (
-    UserProfileService, EnhancedUserProfile, UserRole, UserStatus,
-    PrivacyLevel, LearningStyle, CommunicationStyle, create_user_profile_service
+    CommunicationStyle,
+    LearningStyle,
+    UserRole,
+    create_user_profile_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,68 +41,68 @@ class ProfileCreateRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: str = Field(..., regex=r'^[^@]+@[^@]+\.[^@]+$')
     full_name: str = Field(..., min_length=1, max_length=100)
-    bio: Optional[str] = Field(None, max_length=500)
-    avatar_url: Optional[str] = None
+    bio: str | None = Field(None, max_length=500)
+    avatar_url: str | None = None
     role: str = Field(default="standard", regex=r'^(admin|moderator|premium|standard|guest)$')
-    location: Optional[str] = Field(None, max_length=100)
-    occupation: Optional[str] = Field(None, max_length=100)
-    interests: List[str] = Field(default=[])
-    skills: List[str] = Field(default=[])
-    expertise_areas: List[str] = Field(default=[])
+    location: str | None = Field(None, max_length=100)
+    occupation: str | None = Field(None, max_length=100)
+    interests: list[str] = Field(default=[])
+    skills: list[str] = Field(default=[])
+    expertise_areas: list[str] = Field(default=[])
     learning_style: str = Field(default="multimodal", regex=r'^(visual|auditory|kinesthetic|reading_writing|multimodal)$')
     communication_style: str = Field(default="balanced", regex=r'^(formal|casual|technical|simple|detailed)$')
-    preferences: Optional[Dict[str, Any]] = Field(default={})
-    custom_fields: Optional[Dict[str, Any]] = Field(default={})
+    preferences: dict[str, Any] | None = Field(default={})
+    custom_fields: dict[str, Any] | None = Field(default={})
 
 class ProfileUpdateRequest(BaseModel):
     """Request model for updating user profile"""
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[str] = Field(None, regex=r'^[^@]+@[^@]+\.[^@]+$')
-    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    bio: Optional[str] = Field(None, max_length=500)
-    avatar_url: Optional[str] = None
-    location: Optional[str] = Field(None, max_length=100)
-    occupation: Optional[str] = Field(None, max_length=100)
-    interests: Optional[List[str]] = None
-    skills: Optional[List[str]] = None
-    expertise_areas: Optional[List[str]] = None
-    learning_style: Optional[str] = Field(None, regex=r'^(visual|auditory|kinesthetic|reading_writing|multimodal)$')
-    communication_style: Optional[str] = Field(None, regex=r'^(formal|casual|technical|simple|detailed)$')
-    preferences: Optional[Dict[str, Any]] = None
-    custom_fields: Optional[Dict[str, Any]] = None
+    username: str | None = Field(None, min_length=3, max_length=50)
+    email: str | None = Field(None, regex=r'^[^@]+@[^@]+\.[^@]+$')
+    full_name: str | None = Field(None, min_length=1, max_length=100)
+    bio: str | None = Field(None, max_length=500)
+    avatar_url: str | None = None
+    location: str | None = Field(None, max_length=100)
+    occupation: str | None = Field(None, max_length=100)
+    interests: list[str] | None = None
+    skills: list[str] | None = None
+    expertise_areas: list[str] | None = None
+    learning_style: str | None = Field(None, regex=r'^(visual|auditory|kinesthetic|reading_writing|multimodal)$')
+    communication_style: str | None = Field(None, regex=r'^(formal|casual|technical|simple|detailed)$')
+    preferences: dict[str, Any] | None = None
+    custom_fields: dict[str, Any] | None = None
 
 class BehaviorTrackingRequest(BaseModel):
     """Request model for behavior tracking"""
-    session_data: Optional[Dict[str, Any]] = None
-    conversation_data: Optional[Dict[str, Any]] = None
-    achievements: Optional[List[Dict[str, Any]]] = None
+    session_data: dict[str, Any] | None = None
+    conversation_data: dict[str, Any] | None = None
+    achievements: list[dict[str, Any]] | None = None
 
 class AchievementRequest(BaseModel):
     """Request model for adding achievements"""
     achievement_type: str = Field(..., regex=r'^(badge|milestone|streak)$')
-    achievement_data: Dict[str, Any]
+    achievement_data: dict[str, Any]
 
 class SocialConnectionRequest(BaseModel):
     """Request model for social connections"""
     connection_type: str = Field(..., regex=r'^(friends|followers|following|groups)$')
-    user_ids: List[str]
+    user_ids: list[str]
     action: str = Field(default="add", regex=r'^(add|remove)$')
 
 class ProfileSearchRequest(BaseModel):
     """Request model for profile search"""
-    role: Optional[str] = None
-    status: Optional[str] = None
-    interests: Optional[List[str]] = None
-    skills: Optional[List[str]] = None
-    min_engagement: Optional[float] = Field(None, ge=0, le=1)
-    min_completeness: Optional[float] = Field(None, ge=0, le=100)
+    role: str | None = None
+    status: str | None = None
+    interests: list[str] | None = None
+    skills: list[str] | None = None
+    min_engagement: float | None = Field(None, ge=0, le=1)
+    min_completeness: float | None = Field(None, ge=0, le=100)
 
 class ProfileResponse(BaseModel):
     """Response model for profile data"""
     success: bool
-    data: Optional[Dict[str, Any]] = None
-    message: Optional[str] = None
-    error: Optional[str] = None
+    data: dict[str, Any] | None = None
+    message: str | None = None
+    error: str | None = None
 
 # API Routes
 
@@ -633,7 +632,7 @@ async def health_check():
 
 # Batch operations
 @router.post("/batch/create", response_model=ProfileResponse)
-async def batch_create_profiles(profiles: List[Dict[str, Any]]):
+async def batch_create_profiles(profiles: list[dict[str, Any]]):
     """Create multiple user profiles in batch"""
     try:
         created_profiles = []
@@ -643,7 +642,7 @@ async def batch_create_profiles(profiles: List[Dict[str, Any]]):
             try:
                 user_id = profile_data.get('user_id')
                 if not user_id:
-                    errors.append(f"Missing user_id in profile data")
+                    errors.append("Missing user_id in profile data")
                     continue
                 
                 profile = await profile_service.create_profile(user_id, profile_data)
@@ -671,7 +670,7 @@ async def batch_create_profiles(profiles: List[Dict[str, Any]]):
         )
 
 @router.put("/batch/update", response_model=ProfileResponse)
-async def batch_update_profiles(updates: List[Dict[str, Any]]):
+async def batch_update_profiles(updates: list[dict[str, Any]]):
     """Update multiple user profiles in batch"""
     try:
         updated_profiles = []
@@ -681,7 +680,7 @@ async def batch_update_profiles(updates: List[Dict[str, Any]]):
             try:
                 user_id = update_data.get('user_id')
                 if not user_id:
-                    errors.append(f"Missing user_id in update data")
+                    errors.append("Missing user_id in update data")
                     continue
                 
                 # Remove user_id from updates

@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Request, HTTPException, status, Depends
-from fastapi.responses import JSONResponse
-from starlette.background import BackgroundTasks
-from .schemas import CreateCheckoutIn, CreateCheckoutOut, ITNResult
-from .config import PAYFAST_CFG
-from .utils import build_signature, host, validate_itn_with_payfast
 import urllib.parse
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 # DB + models
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTasks
+
 from app.database import get_db
-from app.models.payment import CreditTransaction, Credits
+from app.models.payment import Credits, CreditTransaction
+
+from .config import PAYFAST_CFG
+from .schemas import CreateCheckoutIn, CreateCheckoutOut, ITNResult
+from .utils import build_signature, host, validate_itn_with_payfast
 
 router = APIRouter(prefix="/api/payfast", tags=["payfast"])
 

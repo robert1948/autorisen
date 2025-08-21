@@ -6,21 +6,21 @@ This script handles the migration from the current user system to the enhanced
 authentication architecture with proper data preservation and rollback support.
 """
 
+import logging
 import os
 import sys
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
-import logging
+
+from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
 
 # Add the parent directory to the path so we can import our models
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.config import get_database_url
-from app.database import engine, Base
-from app.models import User as OldUser  # Existing user model
-from app.models_enhanced import UserV2 as NewUser, UserRole, Token, DeveloperEarning, PasswordReset, AuditLog
 from app.auth_enhanced import auth_service
+from app.database import Base, engine
+from app.models_enhanced import AuditLog, DeveloperEarning, UserRole
+from app.models_enhanced import UserV2 as NewUser
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -45,7 +45,6 @@ def migrate_existing_users():
     """Migrate existing users to the enhanced user table"""
     logger.info("Migrating existing users...")
     
-    from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=engine)
     session = Session()
     
@@ -143,7 +142,6 @@ def verify_migration():
     """Verify that the migration was successful"""
     logger.info("Verifying migration...")
     
-    from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=engine)
     session = Session()
     

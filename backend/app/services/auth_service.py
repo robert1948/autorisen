@@ -2,11 +2,13 @@
 Authentication Service for CapeAI Enterprise Platform
 """
 
-from typing import Optional
-from passlib.context import CryptContext
-from jose import JWTError, jwt
 from datetime import datetime, timedelta
+
+from jose import jwt
+from passlib.context import CryptContext
+
 from app.config import settings
+
 
 class AuthService:
     """Enterprise authentication service"""
@@ -22,7 +24,7 @@ class AuthService:
         """Generate password hash"""
         return self.pwd_context.hash(password)
     
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(self, data: dict, expires_delta: timedelta | None = None):
         """Create a JWT access token"""
         to_encode = data.copy()
         if expires_delta:

@@ -5,18 +5,23 @@ Creates all payment-related tables for Cape Control
 
 import os
 import sys
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+
+from sqlalchemy import text
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import Base, DATABASE_URL, engine
+from app.database import DATABASE_URL, Base, engine
 from app.models.payment import (
-    Subscription, Credits, CreditTransaction, CustomRequest, 
-    SupportTicket, AnalyticsEvent, PaymentMethod
+    AnalyticsEvent,
+    Credits,
+    CreditTransaction,
+    CustomRequest,
+    PaymentMethod,
+    Subscription,
+    SupportTicket,
 )
-from app.models import User
+
 
 def run_payment_migration():
     """Create payment system tables"""

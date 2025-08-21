@@ -12,17 +12,16 @@ Success Criteria:
 - AI endpoints perform within acceptable thresholds
 """
 
-import pytest
-import asyncio
-import time
-import threading
 import concurrent.futures
-import statistics
-import psutil
 import os
+import statistics
+import threading
+import time
 import uuid
-from typing import List, Dict, Any
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import psutil
+import pytest
 
 # Set test environment variables
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-very-long-and-secure"
@@ -33,10 +32,11 @@ os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "False"  # Performance testing with debug off
 
 from fastapi.testclient import TestClient
-from app.main import app
-from app.database import engine, SessionLocal
-from app.models import Base, User, UserProfile
+
 from app.auth import create_access_token
+from app.database import SessionLocal, engine
+from app.main import app
+from app.models import Base, User, UserProfile
 
 # Test configuration
 TEST_API_PREFIX = "/api"
@@ -86,7 +86,7 @@ class PerformanceTestHelper:
         self.access_token = get_test_user_token()
         self.headers = {"Authorization": f"Bearer {self.access_token}"}
         
-    def create_multiple_users(self, count: int) -> List[str]:
+    def create_multiple_users(self, count: int) -> list[str]:
         """Create multiple test users and return their tokens"""
         tokens = []
         for i in range(count):
@@ -95,7 +95,7 @@ class PerformanceTestHelper:
         return tokens
         
     def measure_response_time(self, endpoint: str, method: str = "GET", 
-                            data: Dict = None, headers: Dict = None) -> float:
+                            data: dict = None, headers: dict = None) -> float:
         """Measure response time for a single request"""
         start_time = time.time()
         
@@ -110,7 +110,7 @@ class PerformanceTestHelper:
         return response_time, response.status_code
     
     def concurrent_requests(self, endpoint: str, num_requests: int, 
-                          method: str = "GET", data: Dict = None) -> List[Dict]:
+                          method: str = "GET", data: dict = None) -> list[dict]:
         """Execute concurrent requests and measure performance"""
         results = []
         
@@ -138,7 +138,7 @@ class PerformanceTestHelper:
         
         return results
     
-    def get_system_metrics(self) -> Dict[str, float]:
+    def get_system_metrics(self) -> dict[str, float]:
         """Get current system performance metrics"""
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),

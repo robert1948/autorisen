@@ -15,13 +15,12 @@ Features:
 - PII detection and redaction
 """
 
-import re
 import html
-import json
 import logging
-from typing import Any, Dict, List, Optional, Union, Tuple
+import re
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +108,7 @@ class InputSanitizer:
         level: SanitizationLevel = SanitizationLevel.BASIC,
         field_type: str = "general_text",
         preserve_formatting: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Main sanitization method with comprehensive cleaning
         
@@ -191,7 +190,7 @@ class InputSanitizer:
             "field_type": field_type
         }
     
-    def _sanitize_ai_prompt(self, text: str) -> Tuple[str, List[str]]:
+    def _sanitize_ai_prompt(self, text: str) -> tuple[str, list[str]]:
         """Sanitize AI prompts with prompt injection protection"""
         threats = []
         sanitized = text
@@ -222,7 +221,7 @@ class InputSanitizer:
             
         return sanitized, threats
     
-    def _sanitize_strict(self, text: str) -> Tuple[str, List[str]]:
+    def _sanitize_strict(self, text: str) -> tuple[str, list[str]]:
         """Strict sanitization removing all HTML and scripts"""
         threats = []
         sanitized = text
@@ -240,7 +239,7 @@ class InputSanitizer:
         
         for pattern in xss_patterns:
             if re.search(pattern, sanitized, re.IGNORECASE | re.DOTALL):
-                threats.append(f"xss_pattern_removed")
+                threats.append("xss_pattern_removed")
                 sanitized = re.sub(pattern, '[XSS_REMOVED]', sanitized, flags=re.IGNORECASE | re.DOTALL)
         
         # Remove all HTML tags
@@ -257,7 +256,7 @@ class InputSanitizer:
             
         return sanitized, threats
     
-    def _sanitize_user_data(self, text: str) -> Tuple[str, List[str]]:
+    def _sanitize_user_data(self, text: str) -> tuple[str, list[str]]:
         """Sanitize user profile data"""
         threats = []
         sanitized = text
@@ -277,7 +276,7 @@ class InputSanitizer:
                 
         return sanitized, threats
     
-    def _sanitize_search_query(self, text: str) -> Tuple[str, List[str]]:
+    def _sanitize_search_query(self, text: str) -> tuple[str, list[str]]:
         """Sanitize search queries"""
         threats = []
         sanitized = text
@@ -297,7 +296,7 @@ class InputSanitizer:
                 
         return sanitized, threats
     
-    def _check_universal_threats(self, text: str) -> List[str]:
+    def _check_universal_threats(self, text: str) -> list[str]:
         """Check for universal security threats"""
         threats = []
         
@@ -321,7 +320,7 @@ class InputSanitizer:
             
         return threats
     
-    def _detect_and_redact_pii(self, text: str) -> Tuple[str, List[str]]:
+    def _detect_and_redact_pii(self, text: str) -> tuple[str, list[str]]:
         """Detect and redact PII from text"""
         pii_found = []
         sanitized = text
@@ -335,7 +334,7 @@ class InputSanitizer:
                 
         return sanitized, pii_found
     
-    def validate_ai_prompt(self, prompt: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def validate_ai_prompt(self, prompt: str, context: dict[str, Any] = None) -> dict[str, Any]:
         """
         Specialized validation for AI prompts with enhanced security
         
@@ -406,7 +405,7 @@ def sanitize_text(
     level: str = "basic",
     field_type: str = "general_text",
     preserve_formatting: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convenience function for text sanitization
     
@@ -427,7 +426,7 @@ def sanitize_text(
         preserve_formatting=preserve_formatting
     )
 
-def validate_ai_prompt(prompt: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+def validate_ai_prompt(prompt: str, context: dict[str, Any] = None) -> dict[str, Any]:
     """
     Convenience function for AI prompt validation
     

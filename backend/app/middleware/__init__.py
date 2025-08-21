@@ -4,6 +4,7 @@ Enterprise-grade middleware components for security, monitoring, and performance
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Initialize middleware registry
@@ -13,12 +14,12 @@ MIDDLEWARE_CLASSES = {}
 # Try to import monitoring middleware (REQUIRED)
 try:
     from .monitoring import (
-        MonitoringMiddleware, 
-        set_monitoring_middleware_instance,
-        get_monitoring_middleware_instance,
+        MonitoringMiddleware,
         get_current_metrics,
         get_health_status,
-        get_recent_requests
+        get_monitoring_middleware_instance,
+        get_recent_requests,
+        set_monitoring_middleware_instance,
     )
     AVAILABLE_MIDDLEWARE["monitoring"] = True
     MIDDLEWARE_CLASSES["MonitoringMiddleware"] = MonitoringMiddleware
@@ -80,7 +81,7 @@ except ImportError as e:
         AVAILABLE_MIDDLEWARE["rate_limiting"] = True
         MIDDLEWARE_CLASSES["RateLimitMiddleware"] = RateLimitMiddleware
         logger.info("✅ RateLimitMiddleware loaded successfully")
-    except ImportError as e2:
+    except ImportError:
         logger.warning(f"⚠️ Rate limiting middleware not available: {e}")
         AVAILABLE_MIDDLEWARE["rate_limiting"] = False
 

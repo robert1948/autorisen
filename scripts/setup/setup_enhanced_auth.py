@@ -20,7 +20,7 @@ sys.path.insert(0, './backend')
 
 try:
     print("Testing database connection...")
-    from app.database import engine, Base
+    from app.database import Base, engine
     print("✅ Database imported")
     
     # Test database connection
@@ -29,7 +29,14 @@ try:
     print("✅ Database connection successful")
     
     print("Importing models...")
-    from app.models_enhanced import UserV2, UserRole, Token, DeveloperEarning, PasswordReset, AuditLog
+    from app.models_enhanced import (
+        AuditLog,
+        DeveloperEarning,
+        PasswordReset,
+        Token,
+        UserRole,
+        UserV2,
+    )
     print("✅ Models imported")
     
     print("Importing auth service...")
@@ -41,8 +48,9 @@ try:
     print("✅ Tables created")
     
     # Test creating a user
-    from sqlalchemy.orm import sessionmaker
     from datetime import datetime
+
+    from sqlalchemy.orm import sessionmaker
     
     Session = sessionmaker(bind=engine)
     session = Session()

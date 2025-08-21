@@ -10,31 +10,30 @@ RESTful API endpoints for AI performance monitoring:
 - Usage pattern analysis
 """
 
-from typing import Dict, Any, List, Optional
+import asyncio
+import json
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Query
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import json
-import asyncio
 
-from app.database import get_db
 from app.core.auth import get_current_user
+from app.database import get_db
 from app.services.ai_performance_service import (
-    get_ai_performance_monitor,
     AIModelType,
-    PerformanceMetric
+    PerformanceMetric,
+    get_ai_performance_monitor,
 )
-from app.services.audit_service import get_audit_logger, AuditEventType
 
 
 # Pydantic models for API
 class AIMetricsQuery(BaseModel):
-    provider: Optional[AIModelType] = None
-    model: Optional[str] = None
+    provider: AIModelType | None = None
+    model: str | None = None
     time_period: str = "1h"
-    metric_types: Optional[List[PerformanceMetric]] = None
+    metric_types: list[PerformanceMetric] | None = None
 
 
 class AIUsageRecord(BaseModel):
@@ -45,11 +44,11 @@ class AIUsageRecord(BaseModel):
     completion_tokens: int
     response_time_ms: int
     success: bool
-    user_id: Optional[str] = None
-    error_type: Optional[str] = None
-    error_message: Optional[str] = None
+    user_id: str | None = None
+    error_type: str | None = None
+    error_message: str | None = None
     response_length: int = 0
-    quality_score: Optional[float] = None
+    quality_score: float | None = None
 
 
 class CostAnalyticsQuery(BaseModel):
@@ -108,8 +107,8 @@ async def get_real_time_ai_metrics(
 
 @router.get("/metrics/performance", summary="Get AI performance statistics")
 async def get_ai_performance_statistics(
-    provider: Optional[AIModelType] = Query(None),
-    model: Optional[str] = Query(None),
+    provider: AIModelType | None = Query(None),
+    model: str | None = Query(None),
     time_period: str = Query("1h", regex="^(\\d+[mhd]|1h|24h|7d)$"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -435,7 +434,7 @@ async def get_ai_analytics_summary(
 @router.get("/debug/metrics-history", summary="Get AI metrics history for debugging")
 async def get_ai_metrics_history(
     limit: int = Query(100, ge=1, le=1000),
-    provider: Optional[AIModelType] = Query(None),
+    provider: AIModelType | None = Query(None),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):

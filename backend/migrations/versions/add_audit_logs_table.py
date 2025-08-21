@@ -9,9 +9,10 @@ Revises: previous_migration
 Create Date: 2024-01-20 12:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers
 revision = 'add_audit_logs_table'

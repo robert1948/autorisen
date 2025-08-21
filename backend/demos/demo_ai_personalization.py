@@ -11,17 +11,14 @@ Interactive demonstration of the AI personalization system:
 """
 
 import asyncio
-import json
-from datetime import datetime
-from typing import Dict, Any
 
 # Import personalization components
 from app.services.ai_personalization_service import (
     AIPersonalizationService,
-    LearningStyle,
     CommunicationStyle,
     ExpertiseLevel,
-    PersonalityTrait
+    LearningStyle,
+    PersonalityTrait,
 )
 
 
@@ -129,7 +126,7 @@ class PersonalizationDemo:
                 context_type='learning'
             )
             
-            print(f"✨ Personalized Prompt:")
+            print("✨ Personalized Prompt:")
             print(f"   {personalized_prompt}")
             print(f"📈 Personalization Added: {len(personalized_prompt) - len(base_prompt)} characters")
     
@@ -273,7 +270,7 @@ class PersonalizationDemo:
                 base_params=base_params
             )
             
-            print(f"🎯 Personalized System Message:")
+            print("🎯 Personalized System Message:")
             print(f"   {personalized_system[:150]}{'...' if len(personalized_system) > 150 else ''}")
             print(f"⚙️  Adapted Parameters: temp={adapted_params['temperature']}, tokens={adapted_params['max_tokens']}")
             
@@ -333,17 +330,17 @@ class PersonalizationDemo:
             expertise_levels[expertise] = expertise_levels.get(expertise, 0) + 1
         
         print(f"👥 Total Users Analyzed: {total_users}")
-        print(f"\n🎓 Learning Style Distribution:")
+        print("\n🎓 Learning Style Distribution:")
         for style, count in learning_styles.items():
             percentage = (count / total_users) * 100
             print(f"   {style.replace('_', ' ').title()}: {count} ({percentage:.1f}%)")
         
-        print(f"\n💬 Communication Style Distribution:")
+        print("\n💬 Communication Style Distribution:")
         for style, count in communication_styles.items():
             percentage = (count / total_users) * 100
             print(f"   {style.title()}: {count} ({percentage:.1f}%)")
         
-        print(f"\n⚡ Expertise Level Distribution:")
+        print("\n⚡ Expertise Level Distribution:")
         for level, count in expertise_levels.items():
             percentage = (count / total_users) * 100
             print(f"   {level.title()}: {count} ({percentage:.1f}%)")

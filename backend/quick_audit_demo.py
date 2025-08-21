@@ -5,13 +5,13 @@ Fast validation of core AI audit service functionality without heavy Redis opera
 """
 
 import asyncio
-from datetime import datetime
-
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.ai_audit_service import AIAuditService, ComplianceLevel
+
 
 async def quick_validation():
     """Quick validation of AI audit service core features"""
@@ -94,16 +94,16 @@ async def quick_validation():
     
     # Final summary
     final_cache_size = len(service.memory_cache)
-    print(f"\n📊 Final Results:")
+    print("\n📊 Final Results:")
     print(f"   Total audit entries: {final_cache_size}")
-    print(f"   All core features operational: ✅")
-    print(f"   PII detection working: ✅")
-    print(f"   Security events working: ✅")
-    print(f"   Compliance assessment working: ✅")
-    print(f"   Report generation working: ✅")
+    print("   All core features operational: ✅")
+    print("   PII detection working: ✅")
+    print("   Security events working: ✅")
+    print("   Compliance assessment working: ✅")
+    print("   Report generation working: ✅")
     
-    print(f"\n🎉 AI Audit Service Core Validation Complete!")
-    print(f"System ready for production integration!")
+    print("\n🎉 AI Audit Service Core Validation Complete!")
+    print("System ready for production integration!")
 
 if __name__ == "__main__":
     asyncio.run(quick_validation())

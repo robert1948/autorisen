@@ -10,23 +10,23 @@ Comprehensive testing for content moderation system including:
 - Performance validation
 """
 
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import HTTPException
+from unittest.mock import Mock, patch
 
+import pytest
+from fastapi.testclient import TestClient
+
+from app.main import app
+from app.middleware.content_moderation import ContentModerationMiddleware
 from app.utils.content_moderation import (
+    ContentCategory,
     ContentModerator,
     ModerationLevel,
     ViolationType,
-    ContentCategory,
+    is_content_safe,
     moderate_ai_response,
     moderate_user_content,
-    is_content_safe
 )
-from app.middleware.content_moderation import ContentModerationMiddleware
-from app.main import app
+
 
 # Test fixtures
 @pytest.fixture

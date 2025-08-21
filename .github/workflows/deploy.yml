@@ -2,62 +2,98 @@ name: Deploy via Heroku Pipeline
 
 on:
   push:
-    branches: [develop] # auto-deploy to staging when you push to develop
+    branches: [develop] # Auto-deploy to staging on develop
   workflow_dispatch:
     inputs:
       promote_to_prod:
-        description: "Promote current staging slug (autorisen) to production (capecraft)?"
+        description: "After building/releasing staging, promote autorisen -> capecraft?"
+        type: boolean
+        default: false
+      promote_only:
+        description: "Skip staging build; just promote latest autorisen -> capecraft."
         type: boolean
         default: false
 
-# Prevent overlapping runs per ref
 concurrency:
   group: heroku-deploy-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   HEROKU_STAGING_APP: autorisen
   HEROKU_PRODUCTION_APP: capecraft
-  # Change this if your Heroku app uses 'master' as its default deploy branch
-  HEROKU_TARGET_BRANCH: main
+  HEROKU_PROCESS_TYPE: web
+  # Container registry tags
+  DOCKER_TAG_STAGING: registry.heroku.com/autorisen/web
+  DOCKER_TAG_PROD: registry.heroku.com/capecraft/web
 
 jobs:
   deploy-staging:
-    if: github.ref == 'refs/heads/develop'
+    # Run on push to develop OR manual run (unless promote_only=true)
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.promote_only != 'true')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (full history + LFS)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # <-- fixes "shallow clone" push rejection
-          lfs: true # fetch real LFS files
+          fetch-depth: 0
+
+      - name: Compute build meta
+        id: meta
+        run: |
+          echo "APP_VERSION=v${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+          echo "GIT_SHA=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          echo "BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Authenticate to Heroku
-        run: heroku auth:token
+      - name: Heroku login (container registry)
+        run: heroku container:login
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
-      - name: Add Heroku remote (staging)
+      # Build Docker image with FE/BE stamping
+      - name: Docker build (staging)
         run: |
-          git remote add heroku-staging https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/${{ env.HEROKU_STAGING_APP }}.git
-          git remote -v
+          docker build \
+            --build-arg VITE_APP_VERSION='${{ steps.meta.outputs.APP_VERSION }}' \
+            --build-arg VITE_GIT_SHA='${{ steps.meta.outputs.GIT_SHA }}' \
+            --build-arg VITE_BUILD_TIME='${{ steps.meta.outputs.BUILD_TIME }}' \
+            --build-arg APP_VERSION='${{ steps.meta.outputs.APP_VERSION }}' \
+            --build-arg GIT_SHA='${{ steps.meta.outputs.GIT_SHA }}' \
+            --build-arg BUILD_TIME='${{ steps.meta.outputs.BUILD_TIME }}' \
+            -t ${{ env.DOCKER_TAG_STAGING }} .
 
-      - name: Push to Heroku (staging)
-        run: |
-          # If your Heroku default branch is master, set HEROKU_TARGET_BRANCH=master in env above
-          git push heroku-staging HEAD:${{ env.HEROKU_TARGET_BRANCH }} --force
+      - name: Push image to Heroku (staging)
+        run: docker push ${{ env.DOCKER_TAG_STAGING }}
 
-      - name: Show last release output (staging)
-        run: heroku releases:output -a ${{ env.HEROKU_STAGING_APP }}
+      - name: Release image (staging)
+        run: heroku container:release ${{ env.HEROKU_PROCESS_TYPE }} -a ${{ env.HEROKU_STAGING_APP }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Ensure staging config (ENVIRONMENT=staging)
+        run: heroku config:set ENVIRONMENT=staging -a ${{ env.HEROKU_STAGING_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Show last release (staging)
+        run: heroku releases:info -a ${{ env.HEROKU_STAGING_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Verify /api/status (staging)
+        run: |
+          echo "Status from autorisen:"
+          curl -fsSL https://${{ env.HEROKU_STAGING_APP }}.herokuapp.com/api/status || true
 
   promote-to-prod:
-    if: ${{ github.event.inputs.promote_to_prod == 'true' }}
+    # If manual run with promote_to_prod=true and not 'promote_only', promote after staging deploy above
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.promote_to_prod == 'true' && github.event.inputs.promote_only != 'true'
     runs-on: ubuntu-latest
     needs: [deploy-staging]
 
@@ -75,7 +111,55 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
-      - name: Show last release output (production)
-        run: heroku releases:output -a ${{ env.HEROKU_PRODUCTION_APP }}
+      - name: Ensure production config (ENVIRONMENT=production)
+        run: heroku config:set ENVIRONMENT=production -a ${{ env.HEROKU_PRODUCTION_APP }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Show last release (production)
+        run: heroku releases:info -a ${{ env.HEROKU_PRODUCTION_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Verify /api/status (production)
+        run: |
+          echo "Heroku app URL:"
+          curl -fsSL https://${{ env.HEROKU_PRODUCTION_APP }}.herokuapp.com/api/status || true
+          echo "Custom domain:"
+          curl -fsSL https://www.cape-control.com/api/status || true
+
+  promote-only:
+    # Manual promote without building staging
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.promote_only == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Authenticate to Heroku
+        run: heroku auth:token
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Promote slug from staging -> production
+        run: heroku pipelines:promote -a ${{ env.HEROKU_STAGING_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Ensure production config (ENVIRONMENT=production)
+        run: heroku config:set ENVIRONMENT=production -a ${{ env.HEROKU_PRODUCTION_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Show last release (production)
+        run: heroku releases:info -a ${{ env.HEROKU_PRODUCTION_APP }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Verify /api/status (production)
+        run: |
+          echo "Heroku app URL:"
+          curl -fsSL https://${{ env.HEROKU_PRODUCTION_APP }}.herokuapp.com/api/status || true
+          echo "Custom domain:"
+          curl -fsSL https://www.cape-control.com/api/status || true

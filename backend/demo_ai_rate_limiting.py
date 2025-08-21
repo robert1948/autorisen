@@ -5,9 +5,8 @@ AI Rate Limiting Demo - Task 2.4.2
 Simple demonstration of the AI rate limiting functionality
 """
 
-import asyncio
 import time
-from datetime import datetime
+
 
 def demo_rate_limiting():
     """

@@ -4,9 +4,10 @@ Migration script to add Stripe-related fields to the users_v2 table.
 Run this script to update the database schema for Stripe integration.
 """
 
+import asyncio
 import os
 import sys
-import asyncio
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -26,7 +27,7 @@ async def migrate_stripe_fields():
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
-    print(f"🔗 Connecting to database...")
+    print("🔗 Connecting to database...")
     
     try:
         # Create async engine

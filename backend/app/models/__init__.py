@@ -7,11 +7,12 @@ Fixed for production Heroku deployment.
 """
 
 # Import audit log models
-from .audit_log import AuditLog, AuditEventType, AuditLogLevel
+import os
 
 # Import main models from models.py file
 import sys
-import os
+
+from .audit_log import AuditEventType, AuditLog, AuditLogLevel
 
 # Add the parent directory to path to import from models.py
 current_dir = os.path.dirname(__file__)

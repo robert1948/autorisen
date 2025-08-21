@@ -1,8 +1,8 @@
 """CapeAI Service"""
-import asyncio
 import random
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any
+
 
 class CapeAIService:
     def __init__(self):
@@ -25,7 +25,7 @@ class CapeAIService:
             "auth": "For authentication and security, I can guide you through setting up two-factor auth, managing sessions, or user permissions."
         }
 
-    async def generate_response(self, message: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def generate_response(self, message: str, context: dict[str, Any] = None) -> dict[str, Any]:
         """Generate a demo AI response"""
         
         # Simple keyword-based responses

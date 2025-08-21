@@ -6,23 +6,29 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-import pytest
-import asyncio
-import json
 import base64
-import io
-from typing import Dict, Any
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
-from fastapi import UploadFile
+
+from app.routes.voice import router
 
 # Import the voice service and API components
 from app.services.voice_service import (
-    VoiceService, VoiceProvider, AudioFormat, VoiceGender, VoiceProfile,
-    SpeechToTextResult, TextToSpeechResult, VoiceAnalytics,
-    create_voice_service, get_supported_audio_formats, get_supported_languages
+    AudioFormat,
+    SpeechToTextResult,
+    TextToSpeechResult,
+    VoiceAnalytics,
+    VoiceGender,
+    VoiceProfile,
+    VoiceProvider,
+    VoiceService,
+    create_voice_service,
+    get_supported_audio_formats,
+    get_supported_languages,
 )
-from app.routes.voice import router
+
 
 class TestVoiceService:
     """Test suite for VoiceService"""

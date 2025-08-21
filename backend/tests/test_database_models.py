@@ -19,24 +19,23 @@ Coverage targets:
 - Database operations (CRUD)
 """
 
-import pytest
 import os
 import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, sessionmaker
 
 # Set test environment before importing app modules
 os.environ["DATABASE_URL"] = "sqlite:///./test_models.db"
 
 # Import models to test
-from app.models import User, UserProfile
-from app.models_enhanced import (
-    UserV2, Token, DeveloperEarning, PasswordReset, AuditLog, UserRole
-)
 from app.database import Base
+from app.models import User, UserProfile
+from app.models_enhanced import AuditLog, DeveloperEarning, PasswordReset, Token, UserRole, UserV2
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_models.db"
@@ -1079,7 +1078,7 @@ class TestModelPerformance:
             user = UserV2(
                 email=f"bulk{i}@example.com",
                 password_hash=f"hash_{i}",
-                first_name=f"Bulk",
+                first_name="Bulk",
                 last_name=f"User{i}"
             )
             users.append(user)

@@ -2,10 +2,11 @@
 
 import re
 
+
 def fix_password_selectors():
     file_path = "/home/robert/Documents/localstorm250722/client/src/test/Login.test.jsx"
     
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         content = f.read()
     
     # Replace getByLabelText(/password/i) with document.getElementById('password')

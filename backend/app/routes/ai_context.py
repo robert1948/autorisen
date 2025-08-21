@@ -9,24 +9,25 @@ API endpoints for managing conversation context and memory:
 - Conversation history access
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Any
 
-from app.services.conversation_context_service import get_context_service, ContextType
-from app.services.multi_provider_ai_service import MultiProviderAIService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
 from app.dependencies import get_current_user
 from app.models import User
+from app.services.conversation_context_service import get_context_service
+from app.services.multi_provider_ai_service import MultiProviderAIService
 
 router = APIRouter(prefix="/api/ai/context", tags=["AI Context"])
 
 
 class ConversationRequest(BaseModel):
     message: str
-    conversation_id: Optional[str] = None
-    model: Optional[str] = None
-    temperature: Optional[float] = None
+    conversation_id: str | None = None
+    model: str | None = None
+    temperature: float | None = None
     use_context: bool = True
 
 
@@ -37,17 +38,17 @@ class ConversationResponse(BaseModel):
     provider: str
     context_messages_used: int
     response_time_ms: int
-    tokens_used: Dict[str, int]
+    tokens_used: dict[str, int]
 
 
 class UserPreferencesUpdate(BaseModel):
-    preferred_ai_provider: Optional[str] = None
-    preferred_ai_model: Optional[str] = None
-    communication_style: Optional[str] = None  # 'professional', 'casual', 'formal'
-    detail_level: Optional[str] = None  # 'brief', 'moderate', 'detailed'
-    language: Optional[str] = None
-    topics_of_interest: Optional[List[str]] = None
-    response_length_preference: Optional[str] = None  # 'short', 'moderate', 'long'
+    preferred_ai_provider: str | None = None
+    preferred_ai_model: str | None = None
+    communication_style: str | None = None  # 'professional', 'casual', 'formal'
+    detail_level: str | None = None  # 'brief', 'moderate', 'detailed'
+    language: str | None = None
+    topics_of_interest: list[str] | None = None
+    response_length_preference: str | None = None  # 'short', 'moderate', 'long'
 
 
 class ConversationContextResponse(BaseModel):
@@ -57,8 +58,8 @@ class ConversationContextResponse(BaseModel):
     total_tokens: int
     created_at: datetime
     updated_at: datetime
-    context_summary: Optional[str]
-    recent_messages: List[Dict[str, Any]]
+    context_summary: str | None
+    recent_messages: list[dict[str, Any]]
 
 
 @router.post("/chat", response_model=ConversationResponse)
@@ -122,7 +123,7 @@ async def context_aware_chat(
 async def get_conversation_context(
     conversation_id: str,
     current_user: User = Depends(get_current_user),
-    max_messages: Optional[int] = Query(default=20, le=100)
+    max_messages: int | None = Query(default=20, le=100)
 ):
     """Get conversation context and history"""
     try:
@@ -168,7 +169,7 @@ async def get_conversation_context(
         raise HTTPException(status_code=500, detail=f"Context retrieval error: {str(e)}")
 
 
-@router.get("/preferences", response_model=Dict[str, Any])
+@router.get("/preferences", response_model=dict[str, Any])
 async def get_user_preferences(
     current_user: User = Depends(get_current_user)
 ):
@@ -187,7 +188,7 @@ async def get_user_preferences(
         raise HTTPException(status_code=500, detail=f"Preferences retrieval error: {str(e)}")
 
 
-@router.put("/preferences", response_model=Dict[str, str])
+@router.put("/preferences", response_model=dict[str, str])
 async def update_user_preferences(
     preferences: UserPreferencesUpdate,
     current_user: User = Depends(get_current_user)
@@ -226,7 +227,7 @@ async def update_user_preferences(
         raise HTTPException(status_code=500, detail=f"Preferences update error: {str(e)}")
 
 
-@router.get("/conversations", response_model=List[Dict[str, Any]])
+@router.get("/conversations", response_model=list[dict[str, Any]])
 async def get_conversation_history(
     current_user: User = Depends(get_current_user),
     limit: int = Query(default=10, le=50)
@@ -272,7 +273,7 @@ async def delete_conversation(
         raise HTTPException(status_code=500, detail=f"Deletion error: {str(e)}")
 
 
-@router.get("/status", response_model=Dict[str, Any])
+@router.get("/status", response_model=dict[str, Any])
 async def get_context_service_status():
     """Get context service health status"""
     try:

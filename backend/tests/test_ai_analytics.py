@@ -10,20 +10,17 @@ Comprehensive test suite for AI analytics functionality:
 - API endpoint tests
 """
 
-import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.services.ai_analytics_service import (
     AIAnalyticsService,
-    ResponseAnalytics,
-    ConversationAnalytics,
-    QualityScore,
-    QualityDimension,
     AnalyticsPeriod,
-    ModelPerformanceMetrics
+    QualityDimension,
+    QualityScore,
+    ResponseAnalytics,
 )
 
 
@@ -453,6 +450,7 @@ class TestAIAnalyticsAPI:
     async def test_analytics_dashboard_endpoint(self, mock_user):
         """Test analytics dashboard API endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.ai_analytics.get_current_user', return_value=mock_user):
@@ -485,6 +483,7 @@ class TestAIAnalyticsAPI:
     async def test_user_feedback_endpoint(self, mock_user):
         """Test user feedback recording endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.ai_analytics.get_current_user', return_value=mock_user):
@@ -509,6 +508,7 @@ class TestAIAnalyticsAPI:
     async def test_quality_analysis_endpoint(self, mock_user):
         """Test quality analysis endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.ai_analytics.get_current_user', return_value=mock_user):
@@ -539,6 +539,7 @@ class TestAIAnalyticsAPI:
     async def test_analytics_health_endpoint(self):
         """Test analytics health check endpoint"""
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         with patch('app.routes.ai_analytics.get_analytics_service') as mock_service:

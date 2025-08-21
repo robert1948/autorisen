@@ -3,16 +3,13 @@ Comprehensive Test Suite for CapeAI Enterprise Platform
 Clean Enterprise-Grade Testing Suite - All Critical Issues Fixed
 """
 
-import pytest
 import asyncio
-import os
-import sys
 import importlib
-import tempfile
-import json
-from typing import Dict, List, Any, Optional
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
-from pathlib import Path
+import os
+from unittest.mock import Mock, patch
+
+import pytest
+
 
 class TestCriticalImports:
     """Test critical import functionality"""
@@ -54,8 +51,9 @@ class TestDatabaseModels:
         ]
         try:
             import app.models as models_module
+
             # Import specific models instead of using wildcard
-            from app.models import User, UserProfile, AuditLog
+            from app.models import AuditLog, User, UserProfile
             available_models = [name for name in dir(models_module)
                                 if not name.startswith('_') and name[0].isupper()]
             missing_models = set(expected_models) - set(available_models)
@@ -83,8 +81,9 @@ class TestDatabaseModels:
         """Test individual model structure"""
         try:
             import app.models as models_module
+
             # Import specific models instead of using wildcard
-            from app.models import User, UserProfile, AuditLog
+            from app.models import AuditLog, User, UserProfile
             model_class = getattr(models_module, model_name, None)
             if model_class is None:
                 pytest.skip(f"{model_name} model not found")
@@ -278,9 +277,11 @@ class TestMiddlewareIntegration:
     def test_ddos_protection_functionality(self):
         """Test DDoS protection middleware functionality"""
         try:
-            from app.middleware.ddos_protection import DDoSProtectionMiddleware
-            from fastapi import Request, Response
             from unittest.mock import AsyncMock
+
+            from fastapi import Request, Response
+
+            from app.middleware.ddos_protection import DDoSProtectionMiddleware
             app_mock = Mock()
             middleware = DDoSProtectionMiddleware(app_mock)
             assert hasattr(middleware, 'max_requests')
@@ -293,9 +294,11 @@ class TestMiddlewareIntegration:
     async def test_middleware_request_processing(self):
         """Test middleware request processing"""
         try:
-            from app.middleware.ddos_protection import DDoSProtectionMiddleware
-            from fastapi import Request
             from unittest.mock import AsyncMock, Mock
+
+            from fastapi import Request
+
+            from app.middleware.ddos_protection import DDoSProtectionMiddleware
             app_mock = Mock()
             middleware = DDoSProtectionMiddleware(app_mock, max_requests=5, window=60)
             request_mock = Mock(spec=Request)
@@ -331,7 +334,7 @@ class TestEnvironmentConfiguration:
         env_paths = [".env", "../.env"]
         for env_path in env_paths:
             if os.path.exists(env_path):
-                with open(env_path, "r") as f:
+                with open(env_path) as f:
                     env_content = f.read()
                     if f"{env_var}=" in env_content:
                         return
@@ -557,7 +560,7 @@ class TestSecurityImplementation:
     def test_authentication_mechanisms(self):
         """Test authentication mechanisms"""
         try:
-            from app.auth import verify_password, create_access_token
+            from app.auth import create_access_token, verify_password
             assert callable(verify_password), "verify_password should be callable"
             assert callable(create_access_token), "create_access_token should be callable"
         except ImportError:
@@ -579,7 +582,7 @@ class TestSecurityImplementation:
     def test_jwt_token_patterns(self):
         """Test JWT token implementation"""
         try:
-            from jose import jwt, JWTError
+            from jose import JWTError, jwt
             test_payload = {"sub": "test_user", "exp": 1234567890}
             secret_key = "test_secret_key"
             token = jwt.encode(test_payload, secret_key, algorithm="HS256")
@@ -627,12 +630,10 @@ class TestApplicationHealth:
             "services": "unknown"
         }
         try:
-            from app.database import get_db
             health_status["database"] = "healthy"
         except Exception:
             health_status["database"] = "unhealthy"
         try:
-            import redis
             with patch('redis.Redis') as mock_redis:
                 mock_redis.return_value.ping.return_value = True
                 health_status["redis"] = "healthy"
@@ -710,8 +711,9 @@ class TestIntegrationScenarios:
     def test_database_model_integration(self):
         """Test database model integration"""
         try:
-            from app.models import User, UserProfile
             from sqlalchemy import inspect
+
+            from app.models import User, UserProfile
             user_mapper = inspect(User)
             column_names = [col.name for col in user_mapper.columns]
             expected_columns = ['id', 'email']

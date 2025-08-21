@@ -6,12 +6,13 @@ Comprehensive audit logging system for security, compliance, and monitoring.
 Tracks all important user actions, security events, and system activities.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, JSON
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
-from app.database import Base
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Any
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.sql import func
+
+from app.database import Base
 
 
 class AuditEventType(Enum):
@@ -175,7 +176,7 @@ class AuditLog(Base):
     def __repr__(self):
         return f"<AuditLog(id={self.id}, event_type={self.event_type}, user_id={self.user_id}, timestamp={self.created_at})>"
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert audit log to dictionary for JSON serialization"""
         return {
             'id': self.id,
@@ -204,18 +205,18 @@ class AuditLog(Base):
     def create_event(cls, 
                     event_type: AuditEventType,
                     event_category: str,
-                    user_id: Optional[str] = None,
-                    user_email: Optional[str] = None,
-                    user_role: Optional[str] = None,
-                    event_description: Optional[str] = None,
-                    ip_address: Optional[str] = None,
-                    user_agent: Optional[str] = None,
-                    endpoint: Optional[str] = None,
-                    http_method: Optional[str] = None,
-                    status_code: Optional[int] = None,
+                    user_id: str | None = None,
+                    user_email: str | None = None,
+                    user_role: str | None = None,
+                    event_description: str | None = None,
+                    ip_address: str | None = None,
+                    user_agent: str | None = None,
+                    endpoint: str | None = None,
+                    http_method: str | None = None,
+                    status_code: int | None = None,
                     success: bool = True,
-                    error_message: Optional[str] = None,
-                    metadata: Optional[Dict[str, Any]] = None,
+                    error_message: str | None = None,
+                    metadata: dict[str, Any] | None = None,
                     event_level: AuditLogLevel = AuditLogLevel.INFO,
                     **kwargs) -> 'AuditLog':
         """

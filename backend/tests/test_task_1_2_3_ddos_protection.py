@@ -3,9 +3,8 @@ Task 1.2.3 DDoS Protection Tests
 Comprehensive test suite for DDoS protection and IP blocking functionality
 """
 
-import pytest
-import time
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

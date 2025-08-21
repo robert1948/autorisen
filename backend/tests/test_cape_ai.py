@@ -11,13 +11,12 @@ Tests cover all CapeAI endpoints with 75%+ coverage target:
 - Performance and security validation
 """
 
-import pytest
 import os
-import json
 import uuid
-import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -30,9 +29,8 @@ os.environ["REDIS_HOST"] = "localhost"
 os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "True"
 
+from app.database import Base, get_db
 from app.main import app
-from app.database import get_db, Base
-from app import models
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_cape_ai.db"

@@ -12,20 +12,20 @@ Features:
 - Standalone operation
 """
 
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Numeric, Enum, text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel, EmailStr
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
 import enum
-from typing import Optional
-import os
 import logging
+import os
+from datetime import datetime, timedelta
+
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, Numeric, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -89,8 +89,8 @@ class DeveloperEarningV2(Base):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
     role: UserRole = UserRole.CUSTOMER
 
 class UserLogin(BaseModel):
@@ -105,8 +105,8 @@ class Token(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
     role: UserRole
     is_active: bool
     created_at: datetime

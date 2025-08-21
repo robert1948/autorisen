@@ -6,20 +6,16 @@ Author: CapeAI Development Team
 Date: July 25, 2025
 """
 
-import asyncio
 import json
 import logging
-import time
-import uuid
-from typing import Dict, List, Optional, Any, Union, Tuple
-from dataclasses import dataclass, asdict, field
-from enum import Enum
-from datetime import datetime, timedelta
-import hashlib
 import re
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 # Vector similarity imports
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -70,15 +66,15 @@ class ConversationMessage:
     content: str
     timestamp: datetime
     tokens: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    thread_id: Optional[str] = None
-    parent_message_id: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    thread_id: str | None = None
+    parent_message_id: str | None = None
     edited: bool = False
-    edit_history: List[Dict[str, Any]] = field(default_factory=list)
-    reactions: Dict[str, int] = field(default_factory=dict)
-    attachments: List[Dict[str, Any]] = field(default_factory=list)
+    edit_history: list[dict[str, Any]] = field(default_factory=list)
+    reactions: dict[str, int] = field(default_factory=dict)
+    attachments: list[dict[str, Any]] = field(default_factory=list)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'message_id': self.message_id,
             'conversation_id': self.conversation_id,
@@ -105,15 +101,15 @@ class ConversationThread:
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
     message_count: int = 0
-    participants: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-    topic_keywords: List[str] = field(default_factory=list)
+    participants: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    topic_keywords: list[str] = field(default_factory=list)
     thread_type: str = "general"
     status: str = "active"
-    parent_thread_id: Optional[str] = None
-    child_thread_ids: List[str] = field(default_factory=list)
+    parent_thread_id: str | None = None
+    child_thread_ids: list[str] = field(default_factory=list)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'thread_id': self.thread_id,
             'conversation_id': self.conversation_id,
@@ -139,17 +135,17 @@ class ConversationSummary:
     title: str
     brief_summary: str
     detailed_summary: str
-    key_points: List[str]
-    topics_discussed: List[str]
-    decisions_made: List[str]
-    action_items: List[str]
-    participants: List[str]
-    sentiment_analysis: Dict[str, float]
+    key_points: list[str]
+    topics_discussed: list[str]
+    decisions_made: list[str]
+    action_items: list[str]
+    participants: list[str]
+    sentiment_analysis: dict[str, float]
     conversation_type: ConversationType
     quality_score: float
     created_at: datetime = field(default_factory=datetime.utcnow)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'summary_id': self.summary_id,
             'conversation_id': self.conversation_id,
@@ -176,15 +172,15 @@ class ConversationAnalytics:
     total_tokens: int
     avg_response_time: float
     engagement_score: float
-    topic_distribution: Dict[str, float]
-    sentiment_trend: List[Dict[str, Any]]
-    user_participation: Dict[str, Dict[str, Any]]
-    peak_activity_times: List[str]
-    conversation_flow: Dict[str, Any]
-    quality_metrics: Dict[str, float]
+    topic_distribution: dict[str, float]
+    sentiment_trend: list[dict[str, Any]]
+    user_participation: dict[str, dict[str, Any]]
+    peak_activity_times: list[str]
+    conversation_flow: dict[str, Any]
+    quality_metrics: dict[str, float]
     generated_at: datetime = field(default_factory=datetime.utcnow)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'analytics_id': self.analytics_id,
             'conversation_id': self.conversation_id,
@@ -206,7 +202,7 @@ class EnhancedConversation:
     Enhanced conversation with advanced management capabilities
     """
     
-    def __init__(self, conversation_id: str = None, user_id: str = None, conversation_data: Dict[str, Any] = None):
+    def __init__(self, conversation_id: str = None, user_id: str = None, conversation_data: dict[str, Any] = None):
         """Initialize enhanced conversation"""
         self.conversation_id = conversation_id or str(uuid.uuid4())
         self.user_id = user_id
@@ -221,9 +217,9 @@ class EnhancedConversation:
         self.status = ConversationStatus(data.get('status', 'active'))
         
         # Messages and threads
-        self.messages: List[ConversationMessage] = []
-        self.threads: Dict[str, ConversationThread] = {}
-        self.message_index: Dict[str, ConversationMessage] = {}
+        self.messages: list[ConversationMessage] = []
+        self.threads: dict[str, ConversationThread] = {}
+        self.message_index: dict[str, ConversationMessage] = {}
         
         # Organization and metadata
         self.tags = data.get('tags', [])
@@ -232,8 +228,8 @@ class EnhancedConversation:
         self.sharing_permissions = data.get('sharing_permissions', {})
         
         # Analytics and insights
-        self.summary: Optional[ConversationSummary] = None
-        self.analytics: Optional[ConversationAnalytics] = None
+        self.summary: ConversationSummary | None = None
+        self.analytics: ConversationAnalytics | None = None
         
         # Configuration
         self.auto_threading = data.get('auto_threading', True)
@@ -250,7 +246,7 @@ class EnhancedConversation:
             'auto_summaries_generated': 0
         }
     
-    async def add_message(self, role: MessageRole, content: str, metadata: Dict[str, Any] = None) -> ConversationMessage:
+    async def add_message(self, role: MessageRole, content: str, metadata: dict[str, Any] = None) -> ConversationMessage:
         """Add a new message to the conversation"""
         message = ConversationMessage(
             message_id=str(uuid.uuid4()),
@@ -329,7 +325,7 @@ class EnhancedConversation:
         self.performance_metrics['total_messages'] -= 1
         return True
     
-    async def create_thread(self, title: str, message_ids: List[str] = None, thread_type: str = "general") -> ConversationThread:
+    async def create_thread(self, title: str, message_ids: list[str] = None, thread_type: str = "general") -> ConversationThread:
         """Create a new conversation thread"""
         thread = ConversationThread(
             thread_id=str(uuid.uuid4()),
@@ -376,14 +372,14 @@ class EnhancedConversation:
         
         return True
     
-    async def get_thread_messages(self, thread_id: str) -> List[ConversationMessage]:
+    async def get_thread_messages(self, thread_id: str) -> list[ConversationMessage]:
         """Get all messages in a specific thread"""
         if thread_id not in self.threads:
             return []
         
         return [msg for msg in self.messages if msg.thread_id == thread_id]
     
-    async def search_messages(self, query: str, filters: Dict[str, Any] = None) -> List[ConversationMessage]:
+    async def search_messages(self, query: str, filters: dict[str, Any] = None) -> list[ConversationMessage]:
         """Search messages within the conversation"""
         results = []
         query_lower = query.lower()
@@ -483,7 +479,7 @@ class EnhancedConversation:
         
         return self.analytics
     
-    async def export_conversation(self, format: str = "json", include_metadata: bool = True) -> Union[str, Dict[str, Any]]:
+    async def export_conversation(self, format: str = "json", include_metadata: bool = True) -> str | dict[str, Any]:
         """Export conversation data"""
         export_data = {
             'conversation_id': self.conversation_id,
@@ -594,7 +590,7 @@ class EnhancedConversation:
         # Rough estimation: ~4 characters per token
         return max(1, len(text) // 4)
     
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """Extract keywords from text"""
         # Simple keyword extraction
         words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
@@ -606,7 +602,7 @@ class EnhancedConversation:
         # Return unique keywords
         return list(set(keywords))
     
-    def _extract_summary_data(self, text: str) -> Dict[str, Any]:
+    def _extract_summary_data(self, text: str) -> dict[str, Any]:
         """Extract summary data from conversation text"""
         # This is a simplified implementation
         # In production, would use advanced NLP/AI for better summaries
@@ -628,7 +624,7 @@ class EnhancedConversation:
             'quality_score': 0.75  # Would calculate based on various factors
         }
     
-    def _analyze_topic_distribution(self) -> Dict[str, float]:
+    def _analyze_topic_distribution(self) -> dict[str, float]:
         """Analyze topic distribution in conversation"""
         all_text = " ".join([msg.content for msg in self.messages])
         keywords = self._extract_keywords(all_text)
@@ -667,7 +663,7 @@ class EnhancedConversation:
         
         return round(engagement, 2)
     
-    def _get_peak_activity_times(self) -> List[str]:
+    def _get_peak_activity_times(self) -> list[str]:
         """Get peak activity times from message timestamps"""
         if not self.messages:
             return []
@@ -682,7 +678,7 @@ class EnhancedConversation:
         sorted_hours = sorted(hour_counts.items(), key=lambda x: x[1], reverse=True)
         return [f"{hour:02d}:00" for hour, _ in sorted_hours[:3]]
     
-    def _calculate_quality_metrics(self) -> Dict[str, float]:
+    def _calculate_quality_metrics(self) -> dict[str, float]:
         """Calculate conversation quality metrics"""
         if not self.messages:
             return {}
@@ -698,7 +694,7 @@ class EnhancedConversation:
             'completeness': 0.8  # Would calculate based on conversation resolution
         }
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert conversation to dictionary"""
         return {
             'conversation_id': self.conversation_id,
@@ -726,11 +722,11 @@ class ConversationManager:
     Service for managing enhanced conversations with advanced features
     """
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize conversation manager"""
         self.config = config
-        self.conversations: Dict[str, EnhancedConversation] = {}
-        self.user_conversations: Dict[str, List[str]] = {}  # user_id -> conversation_ids
+        self.conversations: dict[str, EnhancedConversation] = {}
+        self.user_conversations: dict[str, list[str]] = {}  # user_id -> conversation_ids
         
         # Indexing for search and discovery
         self.conversation_index = {}
@@ -750,7 +746,7 @@ class ConversationManager:
         
         logger.info("Advanced conversation manager initialized")
     
-    async def create_conversation(self, user_id: str, conversation_data: Dict[str, Any]) -> EnhancedConversation:
+    async def create_conversation(self, user_id: str, conversation_data: dict[str, Any]) -> EnhancedConversation:
         """Create a new enhanced conversation"""
         try:
             conversation = EnhancedConversation(
@@ -781,11 +777,11 @@ class ConversationManager:
             logger.error(f"Failed to create conversation for user {user_id}: {e}")
             raise
     
-    async def get_conversation(self, conversation_id: str) -> Optional[EnhancedConversation]:
+    async def get_conversation(self, conversation_id: str) -> EnhancedConversation | None:
         """Get conversation by ID"""
         return self.conversations.get(conversation_id)
     
-    async def get_user_conversations(self, user_id: str, filters: Dict[str, Any] = None) -> List[EnhancedConversation]:
+    async def get_user_conversations(self, user_id: str, filters: dict[str, Any] = None) -> list[EnhancedConversation]:
         """Get all conversations for a user with optional filters"""
         conversation_ids = self.user_conversations.get(user_id, [])
         conversations = [self.conversations[cid] for cid in conversation_ids if cid in self.conversations]
@@ -802,7 +798,7 @@ class ConversationManager:
         conversations.sort(key=lambda x: x.updated_at, reverse=True)
         return conversations
     
-    async def update_conversation(self, conversation_id: str, updates: Dict[str, Any]) -> Optional[EnhancedConversation]:
+    async def update_conversation(self, conversation_id: str, updates: dict[str, Any]) -> EnhancedConversation | None:
         """Update conversation metadata"""
         conversation = self.conversations.get(conversation_id)
         if not conversation:
@@ -849,7 +845,7 @@ class ConversationManager:
         
         return True
     
-    async def add_message(self, conversation_id: str, role: MessageRole, content: str, metadata: Dict[str, Any] = None) -> Optional[ConversationMessage]:
+    async def add_message(self, conversation_id: str, role: MessageRole, content: str, metadata: dict[str, Any] = None) -> ConversationMessage | None:
         """Add message to conversation"""
         conversation = self.conversations.get(conversation_id)
         if not conversation:
@@ -864,7 +860,7 @@ class ConversationManager:
         
         return message
     
-    async def search_conversations(self, user_id: str, query: str, filters: Dict[str, Any] = None) -> List[EnhancedConversation]:
+    async def search_conversations(self, user_id: str, query: str, filters: dict[str, Any] = None) -> list[EnhancedConversation]:
         """Search conversations for a user"""
         user_conversations = await self.get_user_conversations(user_id, filters)
         results = []
@@ -887,7 +883,7 @@ class ConversationManager:
         self.performance_metrics['searches_performed'] += 1
         return results
     
-    async def get_conversation_analytics(self, conversation_id: str) -> Optional[ConversationAnalytics]:
+    async def get_conversation_analytics(self, conversation_id: str) -> ConversationAnalytics | None:
         """Get analytics for a specific conversation"""
         conversation = self.conversations.get(conversation_id)
         if not conversation:
@@ -895,7 +891,7 @@ class ConversationManager:
         
         return await conversation.generate_analytics()
     
-    async def generate_conversation_summary(self, conversation_id: str, summary_type: str = "detailed") -> Optional[ConversationSummary]:
+    async def generate_conversation_summary(self, conversation_id: str, summary_type: str = "detailed") -> ConversationSummary | None:
         """Generate summary for a conversation"""
         conversation = self.conversations.get(conversation_id)
         if not conversation:
@@ -907,7 +903,7 @@ class ConversationManager:
         
         return summary
     
-    async def get_similar_conversations(self, conversation_id: str, limit: int = 5) -> List[EnhancedConversation]:
+    async def get_similar_conversations(self, conversation_id: str, limit: int = 5) -> list[EnhancedConversation]:
         """Find similar conversations based on content and metadata"""
         source_conversation = self.conversations.get(conversation_id)
         if not source_conversation:
@@ -927,7 +923,7 @@ class ConversationManager:
         similarities.sort(key=lambda x: x[0], reverse=True)
         return [conv for _, conv in similarities[:limit]]
     
-    async def export_conversations(self, user_id: str, conversation_ids: List[str] = None, format: str = "json") -> Union[str, Dict[str, Any]]:
+    async def export_conversations(self, user_id: str, conversation_ids: list[str] = None, format: str = "json") -> str | dict[str, Any]:
         """Export conversations for a user"""
         if conversation_ids:
             conversations = [self.conversations[cid] for cid in conversation_ids if cid in self.conversations]
@@ -950,7 +946,7 @@ class ConversationManager:
         else:
             return export_data
     
-    async def get_system_analytics(self) -> Dict[str, Any]:
+    async def get_system_analytics(self) -> dict[str, Any]:
         """Get system-wide conversation analytics"""
         total_conversations = len(self.conversations)
         if total_conversations == 0:
@@ -986,7 +982,7 @@ class ConversationManager:
             'performance_metrics': self.performance_metrics
         }
     
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check service health"""
         try:
             return {
@@ -1051,7 +1047,7 @@ class ConversationManager:
             if participant in self.participant_index and conv_id in self.participant_index[participant]:
                 self.participant_index[participant].remove(conv_id)
     
-    def _matches_filters(self, conversation: EnhancedConversation, filters: Dict[str, Any]) -> bool:
+    def _matches_filters(self, conversation: EnhancedConversation, filters: dict[str, Any]) -> bool:
         """Check if conversation matches the given filters"""
         if 'status' in filters and conversation.status.value != filters['status']:
             return False
@@ -1103,6 +1099,6 @@ class ConversationManager:
         
         return min(1.0, similarity_score)
 
-def create_conversation_manager(config: Dict[str, Any]) -> ConversationManager:
+def create_conversation_manager(config: dict[str, Any]) -> ConversationManager:
     """Factory function to create conversation manager"""
     return ConversationManager(config)

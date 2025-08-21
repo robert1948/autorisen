@@ -3,29 +3,30 @@ Password Reset Service
 Implements secure password reset functionality with SendGrid email integration
 """
 
+import hashlib
+import logging
 import os
 import secrets
-import hashlib
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any
 
 # Try to import SendGrid (optional dependency)
 try:
     from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail, From, To, Subject, PlainTextContent, HtmlContent
+    from sendgrid.helpers.mail import From, HtmlContent, Mail, PlainTextContent, Subject, To
     SENDGRID_AVAILABLE = True
 except ImportError:
     SENDGRID_AVAILABLE = False
     logging.warning("SendGrid not available - using SMTP fallback")
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from app.models import User
+from sqlalchemy.orm import Session
+
 from app.auth import get_password_hash
+from app.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class PasswordResetService:
         """Create a hash of the reset token for database storage"""
         return hashlib.sha256(token.encode()).hexdigest()
     
-    async def request_password_reset(self, db: Session, email: str) -> Dict[str, Any]:
+    async def request_password_reset(self, db: Session, email: str) -> dict[str, Any]:
         """
         Initiate password reset process
         
@@ -279,7 +280,7 @@ class PasswordResetService:
             logger.error(f"SMTP error: {e}")
             return False
     
-    async def verify_reset_token(self, db: Session, token: str) -> Optional[User]:
+    async def verify_reset_token(self, db: Session, token: str) -> User | None:
         """
         Verify reset token and return user if valid
         
@@ -307,7 +308,7 @@ class PasswordResetService:
             logger.error(f"Token verification failed: {e}")
             return None
     
-    async def reset_password(self, db: Session, token: str, new_password: str) -> Dict[str, Any]:
+    async def reset_password(self, db: Session, token: str, new_password: str) -> dict[str, Any]:
         """
         Reset user password with valid token
         

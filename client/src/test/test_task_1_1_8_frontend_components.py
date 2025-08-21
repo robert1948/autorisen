@@ -15,11 +15,11 @@ Success Criteria:
 - All form validation works correctly
 """
 
+import os
 import subprocess
 import sys
-import os
-import json
 from pathlib import Path
+
 
 class FrontendComponentTester:
     """Helper class for testing frontend components"""
@@ -193,7 +193,7 @@ def test_task_1_1_8_frontend_components():
                 print("   📋 (More errors in full output...)")
     
     # Run full test suite to get overall metrics
-    print(f"\n📊 Running full test suite for metrics...")
+    print("\n📊 Running full test suite for metrics...")
     full_result = tester.run_component_tests()
     tester.parse_test_results(full_result["stdout"])
     
@@ -202,13 +202,13 @@ def test_task_1_1_8_frontend_components():
     print("📋 TASK 1.1.8 FRONTEND COMPONENT IMPLEMENTATION RESULTS")
     print("="*70)
     
-    print(f"📊 Test Summary:")
+    print("📊 Test Summary:")
     print(f"   • Tests Passed: {tester.results['tests_passed']}")
     print(f"   • Tests Failed: {tester.results['tests_failed']}")
     print(f"   • Success Rate: {tester.results['success_rate']:.1f}%")
     print(f"   • Components Successfully Tested: {len(tester.results['components_tested'])}")
     
-    print(f"\n🔍 Implementation Issues Found:")
+    print("\n🔍 Implementation Issues Found:")
     issues_by_component = {}
     for issue in tester.results["implementation_issues"]:
         comp = issue["component"] or "Unknown"

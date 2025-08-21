@@ -7,6 +7,7 @@ Tests the complete Stripe setup with webhook secret configured.
 import os
 import sys
 
+
 def test_stripe_environment():
     """Test Stripe environment configuration."""
     print("🧪 Testing Complete Stripe Integration...")
@@ -51,14 +52,14 @@ def test_stripe_environment():
     
     try:
         import fastapi
-        print(f"   ✅ fastapi: Available")
+        print("   ✅ fastapi: Available")
     except ImportError:
         print("   ❌ fastapi: Not installed")
         return False
     
     try:
         import uvicorn
-        print(f"   ✅ uvicorn: Available")
+        print("   ✅ uvicorn: Available")
     except ImportError:
         print("   ❌ uvicorn: Not installed")
         return False

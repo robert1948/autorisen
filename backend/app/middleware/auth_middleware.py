@@ -6,16 +6,16 @@ Authentication Middleware for CapeControl
 Enhanced middleware for handling authentication with proper logout support.
 """
 
-from fastapi import Request, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import logging
+from datetime import datetime
+
+from fastapi import Request, status
+from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from sqlalchemy.orm import Session
+
 from app.database import get_db
-from app.auth_enhanced import auth_service
 from app.models_enhanced import Token
-from datetime import datetime
-import logging
 
 logger = logging.getLogger(__name__)
 

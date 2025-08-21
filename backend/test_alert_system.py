@@ -6,9 +6,9 @@ Simple Alert System Test Script
 Test the alert system functionality without full pytest setup.
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 from pathlib import Path
 
 # Add the backend directory to Python path
@@ -27,7 +27,7 @@ async def test_alert_system():
         print("=" * 50)
         
         # Import alert system
-        from app.services.alert_service import get_alert_system, AlertSeverity, AlertType
+        from app.services.alert_service import get_alert_system
         
         print("✅ Successfully imported alert system")
         
@@ -134,6 +134,7 @@ def test_alert_api():
         print("=" * 50)
         
         from fastapi.testclient import TestClient
+
         from app.main import app
         
         client = TestClient(app)

@@ -10,17 +10,18 @@ API endpoints for viewing and managing audit logs, providing:
 - Administrative audit management
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Any
 
-from app.database import get_db
-from app.models.audit_log import AuditLog, AuditEventType, AuditLogLevel
-from app.services.audit_service import get_audit_logger
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from app.auth import get_current_user
+from app.database import get_db
 from app.models import User
+from app.models.audit_log import AuditEventType, AuditLog, AuditLogLevel
+from app.services.audit_service import get_audit_logger
 
 router = APIRouter(prefix="/api/audit", tags=["audit"])
 
@@ -29,25 +30,25 @@ router = APIRouter(prefix="/api/audit", tags=["audit"])
 class AuditLogResponse(BaseModel):
     """Response model for audit log entries"""
     id: int
-    user_id: Optional[str]
-    user_email: Optional[str]
-    user_role: Optional[str]
+    user_id: str | None
+    user_email: str | None
+    user_role: str | None
     event_type: str
     event_category: str
     event_level: str
-    event_description: Optional[str]
-    ip_address: Optional[str]
-    user_agent: Optional[str]
-    endpoint: Optional[str]
-    http_method: Optional[str]
-    status_code: Optional[int]
-    response_time_ms: Optional[int]
+    event_description: str | None
+    ip_address: str | None
+    user_agent: str | None
+    endpoint: str | None
+    http_method: str | None
+    status_code: int | None
+    response_time_ms: int | None
     success: bool
-    error_message: Optional[str]
-    metadata: Optional[Dict[str, Any]]
-    risk_score: Optional[int]
+    error_message: str | None
+    metadata: dict[str, Any] | None
+    risk_score: int | None
     created_at: datetime
-    event_timestamp: Optional[datetime]
+    event_timestamp: datetime | None
 
     class Config:
         from_attributes = True
@@ -60,20 +61,20 @@ class AuditStatisticsResponse(BaseModel):
     failed_events: int
     high_risk_events: int
     success_rate: float
-    events_by_category: Dict[str, int]
-    top_users: List[Dict[str, Any]]
+    events_by_category: dict[str, int]
+    top_users: list[dict[str, Any]]
 
 
 class SecurityEventResponse(BaseModel):
     """Response model for security events"""
     id: int
     event_type: str
-    event_description: Optional[str]
-    ip_address: Optional[str]
-    user_id: Optional[str]
-    user_email: Optional[str]
-    risk_score: Optional[int]
-    threat_indicators: Optional[List[str]]
+    event_description: str | None
+    ip_address: str | None
+    user_id: str | None
+    user_email: str | None
+    risk_score: int | None
+    threat_indicators: list[str] | None
     created_at: datetime
     requires_investigation: bool
 
@@ -81,19 +82,19 @@ class SecurityEventResponse(BaseModel):
         from_attributes = True
 
 
-@router.get("/logs", response_model=List[AuditLogResponse])
+@router.get("/logs", response_model=list[AuditLogResponse])
 async def get_audit_logs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     limit: int = Query(50, le=1000, description="Maximum number of logs to return"),
     offset: int = Query(0, ge=0, description="Number of logs to skip"),
-    event_category: Optional[str] = Query(None, description="Filter by event category"),
-    event_type: Optional[str] = Query(None, description="Filter by event type"),
-    user_id: Optional[str] = Query(None, description="Filter by user ID"),
-    start_date: Optional[datetime] = Query(None, description="Filter events after this date"),
-    end_date: Optional[datetime] = Query(None, description="Filter events before this date"),
-    success_only: Optional[bool] = Query(None, description="Filter by success status"),
-    min_risk_score: Optional[int] = Query(None, ge=0, le=100, description="Minimum risk score")
+    event_category: str | None = Query(None, description="Filter by event category"),
+    event_type: str | None = Query(None, description="Filter by event type"),
+    user_id: str | None = Query(None, description="Filter by user ID"),
+    start_date: datetime | None = Query(None, description="Filter events after this date"),
+    end_date: datetime | None = Query(None, description="Filter events before this date"),
+    success_only: bool | None = Query(None, description="Filter by success status"),
+    min_risk_score: int | None = Query(None, ge=0, le=100, description="Minimum risk score")
 ):
     """
     Get audit logs with filtering and pagination
@@ -192,12 +193,12 @@ async def get_audit_statistics(
     return AuditStatisticsResponse(**stats)
 
 
-@router.get("/security-events", response_model=List[SecurityEventResponse])
+@router.get("/security-events", response_model=list[SecurityEventResponse])
 async def get_security_events(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     hours: int = Query(24, ge=1, le=168, description="Hours to look back"),
-    severity: Optional[str] = Query(None, description="Filter by severity level")
+    severity: str | None = Query(None, description="Filter by severity level")
 ):
     """
     Get recent security events for monitoring
@@ -258,7 +259,7 @@ async def get_user_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     days: int = Query(30, ge=1, le=90, description="Days to look back"),
-    categories: Optional[str] = Query(None, description="Comma-separated event categories")
+    categories: str | None = Query(None, description="Comma-separated event categories")
 ):
     """
     Get activity logs for a specific user
@@ -298,7 +299,7 @@ async def get_failed_login_attempts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     hours: int = Query(24, ge=1, le=168, description="Hours to look back"),
-    ip_address: Optional[str] = Query(None, description="Filter by IP address")
+    ip_address: str | None = Query(None, description="Filter by IP address")
 ):
     """
     Get failed login attempts for security monitoring

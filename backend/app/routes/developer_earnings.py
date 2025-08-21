@@ -3,21 +3,22 @@ Developer Earnings API Routes
 Provides endpoints for developers to view their earnings and performance metrics.
 """
 
+import logging
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict, Any
-import logging
 
-from app.dependencies import get_db, get_current_user
+from app.dependencies import get_current_user, get_db
+from app.services.audit_service import AuditEventType, get_audit_logger
 from app.services.developer_earnings_service import developer_earnings_service
-from app.services.audit_service import get_audit_logger, AuditEventType
 
 router = APIRouter(prefix="/api/developer", tags=["developer-earnings"])
 logger = logging.getLogger(__name__)
 
-@router.get("/earnings", response_model=Dict[str, Any])
+@router.get("/earnings", response_model=dict[str, Any])
 async def get_developer_earnings(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -88,9 +89,9 @@ async def get_developer_earnings(
             detail="Failed to retrieve earnings data"
         )
 
-@router.get("/earnings/summary", response_model=Dict[str, Any])
+@router.get("/earnings/summary", response_model=dict[str, Any])
 async def get_earnings_summary(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -142,10 +143,10 @@ async def get_earnings_summary(
             detail="Failed to retrieve earnings summary"
         )
 
-@router.get("/earnings/transactions", response_model=Dict[str, Any])
+@router.get("/earnings/transactions", response_model=dict[str, Any])
 async def get_recent_transactions(
     limit: int = 20,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -196,10 +197,10 @@ async def get_recent_transactions(
             detail="Failed to retrieve transaction history"
         )
 
-@router.get("/earnings/chart-data", response_model=Dict[str, Any])
+@router.get("/earnings/chart-data", response_model=dict[str, Any])
 async def get_earnings_chart_data(
     days: int = 30,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -255,9 +256,9 @@ async def get_earnings_chart_data(
             detail="Failed to retrieve chart data"
         )
 
-@router.get("/payout-status", response_model=Dict[str, Any])
+@router.get("/payout-status", response_model=dict[str, Any])
 async def get_payout_status(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
