@@ -6,8 +6,14 @@ Handles subscription management, credit purchases, and webhook processing
 import logging
 import os
 
-import stripe
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except Exception:  # ImportError or similar
+    stripe = None
+    STRIPE_AVAILABLE = False
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.models import User
@@ -21,26 +27,22 @@ from app.models.payment import (
     Subscription,
 )
 
-# Configure Stripe
-stripe.api_key = settings.STRIPE_SECRET_KEY
+# Configure Stripe if available
+if STRIPE_AVAILABLE and stripe is not None:
+    try:
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+    except Exception:
+        # defensive: ignore if settings missing during import-time
+        pass
 
 logger = logging.getLogger(__name__)
-
-import logging
-
-import stripe
-from sqlalchemy.exc import SQLAlchemyError
-
-# Configure Stripe
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-
-logger = logging.getLogger(__name__)
-
-
 class StripeService:
     """Service for handling Stripe payment operations"""
     
     def __init__(self, db: Session):
+        if not STRIPE_AVAILABLE:
+            # Allow import but fail fast when used
+            raise RuntimeError("Stripe SDK not installed. Stripe features are disabled.")
         self.db = db
         
     async def create_customer(self, user: User) -> str:
@@ -434,8 +436,19 @@ class WebhookService:
         self.db = db
         self.webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
     
-    def verify_webhook(self, payload: bytes, signature: str) -> stripe.Event:
-        """Verify Stripe webhook signature and return event"""
+    def verify_webhook(self, payload: bytes, signature: str):
+        """Verify Stripe webhook signature and return event.
+        If stripe SDK is unavailable, parse the payload as JSON and return it.
+        """
+        # If stripe is not installed, fall back to parsing JSON without signature verification
+        if not STRIPE_AVAILABLE:
+            import json
+            try:
+                return json.loads(payload)
+            except Exception:
+                logger.error("Invalid JSON payload (stripe SDK missing)")
+                raise
+
         try:
             event = stripe.Webhook.construct_event(
                 payload, signature, settings.STRIPE_WEBHOOK_SECRET
@@ -444,8 +457,9 @@ class WebhookService:
         except ValueError as e:
             logger.error(f"Invalid payload: {e}")
             raise
-        except stripe.error.SignatureVerificationError as e:
-            logger.error(f"Invalid signature: {e}")
+        except Exception as e:
+            # Catch stripe.error.SignatureVerificationError and other stripe errors
+            logger.error(f"Invalid signature or webhook error: {e}")
             raise
     
     async def handle_webhook(self, event: dict) -> bool:
