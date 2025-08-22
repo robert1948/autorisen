@@ -258,6 +258,15 @@ async def health_alias():
     return {"ok": True, "alias": "/api/health"}
 
 
+# Explicit alias for /api/health (some clients request this path without a trailing slash).
+@app.get("/api/health")
+async def api_health_alias():
+    try:
+        return {"message": "health endpoint", "status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    except Exception:
+        return {"ok": True, "alias": "/api/health"}
+
+
 # Explicit root route to serve the SPA index and avoid 404s from clients requesting '/'
 @app.get("/")
 async def root_index():
