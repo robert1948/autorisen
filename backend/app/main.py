@@ -257,6 +257,15 @@ async def api_status():
 async def health_alias():
     return {"ok": True, "alias": "/api/health"}
 
+
+# Explicit root route to serve the SPA index and avoid 404s from clients requesting '/'
+@app.get("/")
+async def root_index():
+    try:
+        return FileResponse(INDEX_HTML)
+    except Exception:
+        return JSONResponse(content={"ok": True, "message": "API running - no frontend build present"})
+
 # -------- SPA fallback --------
 @app.get("/{full_path:path}")
 async def spa_fallback(full_path: str):
