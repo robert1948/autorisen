@@ -2,7 +2,7 @@ name: Deploy via Heroku Pipeline
 
 on:
   push:
-    branches: [develop] # Auto-deploy to staging on develop only
+    branches: [develop, main] # Auto-deploy to staging on develop and main
   workflow_dispatch:
     inputs:
       promote_to_prod:
@@ -31,8 +31,8 @@ env:
 
 jobs:
   deploy-staging:
-    # Run on push to develop, or manual run (unless promote_only=true)
-    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.promote_only != 'true')
+    # Run on push to develop or main, or manual run (unless promote_only=true)
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.promote_only != 'true')
     runs-on: ubuntu-latest
 
     steps:
