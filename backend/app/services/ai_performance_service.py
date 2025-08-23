@@ -224,6 +224,90 @@ class AIPerformanceMonitor:
                 "disk_usage": psutil.disk_usage('/').percent
             }
         }
+
+    # ---- Compatibility / convenience methods expected by routes ----
+    def get_real_time_metrics(self, limit: int = 100) -> list[dict[str, Any]]:
+        """Return recent metrics in a JSON-serializable form (compat wrapper)."""
+        recent = self.get_recent_metrics(minutes=60)
+        # Return up to `limit` most recent
+        return recent[-limit:]
+
+    def get_health_status(self) -> dict[str, Any]:
+        """Return a simple health status for AI services."""
+        summary = self.get_performance_summary()
+        return {
+            "status": "operational" if self.is_monitoring else "stopped",
+            "metrics_count": summary.get("total_metrics", 0),
+            "system": summary.get("system_info", {}),
+        }
+
+    def get_performance_stats(self, provider: AIModelType | None = None, model: str | None = None, time_period: str = "1h") -> dict[str, Any]:
+        """Return aggregated performance statistics (compat wrapper)."""
+        # For now, return the internal model_stats with minor shaping
+        stats = {}
+        for key, v in self.model_stats.items():
+            # Copy fields safely
+            stats[key] = {
+                "total_requests": v.get("total_requests", 0),
+                "avg_response_time": v.get("avg_response_time", 0.0),
+                "error_count": v.get("error_count", 0),
+                "last_updated": v.get("last_updated").isoformat() if v.get("last_updated") else None,
+                "provider": key,
+            }
+        return stats
+
+    def get_cost_analytics(self, time_period: str = "24h") -> dict[str, Any]:
+        """Return a minimal cost analytics placeholder."""
+        return {"total_cost": 0.0, "breakdown": {}}
+
+    def get_usage_patterns(self, time_period: str = "24h") -> dict[str, Any]:
+        """Return a minimal usage pattern summary."""
+        return {"unique_users": 0, "top_endpoints": []}
+
+    def get_optimization_recommendations(self) -> list[dict[str, Any]]:
+        """Return empty recommendations by default."""
+        return []
+
+    @property
+    def metrics_history(self):
+        """Expose a history-like iterable compatible with routes expecting attributes.
+
+        Each item will provide attributes used by the route: timestamp, provider, model,
+        endpoint, success, response_time_ms, total_tokens, estimated_cost, error_type
+        """
+        class _Item:
+            def __init__(self, rec: PerformanceRecord):
+                self.timestamp = rec.timestamp
+                self.provider = rec.model_type
+                self.model = rec.metadata.get("model") if isinstance(rec.metadata, dict) else None
+                self.endpoint = rec.metadata.get("endpoint") if isinstance(rec.metadata, dict) else None
+                # success flag may be stored in metadata
+                self.success = rec.metadata.get("success") if isinstance(rec.metadata, dict) else None
+                self.response_time_ms = rec.value if rec.metric_type == PerformanceMetric.RESPONSE_TIME else None
+                self.total_tokens = rec.metadata.get("total_tokens") if isinstance(rec.metadata, dict) else None
+                self.estimated_cost = rec.metadata.get("estimated_cost") if isinstance(rec.metadata, dict) else None
+                self.error_type = rec.metadata.get("error_type") if isinstance(rec.metadata, dict) else None
+
+        return [_Item(r) for r in self.metrics]
+
+    def record_ai_request(self, provider: AIModelType, model: str, endpoint: str, prompt_tokens: int, completion_tokens: int, response_time_ms: int, success: bool, user_id: str | None = None, error_type: str | None = None, error_message: str | None = None, response_length: int = 0, quality_score: float | None = None) -> str:
+        """Convenience function used by routes to record AI usage events."""
+        metadata = {
+            "model": model,
+            "endpoint": endpoint,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+            "success": success,
+            "user_id": user_id,
+            "error_type": error_type,
+            "error_message": error_message,
+            "response_length": response_length,
+            "quality_score": quality_score,
+            "estimated_cost": 0.0,
+        }
+        # Record as a response_time metric for compatibility
+        return self.record_metric(provider, PerformanceMetric.RESPONSE_TIME, float(response_time_ms), metadata)
     
     def stop_monitoring(self) -> None:
         """Stop the performance monitoring"""
