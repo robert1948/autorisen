@@ -14,7 +14,7 @@ from app.database import get_db
 from app.models import User
 from app.models.payment import CREDIT_PACKS, SUBSCRIPTION_TIERS
 from app.routes.auth_enhanced import get_current_user
-from app.services.stripe_service import StripeService, WebhookService
+from app.services.stripe_service import STRIPE_AVAILABLE, StripeService, WebhookService
 
 router = APIRouter(prefix="/api/payment", tags=["Payment"])
 logger = logging.getLogger(__name__)
@@ -76,6 +76,9 @@ async def create_subscription(
                 detail=f"Invalid subscription tier. Must be one of: {list(SUBSCRIPTION_TIERS.keys())}"
             )
         
+        if not STRIPE_AVAILABLE:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                detail="Stripe payment features are temporarily unavailable")
         stripe_service = StripeService(db)
         result = await stripe_service.create_subscription(
             current_user, request.tier, request.payment_method_id
@@ -104,8 +107,25 @@ async def get_subscription_status(
 ):
     """Get current user subscription status"""
     try:
-        stripe_service = StripeService(db)
-        subscription = await stripe_service.get_subscription_status(current_user.id)
+        # Subscription status may be stored locally; try to get it without
+        # requiring Stripe SDK. Only construct StripeService if needed.
+        subscription = None
+        try:
+            stripe_service = StripeService(db)
+            if stripe_service.enabled:
+                subscription = await stripe_service.get_subscription_status(current_user.id)
+        except RuntimeError:
+            # Stripe not enabled - fall back to local DB record only
+            from app.models.payment import Subscription
+            subscription = db.query(Subscription).filter(Subscription.user_id == current_user.id).first()
+            if subscription:
+                subscription = {
+                    "tier": subscription.tier,
+                    "status": subscription.status,
+                    "start_date": subscription.start_date,
+                    "end_date": subscription.end_date,
+                    "stripe_subscription_id": subscription.stripe_subscription_id
+                }
         
         if not subscription:
             # Default to Basic tier
@@ -140,6 +160,9 @@ async def cancel_subscription(
 ):
     """Cancel user subscription"""
     try:
+        if not STRIPE_AVAILABLE:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                detail="Stripe payment features are temporarily unavailable")
         stripe_service = StripeService(db)
         success = await stripe_service.cancel_subscription(current_user)
         
@@ -177,6 +200,9 @@ async def purchase_credits(
                 detail=f"Invalid pack size. Must be one of: {list(CREDIT_PACKS.keys())}"
             )
         
+        if not STRIPE_AVAILABLE:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                detail="Stripe payment features are temporarily unavailable")
         stripe_service = StripeService(db)
         result = await stripe_service.purchase_credits(
             current_user, request.pack_size, request.payment_method_id
@@ -200,8 +226,14 @@ async def get_credit_balance(
 ):
     """Get user credit balance and recent transactions"""
     try:
-        stripe_service = StripeService(db)
-        balance = await stripe_service.get_credit_balance(current_user.id)
+        # credit balance is stored locally; fetch without requiring Stripe SDK
+        try:
+            stripe_service = StripeService(db)
+            balance = await stripe_service.get_credit_balance(current_user.id)
+        except RuntimeError:
+            from app.models.payment import Credits
+            credits = db.query(Credits).filter(Credits.user_id == current_user.id).first()
+            balance = credits.balance if credits else 0
         
         # Get recent transactions
         from app.models.payment import CreditTransaction
@@ -249,10 +281,18 @@ async def deduct_credits(
                 detail="Credit amount must be positive"
             )
         
-        stripe_service = StripeService(db)
-        success = await stripe_service.deduct_credits(
-            current_user.id, amount, description, agent_id
-        )
+        # Deduction is local and should not require Stripe SDK
+        try:
+            stripe_service = StripeService(db)
+            success = await stripe_service.deduct_credits(
+                current_user.id, amount, description, agent_id
+            )
+        except RuntimeError:
+            # fallback: perform local deduction
+            from app.services.stripe_service import StripeService as _SS
+            ss = _SS(db)
+            ss.enabled = False
+            success = await ss.deduct_credits(current_user.id, amount, description, agent_id)
         
         if not success:
             raise HTTPException(
@@ -442,23 +482,25 @@ async def stripe_webhook(
     try:
         payload = await request.body()
         signature = request.headers.get("Stripe-Signature")
-        
+
+        # Webhooks can be handled even if stripe SDK is not installed; WebhookService
+        # falls back to JSON parsing when STRIPE_AVAILABLE is False.
         webhook_service = WebhookService(db)
         event = webhook_service.verify_webhook(payload, signature)
-        
+
         success = await webhook_service.handle_webhook(event)
-        
+
         if success:
             return JSONResponse(content={"status": "success"})
         else:
             return JSONResponse(
-                content={"status": "error"}, 
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                content={"status": "error"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-            
+
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")
         return JSONResponse(
             content={"status": "error", "message": str(e)},
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST,
         )

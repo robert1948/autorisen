@@ -22,6 +22,8 @@ source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
 pip install -r backend/requirements.txt
+# Optional: install core + optional (Stripe) for local development
+pip install -r backend/requirements-dev.txt
 ```
 
 2. Set environment variables (example `.env` or export manually):
@@ -52,24 +54,71 @@ uvicorn app.main:app --reload
 - If you don't want to install Stripe in a given environment, the codebase has been updated to be resilient: routes return 503 when the Stripe SDK is not available.
 - To enable Stripe fully, add `stripe` to `backend/requirements.txt` and set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in environment variables.
 
-## Troubleshooting
+Optional install (Stripe)
 
-- Dyno crashes at boot with ModuleNotFoundError: inspect the import stack in Heroku logs. If a package is missing, either add it to `backend/requirements.txt` or wrap the import in try/except.
-- Useful local checks:
+To install the optional Stripe SDK (used only if you enable payments), run:
 
 ```bash
-# sanity import
-export PYTHONPATH=backend
-python -c "import app; print('import ok')"
-
-# byte-compile files to catch syntax errors
-python -m py_compile backend/app/services/developer_earnings_service.py backend/app/services/stripe_service.py
+# from repository root
+pip install -r backend/requirements-optional.txt
 ```
 
-## Contributing
+# autorisen — CapeControl integration/staging
 
-- Follow the code style in the repo. Run tests where available and add import-sanity checks to PRs when touching startup modules.
+This repository is the staging/integration workspace for CapeControl (Capecraft).
 
-## Contact / Notes
+Quick facts
 
-- Repo owner: robert1948 (see GitHub repo for issues)
+- Backend: FastAPI 0.104.1 (Python 3.11)
+- Frontend: React 18 + Vite (in `client/`)
+- Production deployment: Heroku (app: `capecraft`, current v663)
+
+Purpose
+
+- Host integration work for autorisen features before merging into CapeControl production.
+- Provide import-sanity checks and OpenAPI diffing in CI to prevent startup or contract regressions.
+
+Local quickstart
+
+1. Create and activate a virtualenv and install dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+# Optional: install core + optional (Stripe) for local development
+pip install -r backend/requirements-dev.txt
+```
+
+2. Configure environment variables (example):
+
+```bash
+export DATABASE_URL=sqlite:///./dev.db
+export STRIPE_SECRET_KEY=sk_test_...
+# see backend/app/config.py for other env vars
+```
+
+3. Run backend locally:
+
+```bash
+export PYTHONPATH=backend
+uvicorn app.main:app --reload --port 8000
+```
+
+Notes
+
+- The canonical FastAPI app module is `backend/app/main.py` (import path: `app.main:app`).
+- The project defers optional SDK imports (e.g., `stripe`) to runtime to avoid import-time crashes on Heroku.
+- CI contains an import-sanity job and an OpenAPI diff script under `.github/workflows/` and `scripts/`.
+
+Heroku
+
+- Procfile and top-level `requirements.txt` are used by Heroku; ensure `backend/requirements.txt` is referenced appropriately.
+- Recommended Stripe pin for Heroku compatibility: `stripe==7.7.0`.
+
+If you'd like, I can:
+
+- Produce and commit `docs/openapi_baseline.json` (exported from production/staging) so CI diffs will run against a baseline.
+- Add a short 'Rollback' section to `docs/Release Runbook.md` with Heroku restore commands.

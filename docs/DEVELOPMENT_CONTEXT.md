@@ -1,9 +1,9 @@
 # 🛠 DEVELOPMENT CONTEXT
 
 **Last Updated**: August 23, 2025  
-**Source of truth**: CapeControl / Capecraft project (synchronized with `C_Control_Development.md`)  
+**Source of truth**: CapeControl / Capecraft project (synchronized with latest Heroku deployment logs)  
 **Project Status**: Production Ready — Registration fixed, AI Security Suite deployed, Payment & Developer Earnings live  
-**Current Version**: v648 (Heroku, deployed Aug 11, 2025) ✅ RUNNING
+**Current Version**: v663 (Heroku, deployed Aug 17, 2025) ✅ RUNNING
 
 ---
 
@@ -11,7 +11,7 @@
 
 This document captures the authoritative development and deployment context for the CapeControl / Capecraft project, incorporating `autorisen` features into the main CapeControl platform.
 
-- **Production App**: `capecraft` (Heroku, version v648)
+- **Production App**: `capecraft` (Heroku, version v663)
 - **Staging Source**: `autorisen` repo, feature integration validated here
 - **Goal**: Feature-flagged integration of `autorisen` modules into CapeControl, with validation gates before production promotion.
 
@@ -27,18 +27,18 @@ This document captures the authoritative development and deployment context for 
 
 ## 2. Project Status & Versions
 
-- Production Heroku app: `capecraft` (v648, deployed Aug 11, 2025)
-- Source app (pre-merge staging): `autorisen`
-- Backend: FastAPI 0.104.1 on Python 3.11
-- Frontend: React 18 + Vite, served by FastAPI
-- Stripe payment integration: ✅ Test-ready, stable at `stripe==7.7.0`
+- **Production**: Heroku app `capecraft` (v663, deployed Aug 17, 2025, release `f8783ce4`)
+- **Staging Source**: `autorisen` (used for integration testing)
+- **Backend**: FastAPI 0.104.1 on Python 3.11
+- **Frontend**: React 18 + Vite, served by FastAPI
+- **Stripe**: integration deployed and test-ready (Heroku-compatible at `stripe==7.7.0`)
 
 ---
 
 ## 3. Repositories & Structure
 
 - **Production Repo**: `localstorm` / `capecontrol` (contains `backend/` and `client/`)
-- **Staging Repo**: `autorisen` (feature source, to be merged under `apps/autorisen` or `backend/app/routes/autorisen`)
+- **Staging Repo**: `autorisen` (features to be merged under `apps/autorisen` or `backend/app/routes/autorisen`)
 
 ---
 

@@ -1,0 +1,2 @@
+# Optional: Stripe SDK (install only if you need payment features)
+stripe>=5.0.0

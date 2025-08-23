@@ -18,8 +18,10 @@ htmlcov/
 .tox/
 .venv/
 venv/
+# Environment files (do NOT commit)
 .env
 .env.*
+.env.local
 !.env.example
 .ruff_cache/
 

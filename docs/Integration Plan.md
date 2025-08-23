@@ -1,20 +1,20 @@
 # 🚀 Integration Plan — Autorisen → CapeControl
 
 **Last Updated**: August 23, 2025  
-**Aligned with**: `DEVELOPMENT_CONTEXT.md` (CapeControl / Capecraft v648)
+**Aligned with**: `DEVELOPMENT_CONTEXT.md` (CapeControl / Capecraft v663)
 
 ---
 
 ## 1. Context
 
-We are integrating `autorisen` features into the CapeControl / Capecraft production app (`capecraft`, currently **v648** on Heroku). Both projects use **FastAPI 0.104.1 + Python 3.11 + PostgreSQL** with React 18 on the frontend.  
+We are integrating `autorisen` features into the CapeControl / Capecraft production app (`capecraft`, currently **v663** on Heroku). Both projects use **FastAPI 0.104.1 + Python 3.11 + PostgreSQL** with React 18 on the frontend.  
 The plan ensures a **safe, feature-flagged rollout** with additive DB migrations, contract testing, and observability.
 
 ---
 
 ## 2. Constraints (from DEVELOPMENT_CONTEXT.md)
 
-- **Production**: Heroku app `capecraft` v648.
+- **Production**: Heroku app `capecraft` v663.
 - **Staging**: `autorisen` repo, used for feature validation.
 - **Security**:
   - Input Sanitization ✅
@@ -55,6 +55,6 @@ Export OpenAPI specs from both projects and produce diff:
 PYTHONPATH=backend uvicorn app.main:app --port 8001 &
 curl -s http://127.0.0.1:8001/openapi.json > /tmp/capecontrol.json
 
-# Autorisen spec
-PYTHONPATH=backend python -c "from autorisen_app import app as a; import json; print(json.dumps(a.openapi()))" > /tmp/autorisen.json
+# Autorisen spec (canonical backend FastAPI app)
+PYTHONPATH=backend python -c "import json; from app import main as m; print(json.dumps(m.app.openapi()))" > /tmp/autorisen.json
 ```

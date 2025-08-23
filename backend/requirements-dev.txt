@@ -1,3 +1,7 @@
+# Development requirements: core runtime + optional integrations (Stripe)
+# This file combines `requirements.txt` and `requirements-optional.txt` for
+# convenience when developing locally.
+
 # Core app
 fastapi==0.110.0
 uvicorn[standard]==0.27.1
@@ -40,3 +44,7 @@ pytest-asyncio>=0.21.0
 openai>=1.0.0,<3
 anthropic>=0.8.0
 jinja2>=3.1.2
+
+# Optional integrations
+# Stripe SDK (payments)
+stripe>=5.0.0
