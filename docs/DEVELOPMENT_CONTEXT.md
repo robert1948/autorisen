@@ -1,64 +1,61 @@
-# Autorisen – Development Context
-**Last Updated:** 2025-08-19  
-**Repo:** https://github.com/robert1948/autorisen  
-**Purpose:** Central reference for architecture, environments, security, and active workstreams.
+# 🛠 DEVELOPMENT CONTEXT
 
-## 1) System Overview
-- **Frontend:** (if applicable) React / Vite (planned)  
-- **Backend:** FastAPI (Python 3.11+), Gunicorn/Uvicorn worker  
-- **Database:** PostgreSQL (Heroku Postgres in prod), SQLite for quick local dev (optional)  
-- **Infra:** Heroku (staging/prod), GitHub Codespaces for dev, Docker/Compose for local  
-- **CI/CD:** GitHub Actions (build, test, deploy), Heroku pipelines
-- **Key Domains:** cape-control.com (platform brand), *Autorisen* app for API/services
+**Last Updated**: August 23, 2025  
+**Source of truth**: CapeControl / Capecraft project (synchronized with `C_Control_Development.md`)  
+**Project Status**: Production Ready — Registration fixed, AI Security Suite deployed, Payment & Developer Earnings live  
+**Current Version**: v648 (Heroku, deployed Aug 11, 2025) ✅ RUNNING
 
-## 2) Directory Map (High-level)
-See `COMPREHENSIVE_FILE_DIAGRAM.md` for full tree. Highlights:
-- `backend/`
-  - `app/`
-    - `api/` – route modules (e.g., payment, health, auth, analytics)
-    - `config/` – settings, environment handling
-    - `core/` – app factory, startup, logging
-    - `middleware/` – rate limit, monitoring, input sanitization
-    - `models/` – SQLAlchemy models
-    - `routes/` – include routers (auth_v2, alerts, analytics, etc.)
-    - `services/` – business/service layer (ai_*, audit, alerts, analytics, auth, etc.)
-  - `alembic/` – migrations
+---
 
-## 3) Environments
-- **Local:** Docker Compose; `.env.dev`  
-- **Staging (Heroku):** `autorisen` staging app; `.env.staging` via Heroku config vars  
-- **Production (Heroku):** `capecraft` production app; `.env.prod` via Heroku config vars
+## Executive Summary
 
-## 4) Security & Compliance
-- HTTPS termination by Heroku
-- JWT auth (users & developers), password hashing (bcrypt/passlib)
-- DDoS/input-sanitization/content moderation middleware
-- Audit logs & analytics (service layer)
-- Secrets in environment (never committed)
+This document captures the authoritative development and deployment context for the CapeControl / Capecraft project, incorporating `autorisen` features into the main CapeControl platform.
 
-## 5) Data & Migrations
-- **ORM:** SQLAlchemy
-- **Migrations:** Alembic – see `DEPLOYMENT.md` for commands
-- **Backups:** Heroku PG backups (auto & manual)
+- **Production App**: `capecraft` (Heroku, version v648)
+- **Staging Source**: `autorisen` repo, feature integration validated here
+- **Goal**: Feature-flagged integration of `autorisen` modules into CapeControl, with validation gates before production promotion.
 
-## 6) Observability
-- **Logs:** Heroku logs, structured logging in `services/*`
-- **Health:** `/health` route
-- **Performance:** `ai_performance_service` metrics
+---
 
-## 7) Active Workstreams
-- [ ] Finalize auth routes parity with production
-- [ ] `/me` endpoints for user/developer
-- [ ] API docs autogen and Swagger tuning
-- [ ] Stabilize staging→prod pipeline (buildpacks, runtime, requirements lock)
-- [ ] Analytics dashboard MVP
+## 1. Company Information
 
-## 8) Risks
-- Drift between staging (autorisen) and prod (capecraft)
-- Rate limit defaults vs. real traffic
-- Missing env vars in Codespaces/Heroku
+- **Legal Entity**: Cape Craft Projects CC
+- **Trading Name**: Cape Control
+- **VAT Number**: 4270105119
 
-## 9) References
-- `DEPLOYMENT_GUIDE_2025.md` – detailed ops guide
-- `API_DOCUMENTATION_2025.md` – routes & schemas
-- `AUTH_TROUBLESHOOTING_GUIDE.md` – quick fixes for login/registration
+---
+
+## 2. Project Status & Versions
+
+- Production Heroku app: `capecraft` (v648, deployed Aug 11, 2025)
+- Source app (pre-merge staging): `autorisen`
+- Backend: FastAPI 0.104.1 on Python 3.11
+- Frontend: React 18 + Vite, served by FastAPI
+- Stripe payment integration: ✅ Test-ready, stable at `stripe==7.7.0`
+
+---
+
+## 3. Repositories & Structure
+
+- **Production Repo**: `localstorm` / `capecontrol` (contains `backend/` and `client/`)
+- **Staging Repo**: `autorisen` (feature source, to be merged under `apps/autorisen` or `backend/app/routes/autorisen`)
+
+---
+
+## 4. Development Workflow
+
+### Local Development
+
+```bash
+# Backend (port 8000)
+cd backend
+python -m uvicorn app.main:app --reload --port 8000
+
+# Frontend (port 3000)
+cd client
+npm run dev
+
+# DB migrations
+cd backend
+alembic upgrade head
+```
