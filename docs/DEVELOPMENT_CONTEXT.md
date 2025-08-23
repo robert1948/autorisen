@@ -44,18 +44,54 @@ This document captures the authoritative development and deployment context for 
 
 ## 4. Development Workflow
 
-### Local Development
+### Local Development (recommended)
+
+Use the repository-local virtualenv and the helper script to start the backend reliably.
+
+1. Create & activate a repo venv (if not present):
 
 ```bash
-# Backend (port 8000)
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
-
-# Frontend (port 3000)
-cd client
-npm run dev
-
-# DB migrations
-cd backend
-alembic upgrade head
+python3 -m venv .venv
+source .venv/bin/activate
 ```
+
+2. Install backend deps:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+3. Create a `.env` from the example (defaults will use SQLite):
+
+```bash
+cp .env.example .env
+# By default the app uses: DATABASE_URL=sqlite:///./capecontrol.db
+```
+
+4. Start the backend using the repo helper (activates venv, sets PYTHONPATH, writes logs to /tmp):
+
+```bash
+./scripts/start-localhost-autorisen.sh 8000 localhost
+# Health URL printed by the script: http://localhost:8000/api/health
+tail -f /tmp/capecontrol_uvicorn.log
+```
+
+Notes:
+
+- The project defaults to SQLite (`DATABASE_URL=sqlite:///./capecontrol.db`) so you can develop without Postgres or Docker.
+- If you want Postgres, set `DATABASE_URL` in `.env` and run migrations (see `backend/migrations` or alembic scripts).
+
+### Frontend (optional)
+
+```bash
+cd client
+npm install
+npm run dev
+# Frontend typically served at http://localhost:3000
+```
+
+### CI / CD & Heroku
+
+- GitHub Actions contains a consolidated `deploy.yml` workflow that builds and deploys to Heroku. It is configured to trigger on pushes to `develop` and `main`, and supports manual promotion to production via workflow_dispatch.
+- Staging deploys are achieved by pushing the built image to the Heroku registry or by using the Heroku git remote (see `.github/workflows/deploy.yml`).
+- If you prefer staging-only deploys from `develop`, we can update the workflow to trigger only on `develop` and use manual promotion from `main` for production.
