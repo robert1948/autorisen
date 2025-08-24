@@ -35,7 +35,7 @@ env:
   PYTHON_VERSION: "3.12"
   HEROKU_STAGING_APP: autorisen
   HEROKU_PROD_APP: capecraft
-  MIN_COVERAGE: "0" # raise later (e.g., "60") to fail if coverage below X%
+  MIN_COVERAGE: "0" # raise later (e.g., "60") to enforce coverage
 
 jobs:
   gate:
@@ -87,44 +87,53 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (full history for subtree split)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Python (Buildpacks flow)
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install Heroku CLI
+        run: curl -s https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Heroku auth & app check
+      - name: Authenticate Heroku CLI
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          curl -s https://cli-assets.heroku.com/install.sh | sh
           heroku auth:token >/dev/null 2>&1 || true
           heroku apps:info -a "${{ env.HEROKU_STAGING_APP }}"
 
-      # Ensure a named local branch exists (avoids detached HEAD edge cases)
-      - name: Ensure local main branch exists
-        run: git checkout -B main
+      # ---- Deploy ONLY backend/ without using git subtree ----
+      - name: Prepare backend-only repo and push to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
+        run: |
+          set -euo pipefail
 
-      - name: Deploy via Heroku Buildpacks (backend/)
-        uses: AkhileshNS/heroku-deploy@v3.12.11
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ env.HEROKU_STAGING_APP }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          branch: HEAD # deploy the checked-out commit
-          usedocker: false
-          appdir: backend # make sure Procfile/requirements.txt/runtime.txt are here
+          # Create a clean temp repo containing only backend/
+          WORK=/tmp/heroku-backend
+          rm -rf "$WORK"
+          mkdir -p "$WORK"
+          rsync -a --delete --exclude=".git" backend/ "$WORK"/
+
+          cd "$WORK"
+          git init
+          git config user.email "${HEROKU_EMAIL:-github-actions[bot]@users.noreply.github.com}"
+          git config user.name  "github-actions[bot]"
+          git add .
+          git commit -m "Deploy backend subtree from $GITHUB_SHA"
+
+          # Add Heroku remote (auth via API key)
+          heroku git:remote -a "${HEROKU_STAGING_APP}"
+          # Push this clean repo (no subtree needed)
+          git push --force heroku HEAD:refs/heads/main
 
   promote_production:
     name: "🔐 Manual Promotion to Production"
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     # To require manual approval, create a repo Environment named "production"
-    # and then uncomment the next line:
+    # then uncomment:
     # environment: production
     steps:
       - name: Install Heroku CLI
