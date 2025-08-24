@@ -60,7 +60,7 @@ export default function Landing() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-blue-700 leading-none sm:leading-tight mb-6 px-2 opacity-0 animate-fadeIn">
               Where Intelligence Meets Impact—
               <br className="hidden sm:block" />
-              <span className="text-blue-600">AI Accessible to Everyone.</span>
+              <span className="text-blue-600">AI Accessible to Everyone1.</span>
             </h1>
 
             <p className="text-gray-600 text-base sm:text-lg lg:text-xl leading-relaxed max-w-4xl mx-auto px-4 opacity-0 animate-fadeInDelay">
