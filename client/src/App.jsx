@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
+import useAuth from "./hooks/useAuth";
 
 // Core layout
 import Navbar from "./components/Navbar";
@@ -15,13 +16,14 @@ import Credits from "./components/Credits";
 import StatusBadge from "./components/StatusBadge";
 
 // Lazy pages for faster initial paint
-const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
+const CustomerDashboard = lazy(() => import("./pages/UserDashboard"));
 const DeveloperDashboard = lazy(() => import("./pages/DeveloperDashboard"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const Login = lazy(() => import("./components/auth/Login"));
-const Register = lazy(() => import("./components/auth/Register"));
+// AdminDashboard not present; reuse DeveloperDashboard for admin routes
+const AdminDashboard = lazy(() => import("./pages/DeveloperDashboard"));
+const PrivacyPolicy = lazy(() => import("./pages/Privacy"));
+const TermsOfService = lazy(() => import("./pages/Terms"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
 
 /** Simple loading UI for route-level suspense */
 function Loader() {

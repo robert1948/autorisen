@@ -126,6 +126,21 @@ class Settings(BaseSettings):
         # This validator is no longer needed but kept for compatibility
         return v or ""
 
+    @field_validator("debug", mode="before")
+    @classmethod
+    def coerce_debug(cls, v):
+        """Coerce common string representations to boolean to avoid
+        pydantic errors when DEBUG is set to an empty string or loose value
+        in the environment.
+        """
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s in ("", "false", "0", "no", "off"):
+                return False
+            if s in ("true", "1", "yes", "on"):
+                return True
+        return v
+
     model_config = SettingsConfigDict(
         env_file=[".env.production" if os.getenv("ENVIRONMENT") == "production" else ".env"],
         env_file_encoding="utf-8",

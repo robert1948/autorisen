@@ -5,6 +5,7 @@ Production-ready configuration with environment variable support
 
 import os
 
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,7 +39,21 @@ class Settings(BaseSettings):
     # Application Configuration
     APP_NAME: str = "CapeAI Enterprise Platform"
     VERSION: str = "1.0.0"
-    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    # Use pydantic Field with alias so env file values are parsed by pydantic.
+    # Provide a pre-validator to coerce common string values (including empty string)
+    # into a boolean to avoid ValidationError on import when DEBUG is set to ''.
+    DEBUG: bool = Field(False, alias="DEBUG")
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def _coerce_debug(cls, v):
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s in ("", "false", "0", "no", "off"):
+                return False
+            if s in ("true", "1", "yes", "on"):
+                return True
+        return v
     
     # CORS Configuration
     ALLOWED_ORIGINS: list[str] = [
