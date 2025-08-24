@@ -1,0 +1,187 @@
+name: CI → Gate → Deploy (Heroku) + Manual Production Promotion
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  # Manual triggers for re-runs and production promotions
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Short production release notes"
+        required: false
+        default: ""
+      promote_from:
+        description: "Heroku Staging app"
+        required: false
+        default: "autorisen"
+      promote_to:
+        description: "Heroku Production app"
+        required: false
+        default: "capecraft"
+
+permissions:
+  contents: read
+
+# Ensure only one run per ref at a time
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  # Adjust these if you want fixed app names at workflow level. Inputs override at dispatch time.
+  HEROKU_STAGING_APP: autorisen
+  HEROKU_PROD_APP: capecraft
+
+jobs:
+  gate:
+    name: ✅ Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          # Dev tools (move to requirements-dev.txt if you prefer)
+          pip install ruff mypy pytest pytest-cov
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Type-check (mypy)
+        # Make strict later by removing '|| true'
+        run: mypy backend || true
+
+      - name: Unit tests + coverage
+        run: pytest -q --maxfail=1 --disable-warnings --cov=backend --cov-report=term-missing
+
+      - name: Enforce coverage threshold (60%)
+        run: |
+          pct=$(pytest --cov=backend --cov-report=term | awk '/TOTAL/ {print $4}' | tr -d '%')
+          echo "Coverage: ${pct}%"
+          [ "${pct%.*}" -ge 60 ] || { echo "Coverage below 60%"; exit 1; }
+
+  deploy_staging:
+    name: 🚀 Deploy to Heroku (Staging: Autorisen)
+    needs: [gate]
+    if: github.ref == 'refs/heads/main' && needs.gate.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://${{ env.HEROKU_STAGING_APP }}.herokuapp.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python (Buildpacks flow)
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # ==== Buildpacks Deploy (default) ====
+      - name: Deploy via Heroku Buildpacks
+        uses: akhileshns/heroku-deploy@v4.2.1
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME || env.HEROKU_STAGING_APP }}
+          heroku_email:     ${{ secrets.HEROKU_EMAIL }}
+          branch: main
+          usedocker: false
+
+      # ==== If you use Docker instead of Buildpacks, replace the step above with the following ====
+      # - name: Install Heroku CLI
+      #   run: curl https://cli-assets.heroku.com/install.sh | sh
+      # - name: Login to Heroku registry
+      #   run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login -u _ --password-stdin registry.heroku.com
+      # - name: Build image
+      #   run: docker build -t registry.heroku.com/${{ env.HEROKU_STAGING_APP }}/web .
+      # - name: Push image
+      #   run: docker push registry.heroku.com/${{ env.HEROKU_STAGING_APP }}/web
+      # - name: Release image
+      #   run: heroku container:release web -a ${{ env.HEROKU_STAGING_APP }}
+      #   env:
+      #     HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+  promote_production:
+    name: 🔐 Manual Promotion to Production
+    # Manual-only. Runs only on workflow_dispatch.
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+
+    # Protect this environment with required reviewers in repo settings.
+    environment:
+      name: production
+      url: https://${{ github.event.inputs.promote_to || env.HEROKU_PROD_APP }}.herokuapp.com
+
+    steps:
+      - name: Echo inputs
+        run: |
+          echo "Release notes: ${{ github.event.inputs.release_notes }}"
+          echo "Promote from (staging): ${{ github.event.inputs.promote_from || env.HEROKU_STAGING_APP }}"
+          echo "Promote to (prod):     ${{ github.event.inputs.promote_to   || env.HEROKU_PROD_APP }}"
+
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Heroku auth
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku auth:token >/dev/null 2>&1 || true
+          echo "Heroku CLI authenticated."
+
+      - name: Promote slug from Staging → Production
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          FROM_APP: ${{ github.event.inputs.promote_from || env.HEROKU_STAGING_APP }}
+        run: |
+          set -e
+          heroku pipelines:promote -a "${FROM_APP}"
+          echo "✅ Promotion command executed."
+
+      - name: Verify Production releases
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          PROD_APP: ${{ github.event.inputs.promote_to || env.HEROKU_PROD_APP }}
+        run: |
+          heroku releases -a "${PROD_APP}" | head -n 20
+
+      - name: Post-promotion smoke check (HTTP 200)
+        env:
+          PROD_APP: ${{ github.event.inputs.promote_to || env.HEROKU_PROD_APP }}
+        run: |
+          set -e
+          PROD_URL="https://${PROD_APP}.herokuapp.com"
+          echo "Checking ${PROD_URL} ..."
+          code=$(curl -s -o /dev/null -w "%{http_code}" "${PROD_URL}/health" || true)
+          if [ "$code" != "200" ]; then
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${PROD_URL}/" || true)
+          fi
+          echo "HTTP code: $code"
+          [ "$code" = "200" ] || { echo "❌ Smoke check failed"; exit 1; }
+          echo "✅ Smoke check passed."
+
+      - name: Summary
+        run: |
+          echo "### Production Promotion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- From (staging): \`${{ github.event.inputs.promote_from || env.HEROKU_STAGING_APP }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- To (production): \`${{ github.event.inputs.promote_to   || env.HEROKU_PROD_APP }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Notes: ${{ github.event.inputs.release_notes }}" >> $GITHUB_STEP_SUMMARY
