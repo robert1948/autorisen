@@ -35,7 +35,7 @@ env:
   PYTHON_VERSION: "3.12"
   HEROKU_STAGING_APP: autorisen
   HEROKU_PROD_APP: capecraft
-  MIN_COVERAGE: "0" # raise later (e.g., "60") to enforce coverage
+  MIN_COVERAGE: "0" # raise later (e.g., "60")
 
 jobs:
   gate:
@@ -92,7 +92,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Heroku CLI
+      - name: Install Heroku CLI (for app existence check)
         run: curl -s https://cli-assets.heroku.com/install.sh | sh
 
       - name: Verify Heroku app & auth
@@ -103,14 +103,16 @@ jobs:
           heroku auth:token >/dev/null 2>&1 || true
           heroku apps:info -a "${{ env.HEROKU_STAGING_APP }}"
 
-      # Push a clean repo containing only backend/ to Heroku (avoids git subtree issues)
-      - name: Push backend/ to Heroku
+      # Push a clean repo containing only backend/ directly to HTTPS URL (no remote, no subtree)
+      - name: Push backend/ to Heroku via HTTPS URL
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           set -euo pipefail
           APP="${{ env.HEROKU_STAGING_APP }}"
+          URL="https://heroku:${HEROKU_API_KEY}@git.heroku.com/${APP}.git"   # no trailing slash
 
+          # Create clean temp repo with ONLY backend/ at root
           WORK=/tmp/heroku-backend
           rm -rf "$WORK"
           mkdir -p "$WORK"
@@ -124,8 +126,8 @@ jobs:
           git add .
           git commit -m "Deploy backend from $GITHUB_SHA"
 
-          git remote add heroku "https://heroku:${HEROKU_API_KEY}@git.heroku.com/${APP}.git"
-          git push --force heroku main:main
+          # Push directly to the HTTPS URL (avoids malformed remote/credential helper issues)
+          git push --force "$URL" main:main
           git log --oneline -n 1
 
   promote_production:
@@ -133,7 +135,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     # To require manual approval: create a repo Environment named "production"
-    # then uncomment the next line:
+    # then uncomment:
     # environment: production
     steps:
       - name: Install Heroku CLI
