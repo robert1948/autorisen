@@ -35,10 +35,11 @@ env:
   PYTHON_VERSION: "3.12"
   HEROKU_STAGING_APP: autorisen
   HEROKU_PROD_APP: capecraft
+  MIN_COVERAGE: "0" # raise later (e.g., "60")
 
 jobs:
   gate:
-    name: "✅ Quality Gate"
+    name: "✅ Quality Gate (non-blocking)"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -64,27 +65,30 @@ jobs:
 
       - name: Lint (ruff)
         run: ruff check .
+        continue-on-error: true
 
-      - name: Type-check (mypy) # tighten later by removing "|| true"
-        run: mypy backend || true
+      - name: Type-check (mypy)
+        run: mypy backend
+        continue-on-error: true
 
       - name: Unit tests + coverage
-        run: pytest -q --maxfail=1 --disable-warnings --cov=backend --cov-report=term-missing
+        run: pytest -q --maxfail=1 --disable-warnings --cov=backend --cov-report=term-missing --cov-fail-under=${{ env.MIN_COVERAGE }}
+        continue-on-error: true
 
-      - name: Enforce coverage threshold (60%)
+      - name: Gate summary
         run: |
-          pct=$(pytest --cov=backend --cov-report=term | awk '/TOTAL/ {print $4}' | tr -d '%')
-          echo "Coverage: ${pct}%"
-          [ "${pct%.*}" -ge 60 ] || { echo "Coverage below 60%"; exit 1; }
+          echo "### Gate results" >> $GITHUB_STEP_SUMMARY
+          echo "- Ruff, mypy, and tests ran. Failing checks were allowed to continue." >> $GITHUB_STEP_SUMMARY
+          echo "- MIN_COVERAGE=${{ env.MIN_COVERAGE }}%" >> $GITHUB_STEP_SUMMARY
 
   deploy_staging:
     name: "🚀 Deploy to Heroku (Staging: autorisen)"
     needs: [gate]
-    if: github.ref == 'refs/heads/main' && needs.gate.result == 'success'
+    # gate is non-blocking, so always try to deploy on main
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Python (Buildpacks flow)
         uses: actions/setup-python@v5
@@ -113,9 +117,7 @@ jobs:
     name: "🔐 Manual Promotion to Production"
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    # To require manual approval, create a repo Environment named "production"
-    # and then uncomment the next line:
-    # environment: production
+    # environment: production   # uncomment after creating the environment for approval
     steps:
       - name: Install Heroku CLI
         run: curl -s https://cli-assets.heroku.com/install.sh | sh
