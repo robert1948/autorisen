@@ -35,7 +35,7 @@ env:
   PYTHON_VERSION: "3.12"
   HEROKU_STAGING_APP: autorisen
   HEROKU_PROD_APP: capecraft
-  MIN_COVERAGE: "0" # raise later (e.g., "60")
+  MIN_COVERAGE: "0" # raise later (e.g., "60") to fail if coverage below X%
 
 jobs:
   gate:
@@ -84,11 +84,13 @@ jobs:
   deploy_staging:
     name: "🚀 Deploy to Heroku (Staging: autorisen)"
     needs: [gate]
-    # gate is non-blocking, so always try to deploy on main
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (full history for subtree split)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python (Buildpacks flow)
         uses: actions/setup-python@v5
@@ -103,21 +105,27 @@ jobs:
           heroku auth:token >/dev/null 2>&1 || true
           heroku apps:info -a "${{ env.HEROKU_STAGING_APP }}"
 
+      # Ensure a named local branch exists (avoids detached HEAD edge cases)
+      - name: Ensure local main branch exists
+        run: git checkout -B main
+
       - name: Deploy via Heroku Buildpacks (backend/)
         uses: AkhileshNS/heroku-deploy@v3.12.11
         with:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           heroku_app_name: ${{ env.HEROKU_STAGING_APP }}
           heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          branch: main
+          branch: HEAD # deploy the checked-out commit
           usedocker: false
-          appdir: backend
+          appdir: backend # make sure Procfile/requirements.txt/runtime.txt are here
 
   promote_production:
     name: "🔐 Manual Promotion to Production"
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    # environment: production   # uncomment after creating the environment for approval
+    # To require manual approval, create a repo Environment named "production"
+    # and then uncomment the next line:
+    # environment: production
     steps:
       - name: Install Heroku CLI
         run: curl -s https://cli-assets.heroku.com/install.sh | sh
