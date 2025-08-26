@@ -10,14 +10,16 @@ docker compose up --build
 
 ## Heroku Staging
 ```bash
-# Set buildpacks (python only, unless you serve static assets)
+
+# Buildpack deployment (Python only, unless you serve static assets)
 heroku buildpacks:clear -a autorisen
 heroku buildpacks:add heroku/python -a autorisen
 
 # Set runtime (pin Python)
-echo "python-3.11.9" > runtime.txt
+echo "python-3.12.5" > runtime.txt
 
-# Push via GitHub Actions or manual
+
+# Push via GitHub Actions (recommended) or manual
 git push heroku main
 
 # Config vars

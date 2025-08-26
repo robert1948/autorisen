@@ -7,7 +7,7 @@
 ## 1) System Overview
 
 - **Frontend:** (if applicable) React / Vite (planned)
-- **Backend:** FastAPI (Python 3.11+), Gunicorn/Uvicorn worker
+- **Backend:** FastAPI (Python 3.12+), Gunicorn/Uvicorn worker
 - **Database:** PostgreSQL (Heroku Postgres in prod), SQLite for quick local dev (optional)
 - **Infra:** Heroku (staging/prod), GitHub Codespaces for dev, Docker/Compose for local
 - **CI/CD:** GitHub Actions (build, test, deploy), Heroku pipelines
@@ -36,7 +36,7 @@ See `COMPREHENSIVE_FILE_DIAGRAM.md` for full tree. Highlights:
 
 ### Recent operational notes (Aug 2025)
 
-- Heroku uses the top-level `requirements.txt` for build. The repository delegates backend dependencies to `backend/requirements.txt` using `-r backend/requirements.txt` in top-level `requirements.txt`.
+- Heroku uses buildpack-based deployment (Procfile, requirements.txt, runtime.txt at backend root). The repository delegates backend dependencies to `backend/requirements.txt` using `-r backend/requirements.txt` in top-level `requirements.txt`.
 - Avoid top-level unconditional imports of optional SDKs (for example: `stripe`, `openai`, `anthropic`) in modules that are imported by `app.main` on startup. Doing so caused dyno crashes during startup; several modules were made resilient by guarding imports.
 - The Procfile uses `PYTHONPATH=backend gunicorn app.main:app -k uvicorn.workers.UvicornWorker` to ensure `app` resolves to the `backend/app` package.
 

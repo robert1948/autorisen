@@ -3,7 +3,7 @@ Release runbook
 # 🚀 CapeControl Release Runbook
 
 **Last Updated**: August 23, 2025  
-**Applies to**: CapeControl / Capecraft Production App (`capecraft`, Heroku v663)  
+**Applies to**: CapeControl / Capecraft Production App (`capecraft`, Heroku v663, Python 3.12, FastAPI 0.110.0, buildpack deployment)  
 **Primary Reference**: `DEVELOPMENT_CONTEXT.md`
 **See also**: `docs/Integration Plan.md`
 

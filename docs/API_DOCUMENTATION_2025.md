@@ -1,5 +1,6 @@
 # API Documentation – Autorisen (2025)
 > Keep this in sync with the FastAPI OpenAPI schema. Add examples.
+> Stack: Python 3.12, FastAPI 0.110.0, Heroku buildpack deployment
 
 ## Auth
 - `POST /auth/register` – Create user/developer

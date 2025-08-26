@@ -7,8 +7,8 @@
 
 ## 1. Context
 
-We are integrating `autorisen` features into the CapeControl / Capecraft production app (`capecraft`, currently **v663** on Heroku). Both projects use **FastAPI 0.104.1 + Python 3.11 + PostgreSQL** with React 18 on the frontend.  
-The plan ensures a **safe, feature-flagged rollout** with additive DB migrations, contract testing, and observability.
+We are integrating `autorisen` features into the CapeControl / Capecraft production app (`capecraft`, currently **v663** on Heroku). Both projects use **FastAPI 0.110.0 + Python 3.12 + PostgreSQL** with React 18 on the frontend.  
+The plan ensures a **safe, feature-flagged rollout** with additive DB migrations, contract testing, and observability. Heroku now uses buildpack-based deployment (Procfile, requirements.txt, runtime.txt at backend root).
 
 ---
 

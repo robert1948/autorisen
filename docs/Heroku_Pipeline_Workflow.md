@@ -9,7 +9,7 @@ This document explains how our **Staging → Production** workflow is set up usi
 - **Autorisen (Staging)**
 
   - Connected to: [robert1948/autorisen](https://github.com/robert1948/autorisen)
-  - Deployment: Auto-deploys from `main` branch via **GitHub Actions**
+  - Deployment: Auto-deploys from `main` branch via **GitHub Actions** (buildpack-based, Python 3.12, FastAPI 0.110.0)
   - Purpose: Safe environment for development, testing, and QA
 
 - **Capecraft (Production)**
@@ -21,28 +21,26 @@ This document explains how our **Staging → Production** workflow is set up usi
 ## 🔄 Workflow Summary
 
 1. **Develop on GitHub (Staging)**
-
-   - Push changes to `main` branch in `robert1948/autorisen`
-   - GitHub Actions runs build, test, and deployment jobs
-   - If successful → changes automatically deployed to **Autorisen (Staging)**
+  - Push changes to `main` branch in `robert1948/autorisen`
+  - GitHub Actions runs build, test, and deployment jobs using buildpack-based deployment (Procfile, requirements.txt, runtime.txt at backend root)
+  - If successful → changes automatically deployed to **Autorisen (Staging)**
 
 2. **Test on Staging**
-
-   - Verify new features and bug fixes on **Autorisen**
-   - Run manual and automated QA
-   - Ensure integration with backend services (DB, APIs, etc.) is stable
+  - Verify new features and bug fixes on **Autorisen**
+  - Run manual and automated QA
+  - Ensure integration with backend services (DB, APIs, etc.) is stable
 
 3. **Promote to Production**
-   - When satisfied, use the **Heroku Pipeline “Promote to Production”** button
-   - The Staging build (Autorisen) is promoted directly to **Capecraft (Production)**
-   - This avoids rebuilding and guarantees Production runs the **exact same build tested in Staging**
+  - When satisfied, use the **Heroku Pipeline “Promote to Production”** button
+  - The Staging build (Autorisen) is promoted directly to **Capecraft (Production)**
+  - This avoids rebuilding and guarantees Production runs the **exact same build tested in Staging**
 
 ---
 
 ## ✅ Best Practices
 
 - **Staging First** → Always deploy to Staging before Production
-- **Automated Checks** → Ensure CI tests (lint, unit, integration) pass in GitHub Actions
+- **Automated Checks** → Ensure CI tests (lint, unit, integration) pass in GitHub Actions (see cicd.yml)
 - **Manual QA** → Test critical flows (login, payments, onboarding) on Staging
 - **Promotions Only** → Do not deploy directly to Production; always promote from Staging
 - **Rollback Plan** →
@@ -53,8 +51,8 @@ This document explains how our **Staging → Production** workflow is set up usi
 
 ## ⚙️ Developer Workflow
 
-1. Make changes locally
-2. Commit & push to `main` → triggers GitHub Actions
+1. Make changes locally (Python 3.12, FastAPI 0.110.0)
+2. Commit & push to `main` → triggers GitHub Actions (buildpack-based deployment)
 3. Confirm workflow success in **GitHub → Actions tab**
 4. Verify deployment on **Autorisen (Staging)**
 5. If approved, promote to **Capecraft (Production)** via the Heroku Pipeline

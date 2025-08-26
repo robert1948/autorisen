@@ -8,7 +8,7 @@ Development site for Cape Control (Cape Control / Autorisen)
 
 ## Overview
 
-- Backend: FastAPI (Python 3.11+), Gunicorn + Uvicorn worker
+- Backend: FastAPI (Python 3.12+), Gunicorn + Uvicorn worker
 - Frontend: React / Vite (client/)
 - Database: PostgreSQL in production (Heroku Postgres), SQLite fine for quick local dev
 
@@ -42,10 +42,11 @@ export PYTHONPATH=backend
 uvicorn app.main:app --reload
 ```
 
-## Heroku notes
+## Heroku Buildpack Deployment
 
+- Heroku now uses buildpack-based deployment (not container-based). No `heroku.yml` is required.
 - The Procfile uses `PYTHONPATH=backend` so Heroku starts the app as `gunicorn app.main:app -k uvicorn.workers.UvicornWorker`.
-- Heroku reads top-level `requirements.txt` during build. The repo delegates backend packages via `-r backend/requirements.txt` in the top-level requirements file — keep `backend/requirements.txt` authoritative for backend runtime packages.
+- Heroku reads the top-level `requirements.txt` during build, which references `backend/requirements.txt` for backend dependencies. Keep `backend/requirements.txt` authoritative for backend runtime packages.
 - Avoid importing optional SDKs (e.g., `stripe`, `openai`) at module import time for modules that are imported during app startup. Use try/except and a flag (e.g., `STRIPE_AVAILABLE`) or defer import into the function that needs it.
 
 ## Stripe & optional integrations
@@ -69,7 +70,7 @@ This repository is the staging/integration workspace for CapeControl (Capecraft)
 
 Quick facts
 
-- Backend: FastAPI 0.104.1 (Python 3.11)
+- Backend: FastAPI 0.110.0 (Python 3.12)
 - Frontend: React 18 + Vite (in `client/`)
 - Production deployment: Heroku (app: `capecraft`, current v663)
 
@@ -116,7 +117,7 @@ Notes
 Heroku
 
 - Procfile and top-level `requirements.txt` are used by Heroku; ensure `backend/requirements.txt` is referenced appropriately.
-- Recommended Stripe pin for Heroku compatibility: `stripe==7.7.0`.
+- Recommended Stripe pin for Heroku compatibility: `stripe==7.7.0` (or update to match your actual requirements).
 
 If you'd like, I can:
 
