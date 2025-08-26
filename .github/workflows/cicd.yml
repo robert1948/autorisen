@@ -110,7 +110,12 @@ jobs:
         run: |
           set -euo pipefail
           APP="${{ env.HEROKU_STAGING_APP }}"
+          if [[ -z "${HEROKU_API_KEY:-}" ]]; then
+            echo "Error: HEROKU_API_KEY is not set!" >&2
+            exit 1
+          fi
           URL="https://heroku:${HEROKU_API_KEY}@git.heroku.com/${APP}.git"   # no trailing slash
+          echo "Heroku remote URL: https://heroku:[REDACTED]@git.heroku.com/${APP}.git"
 
           # Create clean temp repo with ONLY backend/ at root
           WORK=/tmp/heroku-backend
@@ -127,6 +132,8 @@ jobs:
           git commit -m "Deploy backend from $GITHUB_SHA"
 
           # Push directly to the HTTPS URL (avoids malformed remote/credential helper issues)
+          git remote add heroku "$URL"
+          git remote -v
           git push --force "$URL" main:main
           git log --oneline -n 1
 
