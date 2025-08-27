@@ -1,5 +1,11 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import useAuth from "./hooks/useAuth";
@@ -45,7 +51,9 @@ function ProtectedRoute({ children, roles }) {
 
   if (roles?.length) {
     const userRole = (user?.user_type || user?.role || "").toString();
-    const hasRole = roles.some((r) => r.toLowerCase() === userRole.toLowerCase());
+    const hasRole = roles.some(
+      (r) => r.toLowerCase() === userRole.toLowerCase()
+    );
     if (!hasRole) return <Navigate to="/" replace />;
   }
   return children;
@@ -153,9 +161,7 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppShell />
-      </BrowserRouter>
+      <AppShell />
     </AuthProvider>
   );
 }
