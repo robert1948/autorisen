@@ -27,6 +27,13 @@ venv/
 
 # SQLite / local DBs
 *.sqlite3
+*.db
+
+# PostgreSQL / Database files
+*.dump
+*.sql.backup
+pgdata/
+postgres-data/
 
 # --- Node / JavaScript (client) ---
 node_modules/
@@ -66,16 +73,3 @@ temp/
 
 # --- Docker / Devcontainers Artifacts (keep Dockerfile itself) ---
 **/.devcontainer/local-history/
-.venv
-
-# Local dev
-.venv/
-.env
-__pycache__/
-*.pyc
-
-# Local dev
-.venv/
-.env
-__pycache__/
-*.pyc

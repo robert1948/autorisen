@@ -1,18 +1,52 @@
-# autorisen 250826B
+# autorisen 250827
 
-Development site for Cape Control 250817
-
-# autorisen
-
-Development site for Cape Control (Cape Control / Autorisen)
+Development site for Cape Control with PostgreSQL Development Environment
 
 ## Overview
 
-- Backend: FastAPI (Python 3.12+), Gunicorn + Uvicorn worker
-- Frontend: React / Vite (client/)
-- Database: PostgreSQL in production (Heroku Postgres), SQLite fine for quick local dev
+- **Backend**: FastAPI (Python 3.12+), Gunicorn + Uvicorn worker
+- **Frontend**: React / Vite (client/)
+- **Database**: PostgreSQL in production (Heroku Postgres), PostgreSQL local development environment, SQLite fallback for quick dev
+- **Development**: Automated local PostgreSQL setup with production schema replication
 
-## Quickstart (local)
+## Quick Setup Options
+
+### Option A: PostgreSQL Development Environment (Recommended)
+
+**Full production parity with automated setup:**
+
+1. **Prerequisites**: Ensure PostgreSQL 16+ is installed locally
+
+2. **Automated Database Setup**:
+```bash
+# Clone and setup environment
+git clone <repo-url>
+cd autorisen
+python -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+
+# Run automated PostgreSQL setup (creates local DB with production schema)
+bash ./scripts/setup_local_postgres.sh "postgres://[HEROKU_DB_URL]" autorisen_local vscode
+```
+
+3. **Start Development**:
+```bash
+# Backend (with PostgreSQL)
+export PYTHONPATH=backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend (separate terminal)
+cd client
+npm install
+npm run dev
+```
+
+### Option B: SQLite Quick Development
+
+**For rapid prototyping without PostgreSQL setup:**
 
 1. Create and activate a virtualenv, install tools:
 
@@ -40,6 +74,36 @@ export STRIPE_SECRET_KEY=sk_test_...
 # from repository root
 export PYTHONPATH=backend
 uvicorn app.main:app --reload
+```
+
+## Database Management
+
+### Local PostgreSQL Environment
+
+**Connection Details:**
+- Host: `localhost`
+- Port: `5432` 
+- Database: `autorisen_local`
+- Username: `vscode`
+- Password: `123456`
+
+**Database Schema:**
+- `users_v2` - User accounts and authentication
+- `tokens_v2` - Authentication tokens and sessions  
+- `developer_earnings_v2` - Developer payment tracking
+- `password_resets_v2` - Password reset functionality
+- `audit_logs_v2` - Security audit trail
+
+**Useful Commands:**
+```bash
+# Connect to local database
+PGPASSWORD=123456 psql -h localhost -U vscode -d autorisen_local
+
+# Test user registration
+python ./scripts/dummy_register.py
+
+# View database tables
+psql> \dt
 ```
 
 ## Heroku Buildpack Deployment
