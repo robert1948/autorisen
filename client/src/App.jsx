@@ -22,6 +22,10 @@ import Credits from "./components/Credits";
 import StatusBadge from "./components/StatusBadge";
 
 // Lazy pages for faster initial paint
+const Landing = lazy(() => import("./pages/Landing"));
+const About = lazy(() => import("./pages/About"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const Developers = lazy(() => import("./pages/Developers"));
 const CustomerDashboard = lazy(() => import("./pages/UserDashboard"));
 const DeveloperDashboard = lazy(() => import("./pages/DeveloperDashboard"));
 // AdminDashboard not present; reuse DeveloperDashboard for admin routes
@@ -82,7 +86,10 @@ function AppShell() {
         <Suspense fallback={<Loader />}>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/developers" element={<Developers />} />
             <Route
               path="/login"
               element={
@@ -105,11 +112,7 @@ function AppShell() {
             {/* Payments / subscriptions */}
             <Route
               path="/subscribe"
-              element={
-                <ProtectedRoute>
-                  <Subscribe />
-                </ProtectedRoute>
-              }
+              element={<Subscribe />}
             />
             <Route
               path="/credits"
