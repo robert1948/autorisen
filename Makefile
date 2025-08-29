@@ -5,7 +5,7 @@
 .PHONY: build build-frontend build-backend 
 .PHONY: test test-frontend test-backend test-integration
 .PHONY: deploy-check deploy-staging deploy-production
-.PHONY: sync-localstorm db-up db-down db-reset
+.PHONY: sync-capecraft db-up db-down db-reset
 .PHONY: fmt lint security-check
 .PHONY: logs logs-backend logs-frontend
 .PHONY: install install-frontend install-backend
@@ -68,17 +68,17 @@ test-integration: ## Run integration tests
 	@./scripts/dev-test.sh
 
 # Component Management
-sync-localstorm: ## Sync components from localstorm repository
-	@echo "🔄 Syncing components from localstorm..."
-	@./scripts/sync-from-localstorm.sh
+sync-capecraft: ## Sync components from capecraft production environment
+	@echo "🔄 Syncing components from capecraft production..."
+	@./scripts/sync-from-capecraft.sh
 
-sync-frontend: ## Sync only frontend components from localstorm
+sync-frontend: ## Sync only frontend components from capecraft
 	@echo "🔄 Syncing frontend components..."
-	@./scripts/sync-from-localstorm.sh frontend
+	@./scripts/sync-from-capecraft.sh frontend
 
-sync-backend: ## Sync only backend components from localstorm
+sync-backend: ## Sync only backend components from capecraft
 	@echo "🔄 Syncing backend components..."
-	@./scripts/sync-from-localstorm.sh backend
+	@./scripts/sync-from-capecraft.sh backend
 
 # Deployment Pipeline
 deploy-check: ## Run pre-production deployment checks

@@ -51,8 +51,8 @@ make build
 # Run pre-production checks
 make deploy-check
 
-# Sync components from localstorm
-make sync-localstorm
+# Sync components from capecraft production
+make sync-capecraft
 
 # Stop development environment
 make dev-stop
@@ -89,12 +89,12 @@ make deploy-production
 git push capecraft main
 ```
 
-## 🔄 Component Management from localstorm
+## 🔄 Component Management from capecraft
 
 ### Automatic Sync
 ```bash
-# Sync all missing components
-make sync-localstorm
+# Sync all missing components from production
+make sync-capecraft
 
 # Sync only frontend components
 make sync-frontend
@@ -105,12 +105,12 @@ make sync-backend
 
 ### Manual Component Integration
 ```bash
-# Clone reference repository
-git clone https://github.com/robert1948/localstorm.git ../localstorm
+# Clone capecraft production environment
+heroku git:clone -a capecraft ../capecraft-reference
 
 # Copy specific components
-./scripts/sync-from-localstorm.sh frontend SpecificComponent
-./scripts/sync-from-localstorm.sh backend api_module
+./scripts/sync-from-capecraft.sh frontend SpecificComponent
+./scripts/sync-from-capecraft.sh backend api_module
 ```
 
 ## 📋 Quality Assurance Checklist
@@ -146,14 +146,14 @@ The workflow ensures:
 Your development environment is now production-ready with:
 
 1. **Complete Workflow**: Development → Staging → Production pipeline
-2. **Component Management**: Automated sync from localstorm reference
+2. **Component Management**: Automated sync from capecraft production
 3. **Quality Assurance**: Comprehensive testing and validation
 4. **Production Protection**: Multi-layer safeguards for capecraft
 5. **Developer Experience**: Simple make commands for all operations
 
 You can now confidently develop in autorisen, knowing that:
 - All features will be tested before reaching capecraft
-- Component integration from localstorm is automated
+- Component integration from capecraft is automated
 - Production deployments are protected by validation checks
 - The workflow ensures zero-disruption service continuity
 

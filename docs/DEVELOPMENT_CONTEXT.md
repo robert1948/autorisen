@@ -46,6 +46,24 @@ This document captures the authoritative development and deployment context for 
 
 ## 4. Development Workflow
 
+### Component Source Management
+- **Source Repository**: If any components are missing from the autorisen project, they should be copied from **capecraft production environment** (Heroku)
+- **Development Priority**: The autorisen project must always be ahead of capecraft in development lifecycle
+
+### Deployment Pipeline Strategy
+1. **Development Phase**: Build and test all functionality on autorisen first
+2. **Testing Phase**: Ensure complete functionality validation before promotion  
+3. **Production Deployment**: Push to capecraft (live site) only after thorough testing
+4. **Service Continuity**: Maintain zero disruption to live services
+5. **Uptime Requirements**: Ensure absolute minimal downtime during deployments
+
+### Quality Assurance Protocol
+- All features must be fully tested in autorisen environment
+- No untested code should reach the capecraft production environment
+- Maintain service reliability and user experience standards
+
+This workflow ensures a proper **development → staging → production** pipeline where autorisen serves as the development/staging environment and capecraft is the protected production environment.
+
 ### Local Development Environment Setup
 
 The project now supports both SQLite (default) and PostgreSQL development environments.

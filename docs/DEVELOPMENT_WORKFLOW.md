@@ -7,18 +7,18 @@ autorisen (Development/Staging) → capecraft (Production)
 ```
 
 - **autorisen**: Development and staging environment
-- **capecraft**: Protected production environment
-- **localstorm**: Component reference repository
+- **capecraft**: Protected production environment (Heroku)
+- **capecraft**: Component reference source (most up-to-date)
 
 ## Component Source Management
 
 ### Source Repository Priority
 - **Primary Development**: autorisen project (this repository)
-- **Reference Components**: https://github.com/robert1948/localstorm
+- **Reference Components**: Heroku capecraft (production environment)
 - **Production Target**: capecraft (live site)
 
 ### Component Integration Workflow
-1. **Missing Components**: Copy from localstorm reference repository
+1. **Missing Components**: Copy from capecraft production environment
 2. **Development Priority**: autorisen must stay ahead of capecraft
 3. **Component Testing**: All components tested in autorisen before production
 
@@ -103,16 +103,16 @@ ENVIRONMENT=production
 DEBUG=false
 ```
 
-## Component Integration from localstorm
+## Component Integration from capecraft
 
 ### Copying Components
 ```bash
-# Clone reference repository
-git clone https://github.com/robert1948/localstorm.git ../localstorm
+# Access capecraft production environment
+heroku git:clone -a capecraft ../capecraft-reference
 
 # Copy missing components
-cp -r ../localstorm/src/components/* ./client/src/components/
-cp -r ../localstorm/backend/modules/* ./backend/app/
+cp -r ../capecraft-reference/client/src/components/* ./client/src/components/
+cp -r ../capecraft-reference/backend/app/* ./backend/app/
 
 # Update imports and dependencies
 npm install  # Frontend dependencies
