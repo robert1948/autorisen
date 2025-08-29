@@ -1,0 +1,159 @@
+{
+  "timestamp": "2025-07-25T15:22:41.429837",
+  "system_info": {
+    "voice_service_version": "1.0.0",
+    "supported_formats": [
+      "wav",
+      "mp3",
+      "ogg",
+      "webm",
+      "m4a",
+      "flac"
+    ],
+    "supported_languages": [
+      "en-US",
+      "en-GB",
+      "es-ES",
+      "fr-FR",
+      "de-DE",
+      "it-IT",
+      "pt-BR",
+      "ru-RU",
+      "ja-JP",
+      "ko-KR",
+      "zh-CN",
+      "ar-SA",
+      "hi-IN"
+    ]
+  },
+  "demo_results": {
+    "text_to_speech": [
+      {
+        "text": "Hello! Welcome to the voice integration demonstration.",
+        "error": "<VoiceProvider.GOOGLE_CLOUD: 'google_cloud'>",
+        "success": false
+      },
+      {
+        "text": "This system supports multiple providers and voice profiles.",
+        "provider": "elevenlabs",
+        "voice": "Rachel",
+        "audio_duration": 4.4735,
+        "file_size": 143152,
+        "processing_time": 0.011873006820678711,
+        "success": true
+      },
+      {
+        "text": "Speech synthesis quality varies by provider and settings.",
+        "provider": "elevenlabs",
+        "voice": "Adam",
+        "audio_duration": 4.3421875,
+        "file_size": 138950,
+        "processing_time": 0.01153254508972168,
+        "success": true
+      },
+      {
+        "text": "Thank you for testing the voice capabilities!",
+        "provider": "system_tts",
+        "voice": "System Default",
+        "audio_duration": 3.1925,
+        "file_size": 102160,
+        "processing_time": 0.011492490768432617,
+        "success": true
+      }
+    ],
+    "speech_to_text": [
+      {
+        "description": "Short greeting",
+        "expected": "Hello there",
+        "transcribed": "Hello there",
+        "confidence": 0.9369999999999999,
+        "provider": "system_tts",
+        "processing_time": 0.10034942626953125,
+        "success": true
+      },
+      {
+        "description": "Question",
+        "expected": "How can I help you today?",
+        "transcribed": "How can I help you today?",
+        "confidence": 0.94,
+        "provider": "system_tts",
+        "processing_time": 0.10034418106079102,
+        "success": true
+      },
+      {
+        "description": "Technical phrase",
+        "expected": "Initialize voice recognition system",
+        "transcribed": "Initialize voice recognition system",
+        "confidence": 0.901,
+        "provider": "system_tts",
+        "processing_time": 0.10028219223022461,
+        "success": true
+      },
+      {
+        "description": "Long sentence",
+        "expected": "The voice integration system provides comprehensive speech-to-text and text-to-speech capabilities",
+        "transcribed": "The voice integration system provides comprehensive speech-to-text and text-to-speech capabilities",
+        "confidence": 0.863,
+        "provider": "system_tts",
+        "processing_time": 0.10031938552856445,
+        "success": true
+      }
+    ],
+    "validation": {
+      "voice_service_initialization": true,
+      "health_check": true,
+      "voice_profiles_loaded": true,
+      "text_to_speech_functional": true,
+      "speech_to_text_simulation": true,
+      "analytics_tracking": true,
+      "performance_metrics": true,
+      "cache_functionality": true,
+      "provider_selection": true,
+      "error_handling": true
+    }
+  },
+  "system_status": {
+    "status": "healthy",
+    "providers": {
+      "system_tts": {
+        "enabled": true,
+        "status": "available"
+      }
+    },
+    "cache_size": {
+      "audio": 0,
+      "recognition": 0
+    },
+    "analytics_sessions": 2,
+    "voice_profiles": 5
+  },
+  "performance_summary": {
+    "total_requests": 6,
+    "successful_requests": 4,
+    "failed_requests": 2,
+    "average_processing_time": 0.007102807362874349,
+    "provider_performance": {
+      "google_cloud_text_to_speech": {
+        "requests": 1,
+        "successes": 0,
+        "average_time": 0.00011229515075683594
+      },
+      "elevenlabs_text_to_speech": {
+        "requests": 2,
+        "successes": 2,
+        "average_time": 0.010610103607177734
+      },
+      "system_tts_text_to_speech": {
+        "requests": 3,
+        "successes": 2,
+        "average_time": 0.007094780604044597
+      }
+    },
+    "audio_quality_scores": []
+  },
+  "analytics_summary": {
+    "total_sessions": 2,
+    "total_requests": 4,
+    "total_audio_duration": 13.267124999999998
+  }
+}
