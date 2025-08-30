@@ -24,6 +24,29 @@ jobs:
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
+      - name: Configure Heroku auth & ensure git remote
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+          HEROKU_APP_PROD: ${{ secrets.HEROKU_APP_PROD }}
+          HEROKU_APP_STAGING: ${{ secrets.HEROKU_APP_STAGING }}
+          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
+          HEROKU_EMAL: ${{ secrets.HEROKU_EMAL }}
+        run: |
+          echo "HEROKU_API_KEY present? $( [ -n "$HEROKU_API_KEY" ] && echo yes || echo no )"
+          # pick app name from available secrets
+          APP="$HEROKU_APP_NAME"
+          if [ -z "$APP" ]; then APP="$HEROKU_APP_PROD"; fi
+          if [ -z "$APP" ]; then APP="$HEROKU_APP_STAGING"; fi
+          if [ -z "$APP" ]; then
+            echo "No HEROKU app secret found (HEROKU_APP_NAME / HEROKU_APP_PROD / HEROKU_APP_STAGING)."
+            exit 1
+          fi
+          echo "Using Heroku app: $APP"
+          # ensure heroku remote exists (fall back to adding https remote if CLI remote fails)
+          heroku git:remote -a "$APP" || git remote add heroku "https://git.heroku.com/${APP}.git"
+          git remote -v
+          heroku auth:whoami || true
       - name: Deploy to Heroku (requires secrets)
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
