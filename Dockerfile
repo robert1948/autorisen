@@ -1,88 +1,52 @@
-# ──────────────────────────────────────────────────────────────────────────────
-# Multi‑stage build for CapeControl / Autorisen
-# ──────────────────────────────────────────────────────────────────────────────
+# syntax=docker/dockerfile:1
 
-# ========== Stage 1: Build the React frontend ==========
-FROM node:20-alpine AS frontend-builder
+# -------- Base (builder) --------
+FROM python:3.11-slim AS base
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-WORKDIR /app/client
-
-# --- Build args to stamp the frontend (used by write-version.cjs) ---
-ARG VITE_APP_VERSION=dev
-ARG VITE_GIT_SHA=local
-ARG VITE_BUILD_TIME
-
-# Make available to the build process
-ENV VITE_APP_VERSION=${VITE_APP_VERSION} \
-    VITE_GIT_SHA=${VITE_GIT_SHA} \
-    VITE_BUILD_TIME=${VITE_BUILD_TIME} \
-    INSIDE_DOCKER=true
-
-# Only copy package files first for better caching
-COPY client/package*.json ./
-
-# Install deps (ci requires package-lock.json)
-RUN npm ci
-
-# Copy source code and scripts
-COPY client/ ./
-COPY scripts/ ../scripts/
-
-# Build (prebuild in package.json should write /public/version.json)
-RUN npm run build
-
-
-# ========== Stage 2: Python backend with static files ==========
-FROM python:3.11-slim AS backend
-
-# --- Build args to stamp the backend (/api/status & headers) ---
-ARG APP_VERSION=dev
-ARG GIT_SHA=local
-ARG BUILD_TIME
-
-# Runtime env (ENVIRONMENT should be set via Heroku Config Vars)
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8000 \
-    APP_VERSION=${APP_VERSION} \
-    GIT_SHA=${GIT_SHA} \
-    BUILD_TIME=${BUILD_TIME}
-
-# System deps (curl for healthcheck; gcc for native builds if needed)
+# System deps for building wheels (psycopg, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    build-essential libpq-dev curl ca-certificates git \
+ && rm -rf /var/lib/apt/lists/*
+
+# Use a dedicated venv for clean runtime copying
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Install Python deps first for better layer caching
-COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install Python deps first for better layer caching.
+# Expect requirements in backend/requirements.txt (preferred).
+# If you keep them at repo root, also add a copy there and adjust the path below.
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
-# Copy backend code
-COPY backend/ ./app/
+# -------- Runtime: backend (dev/prod) --------
+FROM python:3.11-slim AS backend
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=backend \
+    PORT=8000
 
-# Optional migration script (keep name if your process uses it)
-# NOTE: migrate_production_simple.py is not present in the repository root in
-# many developer checkouts and caused builds to fail with "not found". If you
-# add a migration helper script, re-enable the copy. For now we skip it so
-# local builds don't error.
+# Runtime libs only (no compilers)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy built frontend into FastAPI static dir expected by app.main
-COPY --from=frontend-builder /app/client/dist ./app/app/static
+# Bring in virtualenv from builder
+COPY --from=base /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Create non-root user for security
-RUN adduser --disabled-password --gecos '' --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app
-USER appuser
+WORKDIR /app
 
-EXPOSE ${PORT}
+# Copy app code (thanks to .dockerignore, this is lean)
+COPY backend ./backend
 
-# Health check: main.py exposes /health alias -> /api/health
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -fsS http://localhost:${PORT}/health || exit 1
+# Expose FastAPI port
+EXPOSE 8000
 
-# Start the API (Heroku will set $PORT)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+# Default CMD suitable for Heroku Container Registry (uses $PORT)
+# For local dev, docker-compose typically overrides with uvicorn --reload.
+CMD ["bash", "-lc", "exec gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-2}"]

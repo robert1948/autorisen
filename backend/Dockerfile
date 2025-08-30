@@ -1,30 +1,52 @@
-# 1️⃣ Frontend build stage
-FROM node:20 AS frontend
-WORKDIR /app/client
-COPY ../client/ .
-RUN npm install && npm run build
+# syntax=docker/dockerfile:1
 
-# 2️⃣ Backend stage
-FROM python:3.12-slim AS backend
+# -------- Base (builder) --------
+FROM python:3.11-slim AS base
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y build-essential && apt-get clean
+# System deps for building wheels (psycopg, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev curl ca-certificates git \
+ && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Use a dedicated venv for clean runtime copying
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 WORKDIR /app
 
-# Copy backend source
-COPY ./ .    # assumes Dockerfile is in backend/
+# Install Python deps first for better layer caching.
+# Expect requirements in backend/requirements.txt (preferred).
+# If you keep them at repo root, also add a copy there and adjust the path below.
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# -------- Runtime: backend (dev/prod) --------
+FROM python:3.11-slim AS backend
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=backend \
+    PORT=8000
 
-# Copy frontend build into FastAPI static dir
-COPY --from=frontend /app/client/dist/ ./app/static/
+# Runtime libs only (no compilers)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+ && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app/app
+# Bring in virtualenv from builder
+COPY --from=base /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Run FastAPI with Uvicorn (Heroku reads PORT from env)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+WORKDIR /app
+
+# Copy app code (thanks to .dockerignore, this is lean)
+COPY backend ./backend
+
+# Expose FastAPI port
+EXPOSE 8000
+
+# Default CMD suitable for Heroku Container Registry (uses $PORT)
+# For local dev, docker-compose typically overrides with uvicorn --reload.
+CMD ["bash", "-lc", "exec gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-2}"]

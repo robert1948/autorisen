@@ -44,9 +44,11 @@ services:
     container_name: autorisen-backend
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       # Database
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@host.docker.internal:5432/${POSTGRES_DB}
 
       # Redis
       REDIS_URL: redis://redis:6379
@@ -111,30 +113,7 @@ services:
           # One-time admin bootstrap (gated by flag file and envs)
           if [ ! -f /app/.admin_bootstrapped ] && [ -n "$BOOTSTRAP_ADMIN_EMAIL" ] && [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
             echo "👤 Bootstrapping admin (one-time)..."
-            python - <<'PY'
-import asyncio, os
-from app.services.auth_service import AuthService
-from app.database import SessionLocal
-
-async def main():
-    db = SessionLocal()
-    try:
-        auth = AuthService()
-        try:
-            await auth.register_user(db, {
-                "email": os.environ.get("BOOTSTRAP_ADMIN_EMAIL") or "admin@autorisen.dev",
-                "password": os.environ.get("BOOTSTRAP_ADMIN_PASSWORD") or "admin123",
-                "full_name": "Autorisen Admin",
-                "user_role": "admin"
-            })
-            print("✅ Admin bootstrapped or already exists")
-        except Exception as e:
-            print("ℹ️ Admin may already exist:", e)
-    finally:
-        db.close()
-
-asyncio.run(main())
-PY
+            python /app/scripts/bootstrap_admin.py || true
             touch /app/.admin_bootstrapped
           fi
 
