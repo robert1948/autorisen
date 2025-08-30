@@ -1,4 +1,4 @@
-name: CI minimal
+name: CI + Heroku
 
 on:
   push:
@@ -12,4 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Echo
-        run: echo "CI minimal - sanity"
+        run: echo "CI sanity"
+
+  deploy-heroku:
+    name: Deploy to Heroku
+    needs: sanity
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Heroku (requires secrets)
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          usedocker: false
