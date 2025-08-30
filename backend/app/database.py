@@ -12,20 +12,28 @@ if DATABASE_URL.startswith('postgres://'):
 
 # Create the SQLAlchemy engine with production settings
 if DATABASE_URL.startswith('postgresql://'):
-    # Production PostgreSQL settings with very aggressive timeouts
+    # Decide SSL mode: default to 'require' for remote DBs, but disable for
+    # local/dev hosts (db, localhost, host.docker.internal) or when explicitly
+    # overridden by DISABLE_DB_SSL=1 in the environment.
+    disable_ssl_flag = os.getenv('DISABLE_DB_SSL', '') == '1'
+    lower_url = DATABASE_URL.lower()
+    local_host_hint = any(x in lower_url for x in ('localhost', 'db:', 'host.docker.internal'))
+    sslmode = 'disable' if (disable_ssl_flag or local_host_hint) else 'require'
+
+    # Production PostgreSQL settings with sensible timeouts for this app
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,  # Verify connections before use
-        pool_recycle=60,     # Recycle connections every minute
-        pool_size=2,         # Smaller connection pool
-        max_overflow=3,      # Fewer overflow connections
-        pool_timeout=3,      # Shorter timeout for pool
+        pool_pre_ping=True,
+        pool_recycle=60,
+        pool_size=2,
+        max_overflow=3,
+        pool_timeout=3,
         connect_args={
-            "connect_timeout": 3,  # Very short connection timeout
-            "options": "-c statement_timeout=3000",  # 3 second statement timeout
-            "sslmode": "require"  # Force SSL connection
+            "connect_timeout": 3,
+            "options": "-c statement_timeout=3000",
+            "sslmode": sslmode,
         },
-        echo=False  # Disable SQL logging for performance
+        echo=False,
     )
 else:
     # Development SQLite settings
