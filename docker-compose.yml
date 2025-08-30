@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # PostgreSQL Database - Primary data store
   db:
@@ -47,7 +45,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-      target: development
+      target: backend
     container_name: capeai-backend
     ports:
       - "8000:8000"

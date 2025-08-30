@@ -65,7 +65,10 @@ RUN pip install --upgrade pip && \
 COPY backend/ ./app/
 
 # Optional migration script (keep name if your process uses it)
-COPY migrate_production_simple.py .
+# NOTE: migrate_production_simple.py is not present in the repository root in
+# many developer checkouts and caused builds to fail with "not found". If you
+# add a migration helper script, re-enable the copy. For now we skip it so
+# local builds don't error.
 
 # Copy built frontend into FastAPI static dir expected by app.main
 COPY --from=frontend-builder /app/client/dist ./app/app/static
