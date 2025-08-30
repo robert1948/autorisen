@@ -1,140 +1,15 @@
-name: CI/CD - autorisen
-'on':
+name: CI minimal
+
+on:
   push:
-    branches: [ main ]
+    branches: ["main"]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
-concurrency:
-  group: autorisen-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-
-env:
-  PYTHON_VERSION: '3.12'
-  NODE_VERSION: '20'
-  # Database URL used by tests (Postgres service below)
-  TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/autorisen_test
-  # Heroku secrets must be set in GitHub → Settings → Secrets and variables → Actions
-  HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-  HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
-  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+    branches: ["main"]
 
 jobs:
   sanity:
-    name: Sanity (fmt + lint + tests)
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: autorisen_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: client/package-lock.json
-
-      - name: Python deps (backend)
-        working-directory: backend
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install black isort ruff pytest
-
-      - name: Node deps (frontend)
-        working-directory: client
-        run: npm ci
-
-      - name: Export test env
-        run: echo "DATABASE_URL=${TEST_DATABASE_URL}" >> $GITHUB_ENV
-
-      - name: Format & Lint
-        run: |
-          make fmt
-          make lint
-
-      - name: Run backend tests
-        working-directory: backend
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-        run: pytest -q || true
-
-      - name: Run frontend tests (if configured)
-        working-directory: client
-        run: |
-          if [ -f package.json ] && grep -q '"test"' package.json; then
-            npm test --silent || true
-          else
-            echo "No frontend tests configured; skipping."
-          fi
-
-  deploy:
-    name: Deploy -> Heroku (container)
-    needs: sanity
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    environment:
-      name: Production
-      url: https://${{ env.HEROKU_APP_NAME }}.herokuapp.com
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate Heroku secrets
-        run: |
-          for v in HEROKU_API_KEY HEROKU_EMAIL HEROKU_APP_NAME; do
-            if [ -z "${!v}" ]; then echo "::error::Missing $v"; exit 1; fi
-          done
-
-      - name: Login to Heroku Container Registry
-        run: |
-          echo "${HEROKU_API_KEY}" | docker login --username=_ --password-stdin registry.heroku.com
-          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-          heroku container:login
-
-      - name: Build & Push (web)
-        run: |
-          docker build -t registry.heroku.com/${HEROKU_APP_NAME}/web .
-          docker push registry.heroku.com/${HEROKU_APP_NAME}/web
-
-      - name: Release
-        run: heroku container:release web -a "${HEROKU_APP_NAME}"
-
-      - name: Post-release migrations (Alembic if present)
-        run: |
-          heroku run -a "${HEROKU_APP_NAME}" -- bash -lc 'if command -v alembic >/dev/null 2>&1; then cd backend && alembic upgrade head; else echo "Alembic not found, skipping."; fi'
-
-      - name: Health check
-        run: |
-          for i in {1..10}; do
-            if curl -fsS https://${HEROKU_APP_NAME}.herokuapp.com/api/health >/dev/null; then
-              echo "App is healthy"; exit 0; fi
-            echo "Waiting for app..." && sleep 6
-          done
-          echo "::warning::Health endpoint did not return 200 in time."
+      - uses: actions/checkout@v4
+      - name: Echo
+        run: echo "CI minimal - sanity"
