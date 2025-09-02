@@ -53,7 +53,7 @@ client/dist/
 client/coverage/
 
 # ---------------------------
-# Env / secrets (keep only examples)
+# Env / secrets (keep only safe examples)
 # ---------------------------
 .env
 .env.*
@@ -94,12 +94,14 @@ docker-compose*.yml
 Dockerfile.dev
 **/local-history/
 
-# If you COPY . . and need only app code, explicitly allow key files:
-# !requirements.txt
-# !pyproject.toml
-# !package.json
-# !package-lock.json
-# !client/package.json
+# Explicitly include key manifests needed for builds
+!requirements.txt
+!backend/requirements.txt
+!pyproject.toml
+!package.json
+!package-lock.json
+!client/package.json
+!client/package-lock.json
 
 # ---------------------------
 # Misc

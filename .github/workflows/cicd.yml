@@ -17,9 +17,8 @@ jobs:
   deploy-heroku:
     name: Deploy to Heroku
     needs: sanity
-    # Only run deploy on pushes to main and when Heroku secrets are present.
-    # This avoids failing the workflow when secrets haven't been configured.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.HEROKU_API_KEY != '' && (secrets.HEROKU_APP_NAME != '' || secrets.HEROKU_APP_PROD != '' || secrets.HEROKU_APP_STAGING != '')
+    # Only run deploy on pushes to main. Runtime steps validate secrets and will fail fast if missing.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,10 +75,9 @@ jobs:
   heroku-deploy-test:
     name: Heroku deploy (test)
     runs-on: ubuntu-latest
-    # Run for PRs or manual runs, and only when Heroku secrets exist
+    # Run for PRs or manual runs; runtime steps validate secrets and will fail fast if missing.
     if: >
       (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
-      && secrets.HEROKU_API_KEY != '' && (secrets.HEROKU_APP_NAME != '' || secrets.HEROKU_APP_PROD != '' || secrets.HEROKU_APP_STAGING != '')
     steps:
       - uses: actions/checkout@v4
 

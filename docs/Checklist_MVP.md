@@ -6,9 +6,23 @@ This checklist ensures that our MVP launch delivers on the promises outlined in 
 
 ## 1. Technical Foundation
 
-- [ ] **AI Agents (Core Feature)**
-  - Intelligent, context-aware agents for customer service, scheduling, and task automation.
-  - Adaptive behavior: agents learn from business usage patterns.
+- [ ] **AI Agents (Core Feature)**  
+  **Status:** 🚧 In Progress  
+  **Deliverables (MVP Scope):**  
+  - [ ] Customer Service Agent  
+    - Basic FAQ answering via `/api/agents/faq` route.  
+    - Backed by OpenAI GPT-4o-mini.  
+  - [ ] Scheduling Agent  
+    - Interpret simple scheduling commands.  
+    - Store events in PostgreSQL via `/api/agents/scheduler`.  
+  - [ ] Adaptive Context Handling  
+    - Store last 5 messages in DB for context.  
+
+  **Notes:**  
+  - AI provider logic modularized in `services/ai_provider.py`.  
+  - Database models: `AgentSession`, `AgentMessage`, `ScheduledEvent`.  
+  - Frontend card in React: FAQ + Schedule Task forms.  
+  - Out of scope for MVP: multi-step reasoning, external integrations (CRM, Google Calendar), and advanced ML retraining.  
 
 - [ ] **Custom Integrations**
   - At least 1–2 working integrations (e.g., CRM, POS, Google Calendar).
