@@ -26,7 +26,8 @@ const Credits = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
         setCreditBalance(data);
       }
     } catch (err) {
@@ -36,9 +37,10 @@ const Credits = () => {
 
   const fetchPricing = async () => {
     try {
-      const response = await fetch('/api/payment/pricing');
-      const data = await response.json();
-      setPricing(data);
+  const response = await fetch('/api/payment/pricing');
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  setPricing(data);
     } catch (err) {
       console.error('Failed to fetch pricing:', err);
     }

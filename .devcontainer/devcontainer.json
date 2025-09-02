@@ -1,43 +1,28 @@
 {
-  "name": "autorisen-dev",
-  "build": { "dockerfile": "Dockerfile" },
+  "name": "Autorisen DevContainer",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
 
-  "remoteUser": "vscode",
-  "containerUser": "vscode",
-  "remoteEnv": { "HOME": "/home/vscode" },
-
-  // Run our full setup (venv, Node deps, Heroku CLI, etc.)
-  "postCreateCommand": "bash .devcontainer/postCreate.sh",
-
-  // Avoid git safety warnings inside the container
-  "postStartCommand": "git config --global --add safe.directory /workspaces/autorisen || true",
-
-  // Helpful forwards for local dev
-  "forwardPorts": [8000, 5173],
-  "portsAttributes": {
-    "8000": { "label": "FastAPI (uvicorn)", "onAutoForward": "notify" },
-    "5173": { "label": "Vite dev server", "onAutoForward": "notify" }
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
+
+  "postCreateCommand": "pip install --upgrade pip && npm install -g npm@latest",
 
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "batisteo.vscode-django",
-        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker",
         "esbenp.prettier-vscode",
-        "github.vscode-github-actions",
-        "ms-azuretools.vscode-docker"
-      ],
-      "settings": {
-        "python.defaultInterpreterPath": "/workspaces/autorisen/.venv/bin/python",
-        "editor.formatOnSave": true,
-        "files.exclude": {
-          "**/__pycache__": true,
-          "**/.pytest_cache": true
-        }
-      }
+        "dbaeumer.vscode-eslint"
+      ]
     }
   }
 }

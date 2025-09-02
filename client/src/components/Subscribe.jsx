@@ -36,7 +36,8 @@ const Subscribe = () => {
   const fetchPricing = async () => {
     try {
       const response = await fetch('/api/payment/pricing');
-      const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
       setPricing(data);
     } catch (err) {
       console.error('Failed to fetch pricing:', err);
@@ -46,6 +47,12 @@ const Subscribe = () => {
   const fetchCurrentSubscription = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        // No token — user not authenticated. Skip fetching subscription status.
+        setCurrentSubscription(null);
+        return;
+      }
+
       const response = await fetch('/api/payment/subscription/status', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -54,9 +61,13 @@ const Subscribe = () => {
       if (response.ok) {
         const data = await response.json();
         setCurrentSubscription(data);
+      } else {
+        // When not OK, ensure we clear any stale subscription info
+        setCurrentSubscription(null);
       }
     } catch (err) {
       console.error('Failed to fetch subscription:', err);
+      setCurrentSubscription(null);
     }
   };
 
@@ -88,13 +99,14 @@ const Subscribe = () => {
         })
       });
 
-      const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
 
       if (response.ok) {
         setSuccess(`Successfully subscribed to ${tier} plan!`);
         fetchCurrentSubscription();
       } else {
-        setError(data.detail || 'Subscription failed');
+        setError(data.detail || data.error || 'Subscription failed');
       }
     } catch (err) {
       setError('Network error. Please try again.');
@@ -122,8 +134,9 @@ const Subscribe = () => {
         setSuccess('Subscription cancelled successfully');
         fetchCurrentSubscription();
       } else {
-        const data = await response.json();
-        setError(data.detail || 'Failed to cancel subscription');
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
+  setError(data.detail || data.error || 'Failed to cancel subscription');
       }
     } catch (err) {
       setError('Network error. Please try again.');

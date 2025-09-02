@@ -135,10 +135,40 @@ app.add_middleware(
 )
 
 # Add response headers with version/commit for all requests
-from fastapi import Response as FastAPIResponse  # (optional type alias)
+# from fastapi import Response as FastAPIResponse  # (optional type alias)  # Removed unused import
 @app.middleware("http")
 async def version_headers(request: Request, call_next):
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        # Handle client disconnects / empty stream more gracefully
+        try:
+            import anyio
+            if isinstance(exc, anyio.EndOfStream):
+                vp = _version_payload()
+                resp = Response(status_code=499)
+                resp.headers["X-App-Version"] = vp["version"]
+                resp.headers["X-App-Commit"] = vp["git_sha"]
+                resp.headers["X-App-Env"] = vp["environment"]
+                return resp
+        except Exception:
+            # anyio may not be importable in some environments; fall through
+            pass
+
+        # Defensive: ensure we always return a valid response even if downstream
+        # handlers raise or call_next fails with other exceptions.
+        try:
+            import logging
+            logging.exception("Unhandled exception while processing request")
+        except Exception:
+            pass
+        vp = _version_payload()
+        resp = JSONResponse(content={"detail": "Internal Server Error"}, status_code=500)
+        resp.headers["X-App-Version"] = vp["version"]
+        resp.headers["X-App-Commit"] = vp["git_sha"]
+        resp.headers["X-App-Env"] = vp["environment"]
+        return resp
+
     vp = _version_payload()
     response.headers["X-App-Version"] = vp["version"]
     response.headers["X-App-Commit"] = vp["git_sha"]
@@ -262,7 +292,13 @@ async def health_alias():
 @app.get("/api/health")
 async def api_health_alias():
     try:
-        return {"message": "health endpoint", "status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+        now = datetime.now(timezone.utc)
+        return {
+            "message": "health endpoint",
+            "status": "healthy",
+            "timestamp": now.isoformat(),
+            "reload_test": now.timestamp()
+        }
     except Exception:
         return {"ok": True, "alias": "/api/health"}
 

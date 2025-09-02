@@ -32,6 +32,7 @@ venv/
 
 # Local DBs
 *.sqlite3
+test_models.db
 
 # ---------------------------
 # Node / frontend (install separately if needed)

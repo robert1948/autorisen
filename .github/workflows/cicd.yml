@@ -115,15 +115,15 @@ jobs:
       - name: Quick backend import check
         run: |
           python - <<'PY'
-import sys
-try:
-    import importlib
-    importlib.import_module('app')
-    print('backend import OK')
-except Exception as e:
-    print('backend import failed:', e)
-    sys.exit(1)
-PY
+          import sys
+          try:
+              import importlib
+              importlib.import_module('app')
+              print('backend import OK')
+          except Exception as e:
+              print('backend import failed:', e)
+              sys.exit(1)
+          PY
 
       - name: Install Heroku CLI
         run: |

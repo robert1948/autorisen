@@ -1,6 +1,6 @@
 # 🛠 DEVELOPMENT CONTEXT
 
-**Last Updated**: August 27, 2025  
+**Last Updated**: September 2, 2025
 **Source of truth**: CapeControl / Capecraft project (synchronized with latest Heroku deployment logs)  
 **Project Status**: Production Ready — Registration fixed, AI Security Suite deployed, Payment & Developer Earnings live  
 **Current Version**: v663 (Heroku, deployed Aug 17, 2025) ✅ RUNNING
@@ -146,21 +146,44 @@ Notes:
 - **SQLite Fallback**: The project defaults to SQLite (`DATABASE_URL=sqlite:///./capecontrol.db`) for quick development
 - **Database Testing**: Use `./scripts/dummy_register.py` to create test users and verify database connectivity
 
-### Frontend (optional)
+### Frontend (optional / dev)
+
+The repo supports a local frontend dev server (Vite) with hot-reload. When running with
+docker-compose the frontend is mounted for HMR and the backend is available via the
+`VITE_API_URL` environment variable (default used for compose is `http://backend:8000`).
 
 ```bash
+# Run frontend dev server locally
 cd client
 npm install
 npm run dev
 # Frontend typically served at http://localhost:3000
 ```
 
-### CI / CD & Heroku
+## CI / CD & Heroku
 
-- GitHub Actions contains a consolidated workflow (`cicd.yml`) that builds and deploys to Heroku using buildpack-based deployment (not container-based).
-- The workflow is configured to trigger on pushes to `main` and supports manual promotion to production via workflow_dispatch.
-- Staging deploys are achieved by pushing the contents of `backend/` (with `Procfile`, `requirements.txt`, and `runtime.txt` at root) to the Heroku git remote.
-- If you prefer staging-only deploys from a feature branch, update the workflow to trigger only on that branch and use manual promotion from `main` for production.
+- GitHub Actions contains a consolidated workflow (`cicd.yml`) that can deploy to Heroku. Historically the project used buildpack-based deploys (push to Heroku git remote) but the CI also supports container-based releases using the Heroku Container Registry.
+- The workflow is configured to trigger on pushes to `main` and also contains gated jobs for manual/PR-based container releases (see `.github/workflows/cicd.yml`).
+
+Deployment notes:
+
+- Buildpack (classic) deploys: keep `Procfile`, `requirements.txt` and `runtime.txt` at the repository root so Heroku's Python buildpack can detect and install the backend dependencies. Buildpack deploys use the `Procfile` to start the web process and respect `${PORT}`.
+- Container Registry deploys: CI or local deploys may push a container image to `registry.heroku.com/<app>/web` and call `heroku container:release web -a <app>`. When using container deployments the final image must run a web process that binds to the `$PORT` environment variable provided by Heroku.
+
+Current Dockerfile behavior:
+
+- The repository `Dockerfile` contains a multi-stage build. A `release` stage has been added which uses the `backend` stage as the runtime image and starts Gunicorn/Uvicorn bound to `${PORT}`. This makes container releases safe to run on Heroku (prevents the Vite dev server from being started in production images).
+
+Example container release commands (CI or local):
+
+```bash
+# Build locally and push to Heroku container registry
+docker build -t registry.heroku.com/<app>/web -f Dockerfile .
+docker push registry.heroku.com/<app>/web
+heroku container:release web -a <app>
+```
+
+Important: if you see a Heroku R10 (boot timeout) error, it usually means the container started a process that did not bind to `$PORT` (for example, the Vite dev server on port 3000). Ensure your image's final CMD binds to `${PORT}`.
 
 ---
 
@@ -184,7 +207,8 @@ The project includes automated scripts for database management:
 ### Database Connection Details
 
 **Local Development Database:**
-- Host: `localhost` 
+
+- Host: `localhost`
 - Port: `5432`
 - Database: `autorisen_local`
 - Username: `vscode`
@@ -192,6 +216,7 @@ The project includes automated scripts for database management:
 - Connection string: `postgresql://vscode:123456@localhost:5432/autorisen_local`
 
 **Production Database:**
+
 - Managed by Heroku PostgreSQL
 - SSL required for all connections
 - Schema automatically replicated to local environment

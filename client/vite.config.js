@@ -26,9 +26,12 @@ export default defineConfig({
     host: '0.0.0.0', // Allow external connections
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // Use the VITE_API_URL environment variable when available. Inside the
+        // frontend Docker container this should point to the backend service
+        // (e.g. http://backend:8000). Fallback to http://backend:8000 for
+        // containerized dev environments.
+        target: process.env.VITE_API_URL || 'http://backend:8000',
         changeOrigin: true,
-        // Remove the rewrite to preserve the /api prefix
       },
     },
   },
