@@ -113,3 +113,15 @@ tools:
 # psql shortcut into the dev Postgres
 psql:
 	PGPASSWORD=$${POSTGRES_PASSWORD} psql -h 127.0.0.1 -p 5433 -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+# Makefile
+
+.PHONY: update-git
+update-git:
+	@git status -sb
+	@echo "🔄 Staging all changes..."
+	git add .
+	@echo "✍️  Committing (with [skip ci])..."
+	git commit -m "chore: update local changes [skip ci]" || true
+	@echo "⬆️  Pushing to GitHub (autorisen repo)..."
+	git push origin main
+	@echo "✅ Update pushed (CI skipped)."

@@ -15,11 +15,15 @@ This checklist ensures that our MVP launch delivers on the promises outlined in 
   - [ ] Scheduling Agent  
     - Interpret simple scheduling commands.  
     - Store events in PostgreSQL via `/api/agents/scheduler`.  
+    **Status:** ✅ Completed  
+    **Notes:** Scheduling endpoint implemented at `/api/v1/agents/scheduler`; persists events in `scheduled_events` table with demo provider.
   - [ ] Adaptive Context Handling  
     - Store last 5 messages in DB for context.  
 
   **Notes:**  
   - AI provider logic modularized in `services/ai_provider.py`.  
+  - Basic FAQ agent implemented as `/api/agents/faq` (demo `CapeAIService` used for local/dev responses).  
+  - Status: ✅ Basic FAQ endpoint implemented (records conversation and messages, returns demo answer).  
   - Database models: `AgentSession`, `AgentMessage`, `ScheduledEvent`.  
   - Frontend card in React: FAQ + Schedule Task forms.  
   - Out of scope for MVP: multi-step reasoning, external integrations (CRM, Google Calendar), and advanced ML retraining.  

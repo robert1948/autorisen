@@ -2,7 +2,14 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+# Load environment variables if python-dotenv is installed
+try:
+    from dotenv import load_dotenv  # type: ignore[import]
+except ImportError:
+    # python-dotenv not available; define a no-op
+    def load_dotenv(*args, **kwargs):
+        pass
+
 
 # Load .env from backend/.env
 env_path = Path(__file__).resolve().parent.parent / ".env"

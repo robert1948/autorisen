@@ -56,6 +56,8 @@ The MVP scope limits functionality to **FAQ answering** and **basic scheduling**
 - **Customer Service Agent**
   - Answers FAQs using `/api/agents/faq` (FastAPI route).
   - Powered by OpenAI GPT-4o-mini for cost-effective inference.
+  - Answers FAQs using `/api/agents/faq` (FastAPI route). A lightweight demo implementation using `CapeAIService` is present for local/dev testing at `backend/app/routes/agents_faq.py`.
+  - Note: The MVP includes a demo FAQ implementation; to switch to a real provider wire `services/cape_ai_service.py` to call `services/ai_provider.py` (OpenAI/Anthropic/Google) and ensure API keys are configured in environment.
 - **Scheduling Agent**
   - Parses simple scheduling commands (e.g., “book meeting Tuesday 10”).
   - Stores events in PostgreSQL via `/api/agents/scheduler`.
