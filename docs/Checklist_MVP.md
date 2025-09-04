@@ -1,4 +1,8 @@
 # Cape Control MVP Launch Checklist
+**Last updated:** 2025-09-04
+**Last updated:** 2025-09-04
+
+**Last updated:** 2025-09-04
 
 This checklist ensures that our MVP launch delivers on the promises outlined in **About Cape Control** while staying aligned with our development context.
 

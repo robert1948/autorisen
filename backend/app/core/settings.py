@@ -1,15 +1,32 @@
 # backend/app/core/settings.py
-from pydantic_settings import BaseSettings
+"""
+backend/app/core/settings.py
+Simple Settings container without external dependencies
+"""
 
-class Settings(BaseSettings):
-    API_V1_PREFIX: str = "/api/v1"
-    AI_PROVIDER: str = "demo"  # demo | openai | anthropic | gemini
-    AI_MODEL: str = "gpt-4o-mini"
-    OPENAI_API_KEY: str | None = None
-    ANTHROPIC_API_KEY: str | None = None
-    GEMINI_API_KEY: str | None = None
 
-    class Config:
-        env_file = ".env"
+class Settings:
+    API_V1_PREFIX = "/api/v1"
+    AI_PROVIDER = "demo"  # demo | openai | anthropic | gemini
+    AI_MODEL = "gpt-4o-mini"
+    OPENAI_API_KEY = None
+    ANTHROPIC_API_KEY = None
+    GEMINI_API_KEY = None
 
+
+"""
+Simple configuration container for CapeControl backend.
+"""
+
+
+class Settings:
+    API_V1_PREFIX = "/api/v1"
+    AI_PROVIDER = "demo"  # demo | openai | anthropic | gemini
+    AI_MODEL = "gpt-4o-mini"
+    OPENAI_API_KEY = None
+    ANTHROPIC_API_KEY = None
+    GEMINI_API_KEY = None
+
+
+# Single settings instance used by app modules
 settings = Settings()

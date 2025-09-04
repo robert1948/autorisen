@@ -13,14 +13,6 @@ from app.services.ai_provider import AIProvider, get_ai_provider
 router = APIRouter(prefix=f"{settings.API_V1_PREFIX}/agents", tags=["agents"])
 
 
-class FAQRequest(BaseModel):
-    question: str
-
-
-class FAQResponse(BaseModel):
-    answer: str
-
-
 class ScheduleRequest(BaseModel):
     command: str
 
@@ -33,14 +25,6 @@ class ScheduleResponse(BaseModel):
 
 def provider_dep() -> AIProvider:
     return get_ai_provider()
-
-
-@router.post("/faq", response_model=FAQResponse)
-async def faq(req: FAQRequest, provider: AIProvider = Depends(provider_dep)):
-    if not req.question.strip():
-        raise HTTPException(status_code=400, detail="question is required")
-    answer = await provider.answer_faq(req.question)
-    return FAQResponse(answer=answer)
 
 
 @router.post("/scheduler", response_model=ScheduleResponse)
@@ -77,7 +61,6 @@ async def scheduler(
 alias_router = APIRouter(
     prefix=f"{settings.API_V1_PREFIX.replace('/v1', '')}/agents", tags=["agents"]
 )
-alias_router.post("/faq", response_model=FAQResponse)(faq)
 alias_router.post("/scheduler", response_model=ScheduleResponse)(scheduler)
 
 # Duplicate unreachable code removed

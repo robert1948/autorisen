@@ -107,28 +107,29 @@ services:
       - ./backend:/app
       - ./logs:/app/logs
       - backend_uploads:/app/uploads
+      - ./docs:/app/docs:ro
     working_dir: /app
     command:
       - bash
       - -lc
       - |
-          set -e
-          echo "🚀 Starting Backend..."
-          echo "🔧 Ensuring DB schema is present (dev only)..."
-          /opt/venv/bin/python - <<'PY'
-          from app.database import engine, Base
-          Base.metadata.create_all(bind=engine)
-          print("✅ Database tables created (dev bootstrap)")
-          PY
+        set -e
+        echo "🚀 Starting Backend..."
+        echo "🔧 Ensuring DB schema is present (dev only)..."
+        /opt/venv/bin/python - <<'PY'
+        from app.database import engine, Base
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created (dev bootstrap)")
+        PY
 
-          if [ ! -f /app/.admin_bootstrapped ] && [ -n "$BOOTSTRAP_ADMIN_EMAIL" ] && [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
-            echo "👤 Bootstrapping admin (one-time)..."
-            /opt/venv/bin/python /app/scripts/bootstrap_admin.py || true
-            touch /app/.admin_bootstrapped
-          fi
+        if [ ! -f /app/.admin_bootstrapped ] && [ -n "$BOOTSTRAP_ADMIN_EMAIL" ] && [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
+          echo "👤 Bootstrapping admin (one-time)..."
+          /opt/venv/bin/python /app/scripts/bootstrap_admin.py || true
+          touch /app/.admin_bootstrapped
+        fi
 
-          echo "🎯 Starting FastAPI (reload)..."
-          exec /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
+        echo "🎯 Starting FastAPI (reload)..."
+        exec /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
     healthcheck:
       test:
         - CMD-SHELL

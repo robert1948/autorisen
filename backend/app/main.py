@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 # NEW: aggregate API router (includes /api/v1/agents/* + /api/agents/* alias)
 from .api import api_router
+from .routes.agents_faq import router as faq_router
 
 # Existing Routers
 from .api.payment import router as payment_router
@@ -66,6 +67,8 @@ app = FastAPI(
 )
 # Mount the aggregated API router (MVP agents + alias endpoints)
 app.include_router(api_router)
+# Mount the FAQ agent demo routes
+app.include_router(faq_router)
 
 
 # -------- Version helpers --------
@@ -90,8 +93,8 @@ def _version_payload():
 
 
 # -------- Routers --------
-# New: all versioned/alias API (e.g., /api/v1/agents, /api/agents alias)
-app.include_router(api_router)
+# Duplicate api_router inclusion removed (already included above before faq_router) to prevent
+# overriding the enhanced FAQ endpoint defined in routes/agents_faq.py.
 
 # Existing apps
 app.include_router(auth_v2.router, prefix="/api/auth", tags=["auth"])
