@@ -21,6 +21,24 @@ htmlcov/
 venv/
 .python-version
 .ruff_cache/
+coverage.xml
+
+# Build artifacts (wheel / sdist leftovers)
+*.whl
+*.tar.gz
+
+# Frontend tooling caches
+.vite/
+client/.vite/
+client/.eslintcache
+
+# Profiling / debugging
+profiling/
+*.prof
+pytestdebug.log
+
+# Local VSCode history
+.history/
 
 # --- Environment files (do NOT commit secrets) ---
 .env
@@ -85,6 +103,8 @@ docker-compose*.override.yml
 # Explicitly keep infra files
 !docker-compose.yml
 !Dockerfile
+
+# Keep example envs only (already handled above); avoid redeclaring broad .env* ignores
 .env.development.local
-.env*
-!.env.example
+.env.test.local
+

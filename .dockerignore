@@ -102,6 +102,28 @@ Dockerfile.dev
 !package-lock.json
 !client/package.json
 !client/package-lock.json
+!backend/requirements-dev.txt
+
+# Exclude tests from final image to reduce context size
+backend/tests/
+scripts/tests/
+scripts/archive/
+
+# Python coverage & reports
+coverage/
+htmlcov/
+coverage.xml
+.pytest_cache/
+
+# Frontend dev caches
+.vite/
+client/.vite/
+client/.eslintcache
+
+# Profiling / debug artifacts
+*.prof
+pytestdebug.log
+
 
 # ---------------------------
 # Misc
