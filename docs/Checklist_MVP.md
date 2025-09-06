@@ -1,8 +1,8 @@
 # Cape Control MVP Launch Checklist
-**Last updated:** 2025-09-04
-**Last updated:** 2025-09-04
 
-**Last updated:** 2025-09-04
+**Last updated:** 2025-09-06
+
+Status note (engineering): v3.1.0 tagged and pushed. Health endpoints enhanced and standardized; deployment to Heroku container pending smoke test of /api/health and /api/health/status.
 
 This checklist ensures that our MVP launch delivers on the promises outlined in **About Cape Control** while staying aligned with our development context.
 
