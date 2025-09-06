@@ -98,15 +98,34 @@
   }
 
   body {
-    /* Prevent bounce scrolling on iOS */
-    overscroll-behavior-y: none;
-    /* Improve touch scrolling */
-    -webkit-overflow-scrolling: touch;
-    /* Remove tap highlight on mobile */
-    -webkit-tap-highlight-color: transparent;
-    /* Base font size for mobile readability */
-    font-size: 16px;
-    line-height: 1.6;
+   /* Prevent bounce scrolling on iOS */
+   overscroll-behavior-y: none;
+   /* Improve touch scrolling */
+   -webkit-overflow-scrolling: touch;
+   /* Remove tap highlight on mobile */
+   -webkit-tap-highlight-color: transparent;
+   /* Base font size for mobile readability */
+   font-size: 16px;
+   line-height: 1.6;
+   /* Global navbar padding: adjust --navbar-height to match the navbar's height.
+     Recommended values: --navbar-height: 3rem (pt-12), 4rem (pt-16), 5rem (pt-20).
+     This keeps spacing consistent across all pages. */
+  /* default navbar height for small/mobile: 5rem (h-20 / pt-20) to avoid overlap with fixed navbar */
+   --navbar-height: 5rem;
+   padding-top: var(--navbar-height);
+  }
+
+  /* Breakpoint-specific navbar heights:
+     - sm (>=640px): 4rem (pt-16)
+     - lg (>=1024px): 5rem (pt-20)
+  */
+  @media (min-width: 640px) {
+    /* Navbar uses sm:h-20 (5rem) starting at the sm breakpoint */
+    body { --navbar-height: 5.5rem; }
+  }
+
+  @media (min-width: 1024px) {
+    body { --navbar-height: 5.5rem; }
   }
 
   /* Mobile-safe viewport handling */

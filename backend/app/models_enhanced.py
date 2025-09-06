@@ -31,8 +31,9 @@ from app.database import Base
 # Define role enum for type safety
 class UserRole(str, enum.Enum):
     CUSTOMER = "CUSTOMER"
-    DEVELOPER = "DEVELOPER" 
+    DEVELOPER = "DEVELOPER"
     ADMIN = "ADMIN"
+
 
 class UserV2(Base):
     """
@@ -42,36 +43,47 @@ class UserV2(Base):
     - Enhanced security fields
     - Audit timestamps
     """
+
     __tablename__ = "users_v2"
     __table_args__ = {"extend_existing": True}
 
     # Primary identification
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
+    # NOTE: "users_v2" table is also declared in app.models.User. That class already
+    # defines indexes for id/email. Declaring index=True again on the same Table
+    # (with __table_args__ {extend_existing: True}) causes duplicate Index objects
+    # to be created which then results in "sqlite3.OperationalError: index ... already exists"
+    # during Base.metadata.create_all in tests. To prevent duplicate index DDL we
+    # omit index=True here for shared columns. They remain indexed via the first
+    # declaration (app.models.User), keeping runtime behavior identical while
+    # stabilizing test setup.
+    id = Column(Integer, primary_key=True)  # index provided by app.models.User
+    email = Column(
+        String(255), unique=True, nullable=False
+    )  # index provided by app.models.User
     password_hash = Column(String(255), nullable=False)
-    
+
     # Role-based access control
     role = Column(Enum(UserRole), nullable=False, default=UserRole.CUSTOMER)
-    
+
     # Profile information
     first_name = Column(String(100))
     last_name = Column(String(100))
     phone = Column(String(20))
     website = Column(String(255))
     company = Column(String(255))
-    
+
     # Account status and verification
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     email_verified_at = Column(DateTime(timezone=True))
-    
+
     # Experience level (for both customers and developers)
     experience = Column(String(20))  # 'beginner', 'intermediate', 'advanced', 'expert'
-    
+
     # Phase 2 Profile Completion Status - TEMPORARILY COMMENTED OUT FOR REGISTRATION FIX
     # profile_completed = Column(Boolean, default=False, nullable=False)
     # phase2_completed = Column(Boolean, default=False, nullable=False)
-    
+
     # Customer-specific Phase 2 fields
     company_name = Column(String(255))
     industry = Column(String(100))
@@ -82,7 +94,7 @@ class UserV2(Base):
     goals = Column(JSON)  # Array of customer goals
     preferred_integrations = Column(JSON)  # Array of preferred integrations
     timeline = Column(String(50))
-    
+
     # Developer-specific Phase 2 fields
     experience_level = Column(String(50))  # Developer-specific experience level
     primary_languages = Column(JSON)  # Array of programming languages
@@ -95,19 +107,22 @@ class UserV2(Base):
     hourly_rate = Column(String(50))
     earnings_target = Column(String(50))
     # revenue_share = Column(Numeric(5, 4), default=0.3000)  # TEMPORARILY COMMENTED OUT FOR REGISTRATION FIX
-    
+
     # Audit fields
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login_at = Column(DateTime(timezone=True))
-    
+
     # Terms and privacy
     terms_accepted_at = Column(DateTime(timezone=True))
     # privacy_accepted_at = Column(DateTime(timezone=True))  # TEMPORARILY COMMENTED OUT FOR REGISTRATION FIX
-    
+
     # Relationships - TEMPORARILY COMMENTED OUT FOR REGISTRATION FIX
     # tokens = relationship("Token", back_populates="user", cascade="all, delete-orphan")
     # developer_earnings = relationship("DeveloperEarning", back_populates="user", cascade="all, delete-orphan")
+
 
 class Token(Base):
     """
@@ -116,29 +131,40 @@ class Token(Base):
     - Automatic expiration handling
     - User relationship for easy cleanup
     """
+
     __tablename__ = "tokens_v2"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users_v2.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+    user_id = Column(
+        Integer,
+        ForeignKey("users_v2.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     # Token details
     token = Column(String(500), nullable=False, index=True)  # JWT or session token
-    token_type = Column(String(20), nullable=False, default="access")  # 'access', 'refresh', 'reset'
-    
+    token_type = Column(
+        String(20), nullable=False, default="access"
+    )  # 'access', 'refresh', 'reset'
+
     # Expiration and status
     expires_at = Column(DateTime(timezone=True), nullable=False)
     is_revoked = Column(Boolean, default=False, nullable=False)
-    
+
     # Audit fields
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     used_at = Column(DateTime(timezone=True))  # When token was last used
-    
+
     # Device/session tracking
     user_agent = Column(String(500))
     ip_address = Column(String(45))  # IPv6 compatible
-    
+
     # Relationships - TEMPORARILY COMMENTED OUT FOR REGISTRATION FIX
     # user = relationship("UserV2", back_populates="tokens")
+
 
 class DeveloperEarning(Base):
     """
@@ -147,35 +173,48 @@ class DeveloperEarning(Base):
     - Tracks revenue share and payments
     - Supports analytics and reporting
     """
+
     __tablename__ = "developer_earnings_v2"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users_v2.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+    user_id = Column(
+        Integer,
+        ForeignKey("users_v2.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     # AI Agent identification
-    agent_id = Column(String(100), nullable=False, index=True)  # Identifier for the AI agent
+    agent_id = Column(
+        String(100), nullable=False, index=True
+    )  # Identifier for the AI agent
     agent_name = Column(String(255))  # Human-readable agent name
-    
+
     # Revenue details
     revenue_share = Column(Numeric(10, 2), nullable=False, default=0.00)  # Amount owed
     total_sales = Column(Numeric(10, 2), default=0.00)  # Total sales for this agent
-    commission_rate = Column(Numeric(5, 4), default=0.3000)  # Commission percentage (30% default)
-    
+    commission_rate = Column(
+        Numeric(5, 4), default=0.3000
+    )  # Commission percentage (30% default)
+
     # Payment tracking
     last_payout_amount = Column(Numeric(10, 2), default=0.00)
     last_payout_at = Column(DateTime(timezone=True))
     total_paid_out = Column(Numeric(10, 2), default=0.00)
-    
+
     # Status and metadata
     is_active = Column(Boolean, default=True, nullable=False)
     currency = Column(String(3), default="USD", nullable=False)
-    
+
     # Audit fields
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships - TEMPORARILY COMMENTED OUT FOR REGISTRATION FIX
     # user = relationship("UserV2", back_populates="developer_earnings")
+
 
 class PasswordReset(Base):
     """
@@ -184,23 +223,32 @@ class PasswordReset(Base):
     - Time-limited tokens
     - Single-use tokens
     """
+
     __tablename__ = "password_resets_v2"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users_v2.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+    user_id = Column(
+        Integer,
+        ForeignKey("users_v2.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     # Reset token details
     token = Column(String(255), nullable=False, unique=True, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     is_used = Column(Boolean, default=False, nullable=False)
-    
+
     # Security tracking
     ip_address = Column(String(45))
     user_agent = Column(String(500))
-    
+
     # Audit fields
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     used_at = Column(DateTime(timezone=True))
+
 
 class AuditLog(Base):
     """
@@ -209,24 +257,31 @@ class AuditLog(Base):
     - Security event monitoring
     - Compliance reporting
     """
+
     __tablename__ = "audit_logs_v2"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users_v2.id", ondelete="SET NULL"), index=True)
-    
+    user_id = Column(
+        Integer, ForeignKey("users_v2.id", ondelete="SET NULL"), index=True
+    )
+
     # Event details
-    event_type = Column(String(50), nullable=False, index=True)  # 'login', 'register', 'password_change', etc.
+    event_type = Column(
+        String(50), nullable=False, index=True
+    )  # 'login', 'register', 'password_change', etc.
     event_description = Column(Text)
-    
+
     # Request details
     ip_address = Column(String(45))
     user_agent = Column(String(500))
     endpoint = Column(String(255))
-    
+
     # Status and metadata
     success = Column(Boolean, nullable=False)
     error_message = Column(Text)
     event_metadata = Column(Text)  # JSON string for additional data
-    
+
     # Timestamp
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

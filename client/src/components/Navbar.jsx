@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import useCapeAISafe from "../hooks/useCapeAISafe";
@@ -7,21 +7,60 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, isAuthenticated, logout, loading } = useAuth();
   const { toggleVisibility } = useCapeAISafe();
+  const navRef = useRef(null);
 
-  // Debug logging
-  console.log('Navbar Debug:', { user, isAuthenticated, loading });
+  // Debug logging (HMR test)
+  console.log("Navbar Debug (updated):", { user, isAuthenticated, loading, t: Date.now() });
 
   const handleLogout = () => {
     logout();
     setMenuOpen(false);
   };
 
+  // --- NEW: Keep main content below the fixed navbar ---
+  useEffect(() => {
+    const applyOffset = () => {
+      const navEl = navRef.current;
+      if (!navEl) return;
+      const h = Math.round(navEl.getBoundingClientRect().height);
+      // Use both a CSS var (handy if you want to use in CSS) and direct body padding
+      document.documentElement.style.setProperty("--nav-h", `${h}px`);
+      document.body.style.paddingTop = `${h}px`;
+    };
+
+    // Initial apply
+    applyOffset();
+
+    // Update on window resize
+    window.addEventListener("resize", applyOffset);
+
+    // Update on navbar size changes (e.g., auth state, font loading)
+    let ro;
+    if ("ResizeObserver" in window) {
+      ro = new ResizeObserver(applyOffset);
+      if (navRef.current) ro.observe(navRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", applyOffset);
+      if (ro) ro.disconnect();
+    };
+  }, []); // runs once; ResizeObserver handles subsequent size changes
+  // ------------------------------------------------------
+
   if (loading) {
     return (
-      <nav className="fixed top-0 left-0 right-0 h-16 sm:h-20 bg-blue-600 dark:bg-gray-900 text-white shadow-lg z-50" role="navigation" aria-label="Main navigation">
+      <nav
+        ref={navRef}
+        className="fixed top-0 left-0 right-0 h-16 sm:h-20 bg-blue-600 dark:bg-gray-900 text-white shadow-lg z-50"
+        role="navigation"
+        aria-label="Main navigation"
+      >
         <div className="container-mobile">
           <div className="flex justify-between items-center h-16 sm:h-20">
-            <div data-testid="nav-loading" className="text-white">Loading...</div>
+            <div data-testid="nav-loading" className="text-white">
+              Loading...
+            </div>
           </div>
         </div>
       </nav>
@@ -29,17 +68,27 @@ export function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 sm:h-20 bg-blue-600 dark:bg-gray-900 text-white shadow-lg z-50" role="navigation" aria-label="Main navigation">
+    <nav
+      ref={navRef}
+      className="fixed top-0 left-0 right-0 h-16 sm:h-20 bg-blue-600 dark:bg-gray-900 text-white shadow-lg z-50"
+      role="navigation"
+      aria-label="Main navigation"
+    >
       <div className="container-mobile">
         <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo + Brand */}
-          <Link to="/" className="flex items-center space-x-2 py-2 active:scale-95 transition-transform">
+          <Link
+            to="/"
+            className="flex items-center space-x-2 py-2 active:scale-95 transition-transform"
+          >
             <img
               src="https://lightning-s3.s3.us-east-1.amazonaws.com/static/website/img/LogoW.png"
               alt="CapeControl Logo"
               className="h-10 w-10 sm:h-12 sm:w-12"
             />
-            <span className="text-xl sm:text-2xl lg:text-3xl font-bold">CapeControl</span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-bold">
+              CapeControl
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -54,7 +103,10 @@ export function Navbar() {
             {/* Authentication Links */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <span className="text-white text-lg font-medium" aria-label={`Logged in as ${user?.name || user?.email}`}>
+                <span
+                  className="text-white text-lg font-medium"
+                  aria-label={`Logged in as ${user?.name || user?.email}`}
+                >
                   {user?.name || user?.email}
                 </span>
                 <Link to="/dashboard" className="btn-mobile-lg text-white hover:bg-blue-700 font-medium">
@@ -75,29 +127,32 @@ export function Navbar() {
                 <Link to="/settings" className="btn-mobile-lg text-white hover:bg-blue-700 font-medium">
                   Settings
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="btn-mobile-lg text-white hover:bg-blue-700 font-medium"
-                >
+                <button onClick={handleLogout} className="btn-mobile-lg text-white hover:bg-blue-700 font-medium">
                   Logout
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link to="/subscribe" className="btn-mobile-lg bg-purple-600 text-white hover:bg-purple-700 font-medium">
+                <Link
+                  to="/subscribe"
+                  className="btn-mobile-lg bg-purple-600 text-white hover:bg-purple-700 font-medium"
+                >
                   Pricing
                 </Link>
                 <Link to="/login" className="btn-mobile-lg text-white hover:bg-blue-700 font-medium">
                   Login
                 </Link>
-                <Link to="/register" className="btn-mobile-lg bg-white text-blue-600 hover:bg-gray-100 font-semibold shadow-lg">
+                <Link
+                  to="/register"
+                  className="btn-mobile-lg bg-white text-blue-600 hover:bg-gray-100 font-semibold shadow-lg"
+                >
                   Register
                 </Link>
               </div>
             )}
 
             {/* Emergency Logout - Always show if token exists */}
-            {!isAuthenticated && localStorage.getItem('token') && (
+            {!isAuthenticated && localStorage.getItem("token") && (
               <button
                 onClick={() => {
                   localStorage.clear();
@@ -129,26 +184,11 @@ export function Navbar() {
               aria-label="Toggle menu"
               role="button"
             >
-              <svg
-                className="w-6 h-6 sm:w-7 sm:h-7"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {menuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 )}
               </svg>
             </button>
@@ -248,7 +288,7 @@ export function Navbar() {
               )}
 
               {/* Emergency Logout - Mobile */}
-              {!isAuthenticated && localStorage.getItem('token') && (
+              {!isAuthenticated && localStorage.getItem("token") && (
                 <button
                   onClick={() => {
                     localStorage.clear();

@@ -32,6 +32,7 @@ venv/
 
 # Local DBs
 *.sqlite3
+test_models.db
 
 # ---------------------------
 # Node / frontend (install separately if needed)
@@ -52,7 +53,7 @@ client/dist/
 client/coverage/
 
 # ---------------------------
-# Env / secrets (keep only examples)
+# Env / secrets (keep only safe examples)
 # ---------------------------
 .env
 .env.*
@@ -93,12 +94,36 @@ docker-compose*.yml
 Dockerfile.dev
 **/local-history/
 
-# If you COPY . . and need only app code, explicitly allow key files:
-# !requirements.txt
-# !pyproject.toml
-# !package.json
-# !package-lock.json
-# !client/package.json
+# Explicitly include key manifests needed for builds
+!requirements.txt
+!backend/requirements.txt
+!pyproject.toml
+!package.json
+!package-lock.json
+!client/package.json
+!client/package-lock.json
+!backend/requirements-dev.txt
+
+# Exclude tests from final image to reduce context size
+backend/tests/
+scripts/tests/
+scripts/archive/
+
+# Python coverage & reports
+coverage/
+htmlcov/
+coverage.xml
+.pytest_cache/
+
+# Frontend dev caches
+.vite/
+client/.vite/
+client/.eslintcache
+
+# Profiling / debug artifacts
+*.prof
+pytestdebug.log
+
 
 # ---------------------------
 # Misc

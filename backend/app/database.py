@@ -2,23 +2,31 @@ import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from urllib.parse import urlparse
 
-# Get DATABASE_URL from environment with fallback to SQLite for development
-DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./localstorm.db')
+# Resolve DATABASE_URL with strong preference for PostgreSQL
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    # Compose from POSTGRES_* env if available, else use local compose defaults
+    pg_user = os.getenv("POSTGRES_USER", "autorisen")
+    pg_pass = os.getenv("POSTGRES_PASSWORD", "postgres")
+    pg_db = os.getenv("POSTGRES_DB", "autorisen")
+    # Default to local docker-compose port mapping
+    DATABASE_URL = f"postgresql://{pg_user}:{pg_pass}@127.0.0.1:5433/{pg_db}"
 
 # For PostgreSQL URLs from Heroku, fix the protocol if needed
-if DATABASE_URL.startswith('postgres://'):
+if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # Create the SQLAlchemy engine with production settings
-if DATABASE_URL.startswith('postgresql://'):
+if DATABASE_URL.startswith("postgresql://"):
     # Decide SSL mode: default to 'require' for remote DBs, but disable for
-    # local/dev hosts (db, localhost, host.docker.internal) or when explicitly
+    # local/dev hosts (db, localhost, 127.0.0.1, host.docker.internal) or when explicitly
     # overridden by DISABLE_DB_SSL=1 in the environment.
-    disable_ssl_flag = os.getenv('DISABLE_DB_SSL', '') == '1'
-    lower_url = DATABASE_URL.lower()
-    local_host_hint = any(x in lower_url for x in ('localhost', 'db:', 'host.docker.internal'))
-    sslmode = 'disable' if (disable_ssl_flag or local_host_hint) else 'require'
+    disable_ssl_flag = os.getenv("DISABLE_DB_SSL", "") == "1"
+    host = (urlparse(DATABASE_URL).hostname or "").lower()
+    local_hosts = {"localhost", "127.0.0.1", "db", "host.docker.internal"}
+    sslmode = "disable" if (disable_ssl_flag or host in local_hosts) else "require"
 
     # Production PostgreSQL settings with sensible timeouts for this app
     engine = create_engine(
@@ -36,7 +44,7 @@ if DATABASE_URL.startswith('postgresql://'):
         echo=False,
     )
 else:
-    # Development SQLite settings
+    # Development SQLite settings (fallback only)
     engine = create_engine(DATABASE_URL)
 
 # Create a configured "Session" class
@@ -44,6 +52,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 # Base class for declarative models
 Base = declarative_base()
+
 
 def get_db():
     """

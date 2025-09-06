@@ -5,7 +5,6 @@ Database Migration: Add Audit Log Table
 Task 1.2.6 - Audit Logging: Create audit_logs table for comprehensive event tracking
 
 Revision ID: add_audit_logs_table
-Revises: previous_migration
 Create Date: 2024-01-20 12:00:00.000000
 """
 
@@ -16,7 +15,7 @@ from alembic import op
 
 # revision identifiers
 revision = 'add_audit_logs_table'
-down_revision = 'previous_migration'  # Update this to actual previous revision
+down_revision = None
 branch_labels = None
 depends_on = None
 

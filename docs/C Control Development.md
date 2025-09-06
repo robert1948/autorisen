@@ -1,4 +1,3 @@
-C_Control_Development
 
 # CapeControl Development Context Document
 

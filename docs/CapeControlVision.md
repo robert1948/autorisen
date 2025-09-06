@@ -1,4 +1,4 @@
-## Vision behind the CapeControl AI platform
+# Vision behind the CapeControl AI platform
 
 What is the overarching purpose and vision behind the CapeControl AI platform?
 

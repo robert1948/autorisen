@@ -1,216 +1,98 @@
-# 🛠 DEVELOPMENT CONTEXT
+# DEVELOPMENT_CONTEXT.md  
 
-**Last Updated**: August 27, 2025  
-**Source of truth**: CapeControl / Capecraft project (synchronized with latest Heroku deployment logs)  
-**Project Status**: Production Ready — Registration fixed, AI Security Suite deployed, Payment & Developer Earnings live  
-**Current Version**: v663 (Heroku, deployed Aug 17, 2025) ✅ RUNNING
-**Latest Update**: Local PostgreSQL development environment configured with automated database duplication
-**Database Status**: ✅ Local PostgreSQL setup complete with Heroku schema replication
+**Last updated:** 2025-09-04
+**Last updated:** 2025-09-04
+**Last updated:** 2025-09-04
 
----
+**Version:** v0.1-agents-mvp  
 
-## Executive Summary
+## Environments
 
-This document captures the authoritative development and deployment context for the CapeControl / Capecraft project, incorporating `autorisen` features into the main CapeControl platform.
-
-- **Production App**: `capecraft` (Heroku, version v663)
-- **Staging Source**: `autorisen` repo, feature integration validated here
-- **Goal**: Feature-flagged integration of `autorisen` modules into CapeControl, with validation gates before production promotion.
+- Localhost: Docker Compose setup with FastAPI, React, PostgreSQL, Redis
+- Staging: Heroku app `autorisen` with PostgreSQL, Redis
+- Production: Heroku app `capecraft` with PostgreSQL, Redis
 
 ---
 
-## 1. Company Information
+## Architecture
 
-- **Legal Entity**: Cape Craft Projects CC
-- **Trading Name**: Cape Control
-- **VAT Number**: 4270105119
+### Backend
 
----
+- FastAPI app structured with modular routes (`/auth`, `/ai`, `/analytics`, `/integrations`)
+- Middleware stack: logging, monitoring, DDoS protection, sanitization, content moderation
+- JWT authentication with role-based access control
+- Database: PostgreSQL with SQLAlchemy ORM
+- Redis: used for caching and background tasks
+- AI Provider Integration: OpenAI, Anthropic Claude, Google Gemini
+- Containerized with Docker, deployed to Heroku Container Registry
 
-## 2. Project Status & Versions
+### Frontend
 
-- **Production**: Heroku app `capecraft` (v663, deployed Aug 17, 2025, release `f8783ce4`)
-- **Staging Source**: `autorisen` (used for integration testing)
--- **Backend**: FastAPI 0.110.0 on Python 3.12
-- **Frontend**: React 18 + Vite, served by FastAPI
-- **Stripe**: integration deployed and test-ready (Heroku-compatible at `stripe==7.7.0`)
-
----
-
-## 3. Repositories & Structure
-
-- **Production Repo**: `localstorm` / `capecontrol` (contains `backend/` and `client/`)
-- **Staging Repo**: `autorisen` (features to be merged under `apps/autorisen` or `backend/app/routes/autorisen`)
+- React + Vite + Tailwind CSS
+- Auth flows: login, register, logout
+- Onboarding wizard with guided steps
+- Dashboard with agent cards and analytics
+- Deployed to Heroku, assets stored on S3 (`lightning-s3`)
 
 ---
 
-## 4. Development Workflow
+## Security
 
-### Component Source Management
-- **Source Repository**: If any components are missing from the autorisen project, they should be copied from **capecraft production environment** (Heroku)
-- **Development Priority**: The autorisen project must always be ahead of capecraft in development lifecycle
-
-### Deployment Pipeline Strategy
-1. **Development Phase**: Build and test all functionality on autorisen first
-2. **Testing Phase**: Ensure complete functionality validation before promotion  
-3. **Production Deployment**: Push to capecraft (live site) only after thorough testing
-4. **Service Continuity**: Maintain zero disruption to live services
-5. **Uptime Requirements**: Ensure absolute minimal downtime during deployments
-
-### Quality Assurance Protocol
-- All features must be fully tested in autorisen environment
-- No untested code should reach the capecraft production environment
-- Maintain service reliability and user experience standards
-
-This workflow ensures a proper **development → staging → production** pipeline where autorisen serves as the development/staging environment and capecraft is the protected production environment.
-
-### Local Development Environment Setup
-
-The project now supports both SQLite (default) and PostgreSQL development environments.
-
-#### Option A: Quick SQLite Setup (Default)
-
-1. Create & activate a repo venv (if not present):
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-2. Install backend dependencies:
-
-```bash
-pip install -r requirements.txt
-pip install -r backend/requirements.txt
-# Optional: pip install -r backend/requirements-dev.txt
-```
-
-3. Create a `.env` from the example (defaults will use SQLite):
-
-```bash
-cp .env.example .env
-# By default the app uses: DATABASE_URL=sqlite:///./capecontrol.db
-```
-
-#### Option B: PostgreSQL Development Environment (Recommended for Production Parity)
-
-**Prerequisites**: PostgreSQL 16+ installed locally
-
-1. **Automated Setup**: Use the provided script to create a local database with production schema:
-
-```bash
-# Run the automated setup script
-bash ./scripts/setup_local_postgres.sh "postgres://[HEROKU_DATABASE_URL]" autorisen_local vscode
-
-# This script will:
-# - Create local PostgreSQL database 'autorisen_local' 
-# - Dump production schema from Heroku
-# - Restore schema to local database
-# - Update .env with local DATABASE_URL
-# - Set up 'vscode' user with proper permissions
-```
-
-2. **Manual Database Connection**:
-
-```bash
-# Connect to your local database
-PGPASSWORD=123456 psql -h localhost -U vscode -d autorisen_local
-
-# View tables
-\dt
-
-# Exit
-\q
-```
-
-3. **Database Schema**: The local database contains production-identical tables:
-   - `users_v2` - User accounts and authentication
-   - `tokens_v2` - Authentication tokens and sessions
-   - `developer_earnings_v2` - Developer payment tracking
-   - `password_resets_v2` - Password reset functionality  
-   - `audit_logs_v2` - Security audit trail
-
-#### Starting the Application
-
-4. Start the backend using the repo helper (activates venv, sets PYTHONPATH, writes logs to /tmp):
-
-```bash
-./scripts/start-localhost-autorisen.sh 8000 localhost
-# Health URL printed by the script: http://localhost:8000/api/health
-tail -f /tmp/capecontrol_uvicorn.log
-```
-
-Notes:
-
-- **PostgreSQL**: Set `DATABASE_URL=postgresql://vscode:123456@localhost:5432/autorisen_local` in `.env`
-- **SQLite Fallback**: The project defaults to SQLite (`DATABASE_URL=sqlite:///./capecontrol.db`) for quick development
-- **Database Testing**: Use `./scripts/dummy_register.py` to create test users and verify database connectivity
-
-### Frontend (optional)
-
-```bash
-cd client
-npm install
-npm run dev
-# Frontend typically served at http://localhost:3000
-```
-
-### CI / CD & Heroku
-
-- GitHub Actions contains a consolidated workflow (`cicd.yml`) that builds and deploys to Heroku using buildpack-based deployment (not container-based).
-- The workflow is configured to trigger on pushes to `main` and supports manual promotion to production via workflow_dispatch.
-- Staging deploys are achieved by pushing the contents of `backend/` (with `Procfile`, `requirements.txt`, and `runtime.txt` at root) to the Heroku git remote.
-- If you prefer staging-only deploys from a feature branch, update the workflow to trigger only on that branch and use manual promotion from `main` for production.
+- JWT-based authentication (short-lived access + refresh tokens)
+- Rate limiting and DDoS protection middleware
+- Input sanitization middleware
+- Audit logging middleware
+- GDPR-lite privacy compliance (minimal data retention, clear consent)
 
 ---
 
-## 5. Database Management
+## AI Agents (Core Feature – MVP Scope)
 
-### PostgreSQL Scripts
+**Status:** 🚧 In Progress  
 
-The project includes automated scripts for database management:
+### Overview
 
-- **`./scripts/setup_local_postgres.sh`**: Automated local PostgreSQL setup
-  - Creates local database with production schema
-  - Handles SSL connections to Heroku PostgreSQL
-  - Updates `.env` configuration automatically
-  - Sets up development user permissions
+AI Agents provide context-aware automation and assistance within CapeControl.  
+The MVP scope limits functionality to **FAQ answering** and **basic scheduling**, ensuring the feature is testable and stable without scope creep.
 
-- **`./scripts/dummy_register.py`**: Database testing utility
-  - Creates test users for development
-  - Validates database connectivity
-  - Tests user registration workflow
+### Capabilities
 
-### Database Connection Details
+- **Customer Service Agent**
+  - Answers FAQs using `/api/agents/faq` (FastAPI route).
+  - Powered by OpenAI GPT-4o-mini for cost-effective inference.
+  - Answers FAQs using `/api/agents/faq` (FastAPI route). A lightweight demo implementation using `CapeAIService` is present for local/dev testing at `backend/app/routes/agents_faq.py`.
+  - Note: The MVP includes a demo FAQ implementation; to switch to a real provider wire `services/cape_ai_service.py` to call `services/ai_provider.py` (OpenAI/Anthropic/Google) and ensure API keys are configured in environment.
+- **Scheduling Agent**
+  - Parses simple scheduling commands (e.g., “book meeting Tuesday 10”).
+  - Stores events in PostgreSQL via `/api/agents/scheduler`.
+- **Adaptive Context Handling**
+  - Retains the last 5 messages per session in DB for context-aware replies.
 
-**Local Development Database:**
-- Host: `localhost` 
-- Port: `5432`
-- Database: `autorisen_local`
-- Username: `vscode`
-- Password: `123456`
-- Connection string: `postgresql://vscode:123456@localhost:5432/autorisen_local`
+### Implementation
 
-**Production Database:**
-- Managed by Heroku PostgreSQL
-- SSL required for all connections
-- Schema automatically replicated to local environment
+- **Backend**
+  - Routes:
+    - `/api/agents/faq`
+    - `/api/agents/scheduler`
+  - Service Layer: `services/ai_provider.py` (modular AI provider integration).
+  - Database Models:
+    - `AgentSession` → tracks user/role and session context
+    - `AgentMessage` → query/response history
+    - `ScheduledEvent` → lightweight event storage
 
-### Common Database Commands
+- **Frontend**
+  - React dashboard card for “AI Agents”
+  - FAQ form and Scheduling form linked to backend routes
 
-```bash
-# Connect to local database
-PGPASSWORD=123456 psql -h localhost -U vscode -d autorisen_local
+### Out of Scope for MVP
 
-# View all tables
-\dt
+- Multi-step reasoning chains
+- External integrations (CRM, Google Calendar, etc.)
+- Long-term learning or ML retraining beyond simple session storage
 
-# Describe table structure
-\d users_v2
+### Deliverables for Completion
 
-# Check user count
-SELECT COUNT(*) FROM users_v2;
-
-# Create test user
-python ./scripts/dummy_register.py
-```
+- FAQ agent functional end-to-end (UI → API → AI → response)
+- Scheduling agent functional end-to-end (UI → API → DB)
+- Context storage tested and verified
+- Documentation (Checklist + Development Context) updated accordingly

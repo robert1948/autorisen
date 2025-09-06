@@ -1,0 +1,45 @@
+# Project Cleanup Guide
+
+This guide helps safely remove unnecessary files without breaking project functionality.  
+Follow the checklist step by step before committing or deploying.
+
+---
+
+## 1. Identify Unnecessary Files
+
+- [ ] **Logs**
+  - Check for `*.log` files in root, backend, and frontend directories.
+  - Confirm they are not used in production monitoring.
+
+- [ ] **Caches**
+  - Remove `__pycache__/`, `.pytest_cache/`, `node_modules/.cache/`, `.vite/`, `.cache/`.
+  - Ensure these directories are in `.gitignore`.
+
+- [ ] **Build Artifacts**
+  - Clear `dist/`, `build/`, `.next/` or `static/assets/` if regenerable.
+  - Keep only generated files needed at runtime.
+
+- [ ] **Temp Files**
+  - Delete `*.tmp`, `*.swp`, `*.pid`, `*~` files.
+  - Check for leftover test artifacts in `/tmp/` or `tests/output/`.
+
+- [ ] **Editor Files**
+  - Remove `.vscode/`, `.idea/` unless team-shared configs are required.
+  - Verify `.gitignore` excludes personal IDE configs.
+
+---
+
+## 2. Protect Critical Files
+
+- [ ] Do **NOT** delete `.env`, `.env.*`, `Dockerfile`, `docker-compose.yml`, `Procfile`, or `Makefile`.
+- [ ] Keep `requirements.txt`, `package.json`, `yarn.lock`, `poetry.lock`.
+- [ ] Keep database migrations (e.g., `alembic/versions/`, `migrations/`).
+
+---
+
+## 3. Cleanup Commands
+
+- [ ] **Python**
+  ```bash
+  find . -type d -name "__pycache__" -exec rm -rf {} +
+  find . -type d -name "*.egg-info" -exec rm -rf {} +

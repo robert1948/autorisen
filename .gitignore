@@ -13,23 +13,45 @@ pip-wheel-metadata/
 .mypy_cache/
 .pytest_cache/
 .coverage
+.coverage.*
 coverage/
 htmlcov/
 .tox/
 .venv/
 venv/
-# Environment files (do NOT commit)
+.python-version
+.ruff_cache/
+coverage.xml
+
+# Build artifacts (wheel / sdist leftovers)
+*.whl
+*.tar.gz
+
+# Frontend tooling caches
+.vite/
+client/.vite/
+client/.eslintcache
+
+# Profiling / debugging
+profiling/
+*.prof
+pytestdebug.log
+
+# Local VSCode history
+.history/
+
+# --- Environment files (do NOT commit secrets) ---
 .env
 .env.*
 .env.local
 !.env.example
-.ruff_cache/
+!.env.*.example
 
-# SQLite / local DBs
+# --- SQLite / Local DBs ---
 *.sqlite3
-*.db
+test*.db
 
-# PostgreSQL / Database files
+# --- PostgreSQL / Database files ---
 *.dump
 *.sql.backup
 pgdata/
@@ -37,6 +59,7 @@ postgres-data/
 
 # --- Node / JavaScript (client) ---
 node_modules/
+client/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -71,5 +94,17 @@ Thumbs.db
 tmp/
 temp/
 
-# --- Docker / Devcontainers Artifacts (keep Dockerfile itself) ---
+# --- Docker / Devcontainers Artifacts ---
+.devcontainer/
 **/.devcontainer/local-history/
+Dockerfile.dev
+docker-compose*.override.yml
+
+# Explicitly keep infra files
+!docker-compose.yml
+!Dockerfile
+
+# Keep example envs only (already handled above); avoid redeclaring broad .env* ignores
+.env.development.local
+.env.test.local
+

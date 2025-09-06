@@ -19,7 +19,7 @@ cp .env.example .env
 # Edit .env to set POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD or set DATABASE_URL
 ```
 
-1. Recommended `.env` values for local compose usage:
+2. Recommended `.env` values for local compose usage:
 
 ```text
 POSTGRES_DB=autorisen_dev
@@ -28,22 +28,40 @@ POSTGRES_PASSWORD=dev_password
 DATABASE_URL=postgresql://dev_user:dev_password@db:5432/autorisen_dev
 ```
 
-1. Start the stack:
+3. Start the stack:
 
 ```bash
 docker compose up --build
 ```
 
-1. Verify services:
+4. Verify services:
 
-- Frontend: <http://localhost:5173>
-- Backend: <http://localhost:8000> (health: `/api/health`)
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000` (health: `/api/health`)
 - Postgres (host port 5433) if needed: `psql -h localhost -p 5433 -U dev_user autorisen_dev`
 
 ### Local notes
 
 - The Compose setup uses `db` as the Postgres host. The top-level Postgres host port is mapped to host `5433` to avoid collisions with a local Postgres running on `5432`.
+
 - If you prefer to use a host Postgres instance, set `DATABASE_URL` in your `.env` to point at `host.docker.internal:5432` and ensure your host Postgres accepts connections from Docker and the user/password match.
+
+### Key runtime notes
+
+- DB SSL: The backend detects local DB hosts (e.g. `db`, `localhost`, `host.docker.internal`) and will default to `sslmode=disable` for those. You can explicitly force disabling SSL by setting `DISABLE_DB_SSL=1` in your environment before starting the stack.
+
+Example:
+
+```bash
+export DISABLE_DB_SSL=1
+docker compose up --build
+```
+
+- Admin bootstrap: the admin bootstrap helper now lives at `backend/scripts/bootstrap_admin.py`. Run it inside the backend container or invoke it from an interactive shell in the backend container when you need to create seed admin accounts.
+
+- Frontend & spacing: the frontend uses Vite on port `5173` and sets a global CSS variable `--navbar-height` in `client/src/styles.css` with `padding-top: var(--navbar-height)` applied to `body` to prevent the fixed navbar overlapping content. If you alter navbar classes (heights), update that variable accordingly.
+
+- Proxy errors: while developing, the Vite server proxies `/api` to the backend. If the backend isn't ready you may see temporary `ECONNREFUSED` proxy errors; wait for the backend to become healthy and reload the page.
 
 ---
 
@@ -88,6 +106,8 @@ heroku open -a autorisen
 ### Heroku notes
 
 - If you want CI to deploy, ensure the GitHub repository has these secrets set: `HEROKU_API_KEY`, `HEROKU_APP_NAME` (or `HEROKU_APP_PROD` / `HEROKU_APP_STAGING`), and `HEROKU_EMAIL`. Without them the deploy job in CI will be skipped.
+
+- Security: if any Heroku API key or other secret was exposed in commit history, revoke/rotate it immediately and update repo/org secrets. The CI is configured to skip the deploy step when required secrets are missing to reduce accidental exposure.
 
 ---
 

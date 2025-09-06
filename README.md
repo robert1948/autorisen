@@ -1,25 +1,24 @@
-# autorisen 250827
+# autorisen
 
-Development site for Cape Control with PostgreSQL Development Environment
+[![Docker Pulls](https://img.shields.io/docker/pulls/stinkie/autorisen?style=flat-square)](https://hub.docker.com/r/stinkie/autorisen) [![Docker Image Version](https://img.shields.io/docker/v/stinkie/autorisen?label=docker%20hub&style=flat-square)](https://hub.docker.com/r/stinkie/autorisen)
+
+Development site for Cape Control with PostgreSQL development environment.
 
 ## Overview
 
-- **Backend**: FastAPI (Python 3.12+), Gunicorn + Uvicorn worker
-- **Frontend**: React / Vite (client/)
-- **Database**: PostgreSQL in production (Heroku Postgres), PostgreSQL local development environment, SQLite fallback for quick dev
-- **Development**: Automated local PostgreSQL setup with production schema replication
+- **Backend**: FastAPI (Python 3.11+), Gunicorn + Uvicorn worker
+- **Frontend**: React + Vite (in `client/`)
+- **Database**: PostgreSQL in production (Heroku Postgres); SQLite fallback for quick dev
 
-## Quick Setup Options
+## Quick setup
 
-### Option A: PostgreSQL Development Environment (Recommended)
+### Option A — PostgreSQL (recommended)
 
-**Full production parity with automated setup:**
+1. Prerequisites: PostgreSQL 16+ installed locally.
 
-1. **Prerequisites**: Ensure PostgreSQL 16+ is installed locally
+1. Automated database setup:
 
-2. **Automated Database Setup**:
 ```bash
-# Clone and setup environment
 git clone <repo-url>
 cd autorisen
 python -m venv .venv
@@ -32,9 +31,10 @@ pip install -r backend/requirements.txt
 bash ./scripts/setup_local_postgres.sh "postgres://[HEROKU_DB_URL]" autorisen_local vscode
 ```
 
-3. **Start Development**:
+1. Start development:
+
 ```bash
-# Backend (with PostgreSQL)
+# Backend
 export PYTHONPATH=backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
@@ -44,11 +44,7 @@ npm install
 npm run dev
 ```
 
-### Option B: SQLite Quick Development
-
-**For rapid prototyping without PostgreSQL setup:**
-
-1. Create and activate a virtualenv, install tools:
+### Option B — SQLite (quick)
 
 ```bash
 python -m venv .venv
@@ -56,134 +52,80 @@ source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
 pip install -r backend/requirements.txt
-# Optional: install core + optional (Stripe) for local development
+# Optional: install dev/optional deps
 pip install -r backend/requirements-dev.txt
 ```
 
-2. Set environment variables (example `.env` or export manually):
+Set environment variables:
 
 ```bash
 export DATABASE_URL=sqlite:///./dev.db
 export STRIPE_SECRET_KEY=sk_test_...
-# other env vars per backend/config.py
 ```
 
-3. Run the backend (development):
+Run backend:
 
 ```bash
-# from repository root
 export PYTHONPATH=backend
 uvicorn app.main:app --reload
 ```
 
-## Database Management
+## Local PostgreSQL
 
-### Local PostgreSQL Environment
+**Connection details**
 
-**Connection Details:**
 - Host: `localhost`
-- Port: `5432` 
+- Port: `5432`
 - Database: `autorisen_local`
 - Username: `vscode`
 - Password: `123456`
 
-**Database Schema:**
-- `users_v2` - User accounts and authentication
-- `tokens_v2` - Authentication tokens and sessions  
-- `developer_earnings_v2` - Developer payment tracking
-- `password_resets_v2` - Password reset functionality
-- `audit_logs_v2` - Security audit trail
+**Useful commands**
 
-**Useful Commands:**
 ```bash
-# Connect to local database
 PGPASSWORD=123456 psql -h localhost -U vscode -d autorisen_local
-
-# Test user registration
 python ./scripts/dummy_register.py
-
-# View database tables
-psql> \dt
 ```
 
-## Heroku Buildpack Deployment
+## Heroku deployment options
 
-- Heroku now uses buildpack-based deployment (not container-based). No `heroku.yml` is required.
-- The Procfile uses `PYTHONPATH=backend` so Heroku starts the app as `gunicorn app.main:app -k uvicorn.workers.UvicornWorker`.
-- Heroku reads the top-level `requirements.txt` during build, which references `backend/requirements.txt` for backend dependencies. Keep `backend/requirements.txt` authoritative for backend runtime packages.
-- Avoid importing optional SDKs (e.g., `stripe`, `openai`) at module import time for modules that are imported during app startup. Use try/except and a flag (e.g., `STRIPE_AVAILABLE`) or defer import into the function that needs it.
+The project supports both buildpack-based and container-based Heroku deployments.
 
-## Stripe & optional integrations
+- Buildpack deploys (classic): keep `Procfile`, `requirements.txt` and `runtime.txt` at the repository root. Heroku will use the `Procfile` to start the web process.
 
-- The project contains Stripe integration under `backend/app/services/stripe_service.py` and routes in `backend/app/routes/`.
-- If you don't want to install Stripe in a given environment, the codebase has been updated to be resilient: routes return 503 when the Stripe SDK is not available.
-- To enable Stripe fully, add `stripe` to `backend/requirements.txt` and set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in environment variables.
+- Container Registry deploys: build and push an image to `registry.heroku.com/<app>/web` and run `heroku container:release web -a <app>`. When using container deploys the final image must start a process that binds to `$PORT`.
 
-Optional install (Stripe)
+If you see R10 (boot timeout), verify the container image binds to `$PORT` (the Vite dev server listening on port 3000 is a common cause).
 
-To install the optional Stripe SDK (used only if you enable payments), run:
+## Notes
 
-```bash
-# from repository root
-pip install -r backend/requirements-optional.txt
-```
+- Canonical FastAPI app: `backend/app/main.py` (import path: `app.main:app`).
+- Optional SDKs (e.g., `stripe`) are deferred to runtime; add `stripe` to `backend/requirements.txt` to enable payments.
+- CI contains import-sanity checks and OpenAPI diffing in `.github/workflows/` and `scripts/`.
 
-# autorisen — CapeControl integration/staging
+### Time Handling (UTC Only)
 
-This repository is the staging/integration workspace for CapeControl (Capecraft).
+All new code must use the helper `from app.utils.datetime import utc_now` instead of `datetime.utcnow()`.
 
-Quick facts
+Rationale:
 
-- Backend: FastAPI 0.110.0 (Python 3.12)
-- Frontend: React 18 + Vite (in `client/`)
-- Production deployment: Heroku (app: `capecraft`, current v663)
+- `datetime.utcnow()` returns a naive (timezone-unaware) object and is deprecated in Python 3.12+.
+- A single helper guarantees consistent, timezone-aware UTC timestamps across services, models, and tests.
+- Guard tests fail CI if `datetime.utcnow(` is reintroduced in runtime code.
 
-Purpose
+Guidelines:
 
-- Host integration work for autorisen features before merging into CapeControl production.
-- Provide import-sanity checks and OpenAPI diffing in CI to prevent startup or contract regressions.
+- Use `utc_now()` for DB model defaults, service timestamps, and metrics.
+- Use `utc_now().isoformat()` when storing or serializing as text.
+- For test determinism, optionally monkeypatch `utc_now` (e.g. `monkeypatch.setattr('app.utils.datetime.utc_now', lambda: fixed_dt)`).
+- Never mix naive + aware datetimes in arithmetic; everything should originate from `utc_now()`.
 
-Local quickstart
+Helper functions are in `backend/app/utils/datetime.py` (`utc_now`, `iso_utc_now`).
 
-1. Create and activate a virtualenv and install dependencies:
+---
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -U pip
-pip install -r requirements.txt
-pip install -r backend/requirements.txt
-# Optional: install core + optional (Stripe) for local development
-pip install -r backend/requirements-dev.txt
-```
+If you'd like, I can also:
 
-2. Configure environment variables (example):
-
-```bash
-export DATABASE_URL=sqlite:///./dev.db
-export STRIPE_SECRET_KEY=sk_test_...
-# see backend/app/config.py for other env vars
-```
-
-3. Run backend locally:
-
-```bash
-export PYTHONPATH=backend
-uvicorn app.main:app --reload --port 8000
-```
-
-Notes
-
-- The canonical FastAPI app module is `backend/app/main.py` (import path: `app.main:app`).
-- The project defers optional SDK imports (e.g., `stripe`) to runtime to avoid import-time crashes on Heroku.
-- CI contains an import-sanity job and an OpenAPI diff script under `.github/workflows/` and `scripts/`.
-
-Heroku
-
-- Procfile and top-level `requirements.txt` are used by Heroku; ensure `backend/requirements.txt` is referenced appropriately.
-- Recommended Stripe pin for Heroku compatibility: `stripe==7.7.0` (or update to match your actual requirements).
-
-If you'd like, I can:
-
-- Produce and commit `docs/openapi_baseline.json` (exported from production/staging) so CI diffs will run against a baseline.
-- Add a short 'Rollback' section to `docs/Release Runbook.md` with Heroku restore commands.
+- Add `docs/openapi_baseline.json` (exported from production) for CI diffs
+- Add a Docker Hub / Actions badge
+- Add a Makefile target for local `docker build --target release` and push
