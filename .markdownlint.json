@@ -1,0 +1,10 @@
+{
+  "ignores": [
+    "**/node_modules/**",
+    "client/node_modules/**",
+    "dist/**",
+    "client/dist/**"
+  ],
+  "default": true,
+  "MD013": false
+}

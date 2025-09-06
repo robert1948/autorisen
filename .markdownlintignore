@@ -1,0 +1,8 @@
+# Ignore third-party and build artifacts
+node_modules/
+client/node_modules/
+**/node_modules/**
+dist/
+client/dist/
+coverage/
+htmlcov/
