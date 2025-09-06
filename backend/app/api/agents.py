@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import datetime
+from app.utils.datetime import utc_now
 import json
 
 from app.database import get_db
@@ -45,7 +46,7 @@ async def scheduler(
         command=req.command,
         scheduled_time=result.get("when", ""),
         metadata=json.dumps(result),
-        created_at=datetime.utcnow(),
+        created_at=utc_now(),
     )
     db.add(event)
     db.commit()

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Soft enforcement: warn if no dev log entry for today when committing code changes.
+CHANGED=$(git diff --cached --name-only)
+if echo "$CHANGED" | grep -E '^(backend/app|backend/migrations|client/src)/' >/dev/null; then
+  if ! grep -q "$(date +%Y-%m-%d) –" docs/DEVELOPMENT_LOG.md 2>/dev/null; then
+    echo "[pre-commit] Missing dev log entry for today. Run: make devlog TYPE=refactor SCOPE=misc SUMMARY=\"describe change\" IMPACT=none PR=?"
+  fi
+fi
+exit 0

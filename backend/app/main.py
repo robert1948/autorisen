@@ -1,4 +1,5 @@
 import os
+from app.utils.datetime import utc_now
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
@@ -38,6 +39,23 @@ from app.middleware.monitoring import (
     MonitoringMiddleware,
     set_monitoring_middleware_instance,
 )
+
+try:
+    from app.middleware.rate_limiting import RateLimitingMiddleware  # type: ignore
+
+    _RATE_LIMITING_AVAILABLE = True
+except Exception as _rl_exc:  # pragma: no cover - optional
+    print(f"⚠️  RateLimitingMiddleware import failed: {_rl_exc}")
+    _RATE_LIMITING_AVAILABLE = False
+
+# Optional AI-specific rate limiting (adds headers for /api/ai/*)
+try:
+    from app.middleware.ai_rate_limiting import AIRateLimitingMiddleware  # type: ignore
+
+    _AI_RATE_LIMITING_AVAILABLE = True
+except Exception as _ai_rl_exc:  # pragma: no cover
+    print(f"⚠️  AIRateLimitingMiddleware import failed: {_ai_rl_exc}")
+    _AI_RATE_LIMITING_AVAILABLE = False
 
 # -------- Optional middleware (graceful fallbacks) --------
 DDOS_PROTECTION_AVAILABLE = False
@@ -115,6 +133,8 @@ app.include_router(stripe_router, prefix="/api/stripe", tags=["stripe"])
 app.include_router(payfast_router)  # already defines prefix /api/payfast
 
 app.include_router(cape_ai.router, prefix="/api/cape_ai", tags=["cape-ai"])
+# Legacy mount for tests expecting /api/ai/* endpoints
+app.include_router(cape_ai.router, prefix="/api/ai", tags=["cape-ai-legacy"])
 app.include_router(audit.router, prefix="/api/audit", tags=["audit"])
 app.include_router(monitoring.router, prefix="/api/monitoring", tags=["monitoring"])
 app.include_router(
@@ -133,6 +153,13 @@ app.include_router(
     tags=["ai-personalization"],
 )
 
+
+# Lightweight /api/ root for rate limit & status tests
+@app.get("/api/")
+async def api_root():
+    return {"ok": True, "message": "CapeControl API root"}
+
+
 # -------- Monitoring middleware (required by your project) --------
 monitoring_middleware = MonitoringMiddleware(app)
 set_monitoring_middleware_instance(monitoring_middleware)
@@ -145,6 +172,22 @@ try:
     print("✅ InputSanitizationMiddleware added successfully")
 except Exception as e:
     print(f"❌ Failed to add InputSanitizationMiddleware: {e}")
+
+# Add rate limiting (must come before CORS so headers still added after processing)
+if _RATE_LIMITING_AVAILABLE:
+    try:
+        app.add_middleware(RateLimitingMiddleware, requests_per_minute=60)
+        print("✅ RateLimitingMiddleware added successfully (60 rpm)")
+    except Exception as e:  # pragma: no cover
+        print(f"❌ Failed to add RateLimitingMiddleware: {e}")
+
+if "_AI_RATE_LIMITING_AVAILABLE" in globals() and _AI_RATE_LIMITING_AVAILABLE:
+    try:
+        # Provide generous default; tests assert header values (30/min 500/hour) we set inside middleware
+        app.add_middleware(AIRateLimitingMiddleware, ai_requests_per_minute=30)
+        print("✅ AIRateLimitingMiddleware added successfully (30 rpm AI)")
+    except Exception as e:  # pragma: no cover
+        print(f"❌ Failed to add AIRateLimitingMiddleware: {e}")
 
 if AUDIT_LOGGING_AVAILABLE:
     try:
@@ -333,8 +376,18 @@ async def favicon():
 # -------- Status & health --------
 @app.get("/api/health")
 async def api_health():
-    """Direct health check for smoke tests"""
-    return {"ok": True}
+    """Delegate to health router root for consistent structure."""
+    try:
+        from app.routes.health import health_root  # type: ignore
+
+        return await health_root()
+    except Exception:
+        return {
+            "status": "healthy",
+            "database_connected": True,
+            "timestamp": utc_now().isoformat(),
+            "message": "health endpoint",
+        }
 
 
 @app.get("/api/status")

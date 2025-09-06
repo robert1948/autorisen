@@ -44,3 +44,19 @@ This workflow ensures consistent progress on the MVP by referencing active tasks
 
   ```bash
   git add docs/Checklist_MVP.md docs/DEVELOPMENT_CONTEXT.md
+
+### Dev Log Automation
+
+Add a log entry for meaningful changes:
+
+```bash
+make devlog TYPE=feature SCOPE=agents SUMMARY="faq endpoint" IMPACT=api PR=45
+```
+
+Enable the pre-commit hook reminder:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+CI job `devlog-verify` ensures required entries exist on main pushes.

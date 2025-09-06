@@ -7,10 +7,11 @@ Quick fixes for production issues seen in Heroku logs:
 2. Registration timeout prevention
 """
 
+
 # Patch for audit service to handle relationship gracefully
 def patch_audit_service():
     """Patch audit service to handle missing relationships"""
-    
+
     # Content for a defensive audit service
     audit_service_patch = '''
 # Emergency patch for audit service
@@ -21,8 +22,8 @@ def log_authentication_event(db, event_type, user_id=None, user_email=None,
     Defensive audit logging that handles relationship issues
     """
     try:
-        from app.models.audit_log import AuditLog, AuditEventType
-        from datetime import datetime
+    from app.models.audit_log import AuditLog, AuditEventType
+    from app.utils.datetime import utc_now
         
         # Create audit log without relying on relationships
         audit_log = AuditLog(
@@ -35,7 +36,7 @@ def log_authentication_event(db, event_type, user_id=None, user_email=None,
             success=success,
             error_message=error_message,
             event_metadata=metadata or {},
-            created_at=datetime.utcnow()
+            created_at=utc_now()
         )
         
         # Safe database operation
@@ -49,13 +50,14 @@ def log_authentication_event(db, event_type, user_id=None, user_email=None,
         print(f"⚠️ Audit logging failed: {e}")
         return None
 '''
-    
+
     return audit_service_patch
+
 
 # Patch for registration to reduce timeout risk
 def patch_registration():
     """Patch registration to reduce timeout risk"""
-    
+
     registration_patch = '''
 # Emergency registration optimization
 async def register_v2_optimized(user_data, db):
@@ -83,7 +85,7 @@ async def register_v2_optimized(user_data, db):
             company_name=user_data.company_name,
             industry=user_data.industry,
             project_budget=user_data.project_budget,
-            tos_accepted_at=datetime.utcnow()
+            tos_accepted_at=utc_now()
         )
         
         # Fast database operation
@@ -100,7 +102,7 @@ async def register_v2_optimized(user_data, db):
                 event_type="user_registration",
                 event_category="auth",
                 success=True,
-                created_at=datetime.utcnow()
+                created_at=utc_now()
             )
             db.add(audit_log)
             db.commit()
@@ -116,30 +118,32 @@ async def register_v2_optimized(user_data, db):
         print(f"❌ Registration error: {e}")
         raise HTTPException(500, "Registration failed")
 '''
-    
+
     return registration_patch
+
 
 def main():
     """Create emergency patches"""
     print("🚨 Creating emergency production patches...")
-    
+
     # Create audit service patch
     audit_patch = patch_audit_service()
     print("✅ Created audit service patch")
-    
+
     # Create registration patch
     reg_patch = patch_registration()
     print("✅ Created registration patch")
-    
+
     print("\n📋 Emergency fixes ready:")
     print("1. Audit logging made defensive (no relationship dependencies)")
     print("2. Registration optimized for speed")
     print("3. Error handling improved")
-    
+
     print("\n⚡ Deploy these changes to fix:")
     print("• AuditLog.user relationship errors")
     print("• Registration timeout issues")
     print("• Database connection bottlenecks")
+
 
 if __name__ == "__main__":
     main()

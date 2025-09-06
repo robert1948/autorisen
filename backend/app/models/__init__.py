@@ -25,6 +25,8 @@ User = models_main.User
 UserProfile = models_main.UserProfile
 Conversation = models_main.Conversation
 ConversationMessage = models_main.ConversationMessage
+# Some tests expect Base to be importable from app.models
+Base = getattr(models_main, "Base", None)
 
 __all__ = [
     "AuditEventType",
@@ -34,4 +36,5 @@ __all__ = [
     "UserProfile",
     "Conversation",
     "ConversationMessage",
+    "Base",
 ]

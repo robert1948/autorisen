@@ -103,6 +103,25 @@ If you see R10 (boot timeout), verify the container image binds to `$PORT` (the 
 - Optional SDKs (e.g., `stripe`) are deferred to runtime; add `stripe` to `backend/requirements.txt` to enable payments.
 - CI contains import-sanity checks and OpenAPI diffing in `.github/workflows/` and `scripts/`.
 
+### Time Handling (UTC Only)
+
+All new code must use the helper `from app.utils.datetime import utc_now` instead of `datetime.utcnow()`.
+
+Rationale:
+
+- `datetime.utcnow()` returns a naive (timezone-unaware) object and is deprecated in Python 3.12+.
+- A single helper guarantees consistent, timezone-aware UTC timestamps across services, models, and tests.
+- Guard tests fail CI if `datetime.utcnow(` is reintroduced in runtime code.
+
+Guidelines:
+
+- Use `utc_now()` for DB model defaults, service timestamps, and metrics.
+- Use `utc_now().isoformat()` when storing or serializing as text.
+- For test determinism, optionally monkeypatch `utc_now` (e.g. `monkeypatch.setattr('app.utils.datetime.utc_now', lambda: fixed_dt)`).
+- Never mix naive + aware datetimes in arithmetic; everything should originate from `utc_now()`.
+
+Helper functions are in `backend/app/utils/datetime.py` (`utc_now`, `iso_utc_now`).
+
 ---
 
 If you'd like, I can also:

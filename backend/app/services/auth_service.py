@@ -1,6 +1,4 @@
-"""
-Authentication Service for CapeAI Enterprise Platform
-"""
+"""Authentication Service for CapeAI Enterprise Platform"""
 
 from datetime import datetime, timedelta
 
@@ -8,32 +6,36 @@ from jose import jwt
 from passlib.context import CryptContext
 
 from app.config import settings
+from app.utils.datetime import utc_now
 
 
 class AuthService:
     """Enterprise authentication service"""
-    
+
     def __init__(self):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    
+
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash"""
         return self.pwd_context.verify(plain_password, hashed_password)
-    
+
     def get_password_hash(self, password: str) -> str:
         """Generate password hash"""
         return self.pwd_context.hash(password)
-    
+
     def create_access_token(self, data: dict, expires_delta: timedelta | None = None):
-        """Create a JWT access token"""
+        """Create a JWT access token using timezone-aware UTC timestamps"""
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = utc_now() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
+            expire = utc_now() + timedelta(minutes=15)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+        )
         return encoded_jwt
+
 
 def get_auth_service() -> AuthService:
     """Get authentication service instance"""

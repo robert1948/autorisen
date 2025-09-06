@@ -208,3 +208,19 @@ psql -d autorisen_local -c "SELECT version();"
 - **Communication**: Status page + stakeholder updates
 
 This workflow ensures autorisen serves as a robust development/staging environment that protects the capecraft production environment while maintaining high service reliability standards.
+
+## Dev Log Automation
+
+Add an entry when code/service changes are committed:
+
+```bash
+make devlog TYPE=refactor SCOPE=auth SUMMARY="utc migration" IMPACT=none PR=123
+```
+
+Enable hook locally:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+CI job `devlog-verify` blocks deployment if required entry missing (unless using `--auto` for emergency stub).

@@ -1,12 +1,13 @@
 # Writing the complete `auth_v2.py` file as requested.
-file_content = '''\
+file_content = """\
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import os
 import re
 from typing import Optional
-from datetime import datetime
+from datetime import datetime  # legacy
+from app.utils.datetime import utc_now
 
 from app import models, schemas
 from app.dependencies import get_db
@@ -107,7 +108,7 @@ async def register_v2(
             first_name=first_name,
             last_name=last_name,
             company=user.company_name.strip() if user.company_name else None,
-            terms_accepted_at=datetime.utcnow()
+            terms_accepted_at=utc_now()
         )
         db.add(db_user)
         db.commit()
@@ -159,7 +160,7 @@ async def send_welcome_email_task(user_data: dict):
         print(f"✅ Welcome email sent to {user_data['email']}")
     except Exception as e:
         print(f"⚠️  Failed to send welcome email to {user_data['email']}: {e}")
-'''
+"""
 
 with open("/mnt/data/auth_v2_complete.py", "w") as f:
     f.write(file_content)
