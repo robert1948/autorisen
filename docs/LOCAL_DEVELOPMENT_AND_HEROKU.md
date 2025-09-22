@@ -1,8 +1,10 @@
 # Local development and Heroku Container deployment
 
-This document explains how to run the autorisen project locally with Docker Compose and how to push a container to Heroku's Container Registry.
+This document explains how to run the `autorisen` project locally with Docker
+Compose and how to push a container to Heroku's Container Registry. Do not
+change any Heroku app settings from this repository without explicit approval.
 
-## 1. Local development (Docker Compose)
+## Local development (Docker Compose)
 
 ### Local prerequisites
 
@@ -14,40 +16,43 @@ This document explains how to run the autorisen project locally with Docker Comp
 
 1. Copy example env file and edit values:
 
-```bash
-cp .env.example .env
-# Edit .env to set POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD or set DATABASE_URL
-```
+   ```bash
+   cp .env.example .env
+   # Edit .env to set POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD or set DATABASE_URL
+   ```
 
-1. Recommended `.env` values for local compose usage:
+2. Recommended `.env` values for local compose usage:
 
-```text
-POSTGRES_DB=autorisen_dev
-POSTGRES_USER=dev_user
-POSTGRES_PASSWORD=dev_password
-DATABASE_URL=postgresql://dev_user:dev_password@db:5432/autorisen_dev
-```
+   ```text
+   POSTGRES_DB=autorisen_dev
+   POSTGRES_USER=dev_user
+   POSTGRES_PASSWORD=dev_password
+   DATABASE_URL=postgresql://dev_user:dev_password@db:5432/autorisen_dev
+   ```
 
-1. Start the stack:
+3. Start the stack:
 
-```bash
-docker compose up --build
-```
+   ```bash
+   docker compose up --build
+   ```
 
-1. Verify services:
+### Verify services
 
-- Frontend: <http://localhost:5173>
-- Backend: <http://localhost:8000> (health: `/api/health`)
+- Frontend: `http://localhost:3000` (Docker Compose maps the frontend container's Vite port `5173` -> host `3000`) (container internal `5173`, host `3000`)
+- Backend: `http://localhost:8000` (health: `/api/health`)
 - Postgres (host port 5433) if needed: `psql -h localhost -p 5433 -U dev_user autorisen_dev`
 
 ### Local notes
 
-- The Compose setup uses `db` as the Postgres host. The top-level Postgres host port is mapped to host `5433` to avoid collisions with a local Postgres running on `5432`.
-- If you prefer to use a host Postgres instance, set `DATABASE_URL` in your `.env` to point at `host.docker.internal:5432` and ensure your host Postgres accepts connections from Docker and the user/password match.
+The Compose setup uses `db` as the Postgres host inside the Docker network. The
+Postgres container's host port is mapped to `5433` on the developer machine to
+avoid collisions with a local Postgres that may be running on `5432`.
 
----
+If you prefer to use a host Postgres instance, set `DATABASE_URL` in your
+`.env` to point at `host.docker.internal:5432` and ensure your host Postgres
+accepts connections from Docker and the user/password match.
 
-## 2. Basic local Postgres setup (without compose)
+## Basic local Postgres setup (without compose)
 
 Install Postgres (example for Ubuntu):
 
@@ -59,9 +64,7 @@ sudo -u postgres createdb -O dev_user autorisen_dev || true
 sudo -u postgres psql -c "ALTER USER dev_user WITH PASSWORD 'dev_password';"
 ```
 
----
-
-## 3. Deploying to Heroku (Container Registry)
+## Deploying to Heroku (Container Registry)
 
 ### Heroku prerequisites
 
@@ -87,15 +90,13 @@ heroku open -a autorisen
 
 ### Heroku notes
 
-- If you want CI to deploy, ensure the GitHub repository has these secrets set: `HEROKU_API_KEY`, `HEROKU_APP_NAME` (or `HEROKU_APP_PROD` / `HEROKU_APP_STAGING`), and `HEROKU_EMAIL`. Without them the deploy job in CI will be skipped.
+If you want CI to deploy, ensure the GitHub repository has these secrets set:
+`HEROKU_API_KEY`, `HEROKU_APP_NAME` (or `HEROKU_APP_PROD` / `HEROKU_APP_STAGING`), and `HEROKU_EMAIL`.
 
----
+## Avoid triggering GitHub Actions for doc-only commits
 
-## 4. Avoid triggering GitHub Actions for this documentation update
-
-When committing documentation changes that should not trigger Actions, include `[skip ci]` or `[ci skip]` in the commit message.
-
-Example:
+When committing documentation changes that should not trigger Actions, include
+`[skip ci]` or `[ci skip]` in the commit message. Example:
 
 ```bash
 git add docs/LOCAL_DEVELOPMENT_AND_HEROKU.md
@@ -103,9 +104,7 @@ git commit -m "docs: add local dev + heroku container guide [skip ci]"
 git push
 ```
 
----
-
-## 5. Troubleshooting
+## Troubleshooting
 
 - If the backend returns 500s, check logs:
 
@@ -116,9 +115,7 @@ docker compose logs backend --tail=200
 - Check environment variables are set in `.env` and Docker Compose environment.
 - If Heroku deploy fails due to secrets missing, add them in GitHub repo settings or deploy via the Heroku CLI locally.
 
----
+## Next steps
 
-If you'd like, I can also:
-
-- Add a short `docs/README.md` index and link this file.
-- Open a small PR with these changes instead of pushing to `main`.
+- Optionally add a `docs/README.md` to index these files.
+- I can open a small PR with these doc-only changes if you prefer not to push to `main`.

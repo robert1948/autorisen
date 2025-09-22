@@ -1,0 +1,40 @@
+TaskID,Day,TaskName,Description,Owner,Priority,DurationDays,StartDate,EndDate,DependsOn,Category,Status,AcceptanceCriteria,Notes
+T-001,1,Vision & Principles Alignment,Translate CapeControl vision into 5 guiding principles and success metrics,Robert,P1,1,2025-09-22,2025-09-22,,Planning,Completed,Written principles approved,"See CapeControl_Guiding_Principles_Playbook.md"
+T-002,2,User & Persona Definition,Define primary personas startup SME solo creator and top jobs-to-be-done,Robert,P1,1,2025-09-23,2025-09-23,T-001,Research,In Progress,Personas doc signed off,"Based on CapeControl_Guiding_Principles_Playbook.md"
+T-003,3,Value Propositions,Craft value propositions mapped to pillars accessibility adaptability simplicity productivity,Robert,P1,1,2025-09-24,2025-09-24,T-002,Design,Planned,One-page value prop map
+T-004,4,MVP Scope & Outcomes,Select MVP agent set FAQ and Scheduler and measurable outcomes,Robert,P1,1,2025-09-25,2025-09-25,T-003,Planning,Planned,MVP scope approved
+T-005,5,Architecture Blueprint,Draw high-level architecture React Vite FastAPI Postgres agents queues,Robert,P1,1,2025-09-26,2025-09-26,T-004,Design,Planned,Diagram committed
+T-006,6,Data & Privacy Controls,Define data minimisation consent retention and draft privacy statement,Robert,P1,1,2025-09-27,2025-09-27,T-005,Admin,Planned,Privacy controls checklist green
+T-007,7,Pricing & Tiers,Draft Free Pro Business tiers with limits and upgrade path,Robert,P1,1,2025-09-28,2025-09-28,T-006,Admin,Planned,Pricing table approved
+T-008,8,Repo & CI Hygiene,Configure pre-commit lint format Makefile targets and base CI workflow,Robert,P2,1,2025-09-29,2025-09-29,T-007,Admin,Planned,CI green on main
+T-009,9,Database Schema,Design models for users sessions agents usage audit,Robert,P1,1,2025-09-30,2025-09-30,T-008,Build,Planned,Alembic revision created
+T-010,10,Migrations Apply,Apply schema migrations to local DB and seed minimal data,Robert,P1,1,2025-10-01,2025-10-01,T-009,Build,Planned,Alembic upgrade head OK
+T-011,11,Backend Foundations,Implement FastAPI app settings logging and api health endpoint,Robert,P1,1,2025-10-02,2025-10-02,T-010,Build,Planned,Health returns 200
+T-012,12,Auth & Accounts,Implement JWT register verify login and me endpoints,Robert,P1,1,2025-10-03,2025-10-03,T-011,Build,Planned,Register verify login works
+T-013,13,Agent Framework Core,Create agent interface registry lifecycle and run context,Robert,P2,1,2025-10-04,2025-10-04,T-012,Build,Planned,Sample agent runs
+T-014,14,FAQ Agent MVP,Build FAQ agent endpoint retrieval baseline and response formatting,Robert,P1,1,2025-10-05,2025-10-05,T-013,Build,Planned,FAQ answers top-10 intents
+T-015,15,Scheduler Agent MVP,Build Scheduler agent endpoint create list complete with rules,Robert,P1,1,2025-10-06,2025-10-06,T-014,Build,Planned,Create list complete works
+T-016,16,Frontend Shell,Add layout routing auth guard navbar footer,Robert,P2,1,2025-10-07,2025-10-07,T-015,Build,Planned,Protected route works
+T-017,17,Onboarding Flow,Design welcome role selection checklist and trust signals,Robert,P2,1,2025-10-08,2025-10-08,T-016,Design,Planned,Onboarding UX walkthrough OK
+T-018,18,Frontend Agent UIs,Implement FAQ chat panel Scheduler task pane and status toasts,Robert,P2,1,2025-10-09,2025-10-09,T-017,Build,Planned,UI accepts input and shows results
+T-019,19,Telemetry & Observability,Add request logging metrics traces and basic dashboard,Robert,P1,1,2025-10-10,2025-10-10,T-018,Review,Planned,Metrics visible error rate under 1 percent
+T-020,20,Security & Rate Limits,Configure CORS security headers rate limiting and input sanitisation,Robert,P1,1,2025-10-11,2025-10-11,T-019,Review,Planned,OWASP checks pass
+T-021,21,Performance Pass,Measure P95 latency for key endpoints and tune as needed,Robert,P1,1,2025-10-12,2025-10-12,T-020,Test,Planned,P95 under 400ms locally
+T-022,22,Accessibility & i18n,Enable keyboard navigation aria labels and prepare i18n hooks,Robert,P2,1,2025-10-13,2025-10-13,T-021,Review,Planned,A11y quick audit passes
+T-023,23,Docs & Quickstart,Update DEVELOPMENT_CONTEXT README and API docs,Robert,P2,1,2025-10-14,2025-10-14,T-022,Docs,Planned,Docs build and reviewed
+T-024,24,Staging Deploy,Deploy to autorisen and run smoke tests,Robert,P1,1,2025-10-15,2025-10-15,T-023,Deploy,Planned,Staging api health returns 200
+T-025,25,Feedback Loop,Collect tester feedback triage top issues and prioritise fixes,Robert,P2,1,2025-10-16,2025-10-16,T-024,Comms,Planned,Top ten issues triaged
+T-026,26,Bugfix & Polish,Fix blockers refine copy empty states and error handling,Robert,P2,1,2025-10-17,2025-10-17,T-025,Review,Planned,No critical bugs open
+T-027,27,Launch Readiness Review,Go No-Go rollback plan and release notes,Robert,P2,1,2025-10-18,2025-10-18,T-026,Admin,Planned,Checklist signed
+T-028,28,Public Preview Prep,Update landing pricing and draft announcement post,Robert,P2,1,2025-10-19,2025-10-19,T-027,Comms,Planned,Preview assets ready
+TaskID,Day,TaskName,Description,Owner,Priority,DurationDays,StartDate,EndDate,DependsOn,Category,Status,AcceptanceCriteria
+T-001,0,Validate docs & run linter,Run `markdownlint-cli` across `docs/` and fix high-priority markdown issues,Robert,P1,1,2025-09-22,2025-09-22,,Docs,Completed,"DEVELOPMENT_CONTEXT.md lint-clean for MD025/MD022; no duplicate H1s"
+PP-002,0,Sweep repo for 5173 clarifier,Search repo for `5173` and append '(container internal 5173, host 3000)' to human-facing references,Robert,P2,1,2025-09-23,2025-09-23,,Docs,Planned,"All human-facing references to 5173 include clarifier"
+PP-003,0,Verify docker-compose network config,Confirm frontend can reach backend at container host and VITE_API_BASE is correct,Robert,P1,1,2025-09-23,2025-09-23,,Infra,Planned,"frontend container can curl http://backend:8000/api/status -> 200"
+PP-004,0,Audit & fix client API usage,Ensure client uses import.meta.env.VITE_API_BASE and no hardcoded localhost:8001,Robert,P1,1,2025-09-24,2025-09-24,,Client,Planned,"grep for localhost:8001 returns zero; dev proxy works via /api"
+PP-005,0,Add Heroku deploy helper & Makefile target,Create scripts/deploy_heroku_container.sh and Makefile target (dry-run only),Robert,P2,1,2025-09-25,2025-09-25,,DevOps,Planned,"script exists, executable, documented; no credentials"
+PP-006,0,Add local smoke tests,Create scripts/smoke_local.sh to automate smoke checks and optionally wire into make smoke,Robert,P2,1,2025-09-26,2025-09-26,,QA,Planned,"./scripts/smoke_local.sh returns 0 on healthy stack"
+PP-007,0,Update quickstart & README consistency,Sync ports and commands across README.md and docs/DEVELOPMENT_CONTEXT.md,Robert,P2,1,2025-09-26,2025-09-26,,Docs,Planned,"README and DEVELOPMENT_CONTEXT.md match quickstart steps"
+PP-008,0,Run compose bring-up & validate services,Bring stack up and run smoke checks (backend, frontend, db),Robert,P1,1,2025-09-27,2025-09-27,,Infra,Planned,"backend 200, frontend reachable, pg_isready passes"
+PP-009,0,Document risks & rollback steps,Create docs/DEVELOPMENT_RISKS.md with known risks and rollback steps,Robert,P2,1,2025-09-28,2025-09-28,,Docs,Planned,"DEVELOPMENT_RISKS.md created and referenced"
+PP-010,0,Final report & handoff,Write docs/DEVELOPMENT_CHANGELOG.md mapping requirements to changes and validations,Robert,P2,1,2025-09-29,2025-09-29,,Docs,Planned,"DEVELOPMENT_CHANGELOG.md added and shared"

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",        // or "NodeNext" if you prefer
+    "jsx": "react-jsx",
+    "strict": true,
+    "baseUrl": ".",
+    "types": ["vite/client"],             // 👈 gives you import.meta.env types
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite-env.d.ts"]
+}

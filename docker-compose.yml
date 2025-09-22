@@ -1,24 +1,25 @@
-version: "3.9"
+# Compose v2+ (no version key)
 
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: autorisen-db
     ports:
-      - "5433:5432"
+      - "${HOST_DB_PORT:-5433}:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Africa/Johannesburg
+      POSTGRES_DB: ${POSTGRES_DB:-devdb}
+      POSTGRES_USER: ${POSTGRES_USER:-devuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # - ./backend/init_scripts:/docker-entrypoint-initdb.d
+      - ./backend/sql/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devuser} -d ${POSTGRES_DB:-devdb}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     restart: unless-stopped
 
   redis:
@@ -28,7 +29,10 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: >
+      redis-server --appendonly yes
+                   --maxmemory 256mb
+                   --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -39,101 +43,70 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
-      target: backend
+      dockerfile: Dockerfile      # root Dockerfile (multi-stage)
+      target: runtime
     container_name: autorisen-backend
-    ports:
-      - "8000:8000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    working_dir: /app/backend
     environment:
-      # Database (connect to the local compose Postgres service)
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /app/backend
+      PATH: /opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      PORT: 8000
 
-      # Redis
-      REDIS_URL: redis://redis:6379
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      # Postgres (container-internal)
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-devuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
+      POSTGRES_DB: ${POSTGRES_DB:-devdb}
+      # Keep driver-agnostic so SQLAlchemy picks psycopg/psycopg2 based on what's installed
+      DATABASE_URL: postgresql://${POSTGRES_USER:-devuser}:${POSTGRES_PASSWORD:-devpass}@db:5432/${POSTGRES_DB:-devdb}
 
-      # App
-      SECRET_KEY: ${SECRET_KEY}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      DEBUG: "true"
+      # Alembic
+      ALEMBIC_CONFIG: alembic.ini
+
+      # App/CORS
+      SECRET_KEY: ${SECRET_KEY:-change-me-dev-only}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt}
       ENVIRONMENT: development
       LOG_LEVEL: INFO
+      FRONTEND_ORIGIN: http://localhost:3000
+      CORS_ALLOW_ORIGINS: http://localhost:3000
 
-      # API / CORS
-      API_URL: http://localhost:8000
-      FRONTEND_ORIGIN: http://localhost:5173
-      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
-      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
-
-      # AI (set in .env if needed)
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-
-      # Feature flags
+      # Optional flags
       ENABLE_MONITORING: "true"
       ENABLE_AUDIT_LOGGING: "true"
       ENABLE_RATE_LIMITING: "true"
       ENABLE_DDOS_PROTECTION: "true"
-
-      # Performance/Security
-      WORKERS: 1
-      MAX_CONNECTIONS: 100
-      POOL_SIZE: 10
-      MAX_OVERFLOW: 20
-      BCRYPT_ROUNDS: 12
-      SESSION_TIMEOUT: 3600
-      MAX_LOGIN_ATTEMPTS: 5
-
-      # Optional one-time admin bootstrap
-      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL}
-      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
+    volumes:
+      - ./backend:/app/backend
+      - ./logs:/app/logs
+      - backend_uploads:/app/backend/uploads
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - ./logs:/app/logs
-      - backend_uploads:/app/uploads
-    working_dir: /app
+    ports:
+      - "${HOST_HTTP_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
-      - bash
+      - sh
       - -lc
       - |
-          set -e
-          echo "🚀 Starting Backend..."
-          echo "🔧 Applying DB migrations..."
-          /opt/venv/bin/python -c "from app.database import engine, Base; Base.metadata.create_all(bind=engine); print('✅ Database tables created')"
-
-          # One-time admin bootstrap (gated by flag file and envs)
-          if [ ! -f /app/.admin_bootstrapped ] && [ -n "$BOOTSTRAP_ADMIN_EMAIL" ] && [ -n "$BOOTSTRAP_ADMIN_PASSWORD" ]; then
-            echo "👤 Bootstrapping admin (one-time)..."
-            /opt/venv/bin/python /app/scripts/bootstrap_admin.py || true
-            touch /app/.admin_bootstrapped
-          fi
-
-          echo "🎯 Starting FastAPI (reload)..."
-          exec /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
+        set -e
+        cd /app/backend
+        echo "⏫ Running Alembic migrations (head)..."
+        /opt/venv/bin/alembic -c alembic.ini upgrade head || { echo "⚠️ Alembic failed; starting API anyway (dev)"; }
+        echo "🚀 Starting Uvicorn..."
+        exec /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --reload
     healthcheck:
-      test:
-        - CMD-SHELL
-        - |
-          /opt/venv/bin/python - <<'PY'
-          import sys, urllib.request
-          try:
-              with urllib.request.urlopen("http://localhost:8000/api/health", timeout=2) as r:
-                  sys.exit(0 if r.status == 200 else 1)
-          except Exception:
-              sys.exit(1)
-          PY
+      # Align with your app's health route; change to /health if that's what you expose
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/alive || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 10
+      retries: 20
     restart: unless-stopped
 
   frontend:
@@ -144,9 +117,13 @@ services:
       - ./client:/app
       - frontend_node_modules:/app/node_modules
     ports:
-      - "5173:5173"
+      # Vite listens on 5173 inside; map to 3000 on host
+      - "3000:5173"
     environment:
-      VITE_API_URL: http://localhost:8000
+      # When running inside Docker Compose, the frontend should reach the backend service
+      # by its service name and container port. Use the backend hostname here so Vite
+      # proxying inside the frontend container connects to the backend container.
+      VITE_API_BASE: http://backend:8000
       VITE_APP_NAME: Autorisen
       VITE_ENVIRONMENT: development
       NODE_ENV: development
@@ -155,13 +132,19 @@ services:
       - sh
       - -lc
       - |
-          set -e
-          echo "🎨 Starting Frontend (Vite)..."
-          npm install
-          exec npm run dev -- --host 0.0.0.0 --port 5173
+        set -e
+        echo "🎨 Starting Frontend (Vite)..."
+        npm ci
+        exec npm run dev -- --host 0.0.0.0 --port 5173
     depends_on:
       backend:
         condition: service_started
+    healthcheck:
+      # Health-checks the container-internal Vite port (5173)
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5173/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   pgadmin:
@@ -179,7 +162,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    profiles: ["tools"]
+    profiles:
+      - tools
 
   redis-commander:
     image: rediscommander/redis-commander:latest
@@ -194,7 +178,43 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    profiles: ["tools"]
+    profiles:
+      - tools
+
+  minio:
+    image: minio/minio:latest
+    container_name: autorisen-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    profiles:
+      - tools
+
+  minio-mc:
+    image: minio/mc:latest
+    container_name: autorisen-minio-mc
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - >
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb -p local/cc-static || true &&
+        mc mb -p local/cc-media || true &&
+        mc anonymous set public local/cc-static || true &&
+        mc anonymous set public local/cc-media || true
+    restart: "no"    # run once, then exit
+    profiles:
+      - tools
 
 volumes:
   postgres_data:
@@ -202,3 +222,4 @@ volumes:
   pgadmin_data:
   backend_uploads:
   frontend_node_modules:
+  minio_data:

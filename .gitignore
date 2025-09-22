@@ -1,75 +1,95 @@
-# --- Python ---
+# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 *.so
-*.egg
 *.egg-info/
-.eggs/
-build/
 dist/
-pip-wheel-metadata/
-.mypy_cache/
-.pytest_cache/
-.coverage
-coverage/
-htmlcov/
-.tox/
+build/
+.eggs/
 .venv/
 venv/
-# Environment files (do NOT commit)
+env/
+ENV/
 .env
-.env.*
 .env.local
-!.env.example
-.ruff_cache/
 
-# SQLite / local DBs
-*.sqlite3
-*.db
-
-# PostgreSQL / Database files
-*.dump
-*.sql.backup
-pgdata/
-postgres-data/
-
-# --- Node / JavaScript (client) ---
+# Node / frontend
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-.parcel-cache/
-.next/
-.nuxt/
-out/
-client/.cache/
-client/build/
-client/dist/
-client/coverage/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+dist/
+build/
+.cache/
+.vite/
 
-# --- Logs ---
-logs/
-*.log
-
-# --- Editors / IDE ---
-.vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea/
-*.swp
-*.swo
-
-# --- System / Misc ---
+# Editor / OS
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
 
-# --- Test / Temp ---
-.cache/
+# Logs
+*.log
+
+# Environment & secrets
+secrets.env
+*.pem
+*.key
+*.crt
+
+# Docker
+docker-compose.override.yml
+**/docker-compose.override.yml
+*.local.yml
+
+# Test / coverage
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+
+# Migrations (keep __init__.py)
+*/migrations/*
+!*/migrations/__init__.py
+
+# Build artifacts
+*.egg
+*.egg-info/
+.eggs/
+
+# Local IDE/workspace settings
+.vscode/
+.idea/
+
+# Misc
+.DS_Store
+
+# Ignore node build output for Vite/React
+/client/dist/
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# --- local large/temp files ---
+# Ignore large temporary files that accidentally get created during builds or editors
+Makefile.tmp
+*.tmp
+*.bak
+*.old
+*=*
 tmp/
-temp/
+.cache/
+*.zip
+*.tar.gz
 
-# --- Docker / Devcontainers Artifacts (keep Dockerfile itself) ---
-**/.devcontainer/local-history/
+# End of file

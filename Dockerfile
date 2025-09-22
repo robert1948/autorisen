@@ -6,47 +6,49 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-# System deps for building wheels (psycopg, etc.)
+# Build deps for wheels like psycopg, etc.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl ca-certificates git \
  && rm -rf /var/lib/apt/lists/*
 
-# Use a dedicated venv for clean runtime copying
+# Isolated virtualenv to copy into runtime
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Install Python deps first for better layer caching.
-# Expect requirements in backend/requirements.txt (preferred).
-# If you keep them at repo root, also add a copy there and adjust the path below.
-COPY backend/requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
+# Install deps from either/both locations (root and backend)
+# Copy first to leverage Docker layer cache
+COPY requirements.txt /tmp/requirements-root.txt
+COPY backend/requirements.txt /tmp/requirements-backend.txt
 
-# -------- Runtime: backend (dev/prod) --------
-FROM python:3.11-slim AS backend
+RUN pip install --upgrade pip && \
+    ( test -f /tmp/requirements-root.txt && pip install -r /tmp/requirements-root.txt || true ) && \
+    ( test -f /tmp/requirements-backend.txt && pip install -r /tmp/requirements-backend.txt || true )
+
+# -------- Runtime --------
+FROM python:3.11-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=backend \
     PORT=8000
 
-# Runtime libs only (no compilers)
+# Runtime libs only
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
  && rm -rf /var/lib/apt/lists/*
 
-# Bring in virtualenv from builder
+# Bring in the prebuilt virtualenv
 COPY --from=base /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Copy app code (thanks to .dockerignore, this is lean)
-COPY backend ./backend
+# Copy the whole project so alembic.ini, migrations, configs are available
+# (use a .dockerignore to exclude node_modules, .git, etc.)
+COPY . /app
 
-# Expose FastAPI port
 EXPOSE 8000
 
-# Default CMD suitable for Heroku Container Registry (uses $PORT)
-# For local dev, docker-compose typically overrides with uvicorn --reload.
-CMD ["bash", "-lc", "exec gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-2}"]
+# Default dev-friendly command; docker-compose can override with its own
+# Uses APP_MODULE/APPLICATION settings provided via environment if present.
+CMD ["bash", "-lc", "uvicorn ${APP_MODULE:-app.main:app} --host ${APP_HOST:-0.0.0.0} --port ${PORT:-8000}"]
