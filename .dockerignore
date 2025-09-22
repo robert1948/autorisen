@@ -1,106 +1,65 @@
-# ---------------------------
-# VCS / CI
-# ---------------------------
+# ---- VCS
 .git
+.git/*
 .gitignore
-.github/
-.gitlab-ci.yml
+.gitattributes
 
-# ---------------------------
-# Python artifacts
-# ---------------------------
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg-info/
-.eggs/
-build/
-dist/
-pip-wheel-metadata/
-.mypy_cache/
-.pytest_cache/
-.coverage
-.coverage.*
-coverage/
-htmlcov/
-.tox/
-.venv/
-venv/
-.ruff_cache/
-
-# Local DBs
-*.sqlite3
-
-# ---------------------------
-# Node / frontend (install separately if needed)
-# ---------------------------
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.parcel-cache/
-.next/
-.nuxt/
-out/
-client/node_modules/
-client/.cache/
-client/build/
-client/dist/
-client/coverage/
-
-# ---------------------------
-# Env / secrets (keep only examples)
-# ---------------------------
+# ---- Secrets / env
 .env
 .env.*
-!.env.example
-!.env.*.example
+*.pem
+*.key
 
-# ---------------------------
-# Logs
-# ---------------------------
-logs/
-*.log
+# ---- Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+**/.ruff_cache/
+coverage/
+coverage.*
+htmlcov/
+*.sqlite*
+*.db
+test_models.db
 
-# ---------------------------
-# Temp / caches
-# ---------------------------
-.cache/
-tmp/
-temp/
-*.tmp
-*.swp
-*.swo
+# ---- Node / Frontend
+node_modules/
+client/node_modules/
+client/dist/
 
-# ---------------------------
-# Editors / OS
-# ---------------------------
-.vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea/
+# ---- OS / Editor junk
 .DS_Store
-Thumbs.db
+*.swp
+.idea/
+.vscode/
 
-# ---------------------------
-# Docker / Devcontainer (exclude dev-only tooling)
-# ---------------------------
-.devcontainer/
+# ---- Runtime & logs
+logs/
+backend/uploads/
+backend/.env
+backend/.coverage
+
+# ---- Docs & misc (optional)
+docs/
+
+# ---- Compose files aren't needed in image (optional)
 docker-compose*.yml
-Dockerfile.dev
-**/local-history/
 
-# If you COPY . . and need only app code, explicitly allow key files:
-# !requirements.txt
-# !pyproject.toml
-# !package.json
-# !package-lock.json
-# !client/package.json
+# ---- IMPORTANT: keep backend sources & deps available to COPY
+!backend/
+!backend/requirements.txt
+!backend/app/**
+!backend/alembic.ini
 
-# ---------------------------
-# Misc
-# ---------------------------
+# Ignore large temp files not needed in build context
+Makefile.tmp
+*.tmp
 *.bak
+*.old
+tmp/
+.cache/

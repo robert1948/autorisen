@@ -1,8 +1,20 @@
 // client/src/api/auth-logout.js - Enhanced logout methods
 
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://www.cape-control.com/api' 
-  : 'http://localhost:8001/api';
+const DEFAULT_LOCAL_API = 'http://localhost:8000/api';
+const env = import.meta && import.meta.env ? import.meta.env : {};
+let API_BASE;
+if (env.PROD) {
+  API_BASE = 'https://www.cape-control.com/api';
+} else if (env.VITE_API_BASE) {
+  const provided = env.VITE_API_BASE;
+  if (provided.includes('localhost') || provided.includes('127.0.0.1')) {
+    API_BASE = `${provided.replace(/\/$/, '')}/api`;
+  } else {
+    API_BASE = '/api';
+  }
+} else {
+  API_BASE = DEFAULT_LOCAL_API;
+}
 
 // Token management utility functions
 function getToken() {

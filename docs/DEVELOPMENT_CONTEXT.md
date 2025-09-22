@@ -1,63 +1,53 @@
 # 🛠 DEVELOPMENT CONTEXT
 
-**Last Updated**: August 27, 2025  
-**Source of truth**: CapeControl / Capecraft project (synchronized with latest Heroku deployment logs)  
-**Project Status**: Production Ready — Registration fixed, AI Security Suite deployed, Payment & Developer Earnings live  
-**Current Version**: v663 (Heroku, deployed Aug 17, 2025) ✅ RUNNING
-**Latest Update**: Local PostgreSQL development environment configured with automated database duplication
-**Database Status**: ✅ Local PostgreSQL setup complete with Heroku schema replication
+Last updated: 2025-08-27
 
----
+This file is the concise, canonical quickstart for running the project locally. The full historic content is preserved in `docs/DEVELOPMENT_CONTEXT.md.bak`.
 
-## Executive Summary
+## Quick start
 
-This document captures the authoritative development and deployment context for the CapeControl / Capecraft project, incorporating `autorisen` features into the main CapeControl platform.
+```bash
+# Start the development stack (build + detached)
+make dev-up
 
-- **Production App**: `capecraft` (Heroku, version v663)
-- **Staging Source**: `autorisen` repo, feature integration validated here
-- **Goal**: Feature-flagged integration of `autorisen` modules into CapeControl, with validation gates before production promotion.
+# Run DB migrations inside the backend container
+make migrate
 
----
+# Run quick health checks (backend, DB, frontend)
+make smoke
+```
 
-## 1. Company Information
+## Ports (authoritative)
 
-- **Legal Entity**: Cape Craft Projects CC
-- **Trading Name**: Cape Control
-- **VAT Number**: 4270105119
+- Frontend (Vite): `http://localhost:3000` — Docker Compose maps the frontend container's Vite port `5173` to host port `3000` (container internal `5173`, host `3000`).
+- Backend (Uvicorn): `http://localhost:8000` (health: `/api/health`).
+- Postgres (host): `localhost:5433` (if using the Compose-provided DB).
 
----
+Notes
 
-## 2. Project Status & Versions
+- If you run the frontend dev server directly on your host (not via Compose), Vite's default dev server uses port `5173`.
+- Keep Heroku settings unchanged in this repo unless you have explicit permission to modify the Heroku app(s).
+- For full historical context and extra troubleshooting notes, open `docs/DEVELOPMENT_CONTEXT.md.bak`.
+<!-- Archived historical content moved to docs/DEVELOPMENT_CONTEXT.md.bak -->
+<!-- For the full historical document, executive summary, company information, and extended setup instructions, see docs/DEVELOPMENT_CONTEXT.md.bak -->
 
-- **Production**: Heroku app `capecraft` (v663, deployed Aug 17, 2025, release `f8783ce4`)
-- **Staging Source**: `autorisen` (used for integration testing)
--- **Backend**: FastAPI 0.110.0 on Python 3.12
-- **Frontend**: React 18 + Vite, served by FastAPI
-- **Stripe**: integration deployed and test-ready (Heroku-compatible at `stripe==7.7.0`)
+## Development Workflow
 
----
+## Component Source Management
 
-## 3. Repositories & Structure
-
-- **Production Repo**: `localstorm` / `capecontrol` (contains `backend/` and `client/`)
-- **Staging Repo**: `autorisen` (features to be merged under `apps/autorisen` or `backend/app/routes/autorisen`)
-
----
-
-## 4. Development Workflow
-
-### Component Source Management
 - **Source Repository**: If any components are missing from the autorisen project, they should be copied from **capecraft production environment** (Heroku)
 - **Development Priority**: The autorisen project must always be ahead of capecraft in development lifecycle
 
-### Deployment Pipeline Strategy
+## Deployment Pipeline Strategy
+
 1. **Development Phase**: Build and test all functionality on autorisen first
-2. **Testing Phase**: Ensure complete functionality validation before promotion  
+2. **Testing Phase**: Ensure complete functionality validation before promotion
 3. **Production Deployment**: Push to capecraft (live site) only after thorough testing
 4. **Service Continuity**: Maintain zero disruption to live services
 5. **Uptime Requirements**: Ensure absolute minimal downtime during deployments
 
-### Quality Assurance Protocol
+## Quality Assurance Protocol
+
 - All features must be fully tested in autorisen environment
 - No untested code should reach the capecraft production environment
 - Maintain service reliability and user experience standards
@@ -103,7 +93,7 @@ cp .env.example .env
 bash ./scripts/setup_local_postgres.sh "postgres://[HEROKU_DATABASE_URL]" autorisen_local vscode
 
 # This script will:
-# - Create local PostgreSQL database 'autorisen_local' 
+# - Create local PostgreSQL database 'autorisen_local'
 # - Dump production schema from Heroku
 # - Restore schema to local database
 # - Update .env with local DATABASE_URL
@@ -124,11 +114,12 @@ PGPASSWORD=123456 psql -h localhost -U vscode -d autorisen_local
 ```
 
 3. **Database Schema**: The local database contains production-identical tables:
-   - `users_v2` - User accounts and authentication
-   - `tokens_v2` - Authentication tokens and sessions
-   - `developer_earnings_v2` - Developer payment tracking
-   - `password_resets_v2` - Password reset functionality  
-   - `audit_logs_v2` - Security audit trail
+
+- `users_v2` - User accounts and authentication
+- `tokens_v2` - Authentication tokens and sessions
+- `developer_earnings_v2` - Developer payment tracking
+- `password_resets_v2` - Password reset functionality
+- `audit_logs_v2` - Security audit trail
 
 #### Starting the Application
 
@@ -184,7 +175,8 @@ The project includes automated scripts for database management:
 ### Database Connection Details
 
 **Local Development Database:**
-- Host: `localhost` 
+
+- Host: `localhost`
 - Port: `5432`
 - Database: `autorisen_local`
 - Username: `vscode`
@@ -192,6 +184,7 @@ The project includes automated scripts for database management:
 - Connection string: `postgresql://vscode:123456@localhost:5432/autorisen_local`
 
 **Production Database:**
+
 - Managed by Heroku PostgreSQL
 - SSL required for all connections
 - Schema automatically replicated to local environment

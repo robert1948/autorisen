@@ -1,7 +1,7 @@
 # Autorisen – Development Context
 
 **Last Updated:** 2025-08-21  
-**Repo:** https://github.com/robert1948/autorisen  
+**Repo:** [https://github.com/robert1948/autorisen]
 **Purpose:** Central reference for architecture, environments, operational notes, and current remediation steps.
 
 ## 1) System Overview

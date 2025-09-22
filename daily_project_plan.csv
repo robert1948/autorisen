@@ -1,0 +1,15 @@
+TaskID,Day,TaskName,Description,Owner,Priority,DurationDays,StartDate,EndDate,DependsOn,Category,Status,AcceptanceCriteria
+T-001,1,Kickoff & Objectives,Confirm goals scope success metrics and definition of done,Robert,P1,1,2025-09-22,2025-09-22,,Planning,Planned,Goals documented and approved by owner
+T-002,2,Requirements & Scope,Capture features constraints milestones and risks into a concise plan,Robert,P1,1,2025-09-23,2025-09-23,T-001,Planning,Planned,One-page plan committed to repo
+T-003,3,Architecture & Tech Stack,Select architecture modules integrations and finalize stack decisions,Robert,P1,1,2025-09-24,2025-09-24,T-002,Design,Planned,Architecture diagram and tech choices approved
+T-004,4,Repo & Tooling Setup,Create repo branches linters formatters pre-commit Makefile and CI skeleton,Robert,P1,1,2025-09-25,2025-09-25,T-003,Build,Planned,Pre-commit passes and CI pipeline runs
+T-005,5,Database Setup & Migrations,Provision Postgres on 5433 create schemas and run initial migrations,Robert,P1,1,2025-09-26,2025-09-26,T-004,Build,Planned,psql conninfo ok and \dt shows tables
+T-006,6,Backend API Skeleton & Health,Create FastAPI/Django skeleton with /api/health and logging,Robert,P1,1,2025-09-27,2025-09-27,T-005,Build,Planned,GET /api/health returns 200 with status ok
+T-007,7,Frontend Scaffold & API Wiring,Initialize Vite React on 3000 and configure proxy/CORS to backend,Robert,P2,1,2025-09-28,2025-09-28,T-006,Build,Planned,App loads and /api/* calls return 2xx
+T-008,8,Auth Flow (Register/Login),Implement signup login logout and protected routes,Robert,P1,1,2025-09-29,2025-09-29,T-007,Build,Planned,User can register verify and login successfully
+T-009,9,Core Feature 1 Implementation,Build first high-value feature end-to-end,Robert,P1,1,2025-09-30,2025-09-30,T-008,Build,Planned,Feature works via UI and API
+T-010,10,Core Feature 1 Tests,Add unit and API tests plus manual acceptance checklist,Robert,P1,1,2025-10-01,2025-10-01,T-009,Test,Planned,Tests pass and manual checklist green
+T-011,11,Documentation & Runbooks,Update DEVELOPMENT_CONTEXT README and troubleshooting guides,Robert,P2,1,2025-10-02,2025-10-02,T-010,Docs,Planned,Docs reviewed and committed
+T-012,12,Staging Deploy & Smoke,Deploy to staging run smoke tests and capture release notes,Robert,P2,1,2025-10-03,2025-10-03,T-011,Deploy,Planned,Staging /api/health ok and notes filed
+T-013,13,Bugfix & Buffer,Address defects stabilize logs and performance and polish UI,Robert,P2,1,2025-10-04,2025-10-04,T-012,Review,Planned,No ERROR/Traceback in logs during smoke
+T-014,14,Go/No-Go Review & Next Sprint,Assess readiness and draft next backlog and sprint goals,Robert,P2,1,2025-10-05,2025-10-05,T-013,Admin,Planned,Go/No-Go decision recorded and backlog prioritized

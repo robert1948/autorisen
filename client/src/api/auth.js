@@ -1,8 +1,25 @@
 // client/src/api/auth.js
 
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://www.cape-control.com/api' 
-  : 'http://localhost:8001/api';
+const DEFAULT_LOCAL_API = 'http://localhost:8000/api';
+// Resolve API base safely for dev vs production:
+// - In production, point at the public API URL
+// - In development, prefer relative '/api' so Vite proxy handles requests (avoids embedding container hostnames)
+// - If VITE_API_BASE explicitly points at localhost (e.g., when running client locally), use that absolute host URL
+const env = import.meta && import.meta.env ? import.meta.env : {};
+let API_BASE;
+if (env.PROD) {
+  API_BASE = 'https://www.cape-control.com/api';
+} else if (env.VITE_API_BASE) {
+  const provided = env.VITE_API_BASE;
+  if (provided.includes('localhost') || provided.includes('127.0.0.1')) {
+    API_BASE = `${provided.replace(/\/$/, '')}/api`;
+  } else {
+    // use relative path so the dev server proxy can route to the container-internal backend
+    API_BASE = '/api';
+  }
+} else {
+  API_BASE = DEFAULT_LOCAL_API;
+}
 
 export async function loginUser(email, password) {
   const response = await fetch(`${API_BASE}/token`, {
