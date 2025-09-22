@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: devdb
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    command: uvicorn backend.src.app:app --host 0.0.0.0 --port 8000 --reload
+    volumes: [".:/workspaces/autorisen"]
+    working_dir: /workspaces/autorisen
+    ports: ["8000:8000"]
+    depends_on: [db, redis]
+
+volumes:
+  pgdata:
