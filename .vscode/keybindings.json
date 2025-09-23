@@ -1,0 +1,19 @@
+[
+  {
+    "key": "alt+shift+c",
+    "command": "openai.chat.open", // ← After installing “ChatGPT - Official” by OpenAI,
+    "when": "editorTextFocus" //    confirm the exact command id in Keyboard Shortcuts (🔧 icon)
+  },
+
+  // Handy Copilot shortcuts (optional)
+  {
+    "key": "alt+]",
+    "command": "github.copilot.generate",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "alt+[",
+    "command": "github.copilot.inlineChat.start",
+    "when": "editorTextFocus && !editorReadonly"
+  }
+]
