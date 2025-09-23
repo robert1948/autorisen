@@ -1,0 +1,25 @@
+name: CI - Health Service
+
+on:
+  push:
+    branches: [main, modularization/rfc]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/health/requirements.txt
+          pip install pytest
+      - name: Run tests
+        run: |
+          pytest services/health/tests -q
