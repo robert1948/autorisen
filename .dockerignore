@@ -1,0 +1,37 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual envs
+venv/
+.env
+.env.*
+
+# Git
+.git
+
+# Editor directories and files
+.vscode/
+.idea/
+
+# Build artifacts
+build/
+dist/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Logs
+*.log
+
+# Misc
+*.pyc
+*.pyo
+*.pyd
+
+# Node
+node_modules/
+
+# Ignore backup files
+*.backup-before-move-*
