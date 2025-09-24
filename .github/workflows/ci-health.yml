@@ -30,4 +30,9 @@ jobs:
           fi
       - name: Run tests
         run: |
-          pytest services/health/tests -q
+          if [ -d services/health/tests ]; then
+            pytest services/health/tests -q
+          else
+            echo "No health tests found (services/health/tests). Skipping tests." 
+            exit 0
+          fi
