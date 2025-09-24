@@ -31,11 +31,19 @@ jobs:
       - name: Determine image name and tag
         id: meta
         run: |
-          IMAGE_USER=${{ secrets.DOCKERHUB_USERNAME }}
-          IMAGE_REPO=${{ env.DOCKERHUB_REPO:-autorisen }}
+          # Compute values in shell to allow shell fallbacks and robust defaults
+          IMAGE_USER="${{ secrets.DOCKERHUB_USERNAME }}"
+          IMAGE_REPO="${{ env.DOCKERHUB_REPO }}"
+          if [ -z "$IMAGE_REPO" ]; then
+            IMAGE_REPO="autorisen"
+          fi
           GIT_SHA=$(git rev-parse --short HEAD)
           DATE_UTC=$(date -u +%Y%m%d-%H%M)
-          VERSION=${{ env.DOCKERHUB_VERSION:-"${DATE_UTC}-${GIT_SHA}" }}
+          if [ -n "${{ env.DOCKERHUB_VERSION }}" ]; then
+            VERSION="${{ env.DOCKERHUB_VERSION }}"
+          else
+            VERSION="${DATE_UTC}-${GIT_SHA}"
+          fi
           echo "IMAGE=${IMAGE_USER}/${IMAGE_REPO}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
