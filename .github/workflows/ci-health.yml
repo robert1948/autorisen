@@ -53,7 +53,7 @@ jobs:
             pip install -r services/health/requirements.txt
           else
             echo "services/health/requirements.txt not found — falling back to explicit installs into .venv"
-            pip install fastapi==0.95.2 uvicorn[standard]==0.22.0 pytest
+            pip install fastapi==0.95.2 uvicorn[standard]==0.22.0 pytest redis>=4.6.0,<5.0
           fi
       - name: Run tests
         id: pytest
