@@ -9,6 +9,9 @@ build/
 .venv/
 venv/
 env/
+.terraform/
+*.tfstate
+tmp_pg/
 ENV/
 .env
 .env.local
