@@ -1,0 +1,46 @@
+name: Deploy - ECS (manual)
+
+on:
+  workflow_dispatch:
+    inputs: {}
+
+jobs:
+  build-and-deploy:
+    name: Build and push to ECR (manual only)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials from OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region ${AWS_REGION:-us-east-1} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build and tag image
+        run: |
+          IMAGE=${{ secrets.ECR_REPO }}:ci-${GITHUB_RUN_ID}
+          docker build -t "$IMAGE" .
+          docker tag "$IMAGE" "${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPO }}:ci-${GITHUB_RUN_ID}"
+
+      - name: Push to ECR
+        run: |
+          docker push "${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPO }}:ci-${GITHUB_RUN_ID}"
+
+      - name: Note
+        run: |
+          echo "Manual deploy created image: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPO }}:ci-${GITHUB_RUN_ID}"
+
+# Security notes:
+# - Configure `AWS_OIDC_ROLE` in repo secrets referencing an IAM role that trusts GitHub's OIDC provider.
+# - Store `ECR_REGISTRY` and `ECR_REPO` as secrets.
