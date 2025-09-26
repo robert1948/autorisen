@@ -2,62 +2,87 @@ name: Build and publish Docker image
 
 on:
   push:
-    branches: [ main ]
-    tags:    ['v*', 'release-*']
+    branches: [main]
+    tags:
+      - "v*"
+      - "release-*"
   workflow_dispatch:
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-push:
+    # Only on main or tags
+    if: >
+      github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      # default repo (can be overridden at repo/env level)
+      DOCKERHUB_REPO: autorisen
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
+      # QEMU is only needed for multi-arch; keep it off unless you add more platforms.
+      # - name: Setup QEMU
+      #   uses: docker/setup-qemu-action@v3
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - name: Login to Docker Hub
+        if: ${{ github.secrets.DOCKERHUB_USERNAME != '' && github.secrets.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Determine image name and tag
+      - name: Determine image and version
         id: meta
+        shell: bash
         run: |
-          # Use the secret via GitHub expression, fallbacks handled in shell
-          IMAGE_USER="${{ secrets.DOCKERHUB_USERNAME }}"
-          # Allow optional repo/version to be provided via environment variables; otherwise use sensible defaults
-          IMAGE_REPO="${DOCKERHUB_REPO:-autorisen}"
-          GIT_SHA=$(git rev-parse --short HEAD)
-          DATE_UTC=$(date -u +%Y%m%d-%H%M)
-          VERSION="${DOCKERHUB_VERSION:-${DATE_UTC}-${GIT_SHA}}"
-          echo "IMAGE=${IMAGE_USER}/${IMAGE_REPO}" >> $GITHUB_OUTPUT
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          set -euo pipefail
 
-      - name: Build and push Docker image (backend)
-        uses: docker/build-push-action@v5
+          # Lower-case for Docker refs
+          IMAGE_USER_RAW="${{ secrets.DOCKERHUB_USERNAME }}"
+          IMAGE_REPO_RAW="${DOCKERHUB_REPO:-autorisen}"
+          IMAGE_USER="$(echo "${IMAGE_USER_RAW}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE_REPO="$(echo "${IMAGE_REPO_RAW}" | tr '[:upper:]' '[:lower:]')"
+
+          # Version: explicit override -> tag name -> date+sha
+          DATE_UTC="$(date -u +%Y%m%d-%H%M)"
+          GIT_SHA="$(git rev-parse --short HEAD)"
+          VERSION="${DOCKERHUB_VERSION:-}"
+          if [[ -z "${VERSION}" ]]; then
+            if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+              VERSION="${GITHUB_REF_NAME}"
+            else
+              VERSION="${DATE_UTC}-${GIT_SHA}"
+            fi
+          fi
+
+          echo "image=${IMAGE_USER}/${IMAGE_REPO}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: backend/Dockerfile
-          platforms: linux/amd64
           target: backend
+          platforms: linux/amd64
           push: true
           tags: |
-            ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.VERSION }}
-            ${{ steps.meta.outputs.IMAGE }}:latest
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.image }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
 
-      - name: Image published
-        run: |
-          echo "Published ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.VERSION }} and :latest"
-
-# Notes:
-# - Create repository secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
-# - Optional repo-level envs (in Actions UI) you can set: DOCKERHUB_REPO, DOCKERHUB_VERSION
-# - This workflow builds the backend target from `backend/Dockerfile` and pushes two tags.
+      - name: Done
+        run: echo "Published ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}"
