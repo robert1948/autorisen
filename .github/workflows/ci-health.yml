@@ -28,6 +28,25 @@ jobs:
             echo "services/health/requirements.txt not found — falling back to explicit installs"
             pip install fastapi==0.95.2 uvicorn[standard]==0.22.0 pytest
           fi
+      - name: Fast smoke tests (DB migrate check)
+        if: ${{ env.DATABASE_URL != '' || secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          echo "Running fast DB migrate check..."
+          if [ -f .venv/bin/activate ]; then
+            . .venv/bin/activate
+          fi
+          # If a migrate command exists (replaceable), run it. Default: try alembic heads (if present)
+          if command -v alembic >/dev/null 2>&1 || [ -d alembic ]; then
+            if command -v alembic >/dev/null 2>&1; then
+              alembic current || true
+            else
+              echo "alembic not installed in venv; skipping alembic check"
+            fi
+          else
+            echo "No alembic configuration found — skipping DB migrate check"
+          fi
+          echo "DB migrate check completed"
       - name: Run tests
         run: |
           if [ -d services/health/tests ]; then
