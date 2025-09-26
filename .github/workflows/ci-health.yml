@@ -1,4 +1,5 @@
 name: CI - Health Service
+name: CI - Health Service
 
 on:
   push:
@@ -33,6 +34,7 @@ jobs:
           if [ -d services/health/tests ]; then
             pytest services/health/tests -q
           else
-            echo "No health tests found (services/health/tests). Skipping tests." 
+            echo "No health tests found (services/health/tests). Skipping tests."
             exit 0
           fi
+
