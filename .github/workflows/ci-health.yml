@@ -18,20 +18,28 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: |
+          set -euo pipefail
+          # create a venv so installs don't pollute the runner
+          python -m venv .venv
+          . .venv/bin/activate
           python -m pip install --upgrade pip
           echo "Listing workspace files for debugging..."
           ls -R . | sed -n '1,200p'
           if [ -f services/health/requirements.txt ]; then
             echo "Found services/health/requirements.txt — installing from file"
-            pip install -r services/health/requirements.txt
+            python -m pip install -r services/health/requirements.txt
           else
             echo "services/health/requirements.txt not found — falling back to explicit installs"
-            pip install fastapi==0.95.2 uvicorn[standard]==0.22.0 pytest
+            python -m pip install "fastapi==0.95.2" "uvicorn[standard]==0.22.0" "pytest" "redis>=4.6.0,<5.0"
           fi
       - name: Fast smoke tests (DB migrate check)
-        if: ${{ env.DATABASE_URL != '' || secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
+          # runtime guard: skip if no DATABASE_URL env var set (avoids using secrets in YAML)
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "No DATABASE_URL configured; skipping DB migrate check"
+            exit 0
+          fi
           echo "Running fast DB migrate check..."
           if [ -f .venv/bin/activate ]; then
             . .venv/bin/activate
@@ -52,6 +60,6 @@ jobs:
           if [ -d services/health/tests ]; then
             pytest services/health/tests -q
           else
-            echo "No health tests found (services/health/tests). Skipping tests." 
+            echo "No health tests found (services/health/tests). Skipping tests."
             exit 0
           fi
