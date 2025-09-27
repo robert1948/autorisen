@@ -53,3 +53,33 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+
+      - name: Wait for release
+        run: |
+          echo "Waiting 6s for Heroku router to route to the new release"
+          sleep 6
+
+      - name: Post-release smoke test
+        env:
+          APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+        run: |
+          set -e
+          URL="https://${APP_NAME}.herokuapp.com/alive"
+          # Try /alive up to 6 times, then fallback to /
+          for i in 1 2 3 4 5 6; do
+            echo "Attempt $i: curl -fsS $URL"
+            if curl -fsS "$URL" -m 10; then
+              echo "Alive endpoint responded"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Fallback: trying /"
+          if curl -fsS "https://${APP_NAME}.herokuapp.com/" -m 10; then
+            echo "/ responded (fallback)"
+            exit 0
+          fi
+
+          echo "Smoke test failed: app did not respond on /alive or /"
+          exit 1
