@@ -1,14 +1,16 @@
 # Master Project Plan — autorisen
 
-Snapshot: 2025-09-26
+Snapshot: 2025-09-27
 
 See also: `senior_devops.md`
 
 Overview
+
 - Purpose: provide a single, actionable project plan for ops, infra, and product to execute and update. Keep AWS changes minimal and reversible. Where data is missing, tasks include TODO placeholders.
 - Scope: align secrets (GitHub → Heroku), validate OIDC assume-role, run a live audit (Heroku + AWS), produce Deliverables A–E, and prepare a minimal ECS migration proposal (cluster + single task).
 
 Scope & MVP definition
+
 - MVP scope (minimal):
   - Stable Heroku deployment for `autorisen` (no change in app platform during MVP).
   - GitHub as SSOT for secrets; GitHub → Heroku sync for mapped keys.
@@ -35,6 +37,47 @@ Workstreams
 
 - Cost (R: finance/ops)
   - Track and limit AWS provisioning; prefer Fargate Spot for dev.
+
+Authoritative project plan (CSV)
+
+The primary source of truth for actionable tasks is the CSV located at `docs/autorisen_project_plan.csv`. Edit that file to add, update, or change task rows; the Markdown narrative in this document provides context and milestones but the CSV is the machine-readable, team-facing plan.
+
+Snapshot (from `docs/autorisen_project_plan.csv`) — 2025-09-27
+
+- Total tasks: 70
+- Status counts: todo: 64, busy: 4, done: 2
+
+Recent updates (2025-09-27): DEVOPS-033 set to `busy`; DEVOPS-034 and ADMIN-030 marked `done` after staging deploy and smoke-test validation. DEVOPS-035, OBS-036, and OBS-037 are `busy` as work begins. Many rows updated with today's timestamp.
+
+Top priority (P1) tasks — quick view
+
+| Task ID | Title | Owner | Estimate | Depends On |
+|---|---|---:|---:|---:|
+| AUTH-001 | Design auth data model | backend | 6 | |
+| AUTH-002 | Implement /auth/register + hashing | backend | 8 | AUTH-001 |
+| AUTH-003 | Implement /auth/login + JWT | backend | 8 | AUTH-002 |
+| AUTH-004 | /auth/me and refresh flow | backend | 6 | AUTH-003 |
+| AUTH-005 | Security hardening & tests | backend | 6 | AUTH-003 |
+| ORG-006 | Org model + memberships | backend | 8 | AUTH-001 |
+| ORG-007 | /orgs CRUD + /orgs/{id}/members | backend | 8 | ORG-006, AUTH-004 |
+| AIGW-009 | Provider adapter interface | backend | 6 | |
+| AIGW-010 | OpenAI adapter + quotas | backend | 10 | AIGW-009, AUTH-003 |
+| AIGW-011 | /ai/complete|/ai/chat routes | backend | 8 | AIGW-010 |
+| ORCH-012 | Run model + state machine | backend | 10 | AIGW-011 |
+| ORCH-013 | POST /flows/{name}/run | backend | 8 | ORCH-012 |
+
+How to use and update
+
+- Edit `docs/autorisen_project_plan.csv` for day-to-day task changes (status, owner, estimates). Follow the CSV schema:
+  - Required header: module,area,task_id,task_title,description,owner,priority,estimate,depends_on,status,started_at,updated_at,done_at,notes
+  - `status` must be one of: todo, busy, done
+  - Dates use ISO 8601 (YYYY-MM-DD)
+- Commit message convention: `docs(plan): <short description>` (e.g., `docs(plan): mark AUTH-002 in-progress`)
+- When milestones or high-level narrative shift, update this Markdown to record rationale and dates; include links to PRs or Action runs in the CSV `notes` column.
+
+Automation note
+
+- We include `scripts/plan_md_to_csv.py` which extracts Markdown tables to CSV for one-way conversions; currently the workflow is manual: update the CSV and keep this Markdown in sync. If you want, I can add a reverse helper to regenerate this snapshot from the CSV automatically.
 
 Milestones & dates (Gantt-style)
 
@@ -75,15 +118,18 @@ Operating Cadence
 Checklists
 
 Release checklist (minimal)
+
 1. CI green for `ci-health` and `docker-publish` (or run locally).
 2. `HEROKU_APP_NAME` and `HEROKU_API_KEY` present in repo secrets.
 3. Smoke test `services/health` passes after deploy.
 
 Rollback checklist
+
 1. Revert release commit and re-run deploy using previous image tag.
 2. Verify `/alive` returns 200.
 
 Secrets & Infra change checklist
+
 1. Create mapping in `infra/secrets-mapping.json` (reviewed by SEC).
 2. Run sync in dry-run (`ci/sync-github-to-heroku.yml`).
 3. Approve and run `--apply` in controlled workflow.
