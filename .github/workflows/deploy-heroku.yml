@@ -1,0 +1,47 @@
+# .github/workflows/deploy-heroku.yml
+name: CI & Deploy (Heroku autorisen) (no-marketplace)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "client/**"
+      - "infra/**"
+      - ".github/workflows/deploy-heroku.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_APP: ${{ secrets.HEROKU_APP }}
+    steps:
+      - name: Checkout (no actions)
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach "${GITHUB_SHA}"
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+          heroku --version
+
+      - name: Login to Heroku Container Registry
+        run: |
+          echo "$HEROKU_API_KEY" | heroku auth:token >/dev/null 2>&1 || true
+          HEROKU_AUTH_HEADER="Authorization: Bearer $HEROKU_API_KEY"
+          docker login --username=_ --password="$(heroku auth:token)" registry.heroku.com
+
+      - name: Build image
+        run: |
+          # Adjust Dockerfile path/context if needed:
+          docker build -t registry.heroku.com/$HEROKU_APP/web -f infra/Dockerfile .
+
+      - name: Push & release
+        run: |
+          docker push registry.heroku.com/$HEROKU_APP/web
+          heroku container:release web -a "$HEROKU_APP"
