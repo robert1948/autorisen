@@ -1,9 +1,9 @@
-name: Snapshot Project Plan (PR)
+name: Snapshot Project Plan (PR; no-marketplace)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 5 * * *" # daily 05:00 UTC
+    - cron: "0 5 * * *"
 
 permissions:
   contents: write
@@ -12,65 +12,47 @@ permissions:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: bot/snapshot-${{ github.run_id }}
     steps:
-      - name: Checkout repository (shell)
+      - name: Checkout
         run: |
-          # Clone using the provided GITHUB_TOKEN so we don't rely on actions/checkout
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} .
-
-      - name: Set up Python (verify)
-        run: |
-          python3 --version || true
-          python3 -m pip install --upgrade pip || true
-
-      # (A) Generate snapshot from CSV
-      - name: Generate snapshot
-        run: |
-          python3 scripts/generate_snapshot.py
-
-      # (B) Quick guard: fail if nothing changed (prevents empty PR noise)
-      - name: Detect changes
-        id: gitdiff
-        run: |
-          # Stage only the generated snapshot to avoid accidental unrelated changes
-          git add docs/Master_ProjectPlan.generated.md || true
-          if git diff --staged --quiet; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-      - if: steps.gitdiff.outputs.changed == 'false'
-        run: echo "No changes; exiting."
-        shell: bash
-
-      # (C) Validate CSV before PR (re-uses the same pytest you’ll add below)
-      - if: steps.gitdiff.outputs.changed == 'true'
-        name: Set up Python for validation
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-      - if: steps.gitdiff.outputs.changed == 'true'
-        name: Run CSV validator
-        run: |
-          python -m pip install --upgrade pip
-          python3 scripts/validate_plan.py
-
-      # (D) Create PR (only if changed + tests passed)
-      - if: steps.gitdiff.outputs.changed == 'true'
-        name: Create branch, push, and open PR (shell)
-        env:
-          REPO: ${{ github.repository }}
-          GHTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BRANCH=bot/snapshot-${{ github.run_id }}
+          set -e
+          git init .
+          git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.ref_name }}"
           git checkout -b "$BRANCH"
-          git add docs/Master_ProjectPlan.generated.md
-          git commit -m "chore: snapshot project plan" || echo "no changes to commit"
-          git push https://x-access-token:${GHTOKEN}@github.com/${REPO} HEAD:$BRANCH
-          # Create PR via API using curl (avoids embedding Python here-doc in YAML)
-          PR_JSON=$(printf '%s' "{\"title\":\"Snapshot: project plan\",\"head\":\"$BRANCH\",\"base\":\"main\",\"body\":\"Automated snapshot of docs/autorisen_project_plan.csv\"}")
-          curl -s -X POST -H "Authorization: token ${GHTOKEN}" -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${REPO}/pulls -d "$PR_JSON" -o /tmp/pr_resp
-          echo "PR response:" && cat /tmp/pr_resp || true
+
+      - name: Generate snapshot (edit as needed)
+        run: |
+          python3 tools/snapshot_plan.py  # must write docs/autorisen_project_plan.csv
+
+      - name: Stage & detect changes
+        id: diff
+        run: |
+          git add -A
+          if git diff --staged --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore: snapshot project plan"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push branch
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git push -u origin "$BRANCH"
+
+      - name: Open PR
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          # gh CLI is preinstalled on ubuntu-latest
+          gh pr create \
+            --head "$BRANCH" \
+            --base "${{ github.ref_name }}" \
+            --title "Snapshot: project plan" \
+            --body "Automated snapshot of docs/autorisen_project_plan.csv" \
+            --label automation
