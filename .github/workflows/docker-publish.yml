@@ -2,7 +2,7 @@ name: Build and publish Docker image
 
 on:
   push:
-    branches: [main]
+    # Only build/publish images when a tag is pushed (release or version tags)
     tags: ["v*", "release-*"]
   workflow_dispatch:
 
