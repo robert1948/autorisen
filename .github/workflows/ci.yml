@@ -1,14 +1,11 @@
 name: CI (no-marketplace)
-
 on:
-  push: { branches: [main] }
-  pull_request: { branches: [main] }
-
+  push: { branches: [ main ] }
+  pull_request: { branches: [ main ] }
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      # Checkout without actions/checkout
       - name: Checkout
         run: |
           set -e
@@ -16,12 +13,9 @@ jobs:
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git fetch --depth=1 origin "${{ github.sha }}"
           git checkout --detach "${{ github.sha }}"
-
-      # Python is preinstalled on ubuntu-latest
       - name: Install deps
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install pytest
-
       - name: Run tests
         run: pytest -q
