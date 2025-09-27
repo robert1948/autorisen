@@ -1,33 +1,65 @@
-name: Generate Master Project Plan snapshot
+name: Snapshot Project Plan (PR)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "docs/autorisen_project_plan.csv"
-      - "scripts/generate_snapshot.py"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * *" # daily 05:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  generate:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
+      # (A) Generate snapshot from CSV
       - name: Generate snapshot
-        run: python scripts/generate_snapshot.py
-      - name: Commit snapshot if changed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet docs/Master_ProjectPlan.generated.md; then
-            git add docs/Master_ProjectPlan.generated.md
-            git commit -m "docs(plan): update generated Master_ProjectPlan snapshot"
-            git push origin HEAD:main
+          python3 scripts/generate_snapshot.py
+
+      # (B) Quick guard: fail if nothing changed (prevents empty PR noise)
+      - name: Detect changes
+        id: gitdiff
+        run: |
+          git add -A
+          if git diff --staged --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
           else
-            echo "No changes to snapshot"
+            echo "changed=true" >> $GITHUB_OUTPUT
           fi
+      - if: steps.gitdiff.outputs.changed == 'false'
+        run: echo "No changes; exiting."
+        shell: bash
+
+      # (C) Validate CSV before PR (re-uses the same pytest you’ll add below)
+      - if: steps.gitdiff.outputs.changed == 'true'
+        name: Set up Python for validation
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - if: steps.gitdiff.outputs.changed == 'true'
+        name: Run CSV validator
+        run: |
+          python -m pip install --upgrade pip
+          python3 scripts/validate_plan.py
+
+      # (D) Create PR (only if changed + tests passed)
+      - if: steps.gitdiff.outputs.changed == 'true'
+        name: Open PR with changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: snapshot project plan"
+          title: "Snapshot: project plan"
+          body: "Automated snapshot of docs/autorisen_project_plan.csv"
+          branch: bot/snapshot-${{ github.run_id }}
+          labels: automation
