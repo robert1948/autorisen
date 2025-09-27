@@ -12,6 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Diagnostics (CI)
+        run: |
+          echo "RUNNING DIAGNOSTICS"
+          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "GITHUB_ACTOR=$GITHUB_ACTOR"
+          if [ -n "${GITHUB_TOKEN-}" ]; then echo "GITHUB_TOKEN is set"; else echo "GITHUB_TOKEN is NOT set"; fi
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
