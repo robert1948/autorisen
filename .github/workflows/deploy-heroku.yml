@@ -65,7 +65,15 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           set -euo pipefail
-          BASE="https://${APP_NAME}.herokuapp.com"
+          # Prefer the Heroku app's canonical web URL (handles apps with suffixes or review apps).
+          APP_WEB_URL=$(heroku apps:info --app "$APP_NAME" --json 2>/dev/null | python -c 'import sys,json;obj=json.load(sys.stdin);print(obj.get("app",{}).get("web_url","").rstrip("/"))' || true)
+
+          if [ -n "$APP_WEB_URL" ]; then
+            BASE="$APP_WEB_URL"
+          else
+            BASE="https://${APP_NAME}.herokuapp.com"
+          fi
+
           TARGETS=("${BASE}/api/health" "${BASE}/alive" "${BASE}/")
 
           for tgt in "${TARGETS[@]}"; do
