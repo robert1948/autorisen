@@ -1,21 +1,35 @@
 name: CI (no-marketplace)
+
 on:
-  push: { branches: [ main ] }
-  pull_request: { branches: [ main ] }
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (supports push & PR; no external actions)
         run: |
-          set -e
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git init .
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${{ github.sha }}"
-          git checkout --detach "${{ github.sha }}"
-      - name: Install deps
+          # Fetch heads, tags, and PR refs so $GITHUB_SHA is resolvable in all events
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/tags/*:refs/tags/* \
+            +refs/pull/*:refs/remotes/pull/*
+          git checkout --detach "${GITHUB_SHA}"
+
+      - name: Python deps (pytest + optional project requirements)
         run: |
+          set -euo pipefail
           python3 -m pip install --upgrade pip
           python3 -m pip install pytest
+          if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python3 -m pip install -r requirements-dev.txt; fi
+
       - name: Run tests
+        env:
+          PYTHONUNBUFFERED: "1"
         run: pytest -q
