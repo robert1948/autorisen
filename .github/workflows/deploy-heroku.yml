@@ -59,29 +59,39 @@ jobs:
           echo "Waiting 6s for Heroku router to route to the new release"
           sleep 6
 
-      - name: Post-release smoke test
+      - name: Post-release smoke test (debug)
         env:
           APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          set -e
+          set -euo pipefail
           BASE="https://${APP_NAME}.herokuapp.com"
-          # Try primary health endpoint first, then /alive, then /
           TARGETS=("${BASE}/api/health" "${BASE}/alive" "${BASE}/")
 
           for tgt in "${TARGETS[@]}"; do
             echo "Checking $tgt"
             for i in 1 2 3 4 5 6; do
-              echo "Attempt $i: curl -sS -o /dev/null -w '%{http_code}' $tgt"
-              code=$(curl -sS -o /dev/null -w '%{http_code}' "$tgt" -m 10 || true)
-              echo "HTTP $code"
-              if [ "$code" = "200" ]; then
+              echo "Attempt $i: GET $tgt"
+              tmp=$(mktemp)
+              http_code=$(curl -sS -w '%{http_code}' -o "$tmp" "$tgt" -m 10 || true)
+              echo "HTTP $http_code"
+              if [ "$http_code" = "200" ]; then
                 echo "OK: $tgt returned 200"
+                cat "$tmp"
+                rm -f "$tmp"
                 exit 0
               fi
+              echo "--- response (truncated to 4k) ---"
+              head -c 4096 "$tmp" || true
+              echo "\n--- end response ---"
+              rm -f "$tmp"
               sleep 2
             done
             echo "$tgt did not return 200 after retries, trying next target"
           done
+
+          echo "All targets failed — dumping recent Heroku logs for diagnosis"
+          # Install and show Heroku logs (requires HEROKU_API_KEY set in secrets)
+          heroku logs --app "$APP_NAME" --num 150 || true
 
           echo "Smoke test failed: none of the targets responded with 200"
           exit 1
