@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+import textwrap
 import os
 
 app = FastAPI(title="Autorisen API", version="0.0.1")
@@ -18,4 +20,29 @@ def alive():
 @app.get("/")
 def root():
     """Simple root route so platform-level health checks (/) return 200."""
-    return {"ok": True}
+    html = textwrap.dedent(
+        """\
+        <!doctype html>
+        <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <title>Autorisen</title>
+                <style>
+                    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 24px; background:#111; color:#eee }
+                    pre { background:#000; color:#fff; padding:12px; border-radius:6px; }
+                    .container { max-width:900px; margin:48px auto }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Autorisen</h1>
+                    <p>Minimal landing page. API is available under <code>/api/</code>.</p>
+                    <h2>Health</h2>
+                    <pre>{"ok":true}</pre>
+                </div>
+            </body>
+        </html>
+        """
+    )
+    return HTMLResponse(content=html, status_code=200)
