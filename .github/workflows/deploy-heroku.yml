@@ -64,22 +64,24 @@ jobs:
           APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
           set -e
-          URL="https://${APP_NAME}.herokuapp.com/alive"
-          # Try /alive up to 6 times, then fallback to /
-          for i in 1 2 3 4 5 6; do
-            echo "Attempt $i: curl -fsS $URL"
-            if curl -fsS "$URL" -m 10; then
-              echo "Alive endpoint responded"
-              exit 0
-            fi
-            sleep 2
+          BASE="https://${APP_NAME}.herokuapp.com"
+          # Try primary health endpoint first, then /alive, then /
+          TARGETS=("${BASE}/api/health" "${BASE}/alive" "${BASE}/")
+
+          for tgt in "${TARGETS[@]}"; do
+            echo "Checking $tgt"
+            for i in 1 2 3 4 5 6; do
+              echo "Attempt $i: curl -sS -o /dev/null -w '%{http_code}' $tgt"
+              code=$(curl -sS -o /dev/null -w '%{http_code}' "$tgt" -m 10 || true)
+              echo "HTTP $code"
+              if [ "$code" = "200" ]; then
+                echo "OK: $tgt returned 200"
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "$tgt did not return 200 after retries, trying next target"
           done
 
-          echo "Fallback: trying /"
-          if curl -fsS "https://${APP_NAME}.herokuapp.com/" -m 10; then
-            echo "/ responded (fallback)"
-            exit 0
-          fi
-
-          echo "Smoke test failed: app did not respond on /alive or /"
+          echo "Smoke test failed: none of the targets responded with 200"
           exit 1
