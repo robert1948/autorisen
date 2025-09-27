@@ -13,3 +13,9 @@ def health():
 def alive():
     """Lightweight health endpoint used by CI smoke tests."""
     return {"alive": True}
+
+
+@app.get("/")
+def root():
+    """Simple root route so platform-level health checks (/) return 200."""
+    return {"ok": True}
