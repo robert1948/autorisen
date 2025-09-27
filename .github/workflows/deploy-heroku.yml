@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      HEROKU_APP: ${{ secrets.HEROKU_APP }}
+      HEROKU_APP:     ${{ secrets.HEROKU_APP_NAME }}
     steps:
       - name: Checkout (no actions)
         run: |
@@ -39,7 +39,7 @@ jobs:
       - name: Build image
         run: |
           # Adjust Dockerfile path/context if needed:
-          docker build -t registry.heroku.com/$HEROKU_APP/web -f infra/Dockerfile .
+          docker build -t registry.heroku.com/$HEROKU_APP/web -f Dockerfile .
 
       - name: Push & release
         run: |
