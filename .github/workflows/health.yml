@@ -1,0 +1,24 @@
+# .github/workflows/health.yml
+name: CI - Health Service (no-marketplace)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/health.yml"
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (no actions)
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach "${GITHUB_SHA}"
+      - name: Python quick check
+        run: |
+          python3 -V
+          python3 -m py_compile $(git ls-files 'backend/**/*.py' || true)
