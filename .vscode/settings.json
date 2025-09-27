@@ -42,7 +42,7 @@
   ],
   "eslint.codeActionsOnSave.rules": null,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
 
   // ---- Containers & Docker ----
