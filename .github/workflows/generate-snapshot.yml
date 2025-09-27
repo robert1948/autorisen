@@ -1,0 +1,33 @@
+name: Generate Master Project Plan snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/autorisen_project_plan.csv"
+      - "scripts/generate_snapshot.py"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Generate snapshot
+        run: python scripts/generate_snapshot.py
+      - name: Commit snapshot if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet docs/Master_ProjectPlan.generated.md; then
+            git add docs/Master_ProjectPlan.generated.md
+            git commit -m "docs(plan): update generated Master_ProjectPlan snapshot"
+            git push origin HEAD:main
+          else
+            echo "No changes to snapshot"
+          fi
