@@ -31,7 +31,6 @@ Billing & Plans,Backend,BILL-029,Usage metering & credits,Track AI usage; per-te
 Admin Console,Backend,ADMIN-030,Health/smoke endpoints,/admin/health; per-service checks.,backend,P1,4,,done,2025-09-27,2025-09-27,2025-09-27,added /alive and smoke endpoints; verified
 Admin Console,Backend,ADMIN-031,Feature flags + RBAC,Flags service + guards + audit.,backend,P2,8,ORG-006,todo,,2025-09-27,,
 Admin Console,Backend,ADMIN-032,Audit views,Admin audit logs search/export.,backend,P2,6,ANALYT-025,todo,,2025-09-27,,
-Environments & Delivery,DevOps,DEVOPS-033,Docker Compose local stack,"Backend, DB, Redis; seed data; make targets.",devops,P1,6,,todo,,2025-09-27,,
 Environments & Delivery,DevOps,DEVOPS-033,Docker Compose local stack,"Backend, DB, Redis; seed data; make targets.",devops,P1,6,,busy,2025-09-27,2025-09-27,,started local compose for smoke testing
 Environments & Delivery,DevOps,DEVOPS-034,Staging deploy (Heroku),Autorisen app: build pipelines + smoke tests.,devops,P1,8,DEVOPS-033,done,2025-09-27,2025-09-27,2025-09-27,staging deploy validated; smoke-test passed
 Environments & Delivery,DevOps,DEVOPS-035,Prod deploy (Capecraft),Promotion from staging; rollback plan.,devops,P1,6,DEVOPS-034,busy,2025-09-27,2025-09-27,,starting prod promotion prep
