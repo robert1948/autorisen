@@ -1,9 +1,9 @@
 # Master Project Plan (generated snapshot) — autorisen
 
-Snapshot: 2025-09-27
+Snapshot: 2025-09-28
 
-- Total tasks: 74
-- Status counts: todo: 64, busy: 7, done: 3
+- Total tasks: 70
+- Status counts: todo: 64, done: 2, busy: 4
 
 ## Top priority (P1) tasks — quick view
 
