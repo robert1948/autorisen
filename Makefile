@@ -112,3 +112,26 @@ fe-shell: ## Open a shell in the frontend container
 be-shell: ## Open a shell in the backend container
 	$(COMPOSE) exec $(BACKEND_SVC) sh
 
+# Run alembic upgrade against a temp DB URL (used in CI) or local DATABASE_URL
+migrate:
+	@/opt/venv/bin/alembic -c backend/alembic.ini upgrade head
+
+# Dry-run (generate SQL only) – safe in CI
+migrate-dry:
+	@/opt/venv/bin/alembic -c backend/alembic.ini upgrade head --sql >/dev/null
+
+# Detect model/schema drift (fails if new autogen wants to create a file)
+check-drift:
+	@tmpdir=$$(mktemp -d); \
+	out="$$tmpdir/auto.py"; \
+	/opt/venv/bin/alembic -c backend/alembic.ini revision --autogenerate -m "drift-check" -s "$$tmpdir" >/dev/null; \
+	if [ -s "$$out" ] || ls "$$tmpdir"/*.py >/dev/null 2>&1; then \
+	  echo "❌ Drift detected: models differ from migrations."; \
+	  rm -rf "$$tmpdir"; \
+	  exit 1; \
+	else \
+	  echo "✅ No drift."; \
+	  rm -rf "$$tmpdir"; \
+	fi
+plan-snapshot:
+	@python3 tools/snapshot_plan.py && echo "Plan snapshot complete."
