@@ -2,22 +2,17 @@
 
 Snapshot: 2025-09-28
 
-- Total tasks: 70
-- Status counts: todo: 64, done: 2, busy: 4
+- Total tasks: 15
+- Status counts: In Progress: 2, Todo: 10, Done: 1, heroku): 1, Blocked: 1
 
-## Top priority (P1) tasks — quick view
+## Top priority (P1/High) tasks — quick view
 
-| Task ID | Title | Owner | Estimate | Depends On |
-|---|---|---:|---:|---:|
-| AUTH-001 | Design auth data model | backend | 6 |  |
-| AUTH-002 | Implement /auth/register + hashing | backend | 8 | AUTH-001 |
-| AUTH-003 | Implement /auth/login + JWT | backend | 8 | AUTH-002 |
-| AUTH-004 | /auth/me and refresh flow | backend | 6 | AUTH-003 |
-| AUTH-005 | Security hardening & tests | backend | 6 | AUTH-003 |
-| ORG-006 | Org model + memberships | backend | 8 | AUTH-001 |
-| ORG-007 | /orgs CRUD + /orgs/{id}/members | backend | 8 | ORG-006,AUTH-004 |
-| AIGW-009 | Provider adapter interface | backend | 6 |  |
-| AIGW-010 | OpenAI adapter + quotas | backend | 10 | AIGW-009,AUTH-003 |
-| AIGW-011 | /ai/complete|/ai/chat routes | backend | 8 | AIGW-010 |
-| ORCH-012 | Run model + state machine | backend | 10 | AIGW-011 |
-| ORCH-013 | POST /flows/{name}/run | backend | 8 | ORCH-012 |
+| Task ID | Title | Owner | Priority | Start | Due | Depends On |
+|---|---|---|---|---|---|---|
+| T-001 | Stabilize docker-compose for local dev | Robert | High | 2025-09-28 | 2025-09-28 | - |
+| T-002 | Fix Alembic env.py & config | Robert | High | 2025-09-28 | 2025-09-29 | T-001 |
+| T-003 | Generate initial DB migration (init schema) | Robert | High | 2025-09-29 | 2025-09-29 | T-002 |
+| T-004 | Wire /api/health /alive /ping routes | Robert | High | 2025-09-26 | 2025-09-27 | - |
+| T-005 | Create .env.example for local & Heroku | Robert | High | 2025-09-28 | 2025-09-28 | - |
+| T-007 | Heroku staging deploy (autorisen) | Robert | High | 2025-09-29 | 2025-09-29 | - |
+| T-009 | Frontend landing page (parity with cape-control.com) | Robert | High | 2025-09-29 | 2025-10-01 | - |

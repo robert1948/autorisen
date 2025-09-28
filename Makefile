@@ -1,89 +1,114 @@
+# =============================================================================
+# Autorisen / AutoLocal — Makefile (Docker Compose local dev)
+# =============================================================================
+.ONESHELL:
 SHELL := /bin/bash
-PY := python3
-PIP := $(PY) -m pip
-VENV := .venv
-REQ := requirements.txt
-IMAGE ?= autorisen:local
-PORT ?= 8000
+.DEFAULT_GOAL := help
 
-.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku clean
+# ---- Config ---------------------------------------------------------------
+PROJECT_NAME ?= autorisen
+COMPOSE       ?= docker compose
+COMPOSE_FILE  ?= docker-compose.yml
+BACKEND_SVC   ?= backend
+FRONTEND_SVC  ?= frontend
+DB_SVC        ?= db
+PORT_API      ?= 8000
+PORT_FE       ?= 3000
+HOST_DB_PORT  ?= 5433
 
-help:
-	@echo "Available targets:"
-	@echo "  make venv            - create a virtualenv in $(VENV)"
-	@echo "  make install         - install project dependencies (uses $(REQ) if present)"
-	@echo "  make format          - run code formatters (black/isort)"
-	@echo "  make lint            - run linters (ruff)"
-	@echo "  make test            - run tests (pytest)"
-	@echo "  make docker-build    - build docker image (IMAGE=$(IMAGE))"
-	@echo "  make docker-run      - run docker image locally (exposes $(PORT))"
-	@echo "  make deploy-heroku   - build/push/release to Heroku Container Registry (requires HEROKU_APP_NAME and heroku CLI)"
-	@echo "  make clean           - remove common build artifacts"
+# Paths inside backend container
+ALEMBIC_BIN   ?= /opt/venv/bin/alembic
+BACKEND_DIR   ?= /app/backend
 
-venv:
-	@if [ -d "$(VENV)" ]; then \
-		echo "Virtualenv $(VENV) already exists"; \
-	else \
-		$(PY) -m venv $(VENV); \
-		echo "Created virtualenv $(VENV)"; \
-	fi
+# ---- Helpers --------------------------------------------------------------
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*##"}; /^[a-zA-Z0-9_\-]+:.*##/ {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-install: venv
-	@echo "Installing dependencies..."
-	@if [ -f "$(REQ)" ]; then \
-		$(VENV)/bin/python -m pip install -r $(REQ); \
-	else \
-		$(VENV)/bin/python -m pip install -e . || true; \
-		echo "No requirements.txt found; attempted editable install"; \
-	fi
+# ---- Compose lifecycle ----------------------------------------------------
+up: ## Build and start all services (detached)
+	$(COMPOSE) -f $(COMPOSE_FILE) up --build -d
 
-format:
-	@echo "Running formatters..."
-	@$(VENV)/bin/python -m pip install black isort >/dev/null 2>&1 || true
-	@$(VENV)/bin/black . || true
-	@$(VENV)/bin/isort . || true
+build: ## Build containers without starting
+	$(COMPOSE) -f $(COMPOSE_FILE) build
 
-lint:
-	@echo "Running ruff linter..."
-	@$(VENV)/bin/python -m pip install ruff >/dev/null 2>&1 || true
-	@$(VENV)/bin/ruff check . || true
+restart: ## Restart (recreate) all services
+	$(COMPOSE) -f $(COMPOSE_FILE) up -d --force-recreate
 
-test:
-	@echo "Running tests..."
-	@$(VENV)/bin/python -m pip install pytest >/dev/null 2>&1 || true
-	@$(VENV)/bin/pytest -q || true
+stop: ## Stop containers (keep)
+	$(COMPOSE) -f $(COMPOSE_FILE) stop
 
-# Docker targets
-docker-build:
-	@echo "Building docker image $(IMAGE)..."
-	docker build -t $(IMAGE) .
+down: ## Stop and remove containers (keep volumes)
+	$(COMPOSE) -f $(COMPOSE_FILE) down
 
-docker-run:
-	@echo "Running docker image $(IMAGE) on port $(PORT)..."
-	docker run --rm -p $(PORT):$(PORT) --env PORT=$(PORT) $(IMAGE)
+clean: ## Stop and remove containers + volumes (WIPE DB)
+	$(COMPOSE) -f $(COMPOSE_FILE) down -v
 
-# Push to registry (generic). If you want to push to Heroku, set HEROKU_APP_NAME.
-docker-push:
-	@if [ -z "$(REGISTRY)" ]; then \
-		echo "Please set REGISTRY or use deploy-heroku for Heroku (set HEROKU_APP_NAME)."; exit 1; \
-	fi
-	@echo "Tagging and pushing to $(REGISTRY)/$(IMAGE)..."
-	docker tag $(IMAGE) $(REGISTRY)/$(IMAGE)
-	docker push $(REGISTRY)/$(IMAGE)
+# ---- Logs & Open ----------------------------------------------------------
+logs: ## Tail all logs
+	$(COMPOSE) logs -f --tail=200
 
-# Heroku container deploy (requires heroku CLI and HEROKU_APP_NAME env var)
-deploy-heroku: docker-build
-	@if [ -z "$(HEROKU_APP_NAME)" ]; then \
-		echo "Set HEROKU_APP_NAME environment variable to your Heroku app name"; exit 1; \
-	fi
-	@echo "Tagging image for Heroku registry..."
-	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_NAME)/web
-	@echo "Logging in to Heroku Container Registry (make sure HEROKU_API_KEY is exported or you are logged in)..."
-	@heroku container:login >/dev/null 2>&1 || true
-	@echo "Pushing image to Heroku registry..."
-	docker push registry.heroku.com/$(HEROKU_APP_NAME)/web
-	@echo "Releasing on Heroku..."
-	heroku container:release web --app $(HEROKU_APP_NAME)
+be-logs: ## Tail backend logs
+	$(COMPOSE) logs -f $(BACKEND_SVC)
 
-clean:
-	rm -rf build/ dist/ *.egg-info .pytest_cache/ .venv
+fe-logs: ## Tail frontend logs
+	$(COMPOSE) logs -f $(FRONTEND_SVC)
+
+open: ## Open Swagger UI
+	xdg-open http://localhost:$(PORT_API)/docs || true
+
+fe-open: ## Open Vite frontend
+	xdg-open http://localhost:$(PORT_FE) || true
+
+# ---- Database (Alembic) ---------------------------------------------------
+migrate: ## Alembic upgrade head (run inside backend container)
+	$(COMPOSE) exec -T $(BACKEND_SVC) sh -lc '\
+		cd $(BACKEND_DIR) && $(ALEMBIC_BIN) -c alembic.ini upgrade head'
+
+revision: ## Create new Alembic revision with message MSG="..."
+	@if [ -z "$(MSG)" ]; then echo "Usage: make revision MSG=\"your message\""; exit 1; fi
+	$(COMPOSE) exec -T $(BACKEND_SVC) sh -lc '\
+		cd $(BACKEND_DIR) && $(ALEMBIC_BIN) -c alembic.ini revision --autogenerate -m "$(MSG)"'
+
+rollback: ## Alembic downgrade by N steps (use N=1)
+	@if [ -z "$(N)" ]; then echo "Usage: make rollback N=1"; exit 1; fi
+	$(COMPOSE) exec -T $(BACKEND_SVC) sh -lc '\
+		cd $(BACKEND_DIR) && $(ALEMBIC_BIN) -c alembic.ini downgrade -$(N)'
+
+psql: ## Open psql to local DB (host: $(HOST_DB_PORT))
+	PGPASSWORD=devpass psql -h localhost -p $(HOST_DB_PORT) -U devuser -d devdb
+
+# ---- Diagnostics ----------------------------------------------------------
+smoke: ## Quick health checks (backend + DB + frontend)
+	@echo "Checking backend /api/health ..." && curl -fsS http://localhost:$(PORT_API)/api/health || true
+	@echo "Checking frontend root ..." && curl -fsS http://localhost:$(PORT_FE)/ || true
+	@echo "DB containers:" && $(COMPOSE) ps
+
+doctor: ## Print compose config and port checks
+	$(COMPOSE) config
+	@echo "Ports in use:"; ss -ltnp | grep -E ":($(PORT_API)|$(PORT_FE)|$(HOST_DB_PORT))" || true
+
+# ---- Heroku (staging: autorisen) -----------------------------------------
+heroku-login: ## Log in to Heroku Container Registry
+	heroku container:login
+
+heroku-deploy-stg: ## Build & push web image, release to autorisen
+	# requires: heroku login, app exists, stack=container
+	heroku container:push web -a autorisen
+	heroku container:release web -a autorisen
+
+heroku-logs: ## Tail Heroku logs for autorisen
+	heroku logs -t -a autorisen
+
+# ---- Docker Hub (optional) -----------------------------------------------
+dh-release: ## Build & push to Docker Hub (set IMG=repo/name:tag)
+	@if [ -z "$(IMG)" ]; then echo "Usage: make dh-release IMG=user/repo:tag"; exit 1; fi
+	docker build -t $(IMG) .
+	docker push $(IMG)
+
+# ---- Convenience ----------------------------------------------------------
+fe-shell: ## Open a shell in the frontend container
+	$(COMPOSE) exec $(FRONTEND_SVC) sh
+
+be-shell: ## Open a shell in the backend container
+	$(COMPOSE) exec $(BACKEND_SVC) sh
+
