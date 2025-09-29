@@ -1,0 +1,77 @@
+name: Plan → Issues Sync
+on:
+  push:
+    paths:
+      - "data/plan.csv"
+  schedule:
+    - cron: "5 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Install deps
+        run: python - <<'PY'
+import csv, os, sys, re, json, subprocess, shlex
+CSV="data/plan.csv"
+owner_repo=os.getenv("GITHUB_REPOSITORY")
+def run(cmd):
+    return subprocess.check_output(cmd, shell=True, text=True).strip()
+
+def gh_json(cmd):
+    out=run(cmd)
+    return json.loads(out) if out else None
+
+# Read rows
+rows=[]
+with open(CSV, newline='') as f:
+    r=csv.DictReader(f)
+    assert r.fieldnames==["file","group","subgroup","task","status"], f"Bad header {r.fieldnames}"
+    for row in r:
+        rows.append(row)
+
+# Load open issues with our naming shape
+issues = gh_json('gh issue list --state open --limit 200 --json number,title,labels,body') or []
+
+def title_of(row): return f"{row['group']}/{row['subgroup']}: {row['task']}"
+def labels_of(row): return [row['group'], row['subgroup'], f"status/{row['status']}"]
+def body_of(row): return f"File: `{row['file']}`\n\nSource: `data/plan.csv`"
+
+# Ensure labels exist
+existing_labels = set(l["name"] for l in gh_json('gh label list --json name') or [])
+wanted=set()
+for row in rows:
+    wanted.update(labels_of(row))
+for lab in sorted(wanted-existing_labels):
+    run(f'gh label create {shlex.quote(lab)} --force')
+
+# Upsert issues for todo/doing/blocked/review
+need_states={"todo","doing","blocked","review"}
+by_title={i["title"]:i for i in issues}
+for row in rows:
+    t=title_of(row); labs=labels_of(row); body=body_of(row)
+    if row["status"] in need_states:
+        if t in by_title:
+            # Update labels/body if drifted
+            num=by_title[t]["number"]
+            run(f'gh issue edit {num} --add-label {",".join(shlex.quote(x) for x in labs)} --body {shlex.quote(body)}')
+        else:
+            run(f'gh issue create --title {shlex.quote(t)} --body {shlex.quote(body)} --label {",".join(shlex.quote(x) for x in labs)}')
+    elif row["status"]=="done" and t in by_title:
+        num=by_title[t]["number"]
+        run(f'gh issue close {num} --comment "Closed by plan.csv (status=done)"')
+PY
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

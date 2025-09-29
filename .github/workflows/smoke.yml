@@ -1,0 +1,21 @@
+name: Smoke
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps (FastAPI + Uvicorn)
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "uvicorn[standard]" fastapi
+      - name: Boot app for smoke (background)
+        run: uvicorn backend.src.app:app --host 127.0.0.1 --port 8000 & sleep 3
+      - name: Hit /api/health
+        run: curl -sf http://127.0.0.1:8000/api/health

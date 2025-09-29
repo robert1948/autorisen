@@ -57,4 +57,7 @@ def root():
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     """Serve the site favicon for browsers and uptime monitors."""
-    return FileResponse("backend/src/static/favicon.ico")
+    return RedirectResponse(
+        "https://lightning-s3.s3.us-east-1.amazonaws.com/static/admin/img/favicon.ico",
+        status_code=307,
+    )

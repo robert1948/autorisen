@@ -1,0 +1,57 @@
+name: Main - Test, Deploy to Heroku, Smoke
+on:
+  push:
+    branches: [ main ]
+
+env:
+  APP: ${{ secrets.HEROKU_APP_STAGING }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+      - run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+      - run: |
+          if compgen -G "tests/**.py" > /dev/null; then pytest -q; else echo "No tests"; fi
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Fetch static assets from S3
+        run: scripts/fetch_assets.sh
+
+      - name: Docker login to Heroku
+        run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+
+      - name: Build & Push image
+        run: |
+          docker build -t registry.heroku.com/${{ env.APP }}/web .
+          docker push registry.heroku.com/${{ env.APP }}/web
+
+      - name: Release to Heroku
+        run: heroku container:release web --app $APP
+
+      - name: Smoke check (staging)
+        run: ./scripts/smoke_check.sh "https://${{ env.APP }}.herokuapp.com"
