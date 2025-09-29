@@ -10,7 +10,7 @@ backend/migrations/,db,alembic,Autogenerate initial models and upgrade head,done
 backend/migrations/env.py,db,alembic,Confirm metadata target + compare options,done
 .github/workflows/snapshot.yml,ci,plan,Nightly snapshot of plan.csv + PR,done
 .github/workflows/smoke.yml,ci,health,Smoke test: curl /api/health 200,done
-docs/DEVELOPMENT_CONTEXT.md,docs,runbook,Update ports/make targets/smoke steps,review
-client/src/pages/Home.tsx,frontend,ui,Show API health + backend version,todo
+docs/DEVELOPMENT_CONTEXT.md,docs,runbook,Update ports/make targets/smoke steps,done
+client/src/pages/Home.tsx,frontend,ui,Show API health + backend version,done
 "tools/validate_plan_csv.py",ci,tooling,"Keep header strict: file,group,subgroup,task,status",done
 Makefile,dev,dx,Add plan-validate and plan-open targets,done

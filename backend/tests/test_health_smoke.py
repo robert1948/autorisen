@@ -17,6 +17,7 @@ def test_health_endpoint_ok():
     assert response.status_code == 200
     payload = response.json()
     assert payload.get("status") in ("ok", "healthy")
+    assert isinstance(payload.get("version"), str)
 
 
 def test_alive_endpoint_ok():
