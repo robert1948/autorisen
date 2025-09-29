@@ -1,8 +1,8 @@
-ID,Milestone,Owner,Start,Target,Notes
----:,---,---,---:,---:,---
-M1,OIDC assume-role validated,ops,2025-09-26,2025-09-27,Merge PR #7 and run `Test OIDC` workflow
-M2,Secrets sync dry-run,ops,2025-09-27,2025-09-27,`ci/sync-github-to-heroku.yml` dispatch
-M3,Secrets sync apply (controlled),ops,2025-09-27,2025-09-28,Manual approval required
-M4,Live audit run & artifact,ops,2025-09-28,2025-09-28,`live-audit.yml` dispatch
-M5,Deliverables A–E published,project lead,2025-09-29,2025-09-29,Based on audit artifact
-M6,ECS minimal migration proposal,infra lead,2025-09-29,2025-10-06,Cost estimate + rollback plan
+ID,Milestone,Owner,Start,Target,Notes,Status
+---:,---,---,---:,---:,---,---
+M1,OIDC assume-role validated,ops,2025-09-26,2025-09-27,Merge PR #7 and run `Test OIDC` workflow,doing
+M2,Secrets sync dry-run,ops,2025-09-27,2025-09-27,`ci/sync-github-to-heroku.yml` dispatch,todo
+M3,Secrets sync apply (controlled),ops,2025-09-27,2025-09-28,Manual approval required,todo
+M4,Live audit run & artifact,ops,2025-09-28,2025-09-28,`live-audit.yml` dispatch,todo
+M5,Deliverables A–E published,project lead,2025-09-29,2025-09-29,Based on audit artifact,todo
+M6,ECS minimal migration proposal,infra lead,2025-09-29,2025-10-06,Cost estimate + rollback plan,todo
