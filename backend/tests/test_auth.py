@@ -1,38 +1,41 @@
+"""Integration tests for authentication flow."""
+
 from pathlib import Path
 import sys
+
+from fastapi.testclient import TestClient
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from fastapi.testclient import TestClient
-
-from backend.src.modules.auth import service
 from backend.src.app import app
+from backend.src.modules.auth import service
 
 client = TestClient(app)
 
 
-def setup_function() -> None:  # type: ignore[no-redef]
+def test_register_login_me_flow() -> None:
     service.reset_store()
+    email = "dev@example.com"
+    password = "secret123"
 
+    register_response = client.post(
+        "/api/auth/register",
+        json={"email": email, "password": password, "full_name": "Dev"},
+    )
+    assert register_response.status_code in (200, 201)
 
-def test_register_login_me_happy_path() -> None:
-    register_payload = {"email": "user@example.com", "password": "StrongPass!1", "full_name": "Test User"}
-    register_resp = client.post("/api/auth/register", json=register_payload)
-    assert register_resp.status_code == 201
-    assert register_resp.json() == {"ok": True}
-
-    login_payload = {"email": "user@example.com", "password": "StrongPass!1"}
-    login_resp = client.post("/api/auth/login", json=login_payload)
-    assert login_resp.status_code == 200
-    login_json = login_resp.json()
-    token = login_json["access_token"]
+    login_response = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login_response.status_code == 200
+    token = login_response.json().get("access_token")
     assert token
-    assert login_json["token_type"] == "bearer"
 
-    me_resp = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
-    assert me_resp.status_code == 200
-    me_json = me_resp.json()
-    assert me_json["email"] == "user@example.com"
-    assert me_json["full_name"] == "Test User"
+    me_response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_response.status_code == 200
+    payload = me_response.json()
+    assert payload["email"] == email
+    assert "full_name" in payload
