@@ -6,7 +6,7 @@ REQ := requirements.txt
 IMAGE ?= autorisen:local
 PORT ?= 8000
 
-.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku clean plan-validate plan-open
+.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku clean plan-validate plan-open heroku-deploy-stg
 
 help:
 	@echo "Available targets:"
@@ -84,6 +84,12 @@ deploy-heroku: docker-build
 	docker push registry.heroku.com/$(HEROKU_APP_NAME)/web
 	@echo "Releasing on Heroku..."
 	heroku container:release web --app $(HEROKU_APP_NAME)
+
+heroku-deploy-stg:
+	heroku container:login
+	heroku container:push web -a autorisen
+	heroku container:release web -a autorisen
+	heroku open -a autorisen
 
 clean:
 	rm -rf build/ dist/ *.egg-info .pytest_cache/ .venv
