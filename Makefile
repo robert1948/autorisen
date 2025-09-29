@@ -6,7 +6,7 @@ REQ := requirements.txt
 IMAGE ?= autorisen:local
 PORT ?= 8000
 
-.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku clean
+.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku clean plan-validate plan-open
 
 help:
 	@echo "Available targets:"
@@ -87,3 +87,9 @@ deploy-heroku: docker-build
 
 clean:
 	rm -rf build/ dist/ *.egg-info .pytest_cache/ .venv
+
+plan-validate:
+	python3 tools/validate_plan_csv.py
+
+plan-open:
+	code docs/CODEX_PROJECT_PLAN.md data/plan.csv
