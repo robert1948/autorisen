@@ -2,30 +2,46 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from . import schemas, service
+from . import service
+from .schemas import LoginRequest, RegisterRequest, TokenResponse, UserProfile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+auth_scheme = HTTPBearer(auto_error=False)
 
 
-@router.post("/register", response_model=schemas.TokenResponse, status_code=201)
-def register(payload: schemas.RegisterRequest) -> schemas.TokenResponse:
-    user = service.create_user(payload)
-    return service.create_access_token(user)
+@router.post("/register", status_code=201)
+def register(payload: RegisterRequest) -> dict[str, bool]:
+    try:
+        service.register(payload.email, payload.password, payload.full_name)
+        return {"ok": True}
+    except ValueError as exc:  # user exists
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
-@router.post("/login", response_model=schemas.TokenResponse)
-def login(payload: schemas.LoginRequest) -> schemas.TokenResponse:
-    user = service.authenticate(payload)
-    return service.create_access_token(user)
+@router.post("/login", response_model=TokenResponse)
+def login(payload: LoginRequest) -> TokenResponse:
+    try:
+        token, expires_at = service.login(payload.email, payload.password)
+        return TokenResponse(access_token=token, expires_at=expires_at)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials") from exc
 
 
-def _current_user(authorization: str = Header(default=None)) -> schemas.UserProfile:
-    token = service.bearer_token_from_header(authorization)
-    return service.decode_token(token)
+def _authenticate(creds: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> str:
+    if not creds:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing auth")
+    try:
+        return service.current_user(creds.credentials)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token") from exc
 
 
-@router.get("/me", response_model=schemas.UserProfile)
-def read_profile(current_user: schemas.UserProfile = Depends(_current_user)) -> schemas.UserProfile:
-    return current_user
+@router.get("/me", response_model=UserProfile)
+def me(email: str = Depends(_authenticate)) -> UserProfile:
+    profile = service.profile(email)
+    if profile is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
+    return profile
