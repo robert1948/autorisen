@@ -3,6 +3,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY backend/ ./backend/
+COPY backend/src/static /app/backend/src/static
 RUN pip install -e ./backend && pip install 'uvicorn[standard]'
 EXPOSE 8000
 # Use the PORT env var provided by Heroku; fallback to 8000 locally.
