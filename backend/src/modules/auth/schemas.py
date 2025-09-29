@@ -5,15 +5,15 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 
 class RegisterRequest(BaseModel):
     """Incoming payload to register a new user."""
 
     email: EmailStr
-    password: str = Field(min_length=8)
-    full_name: Optional[str] = Field(default=None, max_length=100)
+    password: str
+    full_name: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -28,7 +28,7 @@ class TokenResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
-    expires_at: datetime
+    expires_at: Optional[datetime] = None
 
 
 class UserProfile(BaseModel):
@@ -36,4 +36,3 @@ class UserProfile(BaseModel):
 
     email: EmailStr
     full_name: Optional[str] = None
-    created_at: datetime
