@@ -17,48 +17,85 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-      - run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-      - run: |
-          if compgen -G "tests/**.py" > /dev/null; then pytest -q; else echo "No tests"; fi
+      - name: Checkout repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/pull/*:refs/remotes/pull/*
+          git checkout --detach "${GITHUB_SHA}"
+
+      - name: Install Python dependencies
+        run: |
+          set -euo pipefail
+          python3 -m ensurepip --upgrade || true
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python3 -m pip install -r requirements-dev.txt; fi
+
+      - name: Run pytest
+        run: |
+          if compgen -G "tests/**.py" > /dev/null; then python3 -m pytest -q; else echo "No tests"; fi
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/pull/*:refs/remotes/pull/*
+          git checkout --detach "${GITHUB_SHA}"
+
+      - name: Install tooling
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y curl
+          python3 -m ensurepip --upgrade || true
+          python3 -m pip install --upgrade pip awscli
 
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
       - name: Fetch static assets from S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
         run: scripts/fetch_assets.sh
 
       - name: Docker login to Heroku
-        run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
 
       - name: Build & Push image
+        env:
+          APP: ${{ env.APP }}
         run: |
-          docker build -t registry.heroku.com/${{ env.APP }}/web .
-          docker push registry.heroku.com/${{ env.APP }}/web
+          docker build -t registry.heroku.com/$APP/web .
+          docker push registry.heroku.com/$APP/web
 
       - name: Release to Heroku
-        run: heroku container:release web --app $APP
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          APP: ${{ env.APP }}
+        run: heroku container:release web --app "$APP"
 
       - name: Smoke check (staging)
-        run: ./scripts/smoke_check.sh "https://${{ env.APP }}.herokuapp.com"
+        env:
+          APP: ${{ env.APP }}
+        run: ./scripts/smoke_check.sh "https://${APP}.herokuapp.com"
