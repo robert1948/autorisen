@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_session
-from . import service
+from . import audit, rate_limiter, service
 from .schemas import (
     LoginRequest,
     RefreshRequest,
@@ -21,6 +21,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 auth_scheme = HTTPBearer(auto_error=False)
 
 
+def _client_identifier(request: Request, email: str) -> str:
+    ip = request.client.host if request.client else "unknown"
+    return f"{email.lower()}:{ip}"
+
+
 @router.post("/register", status_code=201)
 def register(payload: RegisterRequest, db: Session = Depends(get_session)) -> dict[str, bool]:
     try:
@@ -31,15 +36,31 @@ def register(payload: RegisterRequest, db: Session = Depends(get_session)) -> di
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_session)) -> TokenResponse:
+def login(request: Request, payload: LoginRequest, db: Session = Depends(get_session)) -> TokenResponse:
+    identifier = _client_identifier(request, payload.email)
+    if not rate_limiter.check(identifier):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="rate limit exceeded")
+
+    ip = request.client.host if request.client else None
+    agent = request.headers.get("user-agent")
+
     try:
         access_token, expires_at, refresh_token = service.login(
             db,
             payload.email,
             payload.password,
+            user_agent=agent,
+            ip_address=ip,
         )
-        return TokenResponse(access_token=access_token, expires_at=expires_at, refresh_token=refresh_token)
+        audit.log_login_attempt(db, email=payload.email, success=True, ip_address=ip, user_agent=agent)
+        rate_limiter.reset(identifier)
+        return TokenResponse(
+            access_token=access_token,
+            expires_at=expires_at,
+            refresh_token=refresh_token,
+        )
     except ValueError as exc:
+        audit.log_login_attempt(db, email=payload.email, success=False, ip_address=ip, user_agent=agent, details=str(exc))
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials") from exc
 
 
