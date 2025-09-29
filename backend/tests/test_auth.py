@@ -1,3 +1,4 @@
+
 """Integration tests for authentication flow."""
 
 from pathlib import Path
@@ -12,10 +13,11 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from backend.src.app import app
 from backend.src.db.session import SessionLocal
+
 client = TestClient(app)
 
 
-def test_register_login_me_flow() -> None:
+def _reset_auth_tables() -> None:
     with SessionLocal() as db:
         for table in (
             "role_permissions",
@@ -28,6 +30,10 @@ def test_register_login_me_flow() -> None:
         ):
             db.execute(text(f"DELETE FROM {table}"))
         db.commit()
+
+
+def test_register_login_refresh_me_flow() -> None:
+    _reset_auth_tables()
 
     email = "dev@example.com"
     password = "secret123"
@@ -43,11 +49,31 @@ def test_register_login_me_flow() -> None:
         json={"email": email, "password": password},
     )
     assert login_response.status_code == 200
-    token = login_response.json().get("access_token")
-    assert token
+    login_json = login_response.json()
+    access_token = login_json.get("access_token")
+    refresh_token = login_json.get("refresh_token")
+    assert access_token
+    assert refresh_token
 
-    me_response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    me_response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {access_token}"})
     assert me_response.status_code == 200
     payload = me_response.json()
     assert payload["email"] == email
-    assert "full_name" in payload
+    assert payload["full_name"] == "Dev"
+
+    refresh_response = client.post(
+        "/api/auth/refresh",
+        json={"refresh_token": refresh_token},
+    )
+    assert refresh_response.status_code == 200
+    refresh_json = refresh_response.json()
+    new_access = refresh_json.get("access_token")
+    new_refresh = refresh_json.get("refresh_token")
+    assert new_access and new_refresh and new_refresh != refresh_token
+
+    # ensure refreshed access works
+    me_response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {new_access}"})
+    assert me_response.status_code == 200
+    payload = me_response.json()
+    assert payload["email"] == email
+    assert payload["full_name"] == "Dev"

@@ -1,3 +1,4 @@
+
 """Authentication API endpoints."""
 
 from __future__ import annotations
@@ -8,7 +9,13 @@ from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_session
 from . import service
-from .schemas import LoginRequest, RegisterRequest, TokenResponse, UserProfile
+from .schemas import (
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserProfile,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 auth_scheme = HTTPBearer(auto_error=False)
@@ -26,10 +33,23 @@ def register(payload: RegisterRequest, db: Session = Depends(get_session)) -> di
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_session)) -> TokenResponse:
     try:
-        token, expires_at = service.login(db, payload.email, payload.password)
-        return TokenResponse(access_token=token, expires_at=expires_at)
+        access_token, expires_at, refresh_token = service.login(
+            db,
+            payload.email,
+            payload.password,
+        )
+        return TokenResponse(access_token=access_token, expires_at=expires_at, refresh_token=refresh_token)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials") from exc
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh(payload: RefreshRequest, db: Session = Depends(get_session)) -> TokenResponse:
+    try:
+        access_token, expires_at, refresh_token = service.refresh_access_token(db, payload.refresh_token)
+        return TokenResponse(access_token=access_token, expires_at=expires_at, refresh_token=refresh_token)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid refresh token") from exc
 
 
 def _authenticate(

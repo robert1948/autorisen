@@ -23,12 +23,19 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RefreshRequest(BaseModel):
+    """Payload for exchanging a refresh token for a new access token."""
+
+    refresh_token: str
+
+
 class TokenResponse(BaseModel):
     """JWT token response structure."""
 
     access_token: str
     token_type: str = "bearer"
     expires_at: Optional[datetime] = None
+    refresh_token: Optional[str] = None
 
 
 class UserProfile(BaseModel):
