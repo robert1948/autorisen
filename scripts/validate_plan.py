@@ -15,7 +15,14 @@ from collections import Counter
 import re
 import sys
 
+import argparse
+
 PATH = "docs/autorisen_project_plan.csv"
+
+ARGP = argparse.ArgumentParser(description="Validate a canonical project plan CSV")
+ARGP.add_argument(
+    "path", nargs="?", help="Path to CSV to validate (defaults to docs/autorisen_project_plan.csv)"
+)
 RE_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 EXPECTED_HEADER = [
@@ -36,7 +43,10 @@ EXPECTED_HEADER = [
 ]
 
 ok = True
-with open(PATH, newline="") as f:
+args = ARGP.parse_args()
+target = args.path or PATH
+
+with open(target, newline="") as f:
     reader = DictReader(f)
     header = reader.fieldnames
     if header != EXPECTED_HEADER:
