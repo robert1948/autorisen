@@ -1,4 +1,4 @@
-"""Authentication service utilities with in-memory user store and custom JWT."""
+"""Authentication service utilities backed by the database and custom JWT."""
 
 from __future__ import annotations
 
@@ -9,18 +9,15 @@ import json
 import os
 import time
 from datetime import datetime, timezone
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.src.db import models
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 JWT_EXP_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
-
-_USERS: Dict[str, Dict[str, Optional[str]]] = {}
-
-
-def reset_store() -> None:
-    """Testing helper to clear the in-memory store."""
-
-    _USERS.clear()
 
 
 def _hash(password: str, salt: Optional[bytes] = None) -> str:
@@ -36,10 +33,30 @@ def _verify(password: str, encoded: str) -> bool:
     return hmac.compare_digest(dk, test)
 
 
-def register(email: str, password: str, full_name: Optional[str]) -> None:
-    if email in _USERS:
+def register(db: Session, email: str, password: str, full_name: Optional[str]) -> None:
+    existing = db.scalar(select(models.User).where(models.User.email == email))
+    if existing:
         raise ValueError("user exists")
-    _USERS[email] = {"hash": _hash(password), "full_name": full_name}
+
+    hashed = _hash(password)
+    now = datetime.now(timezone.utc)
+
+    user = models.User(
+        email=email,
+        full_name=full_name,
+        hashed_password=hashed,
+        password_changed_at=now,
+    )
+    credential = models.Credential(
+        user=user,
+        provider="password",
+        provider_uid=email,
+        secret_hash=hashed,
+        last_used_at=None,
+    )
+    db.add(user)
+    db.add(credential)
+    db.commit()
 
 
 def _b64url(data: bytes) -> bytes:
@@ -81,17 +98,27 @@ def _jwt_decode(token: str) -> dict:
     return payload
 
 
-def login(email: str, password: str) -> Tuple[str, datetime]:
-    record = _USERS.get(email)
-    if not record or not record.get("hash") or not _verify(password, record["hash"]) :
+def login(db: Session, email: str, password: str) -> Tuple[str, datetime]:
+    user = db.scalar(select(models.User).where(models.User.email == email))
+    if not user or not _verify(password, user.hashed_password):
         raise ValueError("bad credentials")
+
+    user.last_login_at = datetime.now(timezone.utc)
+    db.add(user)
+    db.commit()
     return _jwt_sign({"sub": email}, JWT_EXP_MIN * 60)
 
 
-def current_user(token: str) -> str:
-    return _jwt_decode(token)["sub"]
+def current_user(db: Session, token: str) -> str:
+    payload = _jwt_decode(token)
+    email = payload.get("sub")
+    if not email:
+        raise ValueError("invalid token payload")
+    user = db.scalar(select(models.User).where(models.User.email == email))
+    if not user or not user.is_active:
+        raise ValueError("user not found")
+    return email
 
 
-def profile(email: str) -> Dict[str, Optional[str]]:
-    record = _USERS.get(email) or {}
-    return {"email": email, "full_name": record.get("full_name")}
+def profile(db: Session, email: str) -> Optional[models.User]:
+    return db.scalar(select(models.User).where(models.User.email == email))

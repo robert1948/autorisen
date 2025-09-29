@@ -4,19 +4,31 @@ from pathlib import Path
 import sys
 
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.src.app import app
-from backend.src.modules.auth import service
-
+from backend.src.db.session import SessionLocal
 client = TestClient(app)
 
 
 def test_register_login_me_flow() -> None:
-    service.reset_store()
+    with SessionLocal() as db:
+        for table in (
+            "role_permissions",
+            "user_roles",
+            "sessions",
+            "credentials",
+            "permissions",
+            "roles",
+            "users",
+        ):
+            db.execute(text(f"DELETE FROM {table}"))
+        db.commit()
+
     email = "dev@example.com"
     password = "secret123"
 
