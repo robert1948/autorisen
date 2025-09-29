@@ -49,7 +49,7 @@ def create_user(payload: schemas.RegisterRequest) -> schemas.UserProfile:
         "hashed_password": _hash_password(payload.password),
         "created_at": created_at,
     }
-    return schemas.UserProfile(email=payload.email, full_name=payload.full_name, created_at=created_at)
+    return schemas.UserProfile(email=payload.email, full_name=payload.full_name)
 
 
 def authenticate(payload: schemas.LoginRequest) -> schemas.UserProfile:
@@ -57,11 +57,7 @@ def authenticate(payload: schemas.LoginRequest) -> schemas.UserProfile:
     if not record or not _verify_password(payload.password, record["hashed_password"]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials")
 
-    return schemas.UserProfile(
-        email=record["email"],
-        full_name=record.get("full_name"),
-        created_at=record["created_at"],
-    )
+    return schemas.UserProfile(email=record["email"], full_name=record.get("full_name"))
 
 
 def create_access_token(user: schemas.UserProfile, expires_delta: Optional[timedelta] = None) -> schemas.TokenResponse:
@@ -85,11 +81,7 @@ def decode_token(token: str) -> schemas.UserProfile:
     if not record:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found")
 
-    return schemas.UserProfile(
-        email=record["email"],
-        full_name=record.get("full_name"),
-        created_at=record["created_at"],
-    )
+    return schemas.UserProfile(email=record["email"], full_name=record.get("full_name"))
 
 
 def bearer_token_from_header(authorization: Optional[str]) -> str:
