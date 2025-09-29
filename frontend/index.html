@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Autorisen — Local Frontend</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        padding: 2rem;
+      }
+      header {
+        border-bottom: 1px solid #eee;
+        margin-bottom: 1rem;
+      }
+      h1 {
+        margin: 0;
+      }
+      .meta {
+        color: #666;
+      }
+      .checks {
+        margin-top: 1rem;
+      }
+      .check {
+        margin: 0.5rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Autorisen — Local Frontend</h1>
+      <div class="meta">
+        Serving static demo at <strong>http://localhost:3000</strong>
+      </div>
+    </header>
+    <main>
+      <p>This is a tiny static landing page to verify the frontend port.</p>
+      <div class="checks">
+        <div class="check">
+          Backend health: <a id="health" href="#">checking...</a>
+        </div>
+      </div>
+    </main>
+    <script>
+      fetch("/api/health")
+        .then((r) => r.json())
+        .then((j) => {
+          document.getElementById("health").textContent =
+            j.status + " (" + j.env + ")";
+          document.getElementById("health").href =
+            "http://localhost:8000/api/health";
+        })
+        .catch(() => {
+          document.getElementById("health").textContent = "unreachable";
+        });
+    </script>
+  </body>
+</html>

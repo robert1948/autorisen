@@ -7,6 +7,11 @@ on:
       - "docs/autorisen_project_plan.csv"
       - "tools/validate_plan_csv.py"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Validator mode: tolerant|canonical"
+        required: false
+        default: "tolerant"
 
 permissions:
   contents: read
@@ -32,4 +37,13 @@ jobs:
         run: python3 --version
 
       - name: Run validator
-        run: python3 tools/validate_plan_csv.py
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          if [ -z "$MODE" ]; then MODE=tolerant; fi
+          if [ "$MODE" = "canonical" ]; then
+            echo "Running canonical validator (scripts/validate_plan.py)"
+            python3 scripts/validate_plan.py
+          else
+            echo "Running tolerant validator (tools/validate_plan_csv.py)"
+            python3 tools/validate_plan_csv.py
+          fi

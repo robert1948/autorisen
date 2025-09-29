@@ -1,37 +1,42 @@
-# Ignore Python cache
-__pycache__/
-*.py[cod]
+# VCS
+.git
+.github
+.gitignore
+
+# Docs & meta
+README.md
+LICENSE
+docs/
+
+# Local build caches
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
 
 # Virtual envs
-venv/
-.env
-.env.*
-
-# Git
-.git
-
-# Editor directories and files
-.vscode/
-.idea/
-
-# Build artifacts
-build/
-dist/
-
-# Docker
-Dockerfile
-.dockerignore
-
-# Logs
-*.log
-
-# Misc
-*.pyc
-*.pyo
-*.pyd
+.venv
+.venv*/
+backend/.venv
 
 # Node
-node_modules/
+node_modules
+client/node_modules
+client/dist
+client/.vite
 
-# Ignore backup files
-*.backup-before-move-*
+# Env / secrets (image should not contain these)
+.env
+.env.*
+backend/.env
+backend/.env.*
+
+# Tests (not needed in runtime image)
+tests/
+backend/tests/
+client/tests/
+
+# OS/editor junk
+.DS_Store
+.vscode
+.idea
