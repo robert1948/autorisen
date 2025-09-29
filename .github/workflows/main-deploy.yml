@@ -35,6 +35,7 @@ jobs:
           set -euo pipefail
           python3 -m ensurepip --upgrade || true
           python3 -m pip install --upgrade pip
+          python3 -m pip install pytest
           if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then python3 -m pip install -r requirements-dev.txt; fi
 
