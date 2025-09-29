@@ -17,3 +17,15 @@ def test_health_endpoint_ok():
     assert response.status_code == 200
     payload = response.json()
     assert payload.get("status") in ("ok", "healthy")
+
+
+def test_alive_endpoint_ok():
+    response = client.get("/api/health/alive")
+    assert response.status_code == 200
+    assert response.json() == {"alive": True}
+
+
+def test_ping_endpoint_ok():
+    response = client.get("/api/health/ping")
+    assert response.status_code == 200
+    assert response.json().get("ping") == "pong"
