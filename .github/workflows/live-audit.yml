@@ -10,10 +10,6 @@ permissions:
 on:
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   run-audit:
     runs-on: ubuntu-latest
