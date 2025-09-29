@@ -1,26 +1,65 @@
+# Compose v2 (no top-level version key)
+
 services:
   db:
     image: postgres:15-alpine
+    container_name: autorisen-db
     environment:
-      POSTGRES_DB: devdb
-      POSTGRES_USER: devuser
-      POSTGRES_PASSWORD: devpass
-    ports: ["5433:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+      POSTGRES_DB: ${POSTGRES_DB:-devdb}
+      POSTGRES_USER: ${POSTGRES_USER:-devuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "${HOST_DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-devuser} -d ${POSTGRES_DB:-devdb}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    container_name: autorisen-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${HOST_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
   backend:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
+    container_name: autorisen-backend
     command: uvicorn backend.src.app:app --host 0.0.0.0 --port 8000 --reload
-    volumes: [".:/workspaces/autorisen"]
     working_dir: /workspaces/autorisen
-    ports: ["8000:8000"]
-    depends_on: [db, redis]
+    volumes:
+      - .:/workspaces/autorisen
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://devuser:devpass@db:5432/devdb}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      PYTHONUNBUFFERED: "1"
+      UVICORN_WORKERS: "1"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+    ports:
+      - "${HOST_API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:
