@@ -83,6 +83,9 @@ smoke: ## Quick health checks (backend + DB + frontend)
 	@echo "Checking frontend root ..." && curl -fsS http://localhost:$(PORT_FE)/ || true
 	@echo "DB containers:" && $(COMPOSE) ps
 
+smoke:: ## Run scripted smoke check (accepts URL=http://...)
+	./scripts/smoke_check.sh $(URL)
+
 doctor: ## Print compose config and port checks
 	$(COMPOSE) config
 	@echo "Ports in use:"; ss -ltnp | grep -E ":($(PORT_API)|$(PORT_FE)|$(HOST_DB_PORT))" || true
@@ -135,3 +138,8 @@ check-drift:
 	fi
 plan-snapshot:
 	@python3 tools/snapshot_plan.py && echo "Plan snapshot complete."
+
+deploy-stg:
+	heroku container:login
+	heroku container:push web --app $(HEROKU_APP_STAGING)
+	heroku container:release web --app $(HEROKU_APP_STAGING)
