@@ -15,5 +15,11 @@
     "key": "alt+[",
     "command": "github.copilot.inlineChat.start",
     "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+alt+shift+c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Agent Checkpoint",
+    "when": "editorTextFocus"
   }
 ]

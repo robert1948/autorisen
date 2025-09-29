@@ -122,3 +122,17 @@ class Session(Base):
     revoked_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="sessions")
+
+
+class LoginAudit(Base):
+    """Track authentication attempts for auditing and monitoring."""
+
+    __tablename__ = "login_audits"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(320), nullable=False)
+    success = Column(Boolean, nullable=False)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    details = Column(Text, nullable=True)
