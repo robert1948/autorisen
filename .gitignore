@@ -107,3 +107,7 @@ tmp/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+docs/Docs250929/
+docs/plan_checked.csv
+tools/agent_checkpoint.sh
