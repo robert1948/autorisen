@@ -1,90 +1,97 @@
-"""Authentication service utilities (in-memory for MVP)."""
+"""Authentication service utilities with in-memory user store and custom JWT."""
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
+import json
 import os
-from datetime import datetime, timedelta, timezone
+import time
+from datetime import datetime, timezone
 from typing import Dict, Optional, Tuple
 
-import jwt
-from passlib.context import CryptContext
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
+JWT_EXP_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
-from . import schemas
-
-SECRET_KEY = os.getenv("AUTH_SECRET", "dev-secret-key")
-ALGORITHM = os.getenv("AUTH_ALGORITHM", "HS256")
-ACCESS_TOKEN_MINUTES = int(os.getenv("AUTH_ACCESS_TOKEN_MINUTES", "60"))
-
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-_users: Dict[str, Dict[str, object]] = {}
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
+_USERS: Dict[str, Dict[str, Optional[str]]] = {}
 
 
 def reset_store() -> None:
-    """Testing helper: clear in-memory user store."""
+    """Testing helper to clear the in-memory store."""
 
-    _users.clear()
-
-
-def register(email: str, password: str, full_name: Optional[str] = None) -> schemas.UserProfile:
-    """Register a new user; raise ValueError if the email already exists."""
-
-    if email in _users:
-        raise ValueError("user already exists")
-
-    hashed = _pwd_context.hash(password)
-    _users[email] = {
-        "email": email,
-        "full_name": full_name,
-        "hashed_password": hashed,
-    }
-    return schemas.UserProfile(email=email, full_name=full_name)
+    _USERS.clear()
 
 
-def _verify_credentials(email: str, password: str) -> Dict[str, object]:
-    record = _users.get(email)
-    if not record:
-        raise ValueError("user not found")
-    if not _pwd_context.verify(password, record["hashed_password"]):
-        raise ValueError("invalid credentials")
-    return record
+def _hash(password: str, salt: Optional[bytes] = None) -> str:
+    salt = salt or os.urandom(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100_000)
+    return base64.b64encode(salt + dk).decode()
 
 
-def _issue_token(email: str, expires_delta: Optional[timedelta] = None) -> Tuple[str, datetime]:
-    expire = _now() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_MINUTES))
-    payload = {"sub": email, "exp": expire}
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return token, expire
+def _verify(password: str, encoded: str) -> bool:
+    raw = base64.b64decode(encoded.encode())
+    salt, dk = raw[:16], raw[16:]
+    test = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100_000)
+    return hmac.compare_digest(dk, test)
+
+
+def register(email: str, password: str, full_name: Optional[str]) -> None:
+    if email in _USERS:
+        raise ValueError("user exists")
+    _USERS[email] = {"hash": _hash(password), "full_name": full_name}
+
+
+def _b64url(data: bytes) -> bytes:
+    return base64.urlsafe_b64encode(data).rstrip(b"=")
+
+
+def _jwt_sign(payload: dict, expires_seconds: int) -> Tuple[str, datetime]:
+    header = {"alg": "HS256", "typ": "JWT"}
+    now = int(time.time())
+    exp = now + expires_seconds
+    payload = {**payload, "iat": now, "exp": exp}
+    enc_header = _b64url(json.dumps(header, separators=(",", ":")).encode())
+    enc_payload = _b64url(json.dumps(payload, separators=(",", ":")).encode())
+    signing_input = b".".join([enc_header, enc_payload])
+    signature = hmac.new(JWT_SECRET.encode(), signing_input, hashlib.sha256).digest()
+    token = b".".join([signing_input, _b64url(signature)]).decode()
+    return token, datetime.fromtimestamp(exp, tz=timezone.utc)
+
+
+def _pad_b64(segment: str) -> str:
+    return segment + "=" * (-len(segment) % 4)
+
+
+def _jwt_decode(token: str) -> dict:
+    try:
+        header_b64, payload_b64, signature_b64 = token.split(".")
+    except ValueError as exc:
+        raise ValueError("invalid token format") from exc
+
+    signing_input = f"{header_b64}.{payload_b64}".encode()
+    signature = base64.urlsafe_b64decode(_pad_b64(signature_b64))
+    expected_sig = hmac.new(JWT_SECRET.encode(), signing_input, hashlib.sha256).digest()
+    if not hmac.compare_digest(signature, expected_sig):
+        raise ValueError("bad sig")
+
+    payload = json.loads(base64.urlsafe_b64decode(_pad_b64(payload_b64)).decode())
+    if payload.get("exp", 0) < int(time.time()):
+        raise ValueError("expired")
+    return payload
 
 
 def login(email: str, password: str) -> Tuple[str, datetime]:
-    """Authenticate credentials and return (token, expires_at)."""
-
-    _verify_credentials(email, password)
-    return _issue_token(email)
+    record = _USERS.get(email)
+    if not record or not record.get("hash") or not _verify(password, record["hash"]) :
+        raise ValueError("bad credentials")
+    return _jwt_sign({"sub": email}, JWT_EXP_MIN * 60)
 
 
 def current_user(token: str) -> str:
-    """Validate token and return the associated email."""
-
-    try:
-        decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError as exc:  # type: ignore[attr-defined]
-        raise ValueError("invalid token") from exc
-
-    email = decoded.get("sub")
-    if not email or email not in _users:
-        raise ValueError("user not found")
-    return email
+    return _jwt_decode(token)["sub"]
 
 
-def profile(email: str) -> Optional[schemas.UserProfile]:
-    """Return profile for email if present."""
-
-    record = _users.get(email)
-    if not record:
-        return None
-    return schemas.UserProfile(email=email, full_name=record.get("full_name"))
+def profile(email: str) -> Dict[str, Optional[str]]:
+    record = _USERS.get(email) or {}
+    return {"email": email, "full_name": record.get("full_name")}
