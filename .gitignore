@@ -62,6 +62,7 @@ logs/
 # Databases (local)
 db.sqlite3
 db.sqlite3-journal
+dev.db
 
 # Framework caches
 instance/
