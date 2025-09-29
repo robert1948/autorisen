@@ -8,6 +8,8 @@ permissions:
   pull-requests: write
 jobs:
   snapshot:
+    if: github.actor != "github-actions[bot]"
+    if: github.actor != "github-actions[bot]"
     runs-on: ubuntu-latest
     env:
       BRANCH: bot/snapshot-${{ github.run_id }}
