@@ -1,4 +1,11 @@
 name: Validate project plan CSV
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  id-token: write
 
 on:
   pull_request:

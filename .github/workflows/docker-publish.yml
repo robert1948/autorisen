@@ -1,5 +1,12 @@
 name: Build and publish Docker image
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  id-token: write
 on:
   push:
     # Only build/publish images when a tag is pushed (release or version tags)

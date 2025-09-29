@@ -1,4 +1,11 @@
 # .github/workflows/health.yml
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  id-token: write
 name: CI - Health Service (no-marketplace)
 on:
   push:

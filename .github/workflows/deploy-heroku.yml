@@ -1,4 +1,11 @@
 # .github/workflows/deploy-heroku.yml
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  id-token: write
 name: CI & Deploy (Heroku autorisen) (no-marketplace)
 on:
   workflow_dispatch:
