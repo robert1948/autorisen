@@ -1,9 +1,14 @@
+from pathlib import Path
+
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 import textwrap
 import os
 
 app = FastAPI(title="Autorisen API", version="0.0.1")
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory="backend/src/static"), name="static")
 
 
 @app.get("/api/health")
@@ -28,6 +33,7 @@ def root():
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width,initial-scale=1">
                 <title>Autorisen</title>
+                <link rel="icon" href="/favicon.ico" type="image/x-icon">
                 <style>
                     body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 24px; background:#111; color:#eee }
                     pre { background:#000; color:#fff; padding:12px; border-radius:6px; }
@@ -46,3 +52,9 @@ def root():
         """
     )
     return HTMLResponse(content=html, status_code=200)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Serve the site favicon for browsers and uptime monitors."""
+    return FileResponse("backend/src/static/favicon.ico")
