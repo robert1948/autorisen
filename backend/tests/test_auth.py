@@ -21,9 +21,7 @@ def test_register_login_me_happy_path() -> None:
     register_payload = {"email": "user@example.com", "password": "StrongPass!1", "full_name": "Test User"}
     register_resp = client.post("/api/auth/register", json=register_payload)
     assert register_resp.status_code == 201
-    register_json = register_resp.json()
-    assert register_json["token_type"] == "bearer"
-    assert register_json["access_token"]
+    assert register_resp.json() == {"ok": True}
 
     login_payload = {"email": "user@example.com", "password": "StrongPass!1"}
     login_resp = client.post("/api/auth/login", json=login_payload)
@@ -31,6 +29,7 @@ def test_register_login_me_happy_path() -> None:
     login_json = login_resp.json()
     token = login_json["access_token"]
     assert token
+    assert login_json["token_type"] == "bearer"
 
     me_resp = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert me_resp.status_code == 200

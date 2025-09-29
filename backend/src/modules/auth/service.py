@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import jwt
-from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
 from . import schemas
@@ -25,69 +24,67 @@ def _now() -> datetime:
 
 
 def reset_store() -> None:
-    """Testing helper to clear in-memory users."""
+    """Testing helper: clear in-memory user store."""
 
     _users.clear()
 
 
-def _hash_password(password: str) -> str:
-    return _pwd_context.hash(password)
+def register(email: str, password: str, full_name: Optional[str] = None) -> schemas.UserProfile:
+    """Register a new user; raise ValueError if the email already exists."""
 
+    if email in _users:
+        raise ValueError("user already exists")
 
-def _verify_password(password: str, hashed: str) -> bool:
-    return _pwd_context.verify(password, hashed)
-
-
-def create_user(payload: schemas.RegisterRequest) -> schemas.UserProfile:
-    if payload.email in _users:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="user already exists")
-
-    created_at = _now()
-    _users[payload.email] = {
-        "email": payload.email,
-        "full_name": payload.full_name,
-        "hashed_password": _hash_password(payload.password),
-        "created_at": created_at,
+    hashed = _pwd_context.hash(password)
+    _users[email] = {
+        "email": email,
+        "full_name": full_name,
+        "hashed_password": hashed,
     }
-    return schemas.UserProfile(email=payload.email, full_name=payload.full_name)
+    return schemas.UserProfile(email=email, full_name=full_name)
 
 
-def authenticate(payload: schemas.LoginRequest) -> schemas.UserProfile:
-    record = _users.get(payload.email)
-    if not record or not _verify_password(payload.password, record["hashed_password"]):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials")
+def _verify_credentials(email: str, password: str) -> Dict[str, object]:
+    record = _users.get(email)
+    if not record:
+        raise ValueError("user not found")
+    if not _pwd_context.verify(password, record["hashed_password"]):
+        raise ValueError("invalid credentials")
+    return record
 
-    return schemas.UserProfile(email=record["email"], full_name=record.get("full_name"))
 
-
-def create_access_token(user: schemas.UserProfile, expires_delta: Optional[timedelta] = None) -> schemas.TokenResponse:
+def _issue_token(email: str, expires_delta: Optional[timedelta] = None) -> Tuple[str, datetime]:
     expire = _now() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_MINUTES))
-    payload = {"sub": user.email, "exp": expire}
+    payload = {"sub": email, "exp": expire}
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return schemas.TokenResponse(access_token=token, expires_at=expire)
+    return token, expire
 
 
-def decode_token(token: str) -> schemas.UserProfile:
+def login(email: str, password: str) -> Tuple[str, datetime]:
+    """Authenticate credentials and return (token, expires_at)."""
+
+    _verify_credentials(email, password)
+    return _issue_token(email)
+
+
+def current_user(token: str) -> str:
+    """Validate token and return the associated email."""
+
     try:
         decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.PyJWTError as exc:  # type: ignore[attr-defined]
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token") from exc
+        raise ValueError("invalid token") from exc
 
     email = decoded.get("sub")
-    if not email:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token payload")
+    if not email or email not in _users:
+        raise ValueError("user not found")
+    return email
+
+
+def profile(email: str) -> Optional[schemas.UserProfile]:
+    """Return profile for email if present."""
 
     record = _users.get(email)
     if not record:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found")
-
-    return schemas.UserProfile(email=record["email"], full_name=record.get("full_name"))
-
-
-def bearer_token_from_header(authorization: Optional[str]) -> str:
-    if not authorization:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="authorization header missing")
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid authorization header")
-    return token
+        return None
+    return schemas.UserProfile(email=email, full_name=record.get("full_name"))
