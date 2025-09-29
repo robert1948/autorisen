@@ -11,7 +11,11 @@ router = APIRouter(prefix="/health", tags=["health"])
 @router.get("", summary="Health status", response_model=dict)
 def health_status() -> dict[str, str]:
     """Return service health information."""
-    return {"status": "ok", "env": os.getenv("APP_ENV", "development")}
+    return {
+        "status": "ok",
+        "env": os.getenv("APP_ENV", "development"),
+        "version": os.getenv("APP_VERSION", "0.1.0"),
+    }
 
 
 @router.get("/alive", summary="Liveness probe", response_model=dict)
