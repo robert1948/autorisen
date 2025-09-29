@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
+from backend.src.modules.auth.router import router as auth_router
 from backend.src.modules.health.router import router as health_router
 
 app = FastAPI(title="Autorisen API", version="0.1.0")
@@ -17,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(health_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 
 @app.get("/")
