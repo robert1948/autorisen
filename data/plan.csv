@@ -1,16 +1,16 @@
 file,group,subgroup,task,status
 backend/src/modules/health/router.py,health,api,Ensure /alive /ping mounted under /api/health,done
-backend/src/modules/health/tests/test_health.py,health,tests,Write pytest for /alive and /ping,todo
-backend/src/app.py,core,app,Wire routers + CORS + settings (single Uvicorn app),doing
-backend/src/modules/auth/router.py,auth,api,Implement /register /login /me (JWT),doing
-backend/src/modules/auth/schemas.py,auth,models,Pydantic schemas for Register/Login/Token,todo
-backend/src/modules/auth/service.py,auth,logic,Password hashing + JWT issue/verify,todo
-backend/src/modules/auth/tests/test_auth.py,auth,tests,Happy-path tests for register/login/me,todo
-backend/migrations/,db,alembic,Autogenerate initial models and upgrade head,review
-backend/migrations/env.py,db,alembic,Confirm metadata target + compare options,todo
-.github/workflows/snapshot.yml,ci,plan,Nightly snapshot of plan.csv + PR,todo
-.github/workflows/smoke.yml,ci,health,Smoke test: curl /api/health 200,todo
+backend/src/modules/health/tests/test_health.py,health,tests,Write pytest for /alive and /ping,done
+backend/src/app.py,core,app,Wire routers + CORS + settings (single Uvicorn app),done
+backend/src/modules/auth/router.py,auth,api,Implement /register /login /me (JWT),done
+backend/src/modules/auth/schemas.py,auth,models,Pydantic schemas for Register/Login/Token,done
+backend/src/modules/auth/service.py,auth,logic,Password hashing + JWT issue/verify,done
+backend/src/modules/auth/tests/test_auth.py,auth,tests,Happy-path tests for register/login/me,done
+backend/migrations/,db,alembic,Autogenerate initial models and upgrade head,done
+backend/migrations/env.py,db,alembic,Confirm metadata target + compare options,done
+.github/workflows/snapshot.yml,ci,plan,Nightly snapshot of plan.csv + PR,done
+.github/workflows/smoke.yml,ci,health,Smoke test: curl /api/health 200,done
 docs/DEVELOPMENT_CONTEXT.md,docs,runbook,Update ports/make targets/smoke steps,review
 client/src/pages/Home.tsx,frontend,ui,Show API health + backend version,todo
 "tools/validate_plan_csv.py",ci,tooling,"Keep header strict: file,group,subgroup,task,status",done
-Makefile,dev,dx,Add plan-validate and plan-open targets,todo
+Makefile,dev,dx,Add plan-validate and plan-open targets,done
