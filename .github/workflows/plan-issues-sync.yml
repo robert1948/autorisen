@@ -16,3 +16,76 @@ on:
   schedule:
     - cron: "5 5 * * *"
   workflow_dispatch:
+
+jobs:
+  sync:
+    if: github.actor != "github-actions[bot]"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/tags/*:refs/tags/* \
+            +refs/pull/*:refs/remotes/pull/*
+          git checkout --detach "${GITHUB_SHA}"
+
+      - name: Sync plan issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 <<'PY'
+import csv, json, os, shlex, subprocess
+
+CSV = "data/plan.csv"
+
+
+def run(cmd: str) -> str:
+    return subprocess.check_output(cmd, shell=True, text=True).strip()
+
+
+def gh_json(cmd: str):
+    out = run(cmd)
+    return json.loads(out) if out else None
+
+rows = []
+with open(CSV, newline="") as fh:
+    reader = csv.DictReader(fh)
+    assert reader.fieldnames == ["file", "group", "subgroup", "task", "status"], reader.fieldnames
+    rows.extend(reader)
+
+issues = gh_json('gh issue list --state open --limit 200 --json number,title,labels,body') or []
+open_map = {issue["title"]: issue for issue in issues}
+
+needed_labels = set()
+for row in rows:
+    needed_labels.update([row['group'], row['subgroup'], f"status/{row['status']}"])
+
+existing_labels = {lab["name"] for lab in gh_json('gh label list --json name') or []}
+for label in sorted(needed_labels - existing_labels):
+    run(f"gh label create {shlex.quote(label)} --force")
+
+valid_states = {"todo", "doing", "blocked", "review"}
+
+for row in rows:
+    title = f"{row['group']}/{row['subgroup']}: {row['task']}"
+    labels = [row['group'], row['subgroup'], f"status/{row['status']}"]
+    body = f"File: `{row['file']}`\n\nSource: `data/plan.csv`"
+
+    if row['status'] in valid_states:
+        if title in open_map:
+            number = open_map[title]['number']
+            run(f"gh issue edit {number} --add-label {','.join(shlex.quote(x) for x in labels)} --body {shlex.quote(body)}")
+        else:
+            run(f"gh issue create --title {shlex.quote(title)} --body {shlex.quote(body)} --label {','.join(shlex.quote(x) for x in labels)}")
+    elif row['status'] == 'done' and title in open_map:
+        number = open_map[title]['number']
+        run(f"gh issue close {number} --comment 'Closed via plan.csv (status=done)' ")
+PY

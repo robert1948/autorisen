@@ -18,12 +18,24 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-      - name: Install deps
-        run: python -m pip install --upgrade pip
+      - name: Checkout repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/pull/*:refs/remotes/pull/*
+          git checkout --detach "${GITHUB_SHA}"
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python3 -m ensurepip --upgrade || true
+          python3 -m pip install --upgrade pip
+
       - name: Run CSV validator
-        run: python scripts/validate_plan.py
+        run: python3 scripts/validate_plan.py

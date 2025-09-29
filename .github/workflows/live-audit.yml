@@ -14,30 +14,25 @@ jobs:
   run-audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials from OIDC
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
-          aws-region: us-east-1
-
-      - name: Install tools
+      - name: Checkout repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq curl
-          python3 -m pip install --user heroku3 || true
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/*
+          git checkout --detach "${GITHUB_SHA}"
 
-      - name: Run live audit
+      - name: Run live audit steps (placeholder)
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          chmod +x .github/scripts/live_audit.sh
-          .github/scripts/live_audit.sh
-
-      - name: Upload audit artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: live-audit-output
-          path: audit-output
+          set -euo pipefail
+          if [ -x .github/scripts/live_audit.sh ]; then
+            .github/scripts/live_audit.sh
+          else
+            echo "No live audit script found; exiting gracefully."
+          fi

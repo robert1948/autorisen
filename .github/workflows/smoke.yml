@@ -17,12 +17,28 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/pull/*:refs/remotes/pull/*
+          git checkout --detach "${GITHUB_SHA}"
+
       - name: Install deps (FastAPI + Uvicorn)
         run: |
+          set -euo pipefail
+          python3 -m ensurepip --upgrade || true
           python3 -m pip install --upgrade pip
           python3 -m pip install "uvicorn[standard]" fastapi
+
       - name: Boot app for smoke (background)
-        run: uvicorn backend.src.app:app --host 127.0.0.1 --port 8000 & sleep 3
+        run: uvicorn backend.src.app:app --host 127.0.0.1 --port 8000 & sleep 5
+
       - name: Hit /api/health
         run: curl -sf http://127.0.0.1:8000/api/health
