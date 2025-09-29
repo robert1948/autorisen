@@ -1,4 +1,4 @@
-name: Snapshot Project Plan (PR; no-marketplace)
+name: Snapshot Project Plan
 on:
   workflow_dispatch:
   schedule:
@@ -10,39 +10,29 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BRANCH: bot/snapshot-${{ github.run_id }}
     steps:
-      - name: Checkout
+      - uses: actions/checkout@v4
+
+      - name: Validate plan.csv
+        run: python3 tools/validate_plan_csv.py
+
+      - name: Create branch and commit snapshot
         run: |
-          set -e
-          git init .
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${{ github.ref_name }}"
-          git checkout -b "$BRANCH"
-      - name: Generate snapshot
-        run: python3 tools/snapshot_plan.py
-      - name: Stage & detect changes
-        id: diff
-        run: |
-          git add -A
-          if git diff --staged --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            git commit -m "chore: snapshot project plan"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Push branch
-        if: steps.diff.outputs.changed == 'true'
-        run: git push -u origin "$BRANCH"
+          set -euo pipefail
+          git switch -c "$BRANCH"
+          mkdir -p snapshots
+          ts=$(date -u +'%Y-%m-%dT%H-%M-%SZ')
+          cp data/plan.csv "snapshots/plan-$ts.csv"
+          git add snapshots/*.csv
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "chore(snapshot): plan at $ts"
+          git push -u origin "$BRANCH"
+
       - name: Open PR
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          gh pr create \
-            --head "$BRANCH" \
-            --base "${{ github.ref_name }}" \
-            --title "Snapshot: project plan" \
-            --body "Automated snapshot of docs/autorisen_project_plan.csv" \
-            --label automation
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Snapshot: plan.csv"
+          body: "Automated plan snapshot."
+          branch: ${{ env.BRANCH }}
