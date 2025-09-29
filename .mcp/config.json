@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "providers": [
+    {
+      "name": "local-shell",
+      "type": "shell",
+      "commandWhitelist": ["make","git","docker","docker compose","heroku","bash"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "name": "fs-ro",
+      "type": "filesystem",
+      "roots": ["${workspaceRoot}"],
+      "writable": false
+    }
+  ]
+}

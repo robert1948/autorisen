@@ -1,0 +1,42 @@
+name: DB Guard
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  drift-and-migrate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ci
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U ci -d ci"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          pip install -r backend/requirements.txt
+
+      - name: Drift check
+        run: |
+          make check-drift
+
+      - name: Migrate (dry run)
+        run: |
+          make migrate-dry

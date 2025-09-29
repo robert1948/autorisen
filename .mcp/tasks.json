@@ -1,0 +1,5 @@
+[
+  {"id":"smoke-local","description":"Run local smoke checks","tool":"local-shell","command":"bash scripts/smoke_check.sh http://localhost:8000"},
+  {"id":"logs-staging","description":"Tail Heroku logs (staging)","tool":"local-shell","command":"heroku logs -t --app autorisen"},
+  {"id":"deploy-staging","description":"Build/push/release to Heroku staging","tool":"local-shell","command":"make deploy-stg"}
+]

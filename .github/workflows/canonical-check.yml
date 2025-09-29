@@ -1,0 +1,41 @@
+name: Nightly canonical CSV check
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily at 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  canonical-check:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: bot/canonical-snapshot-${{ github.run_id }}
+    steps:
+      - name: Checkout (manual)
+        run: |
+          set -euo pipefail
+          git init .
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin ${{ github.ref_name || 'main' }} || true
+          git checkout -b "$BRANCH"
+
+      - name: Convert to canonical
+        run: |
+          python3 tools/csv_to_canonical.py --in docs/autorisen_project_plan.csv --out /tmp/canonical.csv
+
+      - name: Validate canonical
+        run: |
+          python3 scripts/validate_plan.py /tmp/canonical.csv || exit 2
+
+      - name: Commit canonical and open PR
+        run: |
+          git add -A
+          git commit -m "chore: canonical snapshot of project plan" || echo "no changes"
+          git push -u origin "$BRANCH"
+          gh pr create --head "$BRANCH" --base main --title "Canonical snapshot: project plan" --body "Automated canonical snapshot of project plan"
