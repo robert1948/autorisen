@@ -1,7 +1,7 @@
 module,area,task_id,task_title,description,owner,priority,estimate,depends_on,status,started_at,updated_at,done_at,notes
 Auth & Accounts,Backend,AUTH-001,Design auth data model,"Users, credentials, sessions, roles, permissions; ERD + migration scripts.",backend,P1,6,,done,2025-09-29,2025-09-29,2025-09-29,"Alembic revision a8d4cc7f6947 adds users/credentials/roles/permissions/sessions; see backend/src/db/models.py"
-Auth & Accounts,Backend,AUTH-002,Implement /auth/register + hashing,"FastAPI route, Pydantic schemas, validation, bcrypt/argon2 hashing, happy-path tests.",backend,P1,8,AUTH-001,todo,,2025-09-27,,
-Auth & Accounts,Backend,AUTH-003,Implement /auth/login + JWT,"Issue access/refresh tokens, rate limit, audit events.",backend,P1,8,AUTH-002,todo,,2025-09-27,,
+Auth & Accounts,Backend,AUTH-002,Implement /auth/register + hashing,"FastAPI route, Pydantic schemas, validation, bcrypt/argon2 hashing, happy-path tests.",backend,P1,8,AUTH-001,done,2025-09-29,2025-09-29,2025-09-29,"DB-backed register/login: see commit bff65e95 + refresh flow commit pending AUTH-004"
+Auth & Accounts,Backend,AUTH-003,Implement /auth/login + JWT,"Issue access/refresh tokens, rate limit, audit events.",backend,P1,8,AUTH-002,doing,2025-09-29,2025-09-29,,"Access + refresh token endpoints implemented; rate limiting/audit pending"
 Auth & Accounts,Backend,AUTH-004,/auth/me and refresh flow,Protected route + token refresh endpoint + middleware.,backend,P1,6,AUTH-003,todo,,2025-09-27,,
 Auth & Accounts,Backend,AUTH-005,Security hardening & tests,"Bruteforce protection, CSRF for state-changing ops, unit+integration tests.",backend,P1,6,AUTH-003,todo,,2025-09-27,,
 Org & Tenants,Backend,ORG-006,Org model + memberships,"Create orgs, roles, invitations; migrations + seeds.",backend,P1,8,AUTH-001,todo,,2025-09-27,,
