@@ -28,11 +28,11 @@ jobs:
             +refs/pull/*:refs/remotes/pull/*
           git checkout --detach "${GITHUB_SHA}"
 
-      - name: Python deps (pytest + optional project requirements)
+      - name: Python deps (pytest + project requirements)
         run: |
           set -euo pipefail
           python3 -m pip install --upgrade pip
-          python3 -m pip install pytest
+          python3 -m pip install pytest fastapi "uvicorn[standard]"
           if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then python3 -m pip install -r requirements-dev.txt; fi
 
