@@ -1,4 +1,11 @@
 name: Main - Test, Deploy to Heroku, Smoke
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  id-token: write
 on:
   push:
     branches: [ main ]

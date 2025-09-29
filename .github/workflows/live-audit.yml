@@ -1,5 +1,12 @@
 name: Live Audit - Heroku & AWS (manual)
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  checks: read
+  id-token: write
 on:
   workflow_dispatch:
 
