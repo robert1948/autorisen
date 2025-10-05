@@ -56,3 +56,13 @@ heroku logs --tail
 ```
 
 CI/CD note: The repo already expects `HEROKU_API_KEY` and `HEROKU_APP_NAME` to be set in GitHub Actions secrets for automated deployment.
+
+## Agents Setup
+
+Create a local `.env.dev` (keep it out of version control) with the following placeholders and export them before running agent make targets:
+
+```
+GH_TOKEN=<github token with repo + workflow>
+HEROKU_API_KEY=<Heroku API Key>
+HEROKU_APP_NAME=autorisen
+```

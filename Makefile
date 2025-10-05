@@ -99,3 +99,21 @@ plan-validate:
 
 plan-open:
 	code docs/CODEX_PROJECT_PLAN.md data/plan.csv
+
+.PHONY: agents-new agents-validate agents-test agents-run
+
+agents-new:
+	@[ -n "$$name" ] || (echo "Usage: make agents-new name=<slug>"; exit 1)
+	@mkdir -p agents/$(name)/tests && \
+	printf "name: %s\nrole: <fill>\nmodel: { provider: openai, name: gpt-4.1, temperature: 0.2 }\npolicies: { allow_tools: [] }\ncontext: { system_prompt: |\n  You are %s. }\n" "$(name)" "$(name)" > agents/$(name)/agent.yaml
+	@echo "Created agents/$(name)"
+
+agents-validate:
+	@python3 scripts/agents_validate.py agents/registry.yaml
+
+agents-test:
+	@echo "(stub) run unit + dry-run e2e" && exit 0
+
+agents-run:
+	@[ -n "$$name" ] || (echo "Usage: make agents-run name=<slug> task=\"...\""; exit 1)
+	@python3 scripts/agents_run.py --agent $$name --task "$$task"

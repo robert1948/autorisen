@@ -1,0 +1,5 @@
+endpoint: https://api.heroku.com
+container_registry: https://registry.heroku.com
+required_env: [HEROKU_API_KEY, HEROKU_APP_NAME]
+headers:
+  Accept: application/vnd.heroku+json; version=3
