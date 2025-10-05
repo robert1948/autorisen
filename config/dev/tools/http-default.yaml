@@ -1,0 +1,4 @@
+allowed_hosts:
+  - http://localhost:8000
+  - https://autorisen-*.herokuapp.com
+timeouts: { connect: 5, read: 10 }
