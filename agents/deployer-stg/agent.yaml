@@ -4,7 +4,7 @@ goals:
   - Build/push container
   - Release to Heroku
   - Run smoke tests (/api/health)
-model: { provider: openai, name: gpt-4.1, temperature: 0.1 }
+model: { provider: openai, name: gpt-4.1-mini, temperature: 0.1 }
 policies:
   allow_tools: [github, heroku]
   data_access: { read: [repo:read], write: [deploy:release] }
@@ -17,7 +17,8 @@ routes:
   - when: "label:deploy-stg or path:/deploy"
     to: deploy
 tools:
-  - { id: github, kind: rest,  config_ref: github-default }
-  - { id: heroku, kind: rest,  config_ref: heroku-stg }
-telemetry: { events: [plan, act, error, success], redact_fields: [api_key, token] }
+  - { id: github, kind: rest, config_ref: github-default }
+  - { id: heroku, kind: rest, config_ref: heroku-stg }
+telemetry:
+  { events: [plan, act, error, success], redact_fields: [api_key, token] }
 validation: { required_checks: [schema, dryrun, e2e] }

@@ -105,7 +105,7 @@ plan-open:
 agents-new:
 	@[ -n "$$name" ] || (echo "Usage: make agents-new name=<slug>"; exit 1)
 	@mkdir -p agents/$(name)/tests && \
-	printf "name: %s\nrole: <fill>\nmodel: { provider: openai, name: gpt-4.1, temperature: 0.2 }\npolicies: { allow_tools: [] }\ncontext: { system_prompt: |\n  You are %s. }\n" "$(name)" "$(name)" > agents/$(name)/agent.yaml
+	printf "name: %s\nrole: <fill>\nmodel: { provider: openai, name: gpt-4.1-mini, temperature: 0.2 }\npolicies: { allow_tools: [] }\ncontext: { system_prompt: |\n  You are %s. }\n" "$(name)" "$(name)" > agents/$(name)/agent.yaml
 	@echo "Created agents/$(name)"
 
 agents-validate:
