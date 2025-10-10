@@ -1,0 +1,50 @@
+name: Snapshot Project Plan (no-marketplace)
+
+on:
+  workflow_dispatch: {} # run manually
+  schedule:
+    - cron: "0 5 * * *" # 05:00 UTC daily (optional)
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (no marketplace actions)
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach "${GITHUB_SHA}"
+          git submodule update --init --recursive || true
+
+      - name: Generate snapshot (safe)
+        run: |
+          set -euo pipefail
+          if [ -f tools/snapshot_plan.py ]; then
+            python3 tools/snapshot_plan.py
+          else
+            echo "tools/snapshot_plan.py not found — creating placeholder."
+            mkdir -p docs
+            printf 'file,group,subgroup,task,status\n' > docs/autorisen_project_plan.csv
+          fi
+
+      - name: Commit changes (if any) to a bot branch
+        env:
+          BRANCH: bot/snapshot-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add docs/autorisen_project_plan.csv || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Snapshot: update autorisen_project_plan.csv"
+          git push --set-upstream origin "$BRANCH"
+          echo "Pushed $BRANCH — open a PR from this branch to main."
