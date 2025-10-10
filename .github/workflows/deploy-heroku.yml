@@ -12,7 +12,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # keep if you later use OIDC; harmless otherwise
+  id-token: write
 
 concurrency:
   group: deploy-heroku-${{ github.ref }}
@@ -26,21 +26,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Heroku Container Registry
+      - name: Checkout (no marketplace actions)
         run: |
-          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach "${GITHUB_SHA}"
+          git submodule update --init --recursive || true
 
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
           heroku --version
-          # ensure CLI uses the provided key (no interactive login)
+          # Non-interactive auth for later heroku commands
           cat > ~/.netrc <<EOF
           machine api.heroku.com
             login _
@@ -49,6 +48,15 @@ jobs:
             login _
             password ${HEROKU_API_KEY}
           EOF
+
+      - name: Docker login to Heroku registry
+        run: |
+          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+
+      - name: (Optional) Enable Buildx if available
+        run: |
+          docker buildx version || true
+          docker buildx create --use || true
 
       - name: Build image
         run: |
