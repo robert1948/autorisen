@@ -1,14 +1,6 @@
-# .github/workflows/deploy-heroku.yml
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  actions: read
-  checks: read
-  id-token: write
-name: CI & Deploy (Heroku autorisen) (no-marketplace)
+name: Deploy to Heroku (autorisen)
+
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -16,39 +8,65 @@ on:
       - "client/**"
       - "infra/**"
       - ".github/workflows/deploy-heroku.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write # keep if you later use OIDC; harmless otherwise
+
+concurrency:
+  group: deploy-heroku-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HEROKU_APP: ${{ secrets.HEROKU_APP_NAME }} # e.g. autorisen
+  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      HEROKU_APP:     ${{ secrets.HEROKU_APP_NAME }}
     steps:
-      - name: Checkout (no actions)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Heroku Container Registry
         run: |
-          set -euo pipefail
-          git init .
-          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          git fetch --depth=1 origin "${GITHUB_SHA}"
-          git checkout --detach "${GITHUB_SHA}"
+          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
 
       - name: Install Heroku CLI
         run: |
-          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+          curl https://cli-assets.heroku.com/install.sh | sh
           heroku --version
-
-      - name: Login to Heroku Container Registry
-        run: |
-          echo "$HEROKU_API_KEY" | heroku auth:token >/dev/null 2>&1 || true
-          HEROKU_AUTH_HEADER="Authorization: Bearer $HEROKU_API_KEY"
-          docker login --username=_ --password="$(heroku auth:token)" registry.heroku.com
+          # ensure CLI uses the provided key (no interactive login)
+          cat > ~/.netrc <<EOF
+          machine api.heroku.com
+            login _
+            password ${HEROKU_API_KEY}
+          machine git.heroku.com
+            login _
+            password ${HEROKU_API_KEY}
+          EOF
 
       - name: Build image
         run: |
-          # Adjust Dockerfile path/context if needed:
-          docker build -t registry.heroku.com/$HEROKU_APP/web -f Dockerfile .
+          IMAGE="registry.heroku.com/${HEROKU_APP}/web"
+          docker build -t "$IMAGE" .
 
-      - name: Push & release
+      - name: Push image
         run: |
-          docker push registry.heroku.com/$HEROKU_APP/web
+          IMAGE="registry.heroku.com/${HEROKU_APP}/web"
+          docker push "$IMAGE"
+
+      - name: Release container
+        run: |
           heroku container:release web -a "$HEROKU_APP"
+
+      # OPTIONAL: run DB migrations (adjust or remove)
+      - name: Run Alembic migrations
+        if: always()
+        run: |
+          heroku run -a "$HEROKU_APP" -- \
+            python -m alembic -c backend/alembic.ini upgrade head
