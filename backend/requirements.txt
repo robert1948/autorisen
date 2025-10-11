@@ -26,9 +26,10 @@ greenlet==3.2.4
 gunicorn==21.2.0
 h11==0.14.0
 hiredis==2.4.0
-httpcore==0.16.3
-httptools==0.6.4
-httpx==0.23.3
+# httpcore is chosen by httpx; do not pin here
+# httpcore==0.16.3
+# satisfy anthropic: >=0.25,<1
+httpx>=0.25,<1
 idna==3.10
 iniconfig==2.1.0
 Jinja2==3.1.6
@@ -44,7 +45,7 @@ passlib==1.7.4
 pluggy==1.6.0
 propcache==0.3.2
 psutil==5.9.8
-# Use modern psycopg with binary wheels; remove psycopg-binary/psycopg2-binary
+# Use modern psycopg with binary wheels
 psycopg[binary]==3.2.10
 pyasn1==0.6.1
 pycparser==2.23
@@ -82,3 +83,4 @@ uvloop==0.21.0
 watchfiles==1.1.0
 webencodings==0.5.1
 websockets==15.0.1
+yarl==1.20.1
