@@ -71,3 +71,24 @@ CI/CD note: The repo already expects `HEROKU_API_KEY` and `HEROKU_APP_NAME` to b
   - `make agents-test` runs targeted pytest coverage for the local adapters (`tests/test_agents_tooling.py`).
 - `make agents-run name=<slug> task="..."` invokes `scripts/agents_run.py` to surface adapter readiness (use `AGENTS_ENV` or `--env` to swap config sets).
 - GitHub Actions runs `.github/workflows/agents-validate.yml` on PRs touching agent specs, tool configs, or the helper scripts to keep the registry healthy.
+
+## ChatKit Integration (scaffold)
+
+- Backend exposes `/api/chatkit/token` to mint short-lived client tokens (see `backend/src/modules/chatkit`).
+- Configure ChatKit issuance via `CHATKIT_APP_ID`, `CHATKIT_SIGNING_KEY`, optional `CHATKIT_AUDIENCE`, `CHATKIT_ISSUER`, and `CHATKIT_TOKEN_TTL_SECONDS` env vars.
+- `/api/chatkit/tools/{tool_name}` invokes backend adapters (onboarding/support/energy/money) and logs usage in `app_chat_events`.
+- `/api/flows/run` executes orchestrated tool sequences using the shared ChatKit adapters (optionally bound to an agent slug/version).
+- Flow runs are persisted (`flow_runs` table) so the UI can display history using the returned `run_id`.
+- `/api/flows/onboarding/checklist` and `/api/flows/runs` power the onboarding progress card in the SPA.
+- `/api/agents` provides CRUD endpoints for the agent registry (agents + versions).
+- Agent registry UI allows creating agents, adding versions, and publishing the latest release.
+- Manifest editor modal lets developers edit agent manifests and create new versions with preview/validation.
+- SPA auth context provides login/register forms, stores tokens with auto refresh, and gates onboarding/developer sections.
+- `/api/marketplace/agents` powers a public directory of published agents rendered on the landing page (detail modal fetches `/api/marketplace/agents/{slug}`).
+- Marketplace modal can trigger `/api/flows/run` with an agent slug to preview tool output.
+- Chat thread/event tables are defined via the Alembic migration `c1e0cc70f7a4_add_chatkit_tables.py` and SQLAlchemy models in `backend/src/db/models.py`.
+- Frontend wraps the app with `ChatKitProvider` and includes a Support modal launcher in the top navigation.
+- Landing page highlights Onboarding + Developer workbench experiences that launch ChatKit sessions via shared modal scaffolding.
+- Developer section surfaces the agent registry and creation form backed by `/api/agents`.
+- Replace the placeholder logic in `backend/src/modules/chatkit/service.py` and the client chat components with the real ChatKit SDK when ready.
+- Set `VITE_CHATKIT_WIDGET_URL` to the hosted ChatKit Web SDK script so the modal can dynamically mount the official widget.
