@@ -5,8 +5,9 @@ VENV := .venv
 REQ := requirements.txt
 IMAGE ?= autorisen:local
 PORT ?= 8000
+HEROKU_APP_NAME ?= autorisen
 
-.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku clean plan-validate plan-open heroku-deploy-stg
+.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku github-update clean plan-validate plan-open heroku-deploy-stg migrate-up migrate-revision
 
 help:
 	@echo "Available targets:"
@@ -18,6 +19,7 @@ help:
 	@echo "  make docker-build    - build docker image (IMAGE=$(IMAGE))"
 	@echo "  make docker-run      - run docker image locally (exposes $(PORT))"
 	@echo "  make deploy-heroku   - build/push/release to Heroku Container Registry (requires HEROKU_APP_NAME and heroku CLI)"
+	@echo "  make github-update   - fast-forward current branch from GitHub origin (https://github.com/robert1948/autorisen)"
 	@echo "  make clean           - remove common build artifacts"
 
 venv:
@@ -85,6 +87,16 @@ deploy-heroku: docker-build
 	@echo "Releasing on Heroku..."
 	heroku container:release web --app $(HEROKU_APP_NAME)
 
+github-update:
+	@echo "Updating branch $$(git rev-parse --abbrev-ref HEAD) from origin..."
+	@origin_url="$$(git remote get-url origin)"; \
+	if [ "$$origin_url" != "https://github.com/robert1948/autorisen.git" ]; then \
+		echo "Origin remote is '$$origin_url' (expected https://github.com/robert1948/autorisen.git)"; \
+		exit 1; \
+	fi
+	@git fetch origin
+	@git pull --ff-only origin $$(git rev-parse --abbrev-ref HEAD)
+
 heroku-deploy-stg:
 	heroku container:login
 	heroku container:push web -a autorisen
@@ -99,6 +111,17 @@ plan-validate:
 
 plan-open:
 	code docs/CODEX_PROJECT_PLAN.md data/plan.csv
+
+migrate-up: venv
+	@echo "Running Alembic upgrade head..."
+	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
+	@$(VENV)/bin/python -m alembic -c backend/alembic.ini upgrade head
+
+migrate-revision: venv
+	@[ -n "$$message" ] || (echo "Usage: make migrate-revision message=\"<description>\""; exit 1)
+	@echo "Creating Alembic revision: $$message"
+	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
+	@$(VENV)/bin/python -m alembic -c backend/alembic.ini revision -m "$$message"
 
 .PHONY: agents-new agents-validate agents-test agents-run
 

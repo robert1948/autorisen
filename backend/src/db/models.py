@@ -9,6 +9,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -136,3 +137,112 @@ class LoginAudit(Base):
     user_agent = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     details = Column(Text, nullable=True)
+
+
+class ChatThread(Base):
+    """Persisted ChatKit thread metadata per user and placement."""
+
+    __tablename__ = "app_chat_threads"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    placement = Column(String(64), nullable=False)
+    context = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    user = relationship("User")
+    events = relationship("ChatEvent", back_populates="thread", cascade="all, delete-orphan")
+
+
+class ChatEvent(Base):
+    """Individual ChatKit messages or tool invocations stored per thread."""
+
+    __tablename__ = "app_chat_events"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    thread_id = Column(
+        String(36), ForeignKey("app_chat_threads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role = Column(String(32), nullable=False)
+    content = Column(Text, nullable=False)
+    tool_name = Column(String(64), nullable=True)
+    event_metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    thread = relationship("ChatThread", back_populates="events")
+
+
+class Agent(Base):
+    """Registered agent metadata owned by an organization or developer."""
+
+    __tablename__ = "agents"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    owner_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    slug = Column(String(100), unique=True, nullable=False)
+    name = Column(String(160), nullable=False)
+    description = Column(Text, nullable=True)
+    visibility = Column(String(32), nullable=False, server_default="private")
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    owner = relationship("User")
+    versions = relationship(
+        "AgentVersion",
+        back_populates="agent",
+        cascade="all, delete-orphan",
+        order_by="AgentVersion.created_at.desc()",
+    )
+
+
+class AgentVersion(Base):
+    """Versioned manifest entries for an agent."""
+
+    __tablename__ = "agent_versions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    agent_id = Column(String(36), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    version = Column(String(20), nullable=False)
+    manifest = Column(JSON, nullable=False)
+    changelog = Column(Text, nullable=True)
+    status = Column(String(32), nullable=False, server_default="draft")
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    published_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (UniqueConstraint("agent_id", "version", name="uq_agent_versions_version"),)
+
+    agent = relationship("Agent", back_populates="versions")
+
+
+class FlowRun(Base):
+    """Recorded orchestrator runs for auditing and UI history."""
+
+    __tablename__ = "flow_runs"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), nullable=True, index=True)
+    agent_id = Column(String(36), nullable=True, index=True)
+    agent_version_id = Column(String(36), nullable=True, index=True)
+    placement = Column(String(64), nullable=False)
+    thread_id = Column(String(36), nullable=False, index=True)
+    steps = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class OnboardingChecklist(Base):
+    """Per-user onboarding checklist state."""
+
+    __tablename__ = "onboarding_checklists"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), nullable=False, index=True)
+    thread_id = Column(String(36), nullable=False, index=True)
+    tasks = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )

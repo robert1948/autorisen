@@ -1,24 +1,56 @@
-# ./Dockerfile
-FROM python:3.12-slim
+# syntax=docker/dockerfile:1
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+############################
+# Stage 1: Build frontend
+############################
+FROM node:20-alpine AS webbuild
+WORKDIR /web/client
+
+# Install deps (need devDependencies so Vite is available)
+COPY client/package*.json ./
+RUN npm ci --omit=dev=false --no-audit --no-fund
+
+# Build the SPA
+COPY client/ ./
+RUN npm run build
+# dist -> /web/client/dist
+
+############################
+# Stage 2: Backend runtime
+############################
+FROM python:3.12-slim AS runtime
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Copy backend code (editable install expects source present)
-COPY backend/ ./backend/
-# Static assets (if your app serves them)
-COPY backend/src/static /app/backend/src/static
+# ---- System deps for native builds & VCS installs ----
+# - git: VCS requirements
+# - build-essential, python3-dev, pkg-config: compile extensions
+# - libpq-dev: psycopg/psycopg2
+# - libffi-dev, libssl-dev: cryptography, etc.
+# - rustc, cargo: some packages (e.g., cryptography when wheels unavailable) need Rust
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl ca-certificates \
+    build-essential python3-dev pkg-config \
+    libpq-dev libffi-dev libssl-dev \
+    rustc cargo \
+  && rm -rf /var/lib/apt/lists/*
 
-# Install app + runtime deps (adds Postgres driver)
-# -e ./backend installs your package in editable mode
-# uvicorn[standard] pulls uvloop/httptools for performance
-# psycopg2-binary provides the Postgres DBAPI for SQLAlchemy
-RUN python -m pip install --upgrade pip && \
-    pip install --no-cache-dir -e ./backend 'uvicorn[standard]' psycopg2-binary==2.9.9
+# ---- Python deps (simple, robust path) ----
+COPY backend/requirements.txt /app/backend/requirements.txt
 
+# Prefer wheels, but allow source builds if needed (now that toolchain is present)
+RUN set -eux; \
+    python --version; pip --version; \
+    pip install --upgrade pip setuptools wheel; \
+    PIP_PROGRESS_BAR=off pip install --prefer-binary -r /app/backend/requirements.txt
+
+# ---- App code & built SPA ----
+COPY backend/ /app/backend/
+COPY --from=webbuild /web/client/dist /app/client/dist
+
+# ---- Runtime ----
 EXPOSE 8000
-
-# Use Heroku's PORT if provided; 8000 locally
 CMD ["sh", "-c", "uvicorn backend.src.app:app --host 0.0.0.0 --port ${PORT:-8000}"]

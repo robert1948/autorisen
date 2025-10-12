@@ -1,37 +1,75 @@
-# Ignore Python cache
-__pycache__/
+# =========================
+# Python
+# =========================
+**/__pycache__/
 *.py[cod]
-
-# Virtual envs
+*.pyo
+*.pyd
+*.pyc
+.venv/
 venv/
-.env
-.env.*
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# Git
+# =========================
+# Git & Editors
+# =========================
 .git
-
-# Editor directories and files
+.gitattributes
+.gitmodules
 .vscode/
 .idea/
 
+# =========================
+# Environment & logs
+# =========================
+.env
+.env.*
+**/.env
+**/.env.*
+*.log
+
+# =========================
 # Build artifacts
+# =========================
 build/
 dist/
+*.egg-info/
+.eggs/
 
-# Docker
+# =========================
+# Node / Frontend
+# =========================
+node_modules/
+client/node_modules/
+client/.next/
+# If you build the SPA inside Docker (recommended), keep dist out of the context:
+client/dist/
+
+# =========================
+# Docker files (safe to ignore in context; Docker reads them directly)
+# =========================
 Dockerfile
 .dockerignore
 
-# Logs
-*.log
+# =========================
+# OS cruft
+# =========================
+.DS_Store
+Thumbs.db
 
+# =========================
+# IMPORTANT: allow backend manifests needed for pip/poetry install
+# (negation means "do NOT ignore these")
+# =========================
+!/backend/requirements.txt
+!/backend/requirements/*.txt
+!/backend/pyproject.toml
+!/backend/poetry.lock
+
+# =========================
 # Misc
-*.pyc
-*.pyo
-*.pyd
-
-# Node
-node_modules/
-
-# Ignore backup files
+# =========================
 *.backup-before-move-*

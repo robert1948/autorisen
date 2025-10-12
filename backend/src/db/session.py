@@ -11,9 +11,13 @@ from sqlalchemy.orm import Session, sessionmaker
 
 # 1) Read and normalize DATABASE_URL
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
+
 if DATABASE_URL.startswith("postgres://"):
-    # Heroku-style URL -> SQLAlchemy expects 'postgresql://'
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    # Heroku-style URL -> prefer psycopg (v3) driver
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and "+psycopg" not in DATABASE_URL.split("://", 1)[0]:
+    # Ensure SQLAlchemy loads the modern psycopg driver when driver not specified
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 # 2) Connect args per driver/env
 connect_args: dict = {}
@@ -21,7 +25,7 @@ connect_args: dict = {}
 if DATABASE_URL.startswith("sqlite"):
     # Needed for SQLite when used in multi-threaded servers
     connect_args = {"check_same_thread": False}
-elif DATABASE_URL.startswith("postgresql://"):
+elif DATABASE_URL.startswith("postgresql"):
     # If not local, assume managed Postgres (e.g., Heroku) -> require SSL
     if "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL:
         connect_args["sslmode"] = "require"

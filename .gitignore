@@ -1,4 +1,3 @@
-<paste the block above>
 # --- OS junk ---
 .DS_Store
 Thumbs.db
@@ -86,6 +85,8 @@ coverage/         # front-end coverage
 # --- Env & secrets ---
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
 .pypirc
 
@@ -98,6 +99,7 @@ coverage/         # front-end coverage
 # --- Docker / local data ---
 *.pid
 data/
+!data/*.csv
 tmp/
 
 # --- Tools / misc ---
