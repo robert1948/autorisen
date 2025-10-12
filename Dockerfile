@@ -8,7 +8,8 @@ WORKDIR /web/client
 
 # Install deps (need devDependencies so Vite is available)
 COPY client/package*.json ./
-RUN npm ci --omit=dev=false --no-audit --no-fund
+# Install all dependencies (dev deps required to build the SPA).
+RUN npm ci --no-audit --no-fund
 
 # Build the SPA
 COPY client/ ./
