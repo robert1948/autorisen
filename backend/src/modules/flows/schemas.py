@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from backend.src.schemas.base import SchemaBase
+
 
 class ToolCall(BaseModel):
     """Single tool invocation requested by the client."""
@@ -23,6 +25,8 @@ class FlowRunRequest(BaseModel):
     agent_version: Optional[str] = Field(default=None, min_length=1, max_length=20)
     thread_id: Optional[str] = Field(default=None)
     tool_calls: List[ToolCall] = Field(default_factory=list)
+    idempotency_key: Optional[str] = Field(default=None, max_length=128)
+    max_attempts: int = Field(default=3, ge=1, le=5)
 
 
 class RunStep(BaseModel):
@@ -43,9 +47,15 @@ class FlowRunResponse(BaseModel):
     steps: List[RunStep] = Field(default_factory=list)
     agent_id: Optional[str] = None
     agent_version_id: Optional[str] = None
+    status: str
+    attempt: int
+    max_attempts: int
+    error_message: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 
-class FlowRunRecord(BaseModel):
+class FlowRunRecord(SchemaBase):
     id: str
     placement: str
     thread_id: str
@@ -53,10 +63,12 @@ class FlowRunRecord(BaseModel):
     agent_version_id: Optional[str]
     steps: List[Dict[str, Any]]
     created_at: datetime
-
-    class Config:
-        orm_mode = True
-
+    status: str
+    attempt: int
+    max_attempts: int
+    error_message: Optional[str]
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
 
 class ChecklistUpdateRequest(BaseModel):
     task_id: str = Field(..., min_length=2, max_length=100)

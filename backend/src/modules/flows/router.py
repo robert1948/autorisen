@@ -14,7 +14,6 @@ from backend.src.modules.auth.deps import get_current_user
 from backend.src.orchestrator import run_engine
 
 from . import schemas
-from .constants import DEFAULT_ONBOARDING_TASKS
 from .onboarding import ensure_checklist, serialize_checklist, update_task
 
 router = APIRouter(prefix="/flows", tags=["flows"])
@@ -57,9 +56,20 @@ def run_flow(
             tool_calls=tool_calls,
             thread_id=payload.thread_id,
             agent=agent_ctx,
+            idempotency_key=payload.idempotency_key,
+            max_attempts=payload.max_attempts,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except run_engine.RunExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "message": str(exc),
+                "run_id": exc.run_id,
+                "retryable": exc.retryable,
+            },
+        ) from exc
 
     return schemas.FlowRunResponse(
         run_id=result.run_id,
@@ -76,6 +86,12 @@ def run_flow(
         ],
         agent_id=result.agent_id,
         agent_version_id=result.agent_version_id,
+        status=result.status,
+        attempt=result.attempt,
+        max_attempts=result.max_attempts,
+        error_message=result.error_message,
+        started_at=result.started_at,
+        completed_at=result.completed_at,
     )
 
 
@@ -105,6 +121,12 @@ def list_runs(
             agent_version_id=run.agent_version_id,
             steps=run.steps or [],
             created_at=run.created_at,
+            status=run.status,
+            attempt=run.attempt,
+            max_attempts=run.max_attempts,
+            error_message=run.error_message,
+            started_at=run.started_at,
+            completed_at=run.completed_at,
         )
         for run in runs
     ]

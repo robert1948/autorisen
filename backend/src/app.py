@@ -4,6 +4,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from backend.src.core.rate_limit import limiter
 
 from backend.src.modules.agents.router import router as agents_router
 from backend.src.modules.auth.router import router as auth_router
@@ -14,7 +17,7 @@ from backend.src.modules.marketplace.router import router as marketplace_router
 
 CLIENT_DIST = Path(__file__).resolve().parents[2] / "client" / "dist"
 
-app = FastAPI(title="Autorisen API", version="0.1.0")
+app = FastAPI(title="CapeControl API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,6 +25,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, lambda request, exc: JSONResponse(status_code=429, content={"detail": "rate limit exceeded"}))
+app.add_middleware(SlowAPIMiddleware)
 
 if CLIENT_DIST.exists():
     assets_path = CLIENT_DIST / "assets"
@@ -39,7 +46,7 @@ def read_root():
             return FileResponse(index_file)
     return JSONResponse(
         content={
-            "message": "Autorisen API root",
+            "message": "CapeControl API root",
             "docs_url": "/docs",
             "health_url": "/api/health",
         }

@@ -1,0 +1,41 @@
+### Step 1 – Customer
+POST http://localhost:8000/api/auth/register/step1
+Content-Type: application/json
+
+{
+  "first_name": "Test",
+  "last_name": "Customer",
+  "email": "customer@example.com",
+  "password": "Password!2345",
+  "confirm_password": "Password!2345",
+  "role": "Customer",
+  "recaptcha_token": "local-dev-token"
+}
+
+### Step 2 – Customer
+POST http://localhost:8000/api/auth/register/step2
+Content-Type: application/json
+Authorization: Bearer {{temp_token}}
+
+{
+  "company_name": "Acme Co",
+  "profile": {
+    "industry": "Technology",
+    "company_size": "11-50",
+    "use_cases": ["Prototyping new workflows"],
+    "budget_range": "$1k-$5k"
+  }
+}
+
+### Analytics sample
+POST http://localhost:8000/api/auth/analytics/track
+Content-Type: application/json
+
+{
+  "event_type": "step_view",
+  "step": "step1",
+  "role": "Customer",
+  "details": {
+    "source": "manual-test"
+  }
+}

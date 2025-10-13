@@ -1,3 +1,6 @@
+import logoUrl from "../../assets/capecontrol-logo.png";
+import { Link } from "react-router-dom";
+
 type Props = {
   onOpenSupport: () => void;
 };
@@ -6,7 +9,15 @@ const TopNav = ({ onOpenSupport }: Props) => {
   return (
     <header className="top-nav" id="top">
       <div className="top-nav__brand">
-        <span className="top-nav__title">Autorisen</span>
+        <img
+          className="top-nav__logo"
+          src={logoUrl}
+          alt="CapeControl logo"
+          width={48}
+          height={48}
+          loading="lazy"
+        />
+        <span className="top-nav__title">CapeControl</span>
       </div>
       <div className="top-nav__actions">
         <nav className="top-nav__nav-links">
@@ -16,12 +27,12 @@ const TopNav = ({ onOpenSupport }: Props) => {
           <a href="#faq">FAQ</a>
         </nav>
         <div className="top-nav__auth">
-          <a className="link" href="#login">
+          <a className="link" href="#auth">
             Login
           </a>
-          <a className="btn btn--ghost" href="#register">
+          <Link className="btn btn--ghost" to="/register">
             Register
-          </a>
+          </Link>
           <button type="button" onClick={onOpenSupport} className="btn btn--primary">
             Support
           </button>

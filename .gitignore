@@ -37,6 +37,9 @@ venv.bak/
 .pdm-build/
 .pixi
 __pypackages__/
+.direnv/
+.python-version
+.pytest-local/
 
 # Testing / coverage / type checking
 htmlcov/
@@ -114,3 +117,4 @@ docs/Docs250929/
 docs/plan_checked.csv
 tools/agent_checkpoint.sh
 .agent_count
+backend/src/modules/auth/routes.legacy.py

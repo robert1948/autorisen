@@ -30,9 +30,9 @@ If paths differ, infer safely and propose minimal, atomic changes.
 ## When I ask for a fix or feature
 
 1. **State the plan** in bullets (1–5 lines).
-2. **Show the patch** (diff or full file if small).
-3. **List test steps** I can run locally.
-4. If config/env needed, **show minimal env vars**.
+1. **Show the patch** (diff or full file if small).
+1. **List test steps** I can run locally.
+1. If config/env needed, **show minimal env vars**.
 
 ## Useful commands (assume repo root)
 

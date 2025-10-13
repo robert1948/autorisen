@@ -3,19 +3,14 @@ import { FormEvent, useState } from "react";
 import { useAuth } from "./AuthContext";
 
 const AuthForms = () => {
-  const { state, loginUser, registerUser, logout, loading, error } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { state, loginUser, logout, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (mode === "login") {
-      await loginUser(email, password);
-    } else {
-      await registerUser(email, password, fullName);
-    }
+    await loginUser(email, password);
   };
 
   if (state.accessToken) {
@@ -35,9 +30,11 @@ const AuthForms = () => {
 
   return (
     <section className="auth-card" id="auth">
-      <header>
-        <span className="badge">Access</span>
-        <h3>{mode === "login" ? "Login to Autorisen" : "Create an account"}</h3>
+      <header className="auth-card__header">
+        <h2>Log in to CapeControl</h2>
+        <p className="auth-card__subtitle">
+          Welcome back! Enter your credentials to access the control center.
+        </p>
       </header>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
@@ -50,36 +47,57 @@ const AuthForms = () => {
             placeholder="you@example.com"
           />
         </label>
-        {mode === "register" && (
-          <label>
-            Full name (optional)
-            <input
-              value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              placeholder="Ada Lovelace"
-            />
-          </label>
-        )}
-        <label>
+        <label className="auth-password-label">
           Password
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-          />
+          <div className="auth-password-field">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={12}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
         </label>
+        <div className="auth-captcha">
+          <div className="auth-captcha__status">
+            <span className="auth-captcha__spinner" aria-hidden="true" />
+            <span>Verifying…</span>
+          </div>
+          <div className="auth-captcha__brand">
+            <span>CapeControl</span>
+            <a href="#privacy">Privacy</a>
+            <span>•</span>
+            <a href="#terms">Terms</a>
+          </div>
+        </div>
+        <p className="auth-terms">
+          By clicking Log in, you agree to CapeControl&apos;s <a href="#terms">terms</a>,
+          <a href="#privacy"> privacy policy</a>, and <a href="#privacy">cookie policy</a>.
+        </p>
         {error && <p className="auth-error">{error}</p>}
-        <button className="btn btn--primary" type="submit" disabled={loading}>
-          {loading ? "Submitting…" : mode === "login" ? "Login" : "Register"}
+        <button className="auth-submit" type="submit" disabled={loading}>
+          {loading ? "Submitting…" : "Log in"}
         </button>
       </form>
-      <footer>
-        <button type="button" className="btn btn--link" onClick={() => setMode(mode === "login" ? "register" : "login")}>
-          {mode === "login" ? "Need an account? Register" : "Have an account? Login"}
-        </button>
+      <footer className="auth-footer">
+        <a className="auth-footer__link" href="#support">
+          Forgot your password?
+        </a>
+        <a className="auth-footer__link" href="mailto:support@capecontrol.ai">
+          Forgot your email?
+        </a>
+        <a className="auth-footer__link" href="/register">
+          Need an account? Start the signup flow
+        </a>
       </footer>
     </section>
   );

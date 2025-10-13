@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 from alembic import op
+import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
@@ -21,10 +22,30 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if "app_chat_events" not in inspector.get_table_names():
+        return
+
+    column_names = {column["name"] for column in inspector.get_columns("app_chat_events")}
+    if "metadata" not in column_names:
+        return
+
     with op.batch_alter_table("app_chat_events") as batch_op:
         batch_op.alter_column("metadata", new_column_name="event_metadata")
 
 
 def downgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if "app_chat_events" not in inspector.get_table_names():
+        return
+
+    column_names = {column["name"] for column in inspector.get_columns("app_chat_events")}
+    if "event_metadata" not in column_names:
+        return
+
     with op.batch_alter_table("app_chat_events") as batch_op:
         batch_op.alter_column("event_metadata", new_column_name="metadata")
