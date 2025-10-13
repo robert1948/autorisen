@@ -110,6 +110,10 @@ const MarketplaceShowcase = () => {
     setRunError(null);
     setRunResult(null);
     try {
+      const idempotencyKey =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `marketplace-${Date.now()}`;
       const response = await runFlow({
         agent_slug: detail.slug,
         agent_version: published?.version,
@@ -119,6 +123,8 @@ const MarketplaceShowcase = () => {
             payload: {},
           },
         ],
+        idempotency_key: idempotencyKey,
+        max_attempts: 3,
       });
       setRunResult(response);
     } catch (err) {
@@ -260,6 +266,18 @@ const MarketplaceShowcase = () => {
             {runResult && (
               <section className="marketplace-modal__run">
                 <h5>Last run preview</h5>
+                <p className="marketplace-modal__run-meta">
+                  Status: <strong>{runResult.status}</strong> · Attempt{" "}
+                  {runResult.attempt}/{runResult.max_attempts}
+                  {runResult.error_message && (
+                    <>
+                      {" · "}
+                      <span className="marketplace-modal__error-inline">
+                        {runResult.error_message}
+                      </span>
+                    </>
+                  )}
+                </p>
                 <ul>
                   {runResult.steps.map((step) => (
                     <li key={step.event_id}>

@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="capecontrol-gradient" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3AC6FF" />
+      <stop offset="0.5" stop-color="#5C6CFF" />
+      <stop offset="1" stop-color="#8F52FF" />
+    </linearGradient>
+    <linearGradient id="capecontrol-wave" x1="12" y1="24" x2="50" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="1" stop-color="#D8EAFE" stop-opacity="0.9" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="18" fill="url(#capecontrol-gradient)" />
+  <path
+    fill-rule="evenodd"
+    clip-rule="evenodd"
+    d="M48 22.5C44.757 20.108 40.61 18.8 36.2 18.8C29.215 18.8 23.076 22.373 20.08 28.167C19.49 29.3 18.08 29.705 16.97 29.08C15.6 28.31 14.33 27.406 13.18 26.38C12.68 28.474 12.4 30.69 12.4 32.999C12.4 33.117 12.401 33.234 12.403 33.351C12.582 44.849 21.33 52 33.016 52C40.252 52 46.487 48.916 49.61 43.507C50.278 42.35 49.787 40.897 48.546 40.34L42.63 37.7C41.56 37.222 40.317 37.682 39.82 38.726C38.521 41.438 35.604 43.074 32.163 43.074C26.96 43.074 22.82 39.682 22.82 34.738C22.82 29.794 26.96 26.401 32.163 26.401C36.68 26.401 40.21 28.79 41.24 32.172C41.615 33.425 42.987 34.051 44.157 33.498L49.264 31.084C50.496 30.497 50.94 28.958 50.257 27.797C49.5 26.509 48.784 24.7 48 22.5Z"
+    fill="url(#capecontrol-wave)"
+  />
+</svg>

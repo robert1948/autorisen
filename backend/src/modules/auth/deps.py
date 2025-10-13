@@ -23,11 +23,6 @@ def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing auth")
 
     try:
-        email = service.current_user(db, creds.credentials)
+        return service.current_user(db, creds.credentials)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token") from exc
-
-    profile = service.profile(db, email)
-    if profile is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
-    return profile

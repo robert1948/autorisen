@@ -6,9 +6,11 @@ import uuid
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     ForeignKey,
+    Integer,
     JSON,
     String,
     Text,
@@ -27,8 +29,13 @@ class User(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String(320), unique=True, nullable=False, index=True)
+    first_name = Column(String(50), nullable=False, server_default="")
+    last_name = Column(String(50), nullable=False, server_default="")
     full_name = Column(String(100), nullable=True)
     hashed_password = Column(String(255), nullable=False)
+    role = Column(String(32), nullable=False, server_default="Customer")
+    company_name = Column(String(100), nullable=False, server_default="")
+    is_email_verified = Column(Boolean, nullable=False, server_default="0")
     is_active = Column(Boolean, nullable=False, server_default="1")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(
@@ -37,9 +44,16 @@ class User(Base):
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     password_changed_at = Column(DateTime(timezone=True), nullable=True)
 
+    __table_args__ = (
+        CheckConstraint(func.length(first_name) <= 50, name="ck_users_first_name_length"),
+        CheckConstraint(func.length(last_name) <= 50, name="ck_users_last_name_length"),
+        CheckConstraint(func.length(company_name) <= 100, name="ck_users_company_name_length"),
+    )
+
     credentials = relationship("Credential", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     roles = relationship("Role", secondary="user_roles", back_populates="users")
+    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class Credential(Base):
@@ -223,6 +237,9 @@ class FlowRun(Base):
     """Recorded orchestrator runs for auditing and UI history."""
 
     __tablename__ = "flow_runs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "idempotency_key", name="uq_flow_runs_user_idempotency"),
+    )
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(36), nullable=True, index=True)
@@ -231,6 +248,13 @@ class FlowRun(Base):
     placement = Column(String(64), nullable=False)
     thread_id = Column(String(36), nullable=False, index=True)
     steps = Column(JSON, nullable=False)
+    status = Column(String(20), nullable=False, server_default="pending")
+    attempt = Column(Integer, nullable=False, server_default="0")
+    max_attempts = Column(Integer, nullable=False, server_default="3")
+    idempotency_key = Column(String(128), nullable=True)
+    error_message = Column(Text, nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
@@ -246,3 +270,31 @@ class OnboardingChecklist(Base):
     updated_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+
+class UserProfile(Base):
+    """Flexible registration profile payload per role."""
+
+    __tablename__ = "user_profiles"
+
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    profile = Column(JSON, nullable=False, server_default="{}")
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    user = relationship("User", back_populates="profile")
+
+
+class AnalyticsEvent(Base):
+    """Minimal analytics events captured for onboarding."""
+
+    __tablename__ = "analytics_events"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_type = Column(String(64), nullable=False)
+    step = Column(String(32), nullable=True)
+    role = Column(String(32), nullable=True)
+    details = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

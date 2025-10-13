@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
-import os
 from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from backend.src.core.config import settings
+
 # 1) Read and normalize DATABASE_URL
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
+DATABASE_URL = settings.database_url
 
 if DATABASE_URL.startswith("postgres://"):
     # Heroku-style URL -> prefer psycopg (v3) driver

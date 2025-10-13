@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
-import { login, refreshSession, register, type TokenResponse } from "../../lib/authApi";
+import { login, refreshSession, type TokenResponse } from "../../lib/authApi";
 
 export type AuthState = {
   accessToken: string | null;
@@ -14,14 +14,14 @@ const AuthContext = createContext<{
   loading: boolean;
   error: string | null;
   loginUser: (email: string, password: string) => Promise<void>;
-  registerUser: (email: string, password: string, fullName?: string) => Promise<void>;
+  setAuthFromTokens: (email: string, token: TokenResponse) => void;
   logout: () => void;
 }>({
   state: { accessToken: null, refreshToken: null, expiresAt: null, userEmail: null },
   loading: false,
   error: null,
   loginUser: async () => undefined,
-  registerUser: async () => undefined,
+  setAuthFromTokens: () => undefined,
   logout: () => undefined,
 });
 
@@ -60,12 +60,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       refreshToken().catch(() => logout());
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const applyAuth = (email: string, token: TokenResponse) => {
+  const setAuthFromTokens = (email: string, token: TokenResponse) => {
     const newState: AuthState = {
       accessToken: token.access_token,
-      refreshToken: token.refresh_token,
-      expiresAt: token.expires_at,
+      refreshToken: token.refresh_token ?? null,
+      expiresAt: token.expires_at ?? null,
       userEmail: email,
     };
     setState(newState);
@@ -80,25 +79,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const resp = await login(email, password);
-      applyAuth(email, resp);
+      setAuthFromTokens(email, resp);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const registerUser = async (email: string, password: string, fullName?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await register(email, password, fullName);
-      const resp = await login(email, password);
-      applyAuth(email, resp);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Registration failed";
       setError(message);
       throw err;
     } finally {
@@ -115,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       const resp = await refreshSession(refreshValue);
-      applyAuth(state.userEmail ?? "", resp);
+      setAuthFromTokens(state.userEmail ?? "", resp);
     } catch (err) {
       console.warn("Failed to refresh token", err);
       logout();
@@ -146,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     error,
     loginUser,
-    registerUser,
+    setAuthFromTokens,
     logout,
   };
 

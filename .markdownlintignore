@@ -1,0 +1,9 @@
+# Ignore markdown linting for these paths
+
+node_modules/
+client/node_modules/
+**/node_modules/
+public/
+Docs250929/
+docs/Docs250929/
+docs/Master_ProjectPlan.generated.md

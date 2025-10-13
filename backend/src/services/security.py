@@ -1,0 +1,74 @@
+"""Security helpers for password hashing and JWT handling."""
+
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Tuple
+
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+from backend.src.core.config import settings
+
+_PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_JWT_ALGORITHM = "HS256"
+
+
+def hash_password(password: str) -> str:
+    """Return a bcrypt hash for the provided password."""
+
+    return _PWD_CONTEXT.hash(password)
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    """Check whether the provided password matches the stored hash."""
+
+    try:
+        if _PWD_CONTEXT.verify(password, hashed_password):
+            return True
+    except ValueError:
+        pass
+
+    # Fallback for legacy PBKDF2 hashes (base64(salt + hash))
+    try:
+        raw = base64.b64decode(hashed_password.encode())
+    except (ValueError, TypeError):
+        return False
+    if len(raw) < 32:
+        return False
+    salt, digest = raw[:16], raw[16:]
+    test = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100_000)
+    return hmac.compare_digest(digest, test)
+
+
+def _ensure_expires_delta(expires_in: timedelta | int) -> timedelta:
+    if isinstance(expires_in, timedelta):
+        return expires_in
+    return timedelta(minutes=expires_in)
+
+
+def create_jwt(payload: Dict[str, Any], expires_in: timedelta | int) -> Tuple[str, datetime]:
+    """Create a signed JWT containing the payload."""
+
+    expires_delta = _ensure_expires_delta(expires_in)
+    now = datetime.now(timezone.utc)
+    expire_at = now + expires_delta
+    with_claims = {
+        **payload,
+        "iat": int(now.timestamp()),
+        "exp": int(expire_at.timestamp()),
+    }
+    token = jwt.encode(with_claims, settings.secret_key, algorithm=_JWT_ALGORITHM)
+    return token, expire_at
+
+
+def decode_jwt(token: str) -> Dict[str, Any]:
+    """Decode a JWT and return the payload."""
+
+    try:
+        return jwt.decode(token, settings.secret_key, algorithms=[_JWT_ALGORITHM])
+    except JWTError as exc:  # pragma: no cover - pass through for callers
+        raise ValueError("invalid token") from exc

@@ -84,8 +84,16 @@ const OnboardingHistory = () => {
             <li key={run.id}>
               <header>
                 <strong>{new Date(run.created_at).toLocaleString()}</strong>
+                <span className={`status-badge status-badge--${run.status}`}>
+                  {run.status.toUpperCase()}
+                </span>
               </header>
-              <p className="onboarding-runs__meta">Thread {run.thread_id}</p>
+              <p className="onboarding-runs__meta">
+                Thread {run.thread_id} · Attempt {run.attempt}/{run.max_attempts}
+              </p>
+              {run.error_message && (
+                <p className="onboarding-runs__error">Error: {run.error_message}</p>
+              )}
               <pre className="onboarding-runs__steps">
                 {JSON.stringify(run.steps, null, 2)}
               </pre>
@@ -105,25 +113,25 @@ const OnboardingHistory = () => {
                 <li key={taskId}>
                   <span className={task.done ? "onboarding-checklist__done" : ""}>{task.label}</span>
                   <button
-                  type="button"
-                  className="btn btn--tiny"
-                  disabled={updatingTask === taskId}
-                  onClick={async () => {
-                    setUpdatingTask(taskId);
-                    try {
-                      const updated = await updateOnboardingChecklist(taskId, !task.done, task.label);
-                      setChecklist(updated);
-                    } catch (err) {
-                      const message =
-                        err instanceof Error ? err.message : "Failed to update checklist";
-                      setError(message);
-                    } finally {
-                      setUpdatingTask(null);
-                    }
-                  }}
-                >
-                  {updatingTask === taskId ? "Saving…" : task.done ? "Mark undone" : "Mark done"}
-                </button>
+                    type="button"
+                    className="btn btn--tiny"
+                    disabled={updatingTask === taskId}
+                    onClick={async () => {
+                      setUpdatingTask(taskId);
+                      try {
+                        const updated = await updateOnboardingChecklist(taskId, !task.done, task.label);
+                        setChecklist(updated);
+                      } catch (err) {
+                        const message =
+                          err instanceof Error ? err.message : "Failed to update checklist";
+                        setError(message);
+                      } finally {
+                        setUpdatingTask(null);
+                      }
+                    }}
+                  >
+                    {updatingTask === taskId ? "Saving…" : task.done ? "Mark undone" : "Mark done"}
+                  </button>
               </li>
             ))}
           </ul>

@@ -48,6 +48,19 @@ client/.next/
 # If you build the SPA inside Docker (recommended), keep dist out of the context:
 client/dist/
 
+# SQLite / local databases
+dev.db
+db.sqlite3
+db.sqlite3-journal
+
+# Local data exports
+data/
+!data/*.csv
+
+# Docs and plans not needed inside image
+docs/Docs250929/
+docs/plan_checked.csv
+
 # =========================
 # Docker files (safe to ignore in context; Docker reads them directly)
 # =========================
