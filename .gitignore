@@ -118,3 +118,6 @@ docs/plan_checked.csv
 tools/agent_checkpoint.sh
 .agent_count
 backend/src/modules/auth/routes.legacy.py
+
+__pycache__/
+*.egg-info/
