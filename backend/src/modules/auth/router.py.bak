@@ -8,7 +8,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from backend.src.core.rate_limit import auth_rate_limit, limiter
+from backend.src.modules.auth.rate_limiter import auth_rate_limit, limiter
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth import audit, rate_limiter, service

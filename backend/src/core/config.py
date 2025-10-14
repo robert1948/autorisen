@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     recaptcha_secret: Optional[str] = Field(default=None, alias="RECAPTCHA_SECRET")
     disable_recaptcha: bool = Field(default=False, alias="DISABLE_RECAPTCHA")
     rate_limit_per_min: int = Field(default=10, alias="RATE_LIMIT_PER_MIN")
+    frontend_origin: str = Field(default="http://localhost:5173", alias="FRONTEND_ORIGIN")
 
     # session/token lifetimes
     temp_token_ttl_minutes: int = Field(default=15, alias="TEMP_TOKEN_TTL_MINUTES")

@@ -6,8 +6,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from backend.src.core.rate_limit import limiter
+from backend.src.modules.auth.rate_limiter import limiter
 
+from backend.src.core.config import settings
 from backend.src.modules.agents.router import router as agents_router
 from backend.src.modules.auth.router import router as auth_router
 from backend.src.modules.chatkit.router import router as chatkit_router
@@ -18,9 +19,12 @@ from backend.src.modules.marketplace.router import router as marketplace_router
 CLIENT_DIST = Path(__file__).resolve().parents[2] / "client" / "dist"
 
 app = FastAPI(title="CapeControl API", version="0.1.0")
+frontend_origins = {settings.frontend_origin.rstrip("/")}
+if settings.frontend_origin.startswith("http://localhost"):
+    frontend_origins.add(settings.frontend_origin.replace("localhost", "127.0.0.1").rstrip("/"))
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(frontend_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

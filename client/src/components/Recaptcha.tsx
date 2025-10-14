@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
 type RecaptchaProps = {
@@ -9,11 +9,19 @@ type RecaptchaProps = {
 const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
 const Recaptcha = ({ onVerify, error }: RecaptchaProps) => {
+  const hasBypassed = useRef(false);
+  const latestOnVerify = useRef(onVerify);
+
   useEffect(() => {
-    if (!siteKey) {
-      onVerify("dev-bypass-token");
-    }
+    latestOnVerify.current = onVerify;
   }, [onVerify]);
+
+  useEffect(() => {
+    if (!siteKey && !hasBypassed.current) {
+      hasBypassed.current = true;
+      latestOnVerify.current("dev-bypass-token");
+    }
+  }, []);
 
   if (!siteKey) {
     return (

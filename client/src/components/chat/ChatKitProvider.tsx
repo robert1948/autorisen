@@ -6,6 +6,8 @@ import {
   useMemo,
 } from "react";
 
+import { useAuth } from "../../features/auth/AuthContext";
+
 const API_BASE =
   (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 
@@ -30,12 +32,21 @@ type Props = {
 };
 
 export const ChatKitProvider = ({ children }: Props) => {
+  const {
+    state: { accessToken },
+  } = useAuth();
+
   const requestToken = useCallback(
     async (placement: string, threadId?: string) => {
+      if (!accessToken) {
+        throw new Error("You must be logged in to request a ChatKit token.");
+      }
+
       const response = await fetch(`${API_BASE}/chatkit/token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         credentials: "include",
         body: JSON.stringify({ placement, thread_id: threadId }),
@@ -55,7 +66,7 @@ export const ChatKitProvider = ({ children }: Props) => {
         allowedTools: (data.allowed_tools as string[]) ?? [],
       };
     },
-    [],
+    [accessToken],
   );
 
   const value = useMemo<ChatKitContextValue>(

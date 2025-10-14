@@ -102,6 +102,8 @@ const Register = () => {
     }
   }, []);
 
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
+
   const step1Form = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -111,9 +113,19 @@ const Register = () => {
       password: "",
       confirm_password: "",
       role: "Customer",
-      recaptcha_token: "",
+      recaptcha_token: recaptchaSiteKey ? "" : "dev-bypass-token",
     },
   });
+
+  useEffect(() => {
+    step1Form.register("recaptcha_token");
+    if (!recaptchaSiteKey) {
+      step1Form.setValue("recaptcha_token", "dev-bypass-token", {
+        shouldValidate: false,
+        shouldDirty: false,
+      });
+    }
+  }, [recaptchaSiteKey, step1Form]);
 
   const step1Role = step1Form.watch("role");
 
@@ -149,6 +161,12 @@ const Register = () => {
     mutationFn: ({ payload, token }: { payload: RegisterStep2Payload; token: string }) =>
       registerStep2(payload, token),
   });
+
+  const handleRecaptchaVerify = useCallback(
+    (token: string | null) =>
+      step1Form.setValue("recaptcha_token", token ?? "", { shouldValidate: true }),
+    [step1Form],
+  );
 
   const handleRoleSelect = (role: UserRole) => {
     step1Form.setValue("role", role, { shouldValidate: true });
@@ -327,10 +345,19 @@ const Register = () => {
             <input type="hidden" {...step1Form.register("role")}
               value={step1Role} />
 
-            <Recaptcha
-              onVerify={(token) => step1Form.setValue("recaptcha_token", token ?? "", { shouldValidate: true })}
-              error={step1Form.formState.errors.recaptcha_token?.message}
-            />
+            {recaptchaSiteKey ? (
+              <Recaptcha
+                onVerify={handleRecaptchaVerify}
+                error={step1Form.formState.errors.recaptcha_token?.message}
+              />
+            ) : (
+              <div className="recaptcha-placeholder">
+                <p className="recaptcha-placeholder__info">
+                  reCAPTCHA is not configured. Set <code>VITE_RECAPTCHA_SITE_KEY</code> when you are ready to
+                  enforce verification. A temporary bypass token has been supplied for local testing.
+                </p>
+              </div>
+            )}
 
             <button
               className="register-form__submit"

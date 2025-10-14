@@ -1,13 +1,22 @@
 # /home/robert/Development/autolocal/backend/src/modules/auth/router.py
 """Authentication API endpoints including registration and analytics."""
 
-from typing import Any, Dict, Annotated
+from typing import Annotated, Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status, Body  # <-- import Body
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)  # <-- import Body
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from backend.src.core.rate_limit import auth_rate_limit, limiter
+from backend.src.core.config import settings
+from backend.src.modules.auth.rate_limiter import auth_rate_limit, limiter
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth import audit, rate_limiter, service
@@ -26,11 +35,10 @@ from backend.src.services import emailer, recaptcha
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 auth_scheme = HTTPBearer(auto_error=False)
-
-
-def _client_identifier(request: Request, email: str) -> str:
-    ip = request.client.host if request.client else "unknown"
-    return f"{email.lower()}:{ip}"
+REFRESH_COOKIE_NAME = "refresh_token"
+REFRESH_COOKIE_PATH = "/api/auth"
+REFRESH_COOKIE_MAX_AGE = service.REFRESH_TOKEN_DAYS * 24 * 60 * 60
+REFRESH_COOKIE_SECURE = settings.env in {"staging", "prod"}
 
 
 def _serialize_user(user: models.User) -> UserOut:
@@ -182,7 +190,7 @@ async def track_event(
         role=normalized_role,
         details=details_payload,
     )
-    return {"ok": True}
+    return Response(status_code=status.HTTP_202_ACCEPTED)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -190,15 +198,16 @@ async def track_event(
 def login(
     request: Request,
     payload: Annotated[LoginRequest, Body(...)],
+    response: Response,
     db: Session = Depends(get_session),
 ) -> TokenResponse:
-    identifier = _client_identifier(request, payload.email)
-    if not rate_limiter.check(identifier):
+    ip = request.client.host if request.client else None
+    allowed, _reason = rate_limiter.allow_login(ip, payload.email)
+    if not allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="rate limit exceeded"
         )
 
-    ip = request.client.host if request.client else None
     agent = request.headers.get("user-agent")
 
     try:
@@ -212,7 +221,16 @@ def login(
         audit.log_login_attempt(
             db, email=payload.email, success=True, ip_address=ip, user_agent=agent
         )
-        rate_limiter.reset(identifier)
+        rate_limiter.reset_login(ip, payload.email)
+        response.set_cookie(
+            REFRESH_COOKIE_NAME,
+            refresh_token,
+            max_age=REFRESH_COOKIE_MAX_AGE,
+            httponly=True,
+            secure=REFRESH_COOKIE_SECURE,
+            samesite="lax",
+            path=REFRESH_COOKIE_PATH,
+        )
         return TokenResponse(
             access_token=access_token,
             expires_at=expires_at,
@@ -236,17 +254,35 @@ def login(
 @limiter.limit(auth_rate_limit)
 def refresh(
     request: Request,
-    payload: Annotated[RefreshRequest, Body(...)],
+    response: Response,
+    payload: Optional[RefreshRequest] = Body(None),
     db: Session = Depends(get_session),
 ) -> TokenResponse:
+    refresh_token = payload.refresh_token if payload else None
+    if not refresh_token:
+        refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid refresh token"
+        )
     try:
         access_token, expires_at, refresh_token = service.refresh_access_token(
-            db, payload.refresh_token
+            db, refresh_token
+        )
+        response.set_cookie(
+            REFRESH_COOKIE_NAME,
+            refresh_token,
+            max_age=REFRESH_COOKIE_MAX_AGE,
+            httponly=True,
+            secure=REFRESH_COOKIE_SECURE,
+            samesite="lax",
+            path=REFRESH_COOKIE_PATH,
         )
         return TokenResponse(
             access_token=access_token, expires_at=expires_at, refresh_token=refresh_token
         )
     except ValueError as exc:
+        response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid refresh token"
         ) from exc
@@ -257,3 +293,16 @@ def me(
     user: models.User = Depends(get_current_user),
 ) -> UserOut:
     return _serialize_user(user)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_session),
+) -> None:
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+    if refresh_token:
+        service.revoke_refresh_token(db, refresh_token)
+    response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
+    response.status_code = status.HTTP_204_NO_CONTENT

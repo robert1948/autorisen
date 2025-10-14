@@ -238,3 +238,32 @@ def test_password_policy_enforced(client):
     body = res.json()
     msgs = [err.get("msg", "") for err in body.get("detail", [])]
     assert any("Password" in m and ("12" in m or "length" in m.lower()) for m in msgs)
+
+
+def test_login_refresh_cookie_logout_flow(client):
+    email = f"cookie_{uuid.uuid4().hex[:8]}@example.com"
+    password = "CookiePass123!"
+
+    _complete_registration(client, email, password)
+
+    login = client.post("/api/auth/login", json={"email": email, "password": password})
+    assert login.status_code == 200, login.text
+    access_token = login.json().get("access_token")
+    assert access_token
+    refresh_cookie = login.cookies.get("refresh_token")
+    assert refresh_cookie, "refresh cookie not issued"
+
+    # Refresh without explicit payload should use the cookie
+    refresh = client.post("/api/auth/refresh")
+    assert refresh.status_code == 200, refresh.text
+    new_access = refresh.json().get("access_token")
+    assert new_access, "refresh did not return access token"
+    rotated_cookie = refresh.cookies.get("refresh_token")
+    assert rotated_cookie and rotated_cookie != refresh_cookie
+
+    logout = client.post("/api/auth/logout")
+    assert logout.status_code == 204, logout.text
+
+    # Refresh should now fail because cookie has been cleared/revoked
+    refresh_after_logout = client.post("/api/auth/refresh")
+    assert refresh_after_logout.status_code == 401
