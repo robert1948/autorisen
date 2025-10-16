@@ -1,0 +1,18 @@
+ID,Task,Owner,Status,Priority,Start,Due,Milestone,DependsOn,Notes
+T-001,Stabilize docker-compose for local dev,Robert,In Progress,High,2025-09-28,2025-09-28,M1-Local-Ready,,Ensure backend:8000 frontend:3000 db:5433 up cleanly
+T-002,Fix Alembic env.py & config,Robert,In Progress,High,2025-09-28,2025-09-29,M1-Local-Ready,T-001,"env.py should import Base, read DATABASE_URL, safe logging"
+T-003,Generate initial DB migration (init schema),Robert,Todo,High,2025-09-29,2025-09-29,M1-Local-Ready,T-002,
+T-004,Wire /api/health /alive /ping routes,Robert,Done,High,2025-09-26,2025-09-27,M1-Local-Ready,,Verify 200 OK locally and on Heroku
+T-005,Create .env.example for local & Heroku,Robert,Todo,High,2025-09-28,2025-09-28,M1-Local-Ready,,Exclude secrets; include sane defaults
+T-006,"Makefile targets (migrate, smoke, heroku)",Robert,Done,High,2025-09-28,2025-09-28,M1-Local-Ready,,"This CSV row tracks this deliverable"
+T-007,Heroku staging deploy (autorisen),Robert,Todo,High,2025-09-29,2025-09-29,M2-Staging,,heroku container:push+release; verify /api/health
+T-008,Heroku logs & uptime checks,Robert,Todo,Medium,2025-09-29,2025-09-30,M2-Staging,T-007,Add health pings (Cron/Automation later)
+T-009,Frontend landing page (parity with cape-control.com),Robert,Todo,High,2025-09-29,2025-10-01,M2-Staging,,Serve basic index and link to backend docs
+T-010,GitHub Actions: CI build + lint,Robert,Todo,Medium,2025-09-30,2025-10-02,M3-Quality,,Optional skip on make update-git
+T-011,Docker Hub push workflow (optional),Robert,Todo,Low,2025-10-01,2025-10-03,M3-Quality,,IMG=user/repo:tag
+T-012,AWS OIDC role for ECR (future),Robert,Blocked,Low,2025-10-02,2025-10-05,M4-Infra,,Wait until Heroku staging stable
+T-013,Release Runbook draft,Robert,Todo,Medium,2025-10-01,2025-10-03,M3-Quality,,"Smoke tests, rollback steps, checklists"
+T-014,PreDeployment sanity checklist,Robert,Todo,Medium,2025-10-01,2025-10-03,M3-Quality,,"Ports, env, migrations, logs"
+T-015,Staging→Production promotion plan,Robert,Todo,Medium,2025-10-02,2025-10-05,M4-Infra,T-007,Map autorisen→capecraft cutover
+
+

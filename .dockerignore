@@ -1,88 +1,75 @@
-# =========================
-# Python
-# =========================
-**/__pycache__/
+# --- VCS / editors / OS cruft ---
+.git
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.orig
+*.old
+*.bak
+
+# --- Python artifacts ---
+__pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-*.pyc
-.venv/
-venv/
+*.so
+.eggs/
+*.egg-info/
+.installed.cfg
 .pytest_cache/
 .mypy_cache/
+.pytype/
+.ruff_cache/
+.tox/
 .coverage
+.coverage.*
 htmlcov/
+.cache/
 
-# =========================
-# Git & Editors
-# =========================
-.git
-.gitattributes
-.gitmodules
-.vscode/
-.idea/
+# --- Virtualenvs (prevent accidental upload/symlinks) ---
+.venv/
+.venv_tmp/
+venv/
+env/
 
-# =========================
-# Environment & logs
-# =========================
+# --- Environment files (keep example) ---
 .env
 .env.*
-**/.env
-**/.env.*
-*.log
+!.env.example
+.envrc
 
-# =========================
-# Build artifacts
-# =========================
+# --- Node / client artifacts ---
+client/node_modules/
+client/.cache/
+client/.parcel-cache/
+client/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+
+# --- Generic build outputs ---
 build/
 dist/
-*.egg-info/
-.eggs/
+wheelhouse/
 
-# =========================
-# Node / Frontend
-# =========================
-node_modules/
-client/node_modules/
-client/.next/
-# If you build the SPA inside Docker (recommended), keep dist out of the context:
-client/dist/
+# --- Logs & local DBs ---
+*.log
+logs/
+*.sqlite3
+*.db
 
-# SQLite / local databases
-dev.db
-db.sqlite3
-db.sqlite3-journal
+# --- Docker/local runtime data ---
+docker-data/
+*.pid
+*.seed
 
-# Local data exports
-data/
-!data/*.csv
-
-# Docs and plans not needed inside image
-docs/Docs250929/
-docs/plan_checked.csv
-
-# =========================
-# Docker files (safe to ignore in context; Docker reads them directly)
-# =========================
-Dockerfile
-.dockerignore
-
-# =========================
-# OS cruft
-# =========================
-.DS_Store
-Thumbs.db
-
-# =========================
-# IMPORTANT: allow backend manifests needed for pip/poetry install
-# (negation means "do NOT ignore these")
-# =========================
-!/backend/requirements.txt
-!/backend/requirements/*.txt
-!/backend/pyproject.toml
-!/backend/poetry.lock
-
-# =========================
-# Misc
-# =========================
-*.backup-before-move-*
+# --- Project-specific backups ---
+backend/alembic.ini.bak

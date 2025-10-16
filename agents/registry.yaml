@@ -1,4 +1,0 @@
-agents:
-  - path: agents/deployer-stg/agent.yaml
-  - path: agents/concierge-docs/agent.yaml
-  - path: agents/health-checker/agent.yaml
