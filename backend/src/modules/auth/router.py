@@ -110,11 +110,11 @@ for _path in (
         if User is not None:
             _resolved_user_path = _path
             break
-    except Exception as e:  # keep last error only for debugging
+    except Exception as e:
         _last_user_err = e
 
 if User is None:
-    log.error("auth.router: User model could not be imported; last error=%s", _last_user_err)
+    log.error("auth.router: User model could not be imported; last_error=%s", _last_user_err)
 else:
     log.debug("auth.router: User model resolved from %s", _resolved_user_path)
 
