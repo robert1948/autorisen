@@ -1,75 +1,21 @@
-# --- VCS / editors / OS cruft ---
 .git
 .gitignore
-.gitattributes
-.idea/
-.vscode/
+.vscode
+.idea
 .DS_Store
-Thumbs.db
-*.swp
-*.swo
-*~
-*.orig
-*.old
-*.bak
-
-# --- Python artifacts ---
+*.log
+.env
+.env.*
+!.env.example
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-.eggs/
-*.egg-info/
-.installed.cfg
-.pytest_cache/
-.mypy_cache/
-.pytype/
-.ruff_cache/
-.tox/
-.coverage
-.coverage.*
-htmlcov/
-.cache/
-
-# --- Virtualenvs (prevent accidental upload/symlinks) ---
 .venv/
 .venv_tmp/
 venv/
 env/
-
-# --- Environment files (keep example) ---
-.env
-.env.*
-!.env.example
-.envrc
-
-# --- Node / client artifacts ---
 client/node_modules/
-client/.cache/
-client/.parcel-cache/
 client/dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.tsbuildinfo
-
-# --- Generic build outputs ---
 build/
 dist/
-wheelhouse/
-
-# --- Logs & local DBs ---
-*.log
-logs/
-*.sqlite3
-*.db
-
-# --- Docker/local runtime data ---
 docker-data/
-*.pid
-*.seed
-
-# --- Project-specific backups ---
-backend/alembic.ini.bak
+app/
+src/

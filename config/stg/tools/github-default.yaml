@@ -1,0 +1,3 @@
+endpoint: https://api.github.com
+required_env: [GH_TOKEN]
+scopes: [repo, workflow]

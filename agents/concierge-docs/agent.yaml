@@ -1,0 +1,7 @@
+name: concierge-docs
+role: Answer developer questions from repo docs & code
+model: { provider: anthropic, name: claude-3.7, temperature: 0.3 }
+policies: { allow_tools: [docs-index, code-index], safety: { pii_redaction: true } }
+context:
+  system_prompt: |
+    Prefer official repo docs. Cite file paths. Keep answers under 200 words.
