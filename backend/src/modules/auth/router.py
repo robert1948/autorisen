@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from backend.src.db.session import get_db
 from .security import verify_password, create_access_refresh_tokens
 from backend.src.modules.auth.deps import get_current_user
-from backend.src.settings import settings  # expects DISABLE_RECAPTCHA, etc.
+from backend.src.core.config import settings  # moved here
 
 log = logging.getLogger("auth")
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -94,12 +94,13 @@ def _normalize_role(r: str) -> str:
     return r.strip().lower()
 
 
-# Try to import the User model from common locations
+# ---- User lookup via ORM (no service import) ----
 User = None  # type: ignore
 _user_import_err = None
 for _path in (
-    "backend.src.modules.auth.models",  # preferred
-    "backend.src.modules.user.models",  # alternatives
+    "backend.src.db.models",  # prefer new location
+    "backend.src.modules.auth.models",  # historical
+    "backend.src.modules.user.models",
     "backend.src.modules.accounts.models",
 ):
     try:
@@ -120,7 +121,7 @@ def _get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).one_or_none()
 
 
-# ---- Registration function shims (tolerate different service names) ----
+# ---- Registration function shims (support both naming styles) ----
 _begin_reg = None
 _complete_reg = None
 try:
@@ -146,7 +147,7 @@ def _begin_registration_adapter(
 ) -> str:
     """
     Calls whichever function exists and normalizes the return to a temp_token string.
-    Accepts either a direct string return, or dict with 'temp_token'.
+    Accepts either a direct string return, or dict with 'temp_token', or object with .temp_token.
     """
     if not _begin_reg:
         raise RuntimeError(
@@ -164,7 +165,6 @@ def _begin_registration_adapter(
         return result
     if isinstance(result, dict) and "temp_token" in result:
         return str(result["temp_token"])
-    # last resort: try attribute access
     temp = getattr(result, "temp_token", None)
     if temp:
         return str(temp)
@@ -199,6 +199,7 @@ async def register_step1(payload: RegisterStep1In, db: Session = Depends(get_db)
     email = _normalize_email(payload.email)
     role = _normalize_role(payload.role)
 
+    # Optional: reCAPTCHA enforcement unless disabled
     if not settings.DISABLE_RECAPTCHA:
         if not payload.recaptcha_token:
             raise HTTPException(status_code=400, detail="Missing reCAPTCHA token")
@@ -239,7 +240,6 @@ async def register_step2(payload: RegisterStep2In, db: Session = Depends(get_db)
             company=payload.company.dict(),
             profile=payload.profile.dict(),
         )
-        # try to log email if the service returns a user
         try:
             log.info(
                 "register_step2_ok email=%s user_id=%s",
@@ -276,6 +276,7 @@ async def login(
     user_found = bool(user)
     log.info("login_attempt email=%s found=%s ua=%s", email, user_found, user_agent)
 
+    # If user not found, do a fake verify to keep time similar
     if not user:
         await asyncio.sleep(0)
         try:
@@ -286,10 +287,12 @@ async def login(
             pass
         raise INVALID_CREDENTIALS
 
+    # Password check
     ok = False
     try:
         ok = verify_password(payload.password, user.password_hash)
     except Exception as e:
+        # Bad hash format or drift → treat as invalid
         log.warning("login_verify_error email=%s err=%s", email, e)
 
     log.info(
@@ -301,6 +304,7 @@ async def login(
         getattr(user, "role", None),
     )
 
+    # Gate checks
     if not ok or not getattr(user, "is_active", True) or not getattr(user, "email_verified", True):
         raise INVALID_CREDENTIALS
 
