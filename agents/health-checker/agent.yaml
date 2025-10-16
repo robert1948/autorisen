@@ -1,9 +1,0 @@
-name: health-checker
-role: Probe health endpoints and summarize status
-model: { provider: openai, name: gpt-4o-mini, temperature: 0.2 }
-policies: { allow_tools: [http], safety: { pii_redaction: true } }
-context:
-  system_prompt: |
-    Call /api/health (staging & local). Report status and latency succinctly.
-tools:
-  - { id: http, kind: rest, config_ref: http-default }
