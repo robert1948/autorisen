@@ -1,0 +1,24 @@
+name: deployer-stg
+role: Deploy AutoLocal to Heroku staging (Autorisen)
+goals:
+  - Build/push container
+  - Release to Heroku
+  - Run smoke tests (/api/health)
+model: { provider: openai, name: gpt-4.1-mini, temperature: 0.1 }
+policies:
+  allow_tools: [github, heroku]
+  data_access: { read: [repo:read], write: [deploy:release] }
+  safety: { jailbreak_protection: true, pii_redaction: true }
+context:
+  system_prompt: |
+    You deploy to the Heroku staging app `autorisen`. If tests fail, stop and report.
+    Only call tools you've been allowed. Never reveal secrets.
+routes:
+  - when: "label:deploy-stg or path:/deploy"
+    to: deploy
+tools:
+  - { id: github, kind: rest, config_ref: github-default }
+  - { id: heroku, kind: rest, config_ref: heroku-stg }
+telemetry:
+  { events: [plan, act, error, success], redact_fields: [api_key, token] }
+validation: { required_checks: [schema, dryrun, e2e] }

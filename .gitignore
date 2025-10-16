@@ -23,12 +23,12 @@ __pycache__/
 .pytype/
 .ruff_cache/
 .tox/
+.cache/
+htmlcov/
 .coverage
 .coverage.*
-htmlcov/
-.cache/
 
-# Virtualenvs (never commit local venvs/symlinks)
+# --- Virtualenvs ---
 .venv/
 .venv_tmp/
 venv/
@@ -71,6 +71,11 @@ docker-data/
 # --- Project-specific / backups ---
 backend/alembic.ini.bak
 
-# --- Stray duplicate roots (keep backend/src as source of truth) ---
+# --- Stray duplicate roots (canonical is backend/ + client/) ---
 /app/
 /src/
+
+# Ensure canonical backend stays tracked
+!/backend/
+!/backend/src/
+!/backend/src/**
