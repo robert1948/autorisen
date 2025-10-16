@@ -1,5 +1,10 @@
-"""Authentication module wiring schemas, services, dependencies, and API router."""
+# backend/src/modules/auth/__init__.py
+"""
+Auth package initializer.
 
-from . import deps, router, schemas, service  # noqa: F401
+Keep this file minimal to avoid import-time side effects and circular imports.
+Routers, deps, services, and models should be imported explicitly from their
+modules where needed, not via package-level imports.
+"""
 
-__all__ = ["router", "schemas", "service", "deps"]
+__all__: list[str] = []
