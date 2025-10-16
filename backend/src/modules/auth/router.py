@@ -3,22 +3,22 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Callable, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, status
 from pydantic import BaseModel, EmailStr, Field, constr
 from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_db
+from backend.src.core.config import settings
 from .security import verify_password, create_access_refresh_tokens
-from backend.src.modules.auth.deps import get_current_user
-from backend.src.core.config import settings  # moved here
+from .deps import get_current_user
 
 log = logging.getLogger("auth")
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ---------------------------
-# Schemas (align with OpenAPI)
+# Schemas
 # ---------------------------
 
 
@@ -76,9 +76,9 @@ class MeOut(BaseModel):
     email_verified: bool
 
 
-# --------------------------------
-# Helpers (small, route-local logic)
-# --------------------------------
+# ---------------------------
+# Helpers
+# ---------------------------
 
 INVALID_CREDENTIALS = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -96,10 +96,11 @@ def _normalize_role(r: str) -> str:
 
 # ---- User lookup via ORM (no service import) ----
 User = None  # type: ignore
-_user_import_err = None
+_last_user_err: Optional[BaseException] = None
+_resolved_user_path: Optional[str] = None
 for _path in (
-    "backend.src.db.models",  # prefer new location
-    "backend.src.modules.auth.models",  # historical
+    "backend.src.db.models",  # current location
+    "backend.src.modules.auth.models",  # historical fallbacks
     "backend.src.modules.user.models",
     "backend.src.modules.accounts.models",
 ):
@@ -107,12 +108,15 @@ for _path in (
         _mod = __import__(_path, fromlist=["User"])
         User = getattr(_mod, "User", None)
         if User is not None:
+            _resolved_user_path = _path
             break
-    except Exception as e:
-        _user_import_err = e
+    except Exception as e:  # keep last error only for debugging
+        _last_user_err = e
 
 if User is None:
-    log.error("auth.router: could not import User model; last error: %s", _user_import_err)
+    log.error("auth.router: User model could not be imported; last error=%s", _last_user_err)
+else:
+    log.debug("auth.router: User model resolved from %s", _resolved_user_path)
 
 
 def _get_user_by_email(db: Session, email: str):
@@ -121,37 +125,43 @@ def _get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).one_or_none()
 
 
-# ---- Registration function shims (support both naming styles) ----
-_begin_reg = None
-_complete_reg = None
+# ---- Registration function shims (relative import; support both namings) ----
+_begin_reg: Optional[Callable[..., Any]] = None
+_complete_reg: Optional[Callable[..., Any]] = None
 try:
-    # prefer explicit step names
-    from backend.src.modules.auth.service import begin_registration_step1 as _begin_reg  # type: ignore
-except Exception:
-    try:
-        from backend.src.modules.auth.service import begin_registration as _begin_reg  # type: ignore
-    except Exception:
-        pass
+    from . import service as auth_service  # relative import prevents path drift
+except Exception as e:
+    auth_service = None
+    log.warning("auth.router: could not import .service: %s", e)
 
-try:
-    from backend.src.modules.auth.service import complete_registration_step2 as _complete_reg  # type: ignore
-except Exception:
-    try:
-        from backend.src.modules.auth.service import complete_registration as _complete_reg  # type: ignore
-    except Exception:
-        pass
+
+def _pick_service_fn(candidates: list[str]) -> Optional[Callable[..., Any]]:
+    if auth_service is None:
+        return None
+    for name in candidates:
+        fn = getattr(auth_service, name, None)
+        if callable(fn):
+            return fn
+    return None
+
+
+_begin_reg = _pick_service_fn(["begin_registration_step1", "begin_registration"])
+_complete_reg = _pick_service_fn(["complete_registration_step2", "complete_registration"])
 
 
 def _begin_registration_adapter(
-    db: Session, *, email: str, first_name: str, last_name: str, password_plain: str, role: str
+    db: Session,
+    *,
+    email: str,
+    first_name: str,
+    last_name: str,
+    password_plain: str,
+    role: str,
 ) -> str:
-    """
-    Calls whichever function exists and normalizes the return to a temp_token string.
-    Accepts either a direct string return, or dict with 'temp_token', or object with .temp_token.
-    """
     if not _begin_reg:
         raise RuntimeError(
-            "Registration function not found in auth.service (looked for begin_registration_step1 / begin_registration)"
+            "Registration function not found in auth.service "
+            "(looked for begin_registration_step1 / begin_registration)"
         )
     result = _begin_reg(  # type: ignore[misc]
         db=db,
@@ -174,7 +184,8 @@ def _begin_registration_adapter(
 def _complete_registration_adapter(db: Session, *, temp_token: str, company: dict, profile: dict):
     if not _complete_reg:
         raise RuntimeError(
-            "Completion function not found in auth.service (looked for complete_registration_step2 / complete_registration)"
+            "Completion function not found in auth.service "
+            "(looked for complete_registration_step2 / complete_registration)"
         )
     return _complete_reg(db=db, temp_token=temp_token, company=company, profile=profile)  # type: ignore[misc]
 
@@ -276,7 +287,7 @@ async def login(
     user_found = bool(user)
     log.info("login_attempt email=%s found=%s ua=%s", email, user_found, user_agent)
 
-    # If user not found, do a fake verify to keep time similar
+    # If user not found, do a fake verify to keep timing similar
     if not user:
         await asyncio.sleep(0)
         try:
@@ -304,7 +315,7 @@ async def login(
         getattr(user, "role", None),
     )
 
-    # Gate checks
+    # Gate checks: unify as 401 to avoid account probing
     if not ok or not getattr(user, "is_active", True) or not getattr(user, "email_verified", True):
         raise INVALID_CREDENTIALS
 
