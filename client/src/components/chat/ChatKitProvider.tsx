@@ -1,79 +1,81 @@
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
+import React, { createContext, useContext, useMemo } from "react";
 
-import { useAuth } from "../../features/auth/AuthContext";
+/** === Feature flag ===
+ * Set VITE_ENABLE_CHATKIT=false to park ChatKit without touching the rest of the app.
+ */
+const CHATKIT_ENABLED = import.meta.env.VITE_ENABLE_CHATKIT === "true";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
-const API_BASE =
-  (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
-
+/** Token shape returned by the backend token endpoint */
 export type ChatToken = {
-  token: string;
-  expiresAt: string;
-  threadId: string;
-  placement: string;
-  allowedTools: string[];
+  client_secret: string;
+  placement?: string;
 };
 
+/** Context contract used by Chat UI pieces */
 type ChatKitContextValue = {
-  requestToken: (placement: string, threadId?: string) => Promise<ChatToken>;
+  /** Requests a short-lived client_secret from the backend */
+  requestToken: (placement?: string) => Promise<ChatToken>;
 };
 
 const ChatKitContext = createContext<ChatKitContextValue | undefined>(
-  undefined,
+  undefined
 );
 
-type Props = {
-  children: ReactNode;
-};
+type Props = { children: React.ReactNode };
 
+/**
+ * Provider that exposes requestToken(). When ChatKit is disabled, it becomes a no-op
+ * pass-through so the rest of the app renders without network calls or errors.
+ */
 export const ChatKitProvider = ({ children }: Props) => {
-  const {
-    state: { accessToken },
-  } = useAuth();
-
-  const requestToken = useCallback(
-    async (placement: string, threadId?: string) => {
-      if (!accessToken) {
-        throw new Error("You must be logged in to request a ChatKit token.");
-      }
-
-      const response = await fetch(`${API_BASE}/chatkit/token`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+  // Disabled → return a stubbed provider (no network calls)
+  if (!CHATKIT_ENABLED) {
+    const value = useMemo<ChatKitContextValue>(
+      () => ({
+        requestToken: async () => {
+          // Return an empty token so any optional callers don't explode.
+          return { client_secret: "", placement: "disabled" };
         },
-        credentials: "include",
-        body: JSON.stringify({ placement, thread_id: threadId }),
-      });
+      }),
+      []
+    );
+    return (
+      <ChatKitContext.Provider value={value}>
+        {children}
+      </ChatKitContext.Provider>
+    );
+  }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ChatKit token (HTTP ${response.status})`);
-      }
-
-      const data = await response.json();
-
-      return {
-        token: data.token as string,
-        expiresAt: data.expires_at as string,
-        threadId: data.thread_id as string,
-        placement: data.placement as string,
-        allowedTools: (data.allowed_tools as string[]) ?? [],
-      };
-    },
-    [accessToken],
-  );
-
+  // Enabled → real implementation
   const value = useMemo<ChatKitContextValue>(
     () => ({
-      requestToken,
+      requestToken: async (placement?: string) => {
+        // If your app requires auth before getting a token, you can check for it here.
+        const res = await fetch(`${API_BASE}/chatkit/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ placement }),
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          // Surface a concise error to the UI/console but don't crash the whole app.
+          const detail = await res.text().catch(() => "");
+          throw new Error(
+            `Failed to fetch ChatKit token (HTTP ${res.status})${
+              detail ? `: ${detail}` : ""
+            }`
+          );
+        }
+        const data = (await res.json()) as ChatToken;
+        if (!data?.client_secret) {
+          throw new Error("ChatKit token response missing client_secret.");
+        }
+        return data;
+      },
     }),
-    [requestToken],
+    []
   );
 
   return (
@@ -81,10 +83,19 @@ export const ChatKitProvider = ({ children }: Props) => {
   );
 };
 
+/**
+ * Hook to access ChatKit. When disabled, returns a stub with a no-op requestToken()
+ * so callers can still call it safely.
+ */
 export const useChatKit = () => {
   const ctx = useContext(ChatKitContext);
+
+  // If the provider wasn't mounted (shouldn't happen with our export), make a safe fallback:
   if (!ctx) {
-    throw new Error("useChatKit must be used within a ChatKitProvider");
+    return {
+      requestToken: async () =>
+        ({ client_secret: "", placement: "no-provider" } as ChatToken),
+    } as ChatKitContextValue;
   }
   return ctx;
 };

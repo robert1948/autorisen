@@ -1,77 +1,32 @@
-"""API routes exposing ChatKit utilities to the frontend."""
-
-from __future__ import annotations
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from backend.src.db import models
-from backend.src.db.session import get_session
-from backend.src.modules.auth.deps import get_current_user
-
-from . import schemas, service, tools
-from .service import ChatKitConfigError
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import os
+import time
+import hmac, hashlib, base64
 
 router = APIRouter(prefix="/chatkit", tags=["chatkit"])
 
+class TokenReq(BaseModel):
+    user_id: str | None = None
 
-@router.post("/token", response_model=schemas.ChatTokenResponse)
-def issue_token(
-    payload: schemas.ChatTokenRequest,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_session),
-) -> schemas.ChatTokenResponse:
-    """Return a ChatKit client token for the requested placement."""
-    try:
-        token_bundle = service.issue_client_token(
-            db,
-            user=user,
-            placement=payload.placement,
-            thread_id=payload.thread_id,
-        )
-    except ChatKitConfigError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="ChatKit configuration is incomplete.",
-        ) from exc
+def _make_client_secret(workflow_id: str, user_id: str) -> str:
+    """
+    Minimal demo token: HMAC-sign a short-lived payload.
+    Replace this with the official ChatKit session creation if you prefer.
+    """
+    secret = os.environ.get("OPENAI_API_KEY")
+    if not secret:
+        raise RuntimeError("OPENAI_API_KEY missing")
+    # rotate roughly every minute to keep it short-lived
+    payload = f"{workflow_id}:{user_id}:{int(time.time()/60)}"
+    sig = hmac.new(secret.encode(), payload.encode(), hashlib.sha256).digest()
+    token = f"{payload}.{base64.urlsafe_b64encode(sig).decode()}"
+    return base64.urlsafe_b64encode(token.encode()).decode()
 
-    return schemas.ChatTokenResponse(
-        token=token_bundle.token,
-        expires_at=token_bundle.expires_at,
-        thread_id=token_bundle.thread.id,
-        placement=token_bundle.thread.placement,
-        allowed_tools=tools.tools_for_placement(token_bundle.thread.placement),
-    )
-
-
-@router.post("/tools/{tool_name}", response_model=schemas.ToolInvokeResponse)
-def invoke_tool(
-    tool_name: str,
-    payload: schemas.ToolInvokeRequest,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_session),
-) -> schemas.ToolInvokeResponse:
-    try:
-        thread, result, event = service.invoke_tool(
-            db,
-            user=user,
-            placement=payload.placement,
-            tool_name=tool_name,
-            payload=payload.payload,
-            thread_id=payload.thread_id,
-        )
-    except ChatKitConfigError as exc:  # pragma: no cover - should surface during token issuance
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="ChatKit configuration is incomplete.",
-        ) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-
-    return schemas.ToolInvokeResponse(
-        thread_id=thread.id,
-        tool_name=tool_name,
-        result=result,
-        event_id=event.id,
-        allowed_tools=tools.tools_for_placement(payload.placement),
-    )
+@router.post("/token")
+def issue_token(req: TokenReq):
+    wf = os.environ.get("CHATKIT_WORKFLOW_ID")
+    if not wf:
+        raise HTTPException(500, "CHATKIT_WORKFLOW_ID not set")
+    user = req.user_id or "anon"
+    return {"client_secret": _make_client_secret(wf, user)}

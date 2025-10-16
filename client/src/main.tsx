@@ -1,22 +1,27 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
 import App from "./App";
 import "./index.css";
+
+// ChatKit provider (becomes a no-op when disabled per your updated provider file)
 import { ChatKitProvider } from "./components/chat/ChatKitProvider";
-import { AuthProvider } from "./features/auth/AuthContext";
 
-const queryClient = new QueryClient();
+// Feature flag (set on Heroku: VITE_ENABLE_CHATKIT=false to park chat)
+const CHATKIT_ENABLED = import.meta.env.VITE_ENABLE_CHATKIT === "true";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const rootEl = document.getElementById("root");
+if (!rootEl) {
+  throw new Error("Root element #root not found");
+}
+
+ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ChatKitProvider>
-          <App />
-        </ChatKitProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    {CHATKIT_ENABLED ? (
+      <ChatKitProvider>
+        <App />
+      </ChatKitProvider>
+    ) : (
+      <App />
+    )}
   </React.StrictMode>
 );

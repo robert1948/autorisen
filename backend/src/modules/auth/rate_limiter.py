@@ -1,5 +1,16 @@
-"""Simple rate limiter helpers for authentication endpoints."""
+"""
+Compatibility shim for legacy imports PLUS lightweight login-attempt gating.
 
+Exports:
+- limiter, rate_limit, auth_rate_limit, configure_rate_limit
+- allow_login(ip, email) -> (allowed: bool, retry_after_sec: int)
+- record_login_attempt(ip, email, success: bool) -> None
+
+Env overrides:
+  AUTH_LOGIN_MAX_ATTEMPTS=5
+  AUTH_LOGIN_WINDOW_SEC=300    # 5 minutes
+  AUTH_LOGIN_BLOCK_SEC=300     # block duration after threshold
+"""
 from __future__ import annotations
 
 import os
@@ -7,93 +18,77 @@ import time
 from collections import defaultdict, deque
 from typing import Deque, Dict, Tuple
 
-try:
-    import redis  # type: ignore
-except ImportError:  # pragma: no cover
-    redis = None
+# Re-export core decorators/middleware from the centralized module
+from backend.src.core.rate_limit import (
+    limiter,
+    rate_limit,
+    auth_rate_limit,
+    configure_rate_limit,
+)
 
-_RATE_LIMIT = int(os.getenv("AUTH_RATE_LIMIT", "5"))  # legacy default
-_WINDOW_SECONDS = int(os.getenv("AUTH_RATE_LIMIT_WINDOW", "60"))
+__all__ = [
+    "limiter",
+    "rate_limit",
+    "auth_rate_limit",
+    "configure_rate_limit",
+    "allow_login",
+    "record_login_attempt",
+]
 
-_LOGIN_IP_LIMIT = int(os.getenv("AUTH_LOGIN_IP_PER_MIN", "5"))
-_LOGIN_IP_WINDOW = int(os.getenv("AUTH_LOGIN_IP_WINDOW_SECONDS", "60"))
-_LOGIN_ACCOUNT_LIMIT = int(os.getenv("AUTH_LOGIN_ACCOUNT_PER_HOUR", "20"))
-_LOGIN_ACCOUNT_WINDOW = int(os.getenv("AUTH_LOGIN_ACCOUNT_WINDOW_SECONDS", str(60 * 60)))
+# ---- Simple in-memory login gate (per (ip,email)) ----
+_MAX = int(os.getenv("AUTH_LOGIN_MAX_ATTEMPTS", "5"))
+_WIN = int(os.getenv("AUTH_LOGIN_WINDOW_SEC", "300"))   # 5 min sliding window
+_BLK = int(os.getenv("AUTH_LOGIN_BLOCK_SEC", "300"))    # 5 min hard block
 
-_REDIS_URL = os.getenv("REDIS_URL")
-_redis_client = None
-if _REDIS_URL and redis is not None:
-    _redis_client = redis.Redis.from_url(_REDIS_URL)
+# attempts[(ip,email)] = deque[timestamps]
+_attempts: Dict[Tuple[str, str], Deque[float]] = defaultdict(deque)
+# blocks[(ip,email)] = block_until_timestamp
+_blocks: Dict[Tuple[str, str], float] = {}
 
-# fallback in-memory store (per-process)
-_memory_buckets: Dict[str, Deque[float]] = defaultdict(deque)
+def _now() -> float:
+    return time.time()
 
+def _norm(key: Tuple[str, str]) -> Tuple[str, str]:
+    ip, email = key
+    return (ip or "unknown"), (email or "").lower()
 
-def _build_key(identifier: str) -> str:
-    return f"auth:rate:{identifier}"
+def _prune(key: Tuple[str, str]) -> None:
+    """Remove timestamps outside sliding window."""
+    key = _norm(key)
+    cutoff = _now() - _WIN
+    dq = _attempts.get(key)
+    if not dq:
+        return
+    while dq and dq[0] < cutoff:
+        dq.popleft()
+    if not dq:
+        _attempts.pop(key, None)
 
-
-def _check(identifier: str, limit: int, window: int) -> bool:
-    """Return True if request is allowed for the configured window."""
-    if limit <= 0:
-        return True
-    now = time.time()
-
-    if _redis_client:
-        key = _build_key(identifier)
-        pipeline = _redis_client.pipeline()
-        pipeline.zremrangebyscore(key, 0, now - window)
-        pipeline.zadd(key, {f"{now}:{os.getpid()}": now})
-        pipeline.expire(key, window)
-        pipeline.zcard(key)
-        _, _, _, count = pipeline.execute()
-        return int(count) <= limit
-
-    bucket = _memory_buckets[identifier]
-    while bucket and now - bucket[0] > window:
-        bucket.popleft()
-    if len(bucket) >= limit:
-        return False
-    bucket.append(now)
-    return True
-
-
-def check(identifier: str) -> bool:
-    """Legacy single-window rate limiter (kept for backwards compatibility)."""
-    return _check(identifier, _RATE_LIMIT, _WINDOW_SECONDS)
-
-
-def reset(identifier: str) -> None:
-    if _redis_client:
-        _redis_client.delete(_build_key(identifier))
-    else:
-        _memory_buckets.pop(identifier, None)
-
-
-def allow_login(ip_address: str | None, account_identifier: str) -> Tuple[bool, str | None]:
+def allow_login(ip: str, email: str) -> Tuple[bool, int]:
     """
-    Enforce combined login rate limits.
-
-    Returns (allowed, reason) where reason is ``"ip"`` or ``"account"`` when blocked.
+    Returns (allowed, retry_after_sec). If blocked, retry_after_sec > 0.
     """
+    key = _norm((ip, email))
+    blk_until = _blocks.get(key, 0.0)
+    now = _now()
+    if blk_until > now:
+        return False, int(round(blk_until - now))
 
-    if ip_address:
-        if not _check(f"login:ip:{ip_address}", _LOGIN_IP_LIMIT, _LOGIN_IP_WINDOW):
-            return False, "ip"
-    normalized_account = account_identifier.strip().lower()
-    if normalized_account:
-        if not _check(
-            f"login:acct:{normalized_account}", _LOGIN_ACCOUNT_LIMIT, _LOGIN_ACCOUNT_WINDOW
-        ):
-            return False, "account"
-    return True, None
+    _prune(key)
+    dq = _attempts.get(key, deque())
+    if len(dq) >= _MAX:
+        _blocks[key] = now + _BLK
+        return False, _BLK
+    return True, 0
 
-
-def reset_login(ip_address: str | None, account_identifier: str) -> None:
-    """Clear login counters after a successful authentication."""
-
-    if ip_address:
-        reset(f"login:ip:{ip_address}")
-    normalized_account = account_identifier.strip().lower()
-    if normalized_account:
-        reset(f"login:acct:{normalized_account}")
+def record_login_attempt(ip: str, email: str, success: bool) -> None:
+    """
+    Track attempts; clear on success.
+    """
+    key = _norm((ip, email))
+    if success:
+        _attempts.pop(key, None)
+        _blocks.pop(key, None)
+        return
+    _prune(key)
+    _attempts[key].append(_now())
