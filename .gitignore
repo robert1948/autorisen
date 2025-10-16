@@ -14,7 +14,6 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-*.so
 .eggs/
 *.egg-info/
 .installed.cfg
@@ -71,11 +70,20 @@ docker-data/
 # --- Project-specific / backups ---
 backend/alembic.ini.bak
 
-# --- Stray duplicate roots (canonical is backend/ + client/) ---
+# --- Stray alternate roots (ignore only at repo root) ---
 /app/
 /src/
+/agents/
+/config/
+/context/
+/data/
+/demos/
+/migrations/
+/tools/
+/.vscode
+/.devcontainer
 
-# Ensure canonical backend stays tracked
+# Keep canonical backend tracked
 !/backend/
 !/backend/src/
 !/backend/src/**
