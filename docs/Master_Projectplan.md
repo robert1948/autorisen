@@ -1,6 +1,6 @@
 # Master Project Plan — autorisen
 
-Snapshot: 2025-10-16
+Snapshot: 2025-10-17
 
 Purpose
 
@@ -78,7 +78,7 @@ Task 4 — Automate container release workflow
   1. Add GitHub Action (manual trigger) invoking script with fresh build (R).
 - Dependencies: Task 1.
 - Acceptance criteria: One-command/manual workflow redeploys latest `main`; logs stored with digest.
-- Status: To Do
+- Status: In Progress — 2025-10-17 — `make deploy-heroku` run successfully; script + GH Action outstanding (ops)
 
 Task 5 — Fix database migration issues for SQLite and Postgres
 
@@ -118,6 +118,46 @@ Task 7 — Update developer documentation & tooling
 - Dependencies: Task 4 script for accuracy.
 - Acceptance criteria: Docs updated; tooling warnings (isort) resolved in local dev.
 - Status: In Progress — 2025-10-17 — isort installed in .venv; doc updates + README refresh pending (docs)
+
+Task 8 — Resolve production 404s on flows/agents APIs
+
+- ID: T8
+- Owner (R/A): backend lead / product
+- Target: 2025-10-19
+- Steps:
+  1. Reproduce `/api/flows/runs` and `/api/flows/onboarding/checklist` 404s in staging/prod with authenticated session and capture logs. (R)
+  1. Confirm router imports succeed after `_safe_import` logging and inspect request handling for missing tenant/user data. (R)
+  1. Decide on UX: return 200 with empty payload vs. hard 404 when user has no runs/agents; implement fix. (R/A)
+  1. Add regression tests covering empty datasets and authenticated access paths. (R)
+- Dependencies: Task 1 (auth router restored), Task 4 (deploy path) for rollout.
+- Acceptance criteria: Authenticated requests return 200 and expected JSON (possibly empty list); logs show successful handler execution; tests cover scenario.
+- Status: To Do — 2025-10-17 — reproducible 404 observed in Heroku logs; investigation queued (backend)
+
+Task 9 — Align user profile FK types with UUID ids
+
+- ID: T9
+- Owner (R/A): backend / data
+- Target: 2025-10-18
+- Steps:
+  1. Create migration altering `user_profiles.user_id` to `VARCHAR(36)` (or UUID) and reapply FK to `users.id`. (R)
+  1. Verify registration step 2 completes locally and in staging after migration. (R)
+  1. Backfill/validate existing rows for consistency and note outcome in deployment log. (R)
+- Dependencies: Task 5 (migration hygiene) for tooling consistency.
+- Acceptance criteria: `/api/auth/register/step2` succeeds; inserts no longer raise datatype mismatch; schema reflects UUID FK.
+- Status: To Do — 2025-10-17 — production error logged `psycopg.errors.DatatypeMismatch` during signup (backend)
+
+Task 10 — Stand up analytics tracking endpoint
+
+- ID: T10
+- Owner (R/A): backend / product analytics
+- Target: 2025-10-20
+- Steps:
+  1. Implement `/api/auth/analytics/track` handler persisting events with CSRF validation. (R)
+  1. Add allow-list for event types and protect against anonymous abuse (rate limit or auth). (R)
+  1. Confirm client POSTs return 201 and events stored; document payload contract. (R)
+- Dependencies: Task 9 (registration flow healthy) to ensure forms emit events without errors.
+- Acceptance criteria: Network tab shows 201 responses for analytics calls; `analytics_events` table receives new rows; Heroku logs free of 405 errors.
+- Status: To Do — 2025-10-17 — client POSTs currently receive 405 (backend)
 
 Communications & Reporting
 

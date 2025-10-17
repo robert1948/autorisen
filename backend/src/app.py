@@ -187,6 +187,15 @@ def create_app() -> FastAPI:
         logging.getLogger("uvicorn.error").exception("Unhandled exception")
         return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
+    if spa_index:
+        @app.get("/{full_path:path}", include_in_schema=False)
+        def spa_fallback(full_path: str):
+            if full_path.startswith("api") or full_path.startswith("assets"):
+                return PlainTextResponse("Not found", status_code=404)
+            if "." in full_path:
+                return PlainTextResponse("Not found", status_code=404)
+            return FileResponse(spa_index)
+
     return app
 
 

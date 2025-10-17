@@ -5,9 +5,21 @@ import "./index.css";
 
 // ChatKit provider (becomes a no-op when disabled per your updated provider file)
 import { ChatKitProvider } from "./components/chat/ChatKitProvider";
+import { AuthProvider } from "./features/auth/AuthContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Feature flag (set on Heroku: VITE_ENABLE_CHATKIT=false to park chat)
 const CHATKIT_ENABLED = import.meta.env.VITE_ENABLE_CHATKIT === "true";
+
+const queryClient = new QueryClient();
+
+const RootApp = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
@@ -18,10 +30,10 @@ ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     {CHATKIT_ENABLED ? (
       <ChatKitProvider>
-        <App />
+        <RootApp />
       </ChatKitProvider>
     ) : (
-      <App />
+      <RootApp />
     )}
   </React.StrictMode>
 );
