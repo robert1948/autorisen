@@ -6,7 +6,7 @@ from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
 try:
     # Your project settings should expose DATABASE_URL
@@ -39,8 +39,12 @@ SSL_REQUIRED = os.getenv("DATABASE_SSL", "").lower() in {"1", "true", "yes", "re
 if ("amazonaws.com" in DB_URL or "heroku" in DB_URL) and os.getenv("DATABASE_SSL") is None:
     SSL_REQUIRED = True
 
+
 connect_args = {}
-if SSL_REQUIRED:
+sqlite_connect_args = None
+if DB_URL.startswith("sqlite"):
+    sqlite_connect_args = {"check_same_thread": False}
+elif SSL_REQUIRED:
     # psycopg accepts sslmode in query, but connect_args keeps it explicit
     connect_args["sslmode"] = "require"
 
@@ -48,6 +52,13 @@ if SSL_REQUIRED:
 # --- Engine configuration ---
 # Tune pools conservatively for Heroku’s single dyno web process
 def _create_engine(url: str) -> Engine:
+    if url.startswith("sqlite"):
+        return create_engine(
+            url,
+            connect_args=sqlite_connect_args or {"check_same_thread": False},
+            future=True,
+        )
+
     return create_engine(
         url,
         pool_pre_ping=True,

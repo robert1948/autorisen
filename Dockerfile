@@ -37,10 +37,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential python3-dev pkg-config \
     libpq-dev libffi-dev libssl-dev \
     rustc cargo \
-  && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 # ---- Python deps (simple, robust path) ----
 COPY backend/requirements.txt /app/backend/requirements.txt
+COPY requirements.txt /app/requirements.txt
 
 # Prefer wheels, but allow source builds if needed (now that toolchain is present)
 RUN set -eux; \

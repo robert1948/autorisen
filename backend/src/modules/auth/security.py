@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Tuple, Dict, Any
+from typing import Any, Dict, Tuple
 
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+from jose import JWTError, jwt
+
+from backend.src.services.security import verify_password as _verify_password
 
 # ---- Config (env or settings) ----
 JWT_SECRET = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
@@ -18,14 +19,9 @@ JWT_AUD = os.getenv("JWT_AUDIENCE")
 if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET/SECRET_KEY is required")
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # ---- Password helpers ----
 def verify_password(plain: str, hashed: str) -> bool:
-    try:
-        return pwd_context.verify(plain, hashed)
-    except Exception:
-        return False
+    return _verify_password(plain, hashed)
 
 # ---- JWT helpers ----
 def _now() -> datetime:

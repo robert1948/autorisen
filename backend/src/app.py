@@ -3,11 +3,19 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse, Response, PlainTextResponse
 from dotenv import load_dotenv
+from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    Response,
+)
 
 # Load .env for local dev (safe in prod; no-op if vars already set)
 load_dotenv()
@@ -32,23 +40,36 @@ try:
 except Exception:
     AccessPathSuppressFilter = None  # type: ignore[assignment]
 
-# Routers (auth/agents/chatkit)
-try:
-    from .modules.auth.router import router as auth_router  # type: ignore
-except Exception:
-    auth_router = None
-try:
-    from .modules.agents.router import router as agents_router  # type: ignore
-except Exception:
-    agents_router = None
-try:
-    from .modules.chatkit.router import router as chatkit_router  # type: ignore
-except Exception:
-    chatkit_router = None
+# Routers (auth/agents/chatkit/flows/marketplace)
+log = logging.getLogger("uvicorn.error")
+
+
+def _safe_import(description: str, dotted_path: str, attr: str):
+    try:
+        module = __import__(dotted_path, fromlist=[attr])
+        router = getattr(module, attr, None)
+        if router is None:
+            raise AttributeError(attr)
+        log.info("Loaded %s router from %s", description, dotted_path)
+        return router
+    except Exception as exc:  # pragma: no cover
+        log.warning("%s router unavailable: %s", description, exc)
+        return None
+
+
+auth_router = _safe_import("auth", "backend.src.modules.auth.router", "router")
+agents_router = _safe_import("agents", "backend.src.modules.agents.router", "router")
+chatkit_router = _safe_import("chatkit", "backend.src.modules.chatkit.router", "router")
+flows_router = _safe_import("flows", "backend.src.modules.flows.router", "router")
+marketplace_router = _safe_import("marketplace", "backend.src.modules.marketplace.router", "router")
 
 # ------------------------------------------------------------------------------
 APP_ORIGIN = os.getenv("APP_ORIGIN", "").strip()
 BOT_HARDEN = os.getenv("BOT_HARDEN", "1").lower() in {"1", "true", "yes"}
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+CLIENT_DIST = PROJECT_ROOT / "client" / "dist"
+SPA_INDEX = CLIENT_DIST / "index.html"
+SPA_ASSETS_DIR = CLIENT_DIST / "assets"
 
 
 def create_app() -> FastAPI:
@@ -80,13 +101,41 @@ def create_app() -> FastAPI:
         logging.getLogger("uvicorn.access").addFilter(AccessPathSuppressFilter())
 
     # -------------------- Health & utility --------------------
+    landing_html = """<!doctype html><html lang='en'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/><title>autorisen</title><style>body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:0;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;}main{max-width:640px;padding:3rem 1.5rem;text-align:center;background:rgba(15,23,42,0.85);border-radius:16px;box-shadow:0 25px 50px -12px rgba(15,23,42,0.6);}h1{font-size:2.5rem;margin-bottom:0.75rem;}p{line-height:1.6;margin:0.75rem 0;}a{color:#38bdf8;text-decoration:none;font-weight:600;}a:hover{text-decoration:underline;}footer{margin-top:2rem;font-size:0.875rem;color:#94a3b8;}nav{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;}nav a{padding:0.75rem 1.5rem;border-radius:999px;background:#1e293b;transition:background 0.2s ease;}nav a:hover{background:#334155;}</style></head><body><main><h1>autorisen Platform API</h1><p>Welcome! This deployment powers authentication, agent tooling, and ChatKit capabilities for the autorisen platform.</p><p>Use the quick links below to inspect the live API and health checks.</p><nav><a href="/docs">Interactive Docs</a><a href="/redoc">ReDoc Spec</a><a href="/api/health">API Health</a></nav><footer>Release: {version} · Origin: {origin}</footer></main></body></html>"""
+
+    spa_index = SPA_INDEX if SPA_INDEX.exists() else None
+    if spa_index and SPA_ASSETS_DIR.exists():
+        app.mount("/assets", StaticFiles(directory=SPA_ASSETS_DIR), name="spa-assets")
+
     @app.get("/", include_in_schema=False)
     def root_ok():
-        return {"ok": True}
+        if spa_index:
+            return FileResponse(spa_index)
+        return HTMLResponse(
+            landing_html.format(
+                version=os.getenv("APP_VERSION", "dev"),
+                origin=APP_ORIGIN or "default",
+            )
+        )
 
     @app.get("/api/health", include_in_schema=False)
     def api_health():
-        return {"ok": True}
+        version = os.getenv("APP_VERSION", "dev")
+        env_name = (
+            os.getenv("APP_ENV")
+            or os.getenv("ENVIRONMENT")
+            or os.getenv("ENV")
+            or "local"
+        )
+        return {"status": "ok", "version": version, "env": env_name}
+
+    @app.get("/api/health/alive", include_in_schema=False)
+    def api_health_alive():
+        return {"alive": True}
+
+    @app.get("/api/health/ping", include_in_schema=False)
+    def api_health_ping():
+        return {"ping": "pong", "version": os.getenv("APP_VERSION", "dev")}
 
     # Silence favicon 404 noise
     @app.get("/favicon.ico", include_in_schema=False)
@@ -119,11 +168,15 @@ def create_app() -> FastAPI:
     # -------------------- API Routers --------------------
     api = APIRouter()
     if auth_router:
-        api.include_router(auth_router, prefix="/auth", tags=["auth"])
+        api.include_router(auth_router, prefix="/auth")
     if agents_router:
-        api.include_router(agents_router, prefix="/agents", tags=["agents"])
+        api.include_router(agents_router)
     if chatkit_router:
-        api.include_router(chatkit_router, prefix="/chatkit", tags=["chatkit"])
+        api.include_router(chatkit_router)
+    if flows_router:
+        api.include_router(flows_router)
+    if marketplace_router:
+        api.include_router(marketplace_router)
 
     # Namespace all app routes under /api
     app.include_router(api, prefix="/api")

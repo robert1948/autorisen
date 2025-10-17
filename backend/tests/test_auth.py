@@ -13,6 +13,8 @@ from sqlalchemy import text
 from backend.src.core.rate_limit import limiter  # single place for limiter
 from backend.src.db.session import SessionLocal
 
+CSRF_HEADER = "X-CSRF-Token"
+
 
 def _post_json_or_query_payload(
     client, url: str, body: Dict[str, Any], *, headers: Optional[Dict[str, str]] = None
@@ -32,25 +34,48 @@ def _clean_auth_state():
     - Reset in-memory/IP-based limiter state
     """
     # DB reset
+    tables = [
+        "analytics_events",
+        "role_permissions",
+        "user_roles",
+        "sessions",
+        "login_audits",
+        "credentials",
+        "permissions",
+        "roles",
+        "user_profiles",
+        "users",
+    ]
+
     with SessionLocal() as db:
-        db.execute(
-            text(
-                """
-                TRUNCATE
-                  analytics_events,
-                  role_permissions,
-                  user_roles,
-                  sessions,
-                  login_audits,
-                  credentials,
-                  permissions,
-                  roles,
-                  user_profiles,
-                  users
-                RESTART IDENTITY CASCADE;
-                """
-            )
-        )
+        bind = db.get_bind()
+        dialect = getattr(bind.dialect, "name", "") if bind else ""
+
+        if dialect == "postgresql":
+            existing = {
+                row[0]
+                for row in db.execute(
+                    text("SELECT tablename FROM pg_tables WHERE schemaname='public';")
+                )
+            }
+            targets = [t for t in tables if t in existing]
+            if targets:
+                joined = ", ".join(targets)
+                db.execute(text(f"TRUNCATE {joined} RESTART IDENTITY CASCADE;"))
+        else:
+            # SQLite fallback used in dev CI/sandboxes — cascade manually.
+            db.execute(text("PRAGMA foreign_keys = OFF;"))
+            for table in tables:
+                try:
+                    db.execute(text(f"DELETE FROM {table};"))
+                except Exception:
+                    pass
+            try:
+                db.execute(text("DELETE FROM sqlite_sequence;"))
+            except Exception:
+                pass
+            db.execute(text("PRAGMA foreign_keys = ON;"))
+
         db.commit()
 
     # Limiter reset (memory/redis)
@@ -65,6 +90,16 @@ def _clean_auth_state():
 def _headers_for_ip(ip: str) -> Dict[str, str]:
     # Make the backend see a stable client IP (if it trusts X-Forwarded-For)
     return {"X-Forwarded-For": ip}
+
+
+def _csrf_headers(client, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    resp = client.get("/api/auth/csrf")
+    assert resp.status_code == 200, resp.text
+    token = resp.json()["csrf_token"]
+    headers: Dict[str, str] = {CSRF_HEADER: token}
+    if extra:
+        headers.update(extra)
+    return headers
 
 
 def _complete_registration(
@@ -89,7 +124,10 @@ def _complete_registration(
         "recaptcha_token": "unit-test-token",
     }
     r1 = _post_json_or_query_payload(
-        client, "/api/auth/register/step1", step1_payload, headers=_headers_for_ip(ip)
+        client,
+        "/api/auth/register/step1",
+        step1_payload,
+        headers=_csrf_headers(client, _headers_for_ip(ip)),
     )
     assert r1.status_code == 201, r1.text
     temp_token = r1.json()["temp_token"]
@@ -111,11 +149,13 @@ def _complete_registration(
         }
 
     step2_payload = {"company_name": company_name, "profile": profile}
+    step2_headers = _headers_for_ip(ip)
+    step2_headers["Authorization"] = f"Bearer {temp_token}"
     r2 = _post_json_or_query_payload(
         client,
         "/api/auth/register/step2",
         step2_payload,
-        headers={"Authorization": f"Bearer {temp_token}", **_headers_for_ip(ip)},
+        headers=_csrf_headers(client, step2_headers),
     )
     assert r2.status_code == 200, r2.text
     body = r2.json()
@@ -140,7 +180,11 @@ def test_register_login_refresh_me_flow(client):
     assert user.get("role") in ("Developer", "developer")
 
     # Login
-    login = client.post("/api/auth/login", json={"email": email, "password": password})
+    login = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": password},
+        headers=_csrf_headers(client),
+    )
     assert login.status_code == 200, login.text
     login_json: Dict[str, Any] = login.json()
     access_token = login_json.get("access_token")
@@ -185,7 +229,7 @@ def test_login_rate_limit(client):
         res = client.post(
             "/api/auth/login",
             json={"email": email, "password": "bad"},
-            headers=_headers_for_ip(ip),
+            headers=_csrf_headers(client, _headers_for_ip(ip)),
         )
         assert res.status_code == 401, res.text
 
@@ -193,9 +237,11 @@ def test_login_rate_limit(client):
     res = client.post(
         "/api/auth/login",
         json={"email": email, "password": "bad"},
-        headers=_headers_for_ip(ip),
+        headers=_csrf_headers(client, _headers_for_ip(ip)),
     )
     assert res.status_code in (401, 429), res.text
+    if res.status_code == 429:
+        assert "Retry-After" in res.headers
 
 
 def test_register_duplicate_email(client):
@@ -216,6 +262,7 @@ def test_register_duplicate_email(client):
             "role": "Customer",
             "recaptcha_token": "unit-test-token",
         },
+        headers=_csrf_headers(client),
     )
     assert step1.status_code in (409, 400), step1.text  # 409 preferred
 
@@ -233,6 +280,7 @@ def test_password_policy_enforced(client):
             "role": "Customer",
             "recaptcha_token": "unit-test-token",
         },
+        headers=_csrf_headers(client),
     )
     assert res.status_code == 422, res.text
     body = res.json()
@@ -246,7 +294,11 @@ def test_login_refresh_cookie_logout_flow(client):
 
     _complete_registration(client, email, password)
 
-    login = client.post("/api/auth/login", json={"email": email, "password": password})
+    login = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": password},
+        headers=_csrf_headers(client),
+    )
     assert login.status_code == 200, login.text
     access_token = login.json().get("access_token")
     assert access_token
@@ -261,9 +313,33 @@ def test_login_refresh_cookie_logout_flow(client):
     rotated_cookie = refresh.cookies.get("refresh_token")
     assert rotated_cookie and rotated_cookie != refresh_cookie
 
-    logout = client.post("/api/auth/logout")
+    logout = client.post("/api/auth/logout", headers=_csrf_headers(client))
     assert logout.status_code == 204, logout.text
 
     # Refresh should now fail because cookie has been cleared/revoked
     refresh_after_logout = client.post("/api/auth/refresh")
     assert refresh_after_logout.status_code == 401
+
+
+def test_register_requires_csrf(client):
+    email = f"csrf_{uuid.uuid4().hex[:8]}@example.com"
+    payload = {
+        "first_name": "NoCsrf",
+        "last_name": "User",
+        "email": email,
+        "password": "NoCsrfPass123!",
+        "confirm_password": "NoCsrfPass123!",
+        "role": "Customer",
+        "recaptcha_token": "unit-test-token",
+    }
+    res = client.post("/api/auth/register/step1", json=payload)
+    assert res.status_code == 403
+
+
+def test_login_requires_csrf(client):
+    email = f"csrf-login_{uuid.uuid4().hex[:8]}@example.com"
+    password = "CsrfLoginPass123!"
+    _complete_registration(client, email, password)
+
+    res = client.post("/api/auth/login", json={"email": email, "password": password})
+    assert res.status_code == 403

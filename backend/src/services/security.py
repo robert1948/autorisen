@@ -8,28 +8,28 @@ import hmac
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from backend.src.core.config import settings
 
-_PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 _JWT_ALGORITHM = "HS256"
 
 
 def hash_password(password: str) -> str:
     """Return a bcrypt hash for the provided password."""
 
-    return _PWD_CONTEXT.hash(password)
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
     """Check whether the provided password matches the stored hash."""
 
     try:
-        if _PWD_CONTEXT.verify(password, hashed_password):
+        if bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8")):
             return True
-    except ValueError:
+    except (ValueError, TypeError):
         pass
 
     # Fallback for legacy PBKDF2 hashes (base64(salt + hash))

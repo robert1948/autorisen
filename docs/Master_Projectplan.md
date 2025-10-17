@@ -41,7 +41,7 @@ Task 1 — Restore auth router and redeploy to Heroku
   1. Document release outcome in `docs/DEPLOYMENTS.md`. (R)
 - Dependencies: Heroku CLI authenticated; `HEROKU_API_KEY` exported locally.
 - Acceptance criteria: Heroku logs show successful boot, GET `/` returns JSON payload, login route available.
-- Status: In Progress — 2025-10-16 — rebuild running; push/release pending (ops)
+- Status: Done — 2025-10-16 — release v244 deployed; health + auth endpoints verified (ops)
 
 Task 2 — Structured login debug logging rollout
 
@@ -117,7 +117,7 @@ Task 7 — Update developer documentation & tooling
   1. Refresh README deployment section with current Heroku workflow. (R)
 - Dependencies: Task 4 script for accuracy.
 - Acceptance criteria: Docs updated; tooling warnings (isort) resolved in local dev.
-- Status: In Progress — 2025-10-16 — isort added to requirements; docs pending (docs)
+- Status: In Progress — 2025-10-17 — isort installed in .venv; doc updates + README refresh pending (docs)
 
 Communications & Reporting
 

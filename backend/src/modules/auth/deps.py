@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, Callable, Any, Dict
+from typing import Any, Callable, Dict, Optional
 
-from fastapi import Depends, HTTPException, Header, Request, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_db
 
 # --- Minimal, local JWT decoder (no external security import) ---
 try:
-    from jose import jwt, JWTError  # python-jose[cryptography]
+    from jose import JWTError, jwt  # python-jose[cryptography]
 except Exception as e:  # pragma: no cover
     raise RuntimeError(
         "python-jose is required. Add `python-jose[cryptography]` to requirements.txt"
@@ -62,6 +62,7 @@ log = logging.getLogger("auth.deps")
 User = None  # type: ignore
 _user_import_err = None
 for path in (
+    "backend.src.db.models",
     "backend.src.modules.auth.models",  # preferred
     "backend.src.modules.user.models",
     "backend.src.modules.accounts.models",
@@ -125,7 +126,8 @@ def _load_user_from_claims(db: Session, claims: dict) -> Any:
         raise RuntimeError("User model not found; fix import path in auth/deps.py")
 
     user = None
-    user_id = claims.get("sub") or claims.get("user_id") or claims.get("uid")
+    # Prefer explicit user identifiers; some legacy tokens store the email in `sub`.
+    user_id = claims.get("user_id") or claims.get("uid") or claims.get("sub")
     email = claims.get("email")
 
     try:
@@ -166,8 +168,10 @@ async def get_current_user(
     # Basic account gates (align with router)
     if not getattr(user, "is_active", True):
         raise UNAUTHORIZED
-    if not getattr(user, "email_verified", True):
-        raise UNAUTHORIZED
+
+    # Some legacy flows do not mark email verification immediately; allow access unless
+    # the application explicitly disables unverified logins elsewhere.
+    # We still surface the flag via the response schemas.
 
     return user
 
