@@ -1,6 +1,6 @@
 # Master Project Plan — autorisen
 
-Snapshot: 2025-09-26
+Snapshot: 2025-10-16
 
 Purpose
 
@@ -22,83 +22,102 @@ Legend
 
 Master milestones (high level)
 
-1. OIDC & Secrets alignment — validate OIDC assume-role and sync GitHub → Heroku (Target: 2025-09-27)
-1. Live audit run & artifact capture (Target: 2025-09-28)
-1. Deliverables A–E produced and reviewed (Target: 2025-09-29)
-1. Minimal ECS migration plan (cluster + single task) and cost estimate (Target: 2025-10-06)
+1. Restore production auth service and publish healthy root/health endpoints (Target: 2025-10-16)
+1. Harden Heroku container release workflow with repeatable scripts (Target: 2025-10-18)
+1. Stabilize database migrations and local developer setup (Target: 2025-10-20)
+1. Finalize ChatKit rollout and analytics instrumentation (Target: 2025-10-22)
 
 Detailed tasks
 
-Task 1 — Verify OIDC assume-role end-to-end
+Task 1 — Restore auth router and redeploy to Heroku
 
 - ID: T1
-- Owner (R/A): ops / repo-admin
-- Target: 2025-09-26 -> 2025-09-27
+- Owner (R/A): backend lead / ops
+- Target: 2025-10-16
 - Steps:
-  1. Merge PR #7 (test workflow) into `main` (A: repo-admin)
-  1. Dispatch `Test OIDC Assume Role` on `main` and confirm `aws sts get-caller-identity` returns the
-    assumed role ARN. (R: ops)
-  1. If failure, troubleshoot trust policy (`infra/aws-ecs-skel/trust-policy.json`), OIDC provider, and repo secret
-     `AWS_OIDC_ROLE` (R: ops)
-- Dependencies: role ARN present in `AWS_OIDC_ROLE`; GH Actions runner must have network egress to AWS.
-- Acceptance criteria: workflow prints the expected ARN matching IAM role `gh-oidc-autorisen-ecr`.
-- Status: Not Started
+  1. Confirm `backend/src/modules/auth/router.py` matches service-based implementation (no `modules.auth.security`). (R)
+  1. Rebuild container with `docker build --no-cache -t autorisen:local .` and push to Heroku registry. (R)
+  1. Release to Heroku and smoke test `/` and `/api/health` endpoints. (R)
+  1. Document release outcome in `docs/DEPLOYMENTS.md`. (R)
+- Dependencies: Heroku CLI authenticated; `HEROKU_API_KEY` exported locally.
+- Acceptance criteria: Heroku logs show successful boot, GET `/` returns JSON payload, login route available.
+- Status: In Progress — 2025-10-16 — rebuild running; push/release pending (ops)
 
-Task 2 — Create safe GitHub -> Heroku sync workflow (dry-run then apply)
+Task 2 — Structured login debug logging rollout
 
 - ID: T2
-- Owner (R/A): ops / repo-admin
-- Target: 2025-09-27
+- Owner (R/A): backend lead
+- Target: 2025-10-16
 - Steps:
-  1. Create a workflow `ci/sync-github-to-heroku.yml` that runs on `workflow_dispatch` and executes
-     `infra/scripts/sync_github_to_heroku.sh` without `--apply` (dry-run). Upload output as an artifact. (R: ops)
-  1. Dispatch the workflow, review artifact, and confirm planned writes. (R: ops, S: infra)
-  1. If confirmed, re-run with `--apply` in a second, narrowly permissioned workflow run. (R: ops)
-  1. Record audit log and update `docs/senior_devops.md` and the secrets matrix with any changes. (R: ops)
-- Dependencies: `HEROKU_API_KEY` and `HEROKU_APP_NAME` present as repo secrets; mapping `infra/secrets-mapping.json` correctness.
-- Acceptance criteria: Heroku config-vars updated to match GitHub SSOT mappings; audit log captured and saved as artifact.
-- Status: Not Started
+  1. Add contextual debug logs around login flow (attempt, rate-limit, success, failure). (R)
+  1. Verify logs in staging/Heroku to aid diagnostics. (R)
+- Dependencies: Task 1 deployment.
+- Acceptance criteria: Logs visible in Heroku tail with expected `auth.login.*` messages.
+- Status: Done — 2025-10-15 — logs present after deployment (backend)
 
-Task 3 — Run Live Audit (Heroku + AWS) and capture artifact
+Task 3 — Root health responder for monitoring
 
 - ID: T3
-- Owner (R/A): ops / project lead
-- Target: 2025-09-28
+- Owner (R/A): backend
+- Target: 2025-10-15
 - Steps:
-  1. Ensure Task 1 and Task 2 completed (or at least Task 1 validated). (A: project lead)
-  1. Dispatch `.github/workflows/live-audit.yml` on `main` with `HEROKU_API_KEY` present in secrets. (R: ops)
-  1. Download the `live-audit-output` artifact and archive it under `artifacts/live-audit/` with a date prefix. (R: ops)
-  1. Run quick checks: Heroku dynos, config-vars, DB connectivity tests (if available). (R: ops)
-- Dependencies: `HEROKU_API_KEY` and `AWS_OIDC_ROLE` present and valid.
-- Acceptance criteria: `live-audit-output` artifact present and contains Heroku and AWS read-only inventory.
-- Status: Not Started
+  1. Add FastAPI route for `/` returning service heartbeat JSON. (R)
+  1. Confirm 200 response via curl/Heroku logs. (R)
+- Dependencies: Task 1 redeploy.
+- Acceptance criteria: Heroku router logs show 200 for GET `/` with JSON body.
+- Status: Done — 2025-10-15 — verified locally and in logs (backend)
 
-Task 4 — Produce Deliverables A–E from audit output
+Task 4 — Automate container release workflow
 
 - ID: T4
-- Owner (R/A): project lead / ops
-- Target: 2025-09-29
+- Owner (R/A): ops
+- Target: 2025-10-18
 - Steps:
-  1. Parse the live-audit artifact and fill in Deliverables A–E in `docs/senior_devops.md` and this plan. (R: project lead)
-  1. Add decision log entries with rationale and impact (B). (R: project lead)
-  1. Confirm secrets matrix and schedule rotation items (C). (R: ops)
-  1. Finalize the 7-day action plan and assign owners (E). (R: project lead)
-- Acceptance criteria: Deliverables A–E are completed, peer-reviewed, and stored in the repo.
-- Status: Not Started
+  1. Script build/tag/push/release sequence (`scripts/deploy-heroku.sh`) with guardrails (R).
+  1. Capture build logs and tag image digest in `docs/DEPLOYMENTS.md`. (R)
+  1. Add GitHub Action (manual trigger) invoking script with fresh build (R).
+- Dependencies: Task 1.
+- Acceptance criteria: One-command/manual workflow redeploys latest `main`; logs stored with digest.
+- Status: To Do
 
-Task 5 — Create minimal ECS migration proposal (cluster + single task)
+Task 5 — Fix database migration issues for SQLite and Postgres
 
 - ID: T5
-- Owner (R/A): infra lead / project lead
-- Target: 2025-10-06
+- Owner (R/A): backend / data
+- Target: 2025-10-20
 - Steps:
-  1. Capture current infra costs and identify required AWS resources for minimal migration. (R: infra)
-  1. Produce Terraform plan under `infra/aws-ecs-skel/` for ECR + ECS cluster + single task definition (no ALB, no RDS).
-    (R: infra)
-  1. Estimate monthly costs plus failure and recovery plan. (R: infra)
-  1. Present to the project lead for sign-off. (A: project lead)
-- Acceptance criteria: Terraform plan reviewed, costs within budget, rollback strategy documented.
-- Status: Not Started
+  1. Investigate Alembic constraint failures on SQLite (`OperationalError: near "ADD CONSTRAINT"`). (R)
+  1. Add batch migrations or conditional logic for SQLite compatibility. (R)
+  1. Re-run migrations locally and in staging DB snapshot. (R)
+- Dependencies: None.
+- Acceptance criteria: `alembic upgrade head` succeeds on SQLite dev DB and Postgres staging.
+- Status: In Progress — 2025-10-14 — error reproduced; fix pending (backend)
+
+Task 6 — ChatKit rollout validation
+
+- ID: T6
+- Owner (R/A): product / backend
+- Target: 2025-10-22
+- Steps:
+  1. Validate `/api/chatkit/token` requires auth and returns 200 with valid credentials. (R)
+  1. Coordinate frontend ChatKit provider initialization with new endpoint. (S: frontend)
+  1. Update docs/env samples with required ChatKit secrets. (R)
+- Dependencies: Stable auth deployment (Task 1).
+- Acceptance criteria: Frontend chat UI connects via ChatKit; Heroku logs show successful token issuance.
+- Status: In Progress — 2025-10-15 — endpoint returns 401 w/o auth; next step add auth header (backend)
+
+Task 7 — Update developer documentation & tooling
+
+- ID: T7
+- Owner (R/A): docs lead / backend
+- Target: 2025-10-19
+- Steps:
+  1. Document new login debug logs and health endpoints in `docs/USAGE_TEMPLATES.md`. (R)
+  1. Add isort requirement and confirm editor integration works. (R)
+  1. Refresh README deployment section with current Heroku workflow. (R)
+- Dependencies: Task 4 script for accuracy.
+- Acceptance criteria: Docs updated; tooling warnings (isort) resolved in local dev.
+- Status: In Progress — 2025-10-16 — isort added to requirements; docs pending (docs)
 
 Communications & Reporting
 
@@ -108,13 +127,13 @@ Communications & Reporting
 
 Risks & Mitigations
 
-- Secret drift — mitigate by running controlled sync from Actions (never export secrets locally). Use audit logs.
-- Unintended writes — require dry-run & manual approval before `--apply`.
-- Cost overrun — keep AWS changes in skeleton stage and only provision after sign-off.
+- Secret drift — mitigate by scripted Heroku deploys (Task 4) and store release notes.
+- Unintended writes — use dry-run mode in deployment script and require reviewer sign-off.
+- Auth downtime — add smoke tests in release workflow; monitor `auth.login.*` debug logs after deploy.
 
 Templates (for updating tasks)
 
-- Status line example: `T1 — Verify OIDC — In Progress — 2025-09-26 — notes: assumed role test returned ARN xxxxx (ops)`
+- Status line example: `T1 — Restore auth router — In Progress — 2025-10-16 — notes: rebuild running (ops)`
 
 Appendix — Useful commands
 
@@ -125,4 +144,4 @@ aws iam create-role --role-name gh-oidc-autorisen-ecr \
   --assume-role-policy-document file://infra/aws-ecs-skel/trust-policy.json
 ```
 
-Maintainers: <ops@example.com>, <infra@example.com>, <repo-admin@example.com>
+Maintainers: <ops@example.com>, <infra@example.com>, <backend@example.com>
