@@ -2,58 +2,19 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from backend.src.core.redis import (
+    cache_user_token_version,
+    clear_user_token_version_cache,
+    get_cached_user_token_version,
+    is_jti_denied,
+)
 from backend.src.db.session import get_db
-
-# --- Minimal, local JWT decoder (no external security import) ---
-try:
-    from jose import JWTError, jwt  # python-jose[cryptography]
-except Exception as e:  # pragma: no cover
-    raise RuntimeError(
-        "python-jose is required. Add `python-jose[cryptography]` to requirements.txt"
-    ) from e
-
-try:
-    from backend.src.settings import settings  # must expose JWT secret/algorithm
-
-    JWT_SECRET = getattr(settings, "JWT_SECRET", None) or getattr(settings, "SECRET_KEY", None)
-    JWT_ALG = getattr(settings, "JWT_ALGORITHM", "HS256")
-    JWT_ISS = getattr(settings, "JWT_ISSUER", None)
-    JWT_AUD = getattr(settings, "JWT_AUDIENCE", None)
-except Exception:
-    import os
-
-    JWT_SECRET = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
-    JWT_ALG = os.getenv("JWT_ALGORITHM", "HS256")
-    JWT_ISS = os.getenv("JWT_ISSUER")
-    JWT_AUD = os.getenv("JWT_AUDIENCE")
-
-if not JWT_SECRET:
-    # We avoid crashing early; requests without a token will 401 anyway.
-    logging.getLogger("auth.deps").warning("JWT secret missing in settings/env")
-
-
-def _decode_access_token(token: str) -> Dict[str, Any]:
-    """
-    Decode & validate an access token using local settings.
-    - If ISS/AUD are unset, we don't enforce them.
-    """
-    if not JWT_SECRET:
-        raise JWTError("JWT secret is not configured")
-
-    options = {"verify_aud": bool(JWT_AUD), "verify_iss": bool(JWT_ISS)}
-    return jwt.decode(
-        token,
-        JWT_SECRET,
-        algorithms=[JWT_ALG],
-        audience=JWT_AUD if JWT_AUD else None,
-        issuer=JWT_ISS if JWT_ISS else None,
-        options=options,
-    )
+from backend.src.services.security import decode_jwt
 
 
 log = logging.getLogger("auth.deps")
@@ -79,16 +40,15 @@ for path in (
 if User is None:
     log.error("Could not import User model; last import error: %s", _user_import_err)
 
-UNAUTHORIZED = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Not authenticated",
-    headers={"WWW-Authenticate": "Bearer"},
-)
+FORBIDDEN = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
-FORBIDDEN = HTTPException(
-    status_code=status.HTTP_403_FORBIDDEN,
-    detail="Not authorized",
-)
+
+def _unauthorized(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def _bearer_from_header(auth_header: Optional[str]) -> Optional[str]:
@@ -110,7 +70,7 @@ def _token_from_request(request: Request, authorization: Optional[str]) -> str:
     if not token:
         token = request.cookies.get("access_token")
     if not token:
-        raise UNAUTHORIZED
+        raise _unauthorized("Not authenticated")
     return token
 
 
@@ -143,8 +103,56 @@ def _load_user_from_claims(db: Session, claims: dict) -> Any:
             log.warning("User lookup by email failed: %s", e)
 
     if not user:
-        raise UNAUTHORIZED
+        raise _unauthorized("Not authenticated")
     return user
+
+
+async def get_current_user_with_claims(
+    request: Request,
+    db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(default=None, convert_underscores=False),
+
+) -> Tuple[Any, Dict[str, Any], str]:
+    """Return ``(user, claims, token)`` after enforcing auth guards."""
+
+    token = _token_from_request(request, authorization)
+
+    try:
+        claims = decode_jwt(token)
+    except ValueError as exc:
+        message = str(exc)
+        if message == "token expired":
+            raise _unauthorized("Token expired") from exc
+        raise _unauthorized("Invalid token") from exc
+
+    user = _load_user_from_claims(db, claims)
+
+    if not getattr(user, "is_active", True):
+        raise _unauthorized("Not authenticated")
+
+    jti = claims.get("jti")
+    if not isinstance(jti, str):
+        raise _unauthorized("Invalid token")
+    if is_jti_denied(jti):
+        raise _unauthorized("Token revoked")
+
+    expected_version = get_cached_user_token_version(getattr(user, "id", ""))
+    if expected_version is None:
+        expected_version = int(getattr(user, "token_version", 1))
+        cache_user_token_version(getattr(user, "id", ""), expected_version)
+
+    try:
+        token_version_claim = int(claims.get("token_version", -1))
+    except (TypeError, ValueError):
+        token_version_claim = -1
+    if token_version_claim != int(expected_version):
+        raise _unauthorized("Session invalidated")
+
+    # Cache claims for downstream dependencies / logout handling
+    request.state.auth_claims = claims
+    request.state.auth_token = token
+
+    return user, claims, token
 
 
 async def get_current_user(
@@ -152,27 +160,7 @@ async def get_current_user(
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(default=None, convert_underscores=False),
 ) -> Any:
-    """
-    Decode the access token, load the current user, and apply basic gates.
-    """
-    token = _token_from_request(request, authorization)
-
-    try:
-        claims = _decode_access_token(token)
-    except Exception as e:
-        log.info("JWT decode failed: %s", e)
-        raise UNAUTHORIZED
-
-    user = _load_user_from_claims(db, claims)
-
-    # Basic account gates (align with router)
-    if not getattr(user, "is_active", True):
-        raise UNAUTHORIZED
-
-    # Some legacy flows do not mark email verification immediately; allow access unless
-    # the application explicitly disables unverified logins elsewhere.
-    # We still surface the flag via the response schemas.
-
+    user, _, _ = await get_current_user_with_claims(request, db, authorization)
     return user
 
 

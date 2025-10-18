@@ -4,6 +4,19 @@ __pycache__/
 *.pyo
 *.pyd
 *.log
+*.sqlite
+*.sqlite3
+*.db
+.coverage
+*.coverage
+
+# Python tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.tox/
+.cache/
+pip-wheel-metadata/
 
 # Virtualenv / local env
 .venv/
@@ -17,3 +30,21 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+*.egg-info/*
+
+# Node / frontend
+node_modules/
+client/node_modules/
+client/dist/
+client/.cache/
+client/.turbo/
+
+# Local test artifacts
+coverage.xml
+htmlcov/
+dev.db
+test.db
+
+# OS junk
+.DS_Store
+Thumbs.db

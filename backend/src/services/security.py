@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
 import bcrypt
-from jose import JWTError, jwt
+from jose import JWTError, ExpiredSignatureError, jwt
 
 from backend.src.core.config import settings
 
@@ -65,10 +65,17 @@ def create_jwt(payload: Dict[str, Any], expires_in: timedelta | int) -> Tuple[st
     return token, expire_at
 
 
-def decode_jwt(token: str) -> Dict[str, Any]:
+def decode_jwt(token: str, *, verify_exp: bool = True) -> Dict[str, Any]:
     """Decode a JWT and return the payload."""
 
     try:
-        return jwt.decode(token, settings.secret_key, algorithms=[_JWT_ALGORITHM])
+        return jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[_JWT_ALGORITHM],
+            options={"verify_exp": verify_exp},
+        )
+    except ExpiredSignatureError as exc:  # pragma: no cover
+        raise ValueError("token expired") from exc
     except JWTError as exc:  # pragma: no cover - pass through for callers
         raise ValueError("invalid token") from exc

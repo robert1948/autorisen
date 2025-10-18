@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
+from uuid import uuid4
 
 from jose import JWTError, jwt
 
@@ -38,10 +39,19 @@ def _encode(payload: Dict[str, Any], minutes: int) -> str:
         to_encode.setdefault("aud", JWT_AUD)
     return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALG)
 
-def create_access_refresh_tokens(*, user_id: int, email: str, role: str) -> Tuple[str, str]:
-    base = {"sub": str(user_id), "email": email, "role": role, "type": "access"}
-    access = _encode(base, ACCESS_MIN)
-    refresh = _encode({**base, "type": "refresh"}, REFRESH_MIN)
+def create_access_refresh_tokens(
+    *, user_id: int | str, email: str, role: str, token_version: int
+) -> Tuple[str, str]:
+    base = {"sub": str(user_id), "email": email, "role": role}
+    access_payload = {
+        **base,
+        "type": "access",
+        "jti": str(uuid4()),
+        "token_version": int(token_version),
+    }
+    refresh_payload = {**base, "type": "refresh", "jti": str(uuid4())}
+    access = _encode(access_payload, ACCESS_MIN)
+    refresh = _encode(refresh_payload, REFRESH_MIN)
     return access, refresh
 
 def decode_access_token(token: str) -> Dict[str, Any]:

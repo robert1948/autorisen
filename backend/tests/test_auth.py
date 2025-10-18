@@ -11,7 +11,9 @@ import pytest
 from sqlalchemy import text
 
 from backend.src.core.rate_limit import limiter  # single place for limiter
+from backend.src.db import models
 from backend.src.db.session import SessionLocal
+from backend.src.services.security import create_jwt
 
 CSRF_HEADER = "X-CSRF-Token"
 
@@ -100,6 +102,16 @@ def _csrf_headers(client, extra: Optional[Dict[str, str]] = None) -> Dict[str, s
     if extra:
         headers.update(extra)
     return headers
+
+
+def _login(client, email: str, password: str, ip: str = "127.0.0.1"):
+    response = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": password},
+        headers=_csrf_headers(client, _headers_for_ip(ip)),
+    )
+    assert response.status_code == 200, response.text
+    return response
 
 
 def _complete_registration(
@@ -294,15 +306,11 @@ def test_login_refresh_cookie_logout_flow(client):
 
     _complete_registration(client, email, password)
 
-    login = client.post(
-        "/api/auth/login",
-        json={"email": email, "password": password},
-        headers=_csrf_headers(client),
-    )
-    assert login.status_code == 200, login.text
-    access_token = login.json().get("access_token")
+    login_response = _login(client, email, password)
+    login = login_response.json()
+    access_token = login.get("access_token")
     assert access_token
-    refresh_cookie = login.cookies.get("refresh_token")
+    refresh_cookie = login_response.cookies.get("refresh_token")
     assert refresh_cookie, "refresh cookie not issued"
 
     # Refresh without explicit payload should use the cookie
@@ -319,6 +327,81 @@ def test_login_refresh_cookie_logout_flow(client):
     # Refresh should now fail because cookie has been cleared/revoked
     refresh_after_logout = client.post("/api/auth/refresh")
     assert refresh_after_logout.status_code == 401
+
+
+def test_logout_revokes_current_token(client):
+    email = f"logout_{uuid.uuid4().hex[:8]}@example.com"
+    password = "LogoutPass123!"
+    access_token, _, _ = _complete_registration(client, email, password)
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    logout_headers = _csrf_headers(client, headers)
+    res = client.post("/api/auth/logout", json={}, headers=logout_headers)
+    assert res.status_code == 200, res.text
+    assert res.json()["message"] == "Logged out"
+
+    me = client.get("/api/auth/me", headers=headers)
+    assert me.status_code == 401
+    assert "Token revoked" in me.text
+
+
+def test_logout_all_devices_invalidates_other_tokens(client):
+    email = f"logoutall_{uuid.uuid4().hex[:8]}@example.com"
+    password = "LogoutAllPass123!"
+    access_token, _, _ = _complete_registration(client, email, password)
+
+    second_login = _login(client, email, password, ip="198.51.100.7")
+    access_token_2 = second_login.json().get("access_token")
+    assert access_token_2
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    logout_headers = _csrf_headers(client, headers)
+    res = client.post(
+        "/api/auth/logout",
+        json={"all_devices": True},
+        headers=logout_headers,
+    )
+    assert res.status_code == 200
+
+    other_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {access_token_2}"})
+    assert other_me.status_code == 401
+    assert "Session invalidated" in other_me.text
+
+
+def test_logout_idempotent(client):
+    email = f"logoutidem_{uuid.uuid4().hex[:8]}@example.com"
+    password = "LogoutIdemPass123!"
+    access_token, _, _ = _complete_registration(client, email, password)
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    logout_headers = _csrf_headers(client, headers)
+    first = client.post("/api/auth/logout", json={}, headers=logout_headers)
+    assert first.status_code == 200
+    second = client.post("/api/auth/logout", json={}, headers=_csrf_headers(client, headers))
+    assert second.status_code == 200
+
+
+def test_logout_with_expired_token_returns_200(client):
+    email = f"exp_{uuid.uuid4().hex[:8]}@example.com"
+    password = "ExpiredLogoutPass123!"
+    _, _, _ = _complete_registration(client, email, password)
+
+    with SessionLocal() as db:
+        user = db.query(models.User).filter(models.User.email == email.lower()).one()
+        payload = {
+            "sub": user.email,
+            "user_id": user.id,
+            "role": user.role,
+            "purpose": "access",
+            "jti": uuid.uuid4().hex,
+            "token_version": int(getattr(user, "token_version", 1)),
+        }
+        expired_token, _ = create_jwt(payload, -1)
+
+    headers = {"Authorization": f"Bearer {expired_token}"}
+    res = client.post("/api/auth/logout", json={}, headers=_csrf_headers(client, headers))
+    assert res.status_code == 200, res.text
+    assert res.json()["message"] == "Logged out"
 
 
 def test_register_requires_csrf(client):

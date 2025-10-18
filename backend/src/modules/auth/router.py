@@ -5,7 +5,7 @@ import asyncio
 import inspect
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from fastapi import (
     APIRouter,
@@ -17,14 +17,25 @@ from fastapi import (
     Response,
     status,
 )
-from pydantic import BaseModel, EmailStr, constr, field_validator
+from pydantic import BaseModel, EmailStr, Field, constr, field_validator
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import settings
 from backend.src.db.session import get_db
 
+from backend.src.core.redis import (
+    cache_user_token_version,
+    clear_user_token_version_cache,
+    denylist_jti,
+)
+from backend.src.services.security import decode_jwt
 from .csrf import issue_csrf_token, require_csrf_token
-from .deps import get_current_user
+from .deps import (
+    get_current_user,
+    get_current_user_with_claims,
+    _load_user_from_claims,
+    _token_from_request,
+)
 from .rate_limiter import allow_login, record_login_attempt
 from .security import create_access_refresh_tokens, verify_password
 
@@ -112,6 +123,14 @@ class RefreshOut(BaseModel):
     access_token: str
     refresh_token: str
     expires_at: Optional[str] = None
+
+
+class LogoutIn(BaseModel):
+    all_devices: bool = Field(default=False, alias="all_devices")
+
+
+class LogoutOut(BaseModel):
+    message: str = "Logged out"
 
 
 # ---------------------------
@@ -596,7 +615,10 @@ async def login(
 
     try:
         access, refresh = create_access_refresh_tokens(
-            user_id=user.id, email=user.email, role=user.role
+            user_id=user.id,
+            email=user.email,
+            role=user.role,
+            token_version=getattr(user, "token_version", 1),
         )
         log.info("login_success email=%s user_id=%s", email, user.id)
         record_login_attempt(ip, email, success=True)
@@ -668,20 +690,58 @@ async def me(current_user=Depends(get_current_user)):
     )
 
 
-@router.post("/logout", status_code=204)
+@router.post("/logout", response_model=LogoutOut, status_code=200)
 async def logout(
     request: Request,
     response: Response,
+    payload: LogoutIn = Body(default_factory=LogoutIn),
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
+    authorization: Optional[str] = Header(default=None, convert_underscores=False),
 ):
-    token = request.cookies.get(REFRESH_COOKIE_NAME)
-    if token and _revoke_refresh_service:
+    user: Optional[Any]
+    claims: Dict[str, Any]
+    try:
+        user, claims, _ = await get_current_user_with_claims(request, db, authorization)
+    except HTTPException as exc:
+        if exc.status_code != status.HTTP_401_UNAUTHORIZED or exc.detail != "Token expired":
+            raise
+        token = _token_from_request(request, authorization)
         try:
-            _revoke_refresh_service(db=db, refresh_token=token)
+            claims = decode_jwt(token, verify_exp=False)
+        except ValueError:
+            claims = {}
+        try:
+            user = _load_user_from_claims(db, claims) if claims else None
+        except HTTPException:
+            user = None
+    jti = claims.get("jti") if isinstance(claims, dict) else None
+    exp = claims.get("exp") if isinstance(claims, dict) else None
+    if isinstance(jti, str) and isinstance(exp, int):
+        try:
+            denylist_jti(jti, exp)
+        except Exception as e:
+            log.warning("logout_denylist_failed jti=%s err=%s", jti, e)
+
+    if payload.all_devices and user is not None:
+        current_version = int(getattr(user, "token_version", 1))
+        new_version = current_version + 1
+        setattr(user, "token_version", new_version)
+        db.add(user)
+        db.commit()
+        clear_user_token_version_cache(getattr(user, "id", ""))
+        cache_user_token_version(getattr(user, "id", ""), new_version)
+    else:
+        db.commit()
+
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+    if refresh_token and _revoke_refresh_service:
+        try:
+            _revoke_refresh_service(db=db, refresh_token=refresh_token)
         except Exception as e:
             log.warning("logout_revoke_failed: %s", e)
+        else:
+            db.commit()
 
     _clear_refresh_cookie(response)
-    response.status_code = status.HTTP_204_NO_CONTENT
-    return None
+    return LogoutOut()

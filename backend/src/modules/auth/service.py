@@ -7,6 +7,7 @@ import hashlib
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
+from uuid import uuid4
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -124,6 +125,8 @@ def complete_registration(
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
+        "jti": str(uuid4()),
+        "token_version": int(getattr(user, "token_version", 1)),
     }
     access_token, expires_at = create_jwt(access_payload, settings.access_token_ttl_minutes)
 
@@ -175,6 +178,8 @@ def login(
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
+        "jti": str(uuid4()),
+        "token_version": int(getattr(user, "token_version", 1)),
     }
     access_token, expires_at = create_jwt(access_payload, settings.access_token_ttl_minutes)
     db.commit()
@@ -214,6 +219,8 @@ def refresh_access_token(db: Session, refresh_token: str) -> Tuple[str, datetime
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
+        "jti": str(uuid4()),
+        "token_version": int(getattr(user, "token_version", 1)),
     }
     new_access, expires_at = create_jwt(new_access_payload, settings.access_token_ttl_minutes)
     new_refresh = _generate_refresh_token()

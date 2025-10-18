@@ -1,4 +1,4 @@
-# CapeControl (fresh)
+# CapeControl 251017B
 
 FastAPI backend with /api/health, devcontainer, and CI/CD to Heroku.
 

@@ -37,6 +37,7 @@ class User(Base):
     company_name = Column(String(100), nullable=False, server_default="")
     is_email_verified = Column(Boolean, nullable=False, server_default="0")
     is_active = Column(Boolean, nullable=False, server_default="1")
+    token_version = Column(Integer, nullable=False, default=1, server_default="1")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
