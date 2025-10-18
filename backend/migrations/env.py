@@ -5,33 +5,31 @@ import os
 import sys
 from pathlib import Path
 from logging.config import fileConfig
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
-from sqlalchemy import engine_from_config, pool
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
-# ------------------------------------------------------------
-# Make sure the project root is on sys.path so
-# `import backend.src...` works regardless of CWD.
-# env.py is at: <repo>/backend/migrations/env.py
-# repo_root = parents[2] of this file
-#   env.py -> migrations -> backend -> <repo_root>
-# ------------------------------------------------------------
+# -------------------------------------------------------------------
+# Ensure project root on sys.path so `import backend.src...` works
+# env.py -> migrations -> backend -> <repo root>
+# -------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-# Alembic Config object, provides access to .ini values
+# Alembic Config object, provides access to .ini values in use.
 config = context.config
 
-# Configure Python logging
+# Configure Python logging from alembic.ini
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# ------------------------------------------------------------
+# -------------------------------------------------------------------
 # Load SQLAlchemy metadata from your app
-# ------------------------------------------------------------
+# -------------------------------------------------------------------
 try:
-    from backend.src.db.models import Base  # adjust if your Base lives elsewhere
+    from backend.src.db.models import Base  # adjust if Base lives elsewhere
 except Exception as e:
     raise RuntimeError(
         "Failed to import Base metadata from backend.src.db.models. "
@@ -40,25 +38,57 @@ except Exception as e:
 
 target_metadata = Base.metadata
 
-# ------------------------------------------------------------
-# Configure DB URL from env if not already set in alembic.ini
-# (alembic.ini should have: sqlalchemy.url = %(DATABASE_URL)s)
-# This ensures local runs don't fail if env is missing.
-# ------------------------------------------------------------
-DEFAULT_LOCAL_URL = "postgresql+psycopg2://devuser:devpass@localhost:5433/devdb"
-db_url = os.getenv("DATABASE_URL", DEFAULT_LOCAL_URL)
-config.set_main_option("sqlalchemy.url", db_url)
+
+# -------------------------------------------------------------------
+# URL helpers
+# -------------------------------------------------------------------
+def _normalize_url(url: str) -> str:
+    """
+    Normalize DB URL for SQLAlchemy & ensure SSL if requested.
+    - Convert postgres:// -> postgresql://
+    - Append sslmode=require when DB_SSLMODE_REQUIRE=1 (default) and missing
+    """
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+
+    if os.getenv("DB_SSLMODE_REQUIRE", "1") == "1":
+        parsed = urlparse(url)
+        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        if "sslmode" not in params:
+            params["sslmode"] = "require"
+            parsed = parsed._replace(query=urlencode(params))
+            url = urlunparse(parsed)
+
+    return url
 
 
+def _resolved_sqlalchemy_url() -> str:
+    """
+    Choose DB URL in priority order:
+      1) ALEMBIC_DATABASE_URL (preferred for running migrations)
+      2) DATABASE_URL
+      3) sensible local default
+    NOTE: we intentionally do NOT read sqlalchemy.url from alembic.ini
+          to avoid ConfigParser %(...) interpolation errors.
+    """
+    env_url = os.getenv("ALEMBIC_DATABASE_URL") or os.getenv("DATABASE_URL")
+    default_local = "postgresql://postgres:postgres@localhost:5433/autorisen"
+    url: str = env_url or default_local
+    return _normalize_url(url)
+
+
+# -------------------------------------------------------------------
+# Offline / Online migration runners
+# -------------------------------------------------------------------
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    sa_url = _resolved_sqlalchemy_url()
     context.configure(
-        url=url,
+        url=sa_url,
         target_metadata=target_metadata,
         literal_binds=True,
-        compare_type=True,  # detect column type changes
-        compare_server_default=True,
+        compare_type=True,            # detect column type changes
+        compare_server_default=True,  # detect server_default changes
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -66,8 +96,10 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
+    sa_url = _resolved_sqlalchemy_url()
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section) or {},
+        {"sqlalchemy.url": sa_url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
         future=True,
@@ -88,3 +120,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+
