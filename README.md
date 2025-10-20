@@ -58,6 +58,23 @@ heroku logs --tail
 CI/CD note: The repo already expects `HEROKU_API_KEY` and `HEROKU_APP_NAME` to be set in GitHub Actions secrets for automated
 deployment.
 
+## Authentication providers
+
+- **reCAPTCHA**  
+  - Backend: set `RECAPTCHA_SECRET` (leave unset + `DISABLE_RECAPTCHA=1` in non-enforced environments).  
+  - Frontend: set `VITE_RECAPTCHA_SITE_KEY`. Without it the UI issues a development bypass token and the backend honors it.
+
+- **Google OAuth**  
+  - Backend: configure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.  
+  - Frontend: configure `VITE_GOOGLE_CLIENT_ID`. The SPA redirects to `/auth/callback` after Google returns an authorization code.
+
+- **LinkedIn OAuth**  
+  - Backend: configure `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.  
+  - Frontend: configure `VITE_LINKEDIN_CLIENT_ID`.
+
+Both social providers share the same callback route: `/auth/callback`. The frontend exchanges the returned code with
+`POST /api/auth/login/{provider}` which issues internal tokens and sets the refresh cookie.
+
 ## Agents Framework
 
 - Create a local `.env.dev` (keep it out of version control) before running the agent make targets.

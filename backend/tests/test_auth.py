@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import uuid
 from typing import Any, Dict, Optional, Tuple
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from sqlalchemy import text
@@ -40,6 +41,7 @@ def _clean_auth_state():
         "analytics_events",
         "role_permissions",
         "user_roles",
+        "password_reset_tokens",
         "sessions",
         "login_audits",
         "credentials",
@@ -426,3 +428,92 @@ def test_login_requires_csrf(client):
 
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     assert res.status_code == 403
+
+
+def test_password_reset_flow(client, monkeypatch):
+    email = f"reset_{uuid.uuid4().hex[:8]}@example.com"
+    original_password = "OriginalPass123!"
+    new_password = "NewPass123!@#"
+
+    _complete_registration(client, email, original_password)
+
+    captured: Dict[str, Any] = {}
+
+    def fake_send(email_arg: str, reset_url: str, expires_at):
+        captured["email"] = email_arg
+        captured["reset_url"] = reset_url
+        captured["expires_at"] = expires_at
+
+    monkeypatch.setattr(
+        "backend.src.modules.auth.router.send_password_reset_email", fake_send
+    )
+
+    forgot = client.post(
+        "/api/auth/password/forgot",
+        json={"email": email},
+        headers=_csrf_headers(client),
+    )
+    assert forgot.status_code == 202, forgot.text
+    assert captured["email"] == email.lower()
+    reset_url = captured["reset_url"]
+    token_list = parse_qs(urlparse(reset_url).query).get("token", [])
+    assert token_list, "reset token not provided"
+    token = token_list[0]
+
+    reset_response = client.post(
+        "/api/auth/password/reset",
+        json={
+            "token": token,
+            "password": new_password,
+            "confirm_password": new_password,
+        },
+        headers=_csrf_headers(client),
+    )
+    assert reset_response.status_code == 200, reset_response.text
+
+    # Token should be single-use.
+    second_reset = client.post(
+        "/api/auth/password/reset",
+        json={
+            "token": token,
+            "password": new_password,
+            "confirm_password": new_password,
+        },
+        headers=_csrf_headers(client),
+    )
+    assert second_reset.status_code == 400
+
+    # Old password rejected
+    old_login = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": original_password},
+        headers=_csrf_headers(client),
+    )
+    assert old_login.status_code == 401
+
+    # New password works
+    new_login = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": new_password},
+        headers=_csrf_headers(client),
+    )
+    assert new_login.status_code == 200
+
+
+def test_password_reset_unknown_email_is_noop(client, monkeypatch):
+    captured: Dict[str, Any] = {}
+
+    def fake_send(email_arg: str, reset_url: str, expires_at):
+        captured["email"] = email_arg
+
+    monkeypatch.setattr(
+        "backend.src.modules.auth.router.send_password_reset_email", fake_send
+    )
+
+    forgot = client.post(
+        "/api/auth/password/forgot",
+        json={"email": "unknown@example.com"},
+        headers=_csrf_headers(client),
+    )
+    assert forgot.status_code == 202, forgot.text
+    assert not captured, "email should not be sent for unknown accounts"

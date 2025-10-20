@@ -1,0 +1,7 @@
+/
+/about
+/login
+/register
+/register?role=user
+/register?role=developer
+/subscribe

@@ -7,8 +7,11 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, Optional, Tuple
 
+import httpx
+
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Body,
     Depends,
     Header,
@@ -17,7 +20,7 @@ from fastapi import (
     Response,
     status,
 )
-from pydantic import BaseModel, EmailStr, Field, constr, field_validator
+from pydantic import BaseModel, EmailStr, Field, constr, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import settings
@@ -28,6 +31,8 @@ from backend.src.core.redis import (
     clear_user_token_version_cache,
     denylist_jti,
 )
+from backend.src.services.emailer import send_password_reset_email
+from backend.src.services import recaptcha as recaptcha_service
 from backend.src.services.security import decode_jwt
 from .csrf import issue_csrf_token, require_csrf_token
 from .deps import (
@@ -47,6 +52,12 @@ try:
 except Exception:
     ServiceUserRole = None
 
+_GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+_GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+_GOOGLE_USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo"
+_LINKEDIN_TOKEN_ENDPOINT = "https://www.linkedin.com/oauth/v2/accessToken"
+_LINKEDIN_USERINFO_ENDPOINT = "https://api.linkedin.com/v2/userinfo"
+
 # ---------------------------
 # Schemas
 # ---------------------------
@@ -55,6 +66,7 @@ except Exception:
 class LoginIn(BaseModel):
     email: EmailStr
     password: constr(min_length=1, max_length=256)
+    recaptcha_token: Optional[str] = None
 
 
 class TokensOut(BaseModel):
@@ -63,8 +75,47 @@ class TokensOut(BaseModel):
     token_type: str = "bearer"
 
 
+class SocialTokensOut(TokensOut):
+    email: EmailStr
+
+
 class CsrfTokenOut(BaseModel):
     csrf_token: str
+
+
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordOut(BaseModel):
+    message: str = (
+        "If an account exists for that email, you'll receive reset instructions shortly."
+    )
+
+
+class ResetPasswordIn(BaseModel):
+    token: constr(min_length=10, max_length=255)
+    password: constr(min_length=1, max_length=256)
+    confirm_password: constr(min_length=1, max_length=256)
+
+    @field_validator("password", "confirm_password")
+    @classmethod
+    def _password_policy(cls, value: str) -> str:
+        if len(value or "") < 12:
+            raise ValueError("Password must be at least 12 characters long")
+        return value
+
+    @field_validator("confirm_password")
+    @classmethod
+    def _matches(cls, value: str, values: Dict[str, Any]) -> str:
+        password = values.get("password")
+        if password is not None and value != password:
+            raise ValueError("Passwords do not match")
+        return value
+
+
+class ResetPasswordOut(BaseModel):
+    message: str = "Your password has been updated."
 
 
 class RegisterStep1In(BaseModel):
@@ -123,6 +174,36 @@ class RefreshOut(BaseModel):
     access_token: str
     refresh_token: str
     expires_at: Optional[str] = None
+
+
+class GoogleLoginIn(BaseModel):
+    id_token: Optional[constr(min_length=10, max_length=4096)] = None
+    code: Optional[str] = None
+    redirect_uri: Optional[str] = None
+    recaptcha_token: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _require_code_or_token(cls, model: "GoogleLoginIn") -> "GoogleLoginIn":
+        if not model.id_token and not model.code:
+            raise ValueError("Provide either id_token or code.")
+        if model.code and not model.redirect_uri:
+            raise ValueError("redirect_uri is required when exchanging an authorization code.")
+        return model
+
+
+class LinkedInLoginIn(BaseModel):
+    access_token: Optional[str] = None
+    code: Optional[str] = None
+    redirect_uri: Optional[str] = None
+    recaptcha_token: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _require_code_or_token(cls, model: "LinkedInLoginIn") -> "LinkedInLoginIn":
+        if not model.access_token and not model.code:
+            raise ValueError("Provide either access_token or code.")
+        if model.code and not model.redirect_uri:
+            raise ValueError("redirect_uri is required when exchanging an authorization code.")
+        return model
 
 
 class LogoutIn(BaseModel):
@@ -194,6 +275,230 @@ def _normalize_email(e: str) -> str:
 
 def _normalize_role(r: str) -> str:
     return r.strip().lower()
+
+
+async def _verify_recaptcha_token(
+    token: Optional[str],
+    request: Request,
+    *,
+    required: bool = True,
+) -> None:
+    if getattr(settings, "disable_recaptcha", False):
+        return
+    if not token:
+        if required:
+            raise HTTPException(status_code=400, detail="Missing reCAPTCHA token")
+        return
+
+    remote_ip = getattr(request.client, "host", None) if request and request.client else None
+    try:
+        ok = await recaptcha_service.verify(token, remote_ip)
+    except Exception as exc:  # pragma: no cover
+        log.warning("recaptcha_verify_failed err=%s", exc)
+        ok = False
+    if not ok:
+        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
+
+
+async def _google_exchange_code(code: str, redirect_uri: str) -> Dict[str, Any]:
+    if not settings.google_client_id or not settings.google_client_secret:
+        raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
+
+    payload = {
+        "code": code,
+        "client_id": settings.google_client_id,
+        "client_secret": settings.google_client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(_GOOGLE_TOKEN_ENDPOINT, data=payload)
+    except httpx.HTTPError as exc:  # pragma: no cover - network errors
+        log.warning("google_token_exchange_http_error err=%s", exc)
+        raise HTTPException(status_code=400, detail="Unable to authorize with Google.") from exc
+
+    if response.status_code != 200:
+        log.warning(
+            "google_token_exchange_failed status=%s body=%s",
+            response.status_code,
+            response.text[:256],
+        )
+        raise HTTPException(status_code=400, detail="Unable to authorize with Google.")
+
+    return response.json()
+
+
+async def _google_fetch_profile(
+    *,
+    id_token: Optional[str],
+    access_token: Optional[str],
+) -> Dict[str, Any]:
+    if id_token:
+        params = {"id_token": id_token}
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(_GOOGLE_TOKENINFO_URL, params=params)
+        except httpx.HTTPError as exc:  # pragma: no cover
+            log.warning("google_tokeninfo_http_error err=%s", exc)
+            raise HTTPException(status_code=400, detail="Unable to verify Google token.") from exc
+    elif access_token:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(_GOOGLE_USERINFO_ENDPOINT, headers=headers)
+        except httpx.HTTPError as exc:  # pragma: no cover
+            log.warning("google_userinfo_http_error err=%s", exc)
+            raise HTTPException(status_code=400, detail="Unable to fetch Google profile.") from exc
+    else:
+        raise HTTPException(status_code=400, detail="Google token missing.")
+
+    if response.status_code != 200:
+        log.warning(
+            "google_profile_failed status=%s body=%s",
+            response.status_code,
+            response.text[:256],
+        )
+        raise HTTPException(status_code=400, detail="Unable to fetch Google profile.")
+
+    data = response.json()
+
+    client_id = settings.google_client_id
+    audience = data.get("aud") or data.get("audience")
+    if client_id and audience and audience != client_id:
+        log.warning(
+            "google_token_invalid_audience audience=%s expected=%s", audience, client_id
+        )
+        raise HTTPException(status_code=400, detail="Google token is not intended for this application.")
+
+    email = data.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Google account did not provide an email.")
+
+    verified = str(data.get("email_verified", data.get("verified_email", ""))).lower()
+    if verified not in {"true", "1", "yes"}:
+        raise HTTPException(status_code=400, detail="Google account email is not verified.")
+
+    return {
+        "email": email,
+        "first_name": data.get("given_name") or "",
+        "last_name": data.get("family_name") or "",
+        "provider_uid": data.get("sub") or data.get("id") or email,
+    }
+
+
+async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:
+    if not settings.linkedin_client_id or not settings.linkedin_client_secret:
+        raise HTTPException(status_code=500, detail="LinkedIn OAuth is not configured.")
+
+    payload = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "client_id": settings.linkedin_client_id,
+        "client_secret": settings.linkedin_client_secret,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(_LINKEDIN_TOKEN_ENDPOINT, data=payload)
+    except httpx.HTTPError as exc:  # pragma: no cover
+        log.warning("linkedin_token_exchange_http_error err=%s", exc)
+        raise HTTPException(status_code=400, detail="Unable to authorize with LinkedIn.") from exc
+
+    if response.status_code != 200:
+        log.warning(
+            "linkedin_token_exchange_failed status=%s body=%s",
+            response.status_code,
+            response.text[:256],
+        )
+        raise HTTPException(status_code=400, detail="Unable to authorize with LinkedIn.")
+
+    data = response.json()
+    access_token = data.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="LinkedIn access token missing.")
+    return access_token
+
+
+async def _linkedin_fetch_profile(access_token: str) -> Dict[str, Any]:
+    headers = {"Authorization": f"Bearer {access_token}"}
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(_LINKEDIN_USERINFO_ENDPOINT, headers=headers)
+    except httpx.HTTPError as exc:  # pragma: no cover
+        log.warning("linkedin_userinfo_http_error err=%s", exc)
+        raise HTTPException(status_code=400, detail="Unable to fetch LinkedIn profile.") from exc
+
+    if response.status_code != 200:
+        log.warning(
+            "linkedin_profile_failed status=%s body=%s",
+            response.status_code,
+            response.text[:256],
+        )
+        raise HTTPException(status_code=400, detail="Unable to fetch LinkedIn profile.")
+
+    data = response.json()
+    email = data.get("email") or data.get("email_verified")
+    if not email:
+        raise HTTPException(status_code=400, detail="LinkedIn account did not provide an email.")
+
+    return {
+        "email": email,
+        "first_name": data.get("given_name") or data.get("localizedFirstName") or "",
+        "last_name": data.get("family_name") or data.get("localizedLastName") or "",
+        "provider_uid": data.get("sub") or data.get("id") or email,
+    }
+
+
+def _finalize_social_login(
+    *,
+    provider: str,
+    provider_uid: str,
+    email: str,
+    first_name: Optional[str],
+    last_name: Optional[str],
+    db: Session,
+    response: Response,
+    request: Request,
+    ip: Optional[str],
+) -> SocialTokensOut:
+    user_agent = request.headers.get("user-agent")
+
+    if not _social_login_service:
+        log.error("social_login_unavailable provider=%s", provider)
+        raise HTTPException(status_code=500, detail="Social login unavailable.")
+
+    try:
+        access_token, expires_at, refresh_token, user = _social_login_service(  # type: ignore[misc]
+            db=db,
+            provider=provider,
+            provider_uid=provider_uid,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            user_agent=user_agent,
+            ip_address=ip,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.exception(
+            "social_login_service_error provider=%s email=%s err=%s", provider, email, exc
+        )
+        raise HTTPException(status_code=500, detail="Authentication failed") from exc
+
+    _set_refresh_cookie(response, refresh_token, expires_at=expires_at)
+    log.info(
+        "social_login_success provider=%s email=%s user_id=%s",
+        provider,
+        email,
+        getattr(user, "id", None),
+    )
+    return SocialTokensOut(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        email=email,
+    )
 
 
 def _adapt_role_for_service(role: str) -> Any:
@@ -279,6 +584,9 @@ _complete_reg = _pick_service_fn(["complete_registration_step2", "complete_regis
 _refresh_access = _pick_service_fn(["refresh_access_token"])
 _login_service = _pick_service_fn(["login"])
 _revoke_refresh_service = _pick_service_fn(["revoke_refresh_token", "revoke_refresh"])
+_init_password_reset_service = _pick_service_fn(["initiate_password_reset"])
+_complete_password_reset_service = _pick_service_fn(["complete_password_reset"])
+_social_login_service = _pick_service_fn(["social_login"])
 
 
 def _begin_registration_adapter(
@@ -442,17 +750,14 @@ async def csrf_token(response: Response):
 @router.post("/register/step1", response_model=RegisterStep1Out, status_code=201)
 async def register_step1(
     payload: RegisterStep1In,
+    request: Request,
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ):
     email = _normalize_email(payload.email)
     role = _normalize_role(payload.role)
 
-    # Optional: reCAPTCHA enforcement unless disabled
-    if not getattr(settings, "disable_recaptcha", False):
-        if not payload.recaptcha_token:
-            raise HTTPException(status_code=400, detail="Missing reCAPTCHA token")
-        # TODO: verify token server-side if required
+    await _verify_recaptcha_token(payload.recaptcha_token, request)
 
     if payload.password != payload.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
@@ -543,6 +848,8 @@ async def login(
 ):
     email = _normalize_email(payload.email)
 
+    await _verify_recaptcha_token(payload.recaptcha_token, request)
+
     ip = request.client.host if request.client else "unknown"
     allowed, retry_after = allow_login(ip, email)
     if not allowed:
@@ -628,6 +935,163 @@ async def login(
     except Exception as e:
         log.exception("login_token_error email=%s: %s", email, e)
         raise HTTPException(status_code=500, detail="Authentication failed") from e
+
+
+@router.post("/login/google", response_model=SocialTokensOut, status_code=200)
+async def login_google(
+    payload: GoogleLoginIn,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
+):
+    await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
+
+    ip = request.client.host if request.client else "unknown"
+
+    id_token = payload.id_token
+    access_token: Optional[str] = None
+    if payload.code:
+        token_data = await _google_exchange_code(payload.code, payload.redirect_uri or "")
+        id_token = id_token or token_data.get("id_token")
+        access_token = token_data.get("access_token")
+
+    profile = await _google_fetch_profile(id_token=id_token, access_token=access_token)
+    email = _normalize_email(profile["email"])
+
+    try:
+        tokens = _finalize_social_login(
+            provider="google",
+            provider_uid=profile["provider_uid"],
+            email=email,
+            first_name=profile.get("first_name"),
+            last_name=profile.get("last_name"),
+            db=db,
+            response=response,
+            request=request,
+            ip=ip,
+        )
+        record_login_attempt(ip, email, success=True)
+        return tokens
+    except HTTPException:
+        record_login_attempt(ip, email, success=False)
+        raise
+
+
+@router.post("/login/linkedin", response_model=SocialTokensOut, status_code=200)
+async def login_linkedin(
+    payload: LinkedInLoginIn,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
+):
+    await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
+
+    ip = request.client.host if request.client else "unknown"
+
+    access_token = payload.access_token
+    if payload.code:
+        access_token = await _linkedin_exchange_code(payload.code, payload.redirect_uri or "")
+
+    if not access_token:
+        raise HTTPException(status_code=400, detail="LinkedIn access token missing.")
+
+    profile = await _linkedin_fetch_profile(access_token)
+    email = _normalize_email(profile["email"])
+
+    try:
+        tokens = _finalize_social_login(
+            provider="linkedin",
+            provider_uid=profile["provider_uid"],
+            email=email,
+            first_name=profile.get("first_name"),
+            last_name=profile.get("last_name"),
+            db=db,
+            response=response,
+            request=request,
+            ip=ip,
+        )
+        record_login_attempt(ip, email, success=True)
+        return tokens
+    except HTTPException:
+        record_login_attempt(ip, email, success=False)
+        raise
+
+
+# -----------------
+# Password Recovery
+# -----------------
+
+
+@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=202)
+async def forgot_password(
+    payload: ForgotPasswordIn,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
+) -> ForgotPasswordOut:
+    email = _normalize_email(payload.email)
+
+    if not _init_password_reset_service:
+        log.error("password_reset_initiate_missing")
+        raise HTTPException(status_code=500, detail="Password reset unavailable")
+
+    try:
+        result = _init_password_reset_service(db=db, email=email)  # type: ignore[misc]
+    except Exception as e:
+        log.exception("password_reset_initiate_error email=%s err=%s", email, e)
+        raise HTTPException(status_code=500, detail="Unable to process request") from e
+
+    if result:
+        user, raw_token, expires_at = result
+        reset_url = f"{settings.frontend_origin.rstrip('/')}/reset-password?token={raw_token}"
+        background_tasks.add_task(
+            send_password_reset_email,
+            user.email,
+            reset_url,
+            expires_at,
+        )
+        log.info(
+            "password_reset_token_issued user_id=%s email=%s expires_at=%s",
+            getattr(user, "id", None),
+            user.email,
+            expires_at.isoformat(),
+        )
+    else:
+        log.info("password_reset_initiate_no_user email=%s", email)
+
+    return ForgotPasswordOut()
+
+
+@router.post("/password/reset", response_model=ResetPasswordOut, status_code=200)
+async def reset_password(
+    payload: ResetPasswordIn,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
+) -> ResetPasswordOut:
+    if not _complete_password_reset_service:
+        log.error("password_reset_complete_missing")
+        raise HTTPException(status_code=500, detail="Password reset unavailable")
+
+    token_preview = (payload.token or "")[:6] + "***"
+
+    try:
+        user = _complete_password_reset_service(  # type: ignore[misc]
+            db=db,
+            token=payload.token,
+            new_password=payload.password,
+        )
+    except ValueError as ve:
+        log.warning("password_reset_invalid token=%s err=%s", token_preview, ve)
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token") from ve
+    except Exception as e:
+        log.exception("password_reset_error token=%s err=%s", token_preview, e)
+        raise HTTPException(status_code=500, detail="Unable to reset password") from e
+
+    clear_user_token_version_cache(getattr(user, "id", ""))
+    log.info("password_reset_success user_id=%s", getattr(user, "id", None))
+    return ResetPasswordOut()
 
 
 # -----------

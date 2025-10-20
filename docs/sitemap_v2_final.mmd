@@ -1,0 +1,105 @@
+graph TD
+  %% =====================================================
+  %% CAPECONTROL × CODEX — SITEMAP v2 FINAL (Annotated)
+  %% =====================================================
+
+  %% ---------- PUBLIC ----------
+  subgraph Public["🌐 Public (public access)"]
+    P1["/ — Landing"]
+    P2["/login"]
+    P3["/register"]
+    P4["/verify-email/:token"]
+    P5["/forgot-password"]
+    P6["/reset-password"]
+    P7["/auth/callback"]
+  end
+
+  %% ---------- AUTH ----------
+  subgraph Auth["🔐 Auth (auth-required)"]
+    A1["/dashboard/* (verified-only)"]
+    APIA1["POST /api/auth/login"]
+    APIA2["POST /api/auth/register"]
+    APIA3["POST /api/auth/refresh"]
+    APIA4["GET /api/auth/me"]
+    APIA5["GET /api/auth/callback"]
+  end
+
+  %% ---------- ONBOARDING ----------
+  subgraph Onboarding["🎯 Onboarding (verified-only)"]
+    O1["/welcome"]
+    O2["/onboarding/customer"]
+    O3["/onboarding/developer"]
+    APIO1["POST /api/onboarding/start"]
+    APIO2["POST /api/onboarding/profile"]
+    APIO3["GET /api/onboarding/progress"]
+    APIO4["POST /api/onboarding/complete"]
+  end
+
+  %% ---------- CODEX ----------
+  subgraph Codex["🤖 Codex   subgraph 🤖 Codex & ChatKit (verified-only) ChatKit (verified-only)"]
+    C1["/codex"]
+    C2["/codex/chatkit"]
+    C3["/codex/prompts"]
+    C4["/codex/agents"]
+    C5["/codex/docs"]
+
+    APIC1["GET /api/codex"]
+    APIC2["GET /api/codex/agents"]
+    APIC3["POST /api/codex/sessions"]
+    APIC4["GET /api/codex/sessions/:id | /current"]
+    APIC5["GET /api/codex/chatkit/sessions"]
+    APIC6["GET /api/codex/chatkit/token"]
+    APIC7["GET /api/codex/docs"]
+  end
+
+  %% ---------- DEVELOPER ----------
+  subgraph Developer["�� Developer Portal (verified-only)"]
+    D1["/developer/dashboard"]
+    D2["/developer/agents"]
+    D3["/developer/earnings"]
+    D4["/developer/settings"]
+    APID1["GET /api/developer/dashboard"]
+    APID2["GET /api/developer/agents"]
+    APID3["GET /api/developer/earnings"]
+    APID4["GET /api/developer/settings"]
+  end
+
+  %% ---------- SYSTEM / ADMIN ----------
+  subgraph System["🛠️ System   subgraph 🛠️ System & Admin (internal) Admin (internal)"]
+    SYS1["GET /api/health"]
+    SYS2["GET /api/admin/metrics"]
+    SYS3["GET /api/admin/audit"]
+  end
+
+  %% ---------- FLOW CONNECTIONS ----------
+  P1 --> P2 --> P3 --> P4 --> O1
+  O1 --> C1
+  C1 --> D1
+  D1 --> A1
+
+  %% ---- VERIFIED GATE NOTE ----
+  O1 -. "verified gate: shared guard for onboarding → codex → developer" .-> C1
+	
+ 
+  %% ---- API LINKAGES ----
+  P2 -.-> APIA1
+  P3 -.-> APIA2
+  P4 -.-> APIA4
+  A1 -.-> APIA3
+
+  O1 -.-> APIO1
+  O2 -.-> APIO2
+  O3 -.-> APIO3
+  O3 -.-> APIO4
+
+  C1 -.-> APIC1
+  C2 -.-> APIC5
+  C3 -.-> APIC3 --> APIC4
+  C2 -.-> APIC6
+  C4 -.-> APIC2
+  C5 -.-> APIC7
+
+  D1 -.-> APID1
+  D2 -.-> APID2
+  D3 -.-> APID3
+  D4 -.-> APID4

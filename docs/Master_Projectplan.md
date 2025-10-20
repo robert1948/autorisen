@@ -1,6 +1,6 @@
 # Master Project Plan — autorisen
 
-Snapshot: 2025-10-17
+Snapshot: 2025-10-18
 
 Purpose
 
@@ -91,7 +91,7 @@ Task 5 — Fix database migration issues for SQLite and Postgres
   1. Re-run migrations locally and in staging DB snapshot. (R)
 - Dependencies: None.
 - Acceptance criteria: `alembic upgrade head` succeeds on SQLite dev DB and Postgres staging.
-- Status: In Progress — 2025-10-14 — error reproduced; fix pending (backend)
+- Status: Done — 2025-10-18 — added SQLite guards + startup migration runner; `ALEMBIC_DATABASE_URL=sqlite:///tmp_migrations.db alembic -c backend/alembic.ini upgrade head` now passes (backend)
 
 Task 6 — ChatKit rollout validation
 
@@ -158,6 +158,19 @@ Task 10 — Stand up analytics tracking endpoint
 - Dependencies: Task 9 (registration flow healthy) to ensure forms emit events without errors.
 - Acceptance criteria: Network tab shows 201 responses for analytics calls; `analytics_events` table receives new rows; Heroku logs free of 405 errors.
 - Status: To Do — 2025-10-17 — client POSTs currently receive 405 (backend)
+
+Task 11 — Enable Google/LinkedIn social login
+
+- ID: T11
+- Owner (R/A): backend / frontend auth
+- Target: 2025-10-19
+- Steps:
+  1. Add `/api/auth/login/google` and `/api/auth/login/linkedin` endpoints, exchanging codes and issuing internal tokens. (R)
+  1. Persist social credentials/sessions and reuse refresh cookie flow. (R)
+  1. Update SPA login form with reCAPTCHA enforcement, provider buttons, and callback handler. (R)
+- Dependencies: Task 5 (migration stability) and Task 7 (docs tooling) for updated environment variables.
+- Acceptance criteria: Users can sign in via Google or LinkedIn, refresh cookie set, SPA stores tokens, README documents required env vars.
+- Status: Done — 2025-10-18 — endpoints + callback shipped; see backend/src/modules/auth/router.py and client/src/pages/SocialCallback.tsx (backend)
 
 Communications & Reporting
 

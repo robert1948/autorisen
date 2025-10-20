@@ -112,11 +112,43 @@ export type TokenResponse = {
   token_type?: string;
 };
 
+export type SocialLoginResponse = TokenResponse & {
+  email: string;
+};
+
+export type GoogleLoginPayload = {
+  id_token?: string;
+  code?: string;
+  redirect_uri?: string;
+  recaptcha_token?: string | null;
+};
+
+export type LinkedInLoginPayload = {
+  access_token?: string;
+  code?: string;
+  redirect_uri?: string;
+  recaptcha_token?: string | null;
+};
+
 export type AnalyticsEventPayload = {
   event_type: string;
   step?: string | null;
   role?: UserRole | null;
   details?: Record<string, unknown>;
+};
+
+export type PasswordResetRequestPayload = {
+  email: string;
+};
+
+export type PasswordResetResponse = {
+  message: string;
+};
+
+export type CompletePasswordResetPayload = {
+  token: string;
+  password: string;
+  confirm_password: string;
 };
 
 export async function registerStep1(
@@ -156,8 +188,16 @@ export async function registerStep2(
   return handleJson<RegisterStep2Response>(response);
 }
 
-export async function login(email: string, password: string): Promise<TokenResponse> {
+export async function login(
+  email: string,
+  password: string,
+  recaptchaToken: string | null,
+): Promise<TokenResponse> {
   const csrfToken = await fetchCsrfToken();
+  const body: Record<string, unknown> = { email, password };
+  if (recaptchaToken) {
+    body.recaptcha_token = recaptchaToken;
+  }
   const response = await fetch(`${AUTH_BASE}/login`, {
     method: "POST",
     headers: {
@@ -165,10 +205,56 @@ export async function login(email: string, password: string): Promise<TokenRespo
       [CSRF_HEADER]: csrfToken,
     },
     ...defaultFetchOptions,
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   });
 
   return handleJson<TokenResponse>(response);
+}
+
+export async function loginWithGoogle(
+  payload: GoogleLoginPayload,
+): Promise<SocialLoginResponse> {
+  const csrfToken = await fetchCsrfToken();
+  const body: Record<string, unknown> = {};
+  if (payload.id_token) body.id_token = payload.id_token;
+  if (payload.code) body.code = payload.code;
+  if (payload.redirect_uri) body.redirect_uri = payload.redirect_uri;
+  if (payload.recaptcha_token) body.recaptcha_token = payload.recaptcha_token;
+
+  const response = await fetch(`${AUTH_BASE}/login/google`, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      [CSRF_HEADER]: csrfToken,
+    },
+    ...defaultFetchOptions,
+    body: JSON.stringify(body),
+  });
+
+  return handleJson<SocialLoginResponse>(response);
+}
+
+export async function loginWithLinkedIn(
+  payload: LinkedInLoginPayload,
+): Promise<SocialLoginResponse> {
+  const csrfToken = await fetchCsrfToken();
+  const body: Record<string, unknown> = {};
+  if (payload.access_token) body.access_token = payload.access_token;
+  if (payload.code) body.code = payload.code;
+  if (payload.redirect_uri) body.redirect_uri = payload.redirect_uri;
+  if (payload.recaptcha_token) body.recaptcha_token = payload.recaptcha_token;
+
+  const response = await fetch(`${AUTH_BASE}/login/linkedin`, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      [CSRF_HEADER]: csrfToken,
+    },
+    ...defaultFetchOptions,
+    body: JSON.stringify(body),
+  });
+
+  return handleJson<SocialLoginResponse>(response);
 }
 
 export async function refreshSession(refreshToken: string): Promise<TokenResponse> {
@@ -217,4 +303,38 @@ export async function logout(): Promise<void> {
     await parseError(response);
   }
   invalidateCsrfToken();
+}
+
+export async function requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+  const csrfToken = await fetchCsrfToken();
+  const response = await fetch(`${AUTH_BASE}/password/forgot`, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      [CSRF_HEADER]: csrfToken,
+    },
+    ...defaultFetchOptions,
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await handleJson<PasswordResetResponse>(response);
+  return data;
+}
+
+export async function completePasswordReset(
+  payload: CompletePasswordResetPayload,
+): Promise<PasswordResetResponse> {
+  const csrfToken = await fetchCsrfToken();
+  const response = await fetch(`${AUTH_BASE}/password/reset`, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      [CSRF_HEADER]: csrfToken,
+    },
+    ...defaultFetchOptions,
+    body: JSON.stringify(payload),
+  });
+
+  const data = await handleJson<PasswordResetResponse>(response);
+  return data;
 }

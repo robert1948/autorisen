@@ -51,6 +51,9 @@ def _normalize_url(url: str) -> str:
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://") :]
 
+    if url.startswith("sqlite"):
+        return url
+
     if os.getenv("DB_SSLMODE_REQUIRE", "1") == "1":
         parsed = urlparse(url)
         params = dict(parse_qsl(parsed.query, keep_blank_values=True))
@@ -120,4 +123,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

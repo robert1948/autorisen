@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     disable_recaptcha: bool = Field(default=False, alias="DISABLE_RECAPTCHA")
     rate_limit_per_min: int = Field(default=10, alias="RATE_LIMIT_PER_MIN")
     frontend_origin: str = Field(default="http://localhost:5173", alias="FRONTEND_ORIGIN")
+    google_client_id: Optional[str] = Field(default=None, alias="GOOGLE_CLIENT_ID")
+    google_client_secret: Optional[str] = Field(default=None, alias="GOOGLE_CLIENT_SECRET")
+    linkedin_client_id: Optional[str] = Field(default=None, alias="LINKEDIN_CLIENT_ID")
+    linkedin_client_secret: Optional[str] = Field(default=None, alias="LINKEDIN_CLIENT_SECRET")
 
     # session/token lifetimes
     temp_token_ttl_minutes: int = Field(default=15, alias="TEMP_TOKEN_TTL_MINUTES")

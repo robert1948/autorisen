@@ -1,4 +1,7 @@
 SHELL := /bin/bash
+.ONESHELL:
+.SHELLFLAGS := -eu -o pipefail -c
+
 PY := python3
 PIP := $(PY) -m pip
 VENV := .venv
@@ -7,20 +10,44 @@ IMAGE ?= autorisen:local
 PORT ?= 8000
 HEROKU_APP_NAME ?= autorisen
 
-.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku github-update clean plan-validate plan-open heroku-deploy-stg migrate-up migrate-revision
+# Domains
+DEV_BASE_URL  ?= https://dev.cape-control.com
+PROD_BASE_URL ?= https://cape-control.com
+
+# Docs inputs for sitemap
+SITEMAP_DEV_TXT  ?= docs/sitemap.dev.txt
+SITEMAP_PROD_TXT ?= docs/sitemap.prod.txt
+
+# Output static sitemap (served by Vite from / if present)
+PUBLIC_DIR ?= client/public
+SITEMAP_XML ?= sitemap.xml
+
+.PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku github-update clean \
+		plan-validate plan-open heroku-deploy-stg migrate-up migrate-revision \
+		sitemap-generate-dev sitemap-generate-prod verify-sitemap-dev verify-sitemap-prod \
+		verify-sitemap crawl-dev crawl-prod crawl-local
 
 help:
 	@echo "Available targets:"
-	@echo "  make venv            - create a virtualenv in $(VENV)"
-	@echo "  make install         - install project dependencies (uses $(REQ) if present)"
-	@echo "  make format          - run code formatters (black/isort)"
-	@echo "  make lint            - run linters (ruff)"
-	@echo "  make test            - run tests (pytest)"
-	@echo "  make docker-build    - build docker image (IMAGE=$(IMAGE))"
-	@echo "  make docker-run      - run docker image locally (exposes $(PORT))"
-	@echo "  make deploy-heroku   - build/push/release to Heroku Container Registry (requires HEROKU_APP_NAME and heroku CLI)"
-	@echo "  make github-update   - fast-forward current branch from GitHub origin (https://github.com/robert1948/autorisen)"
-	@echo "  make clean           - remove common build artifacts"
+	@echo "  make venv                     - create a virtualenv in $(VENV)"
+	@echo "  make install                  - install project dependencies (uses $(REQ) if present)"
+	@echo "  make format                   - run code formatters (black/isort)"
+	@echo "  make lint                     - run linters (ruff)"
+	@echo "  make test                     - run tests (pytest)"
+	@echo "  make docker-build             - build docker image (IMAGE=$(IMAGE))"
+	@echo "  make docker-run               - run docker image locally (exposes $(PORT))"
+	@echo "  make deploy-heroku            - build/push/release to Heroku Container Registry"
+	@echo "  make github-update            - fast-forward current branch from GitHub origin"
+	@echo "  make clean                    - remove common build artifacts"
+	@echo "  --- Sitemap / verification ---"
+	@echo "  make sitemap-generate-dev     - generate client/public/$(SITEMAP_XML) from $(SITEMAP_DEV_TXT)"
+	@echo "  make sitemap-generate-prod    - generate client/public/$(SITEMAP_XML) from $(SITEMAP_PROD_TXT)"
+	@echo "  make verify-sitemap-dev       - curl-check all dev routes from $(SITEMAP_DEV_TXT) (BASE=$(DEV_BASE_URL))"
+	@echo "  make verify-sitemap-prod      - curl-check all prod routes from $(SITEMAP_PROD_TXT) (BASE=$(PROD_BASE_URL))"
+	@echo "  make verify-sitemap           - curl-check routes using FILE=<txt> BASE=<url> (manual)"
+	@echo "  make crawl-dev                - run tools/crawl_sitemap.py against $(DEV_BASE_URL)"
+	@echo "  make crawl-prod               - run tools/crawl_sitemap.py against $(PROD_BASE_URL)"
+	@echo "  make crawl-local              - run tools/crawl_sitemap.py against http://localhost:3000"
 
 venv:
 	@if [ -d "$(VENV)" ]; then \
@@ -123,6 +150,91 @@ migrate-revision: venv
 	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
 	@$(VENV)/bin/python -m alembic -c backend/alembic.ini revision -m "$$message"
 
+# -----------------------------
+# Sitemap generation & checks
+# -----------------------------
+
+# Helper to turn a plain list (docs/sitemap.*.txt) into XML under client/public/sitemap.xml
+define GEN_SITEMAP_XML
+mkdir -p "$(PUBLIC_DIR)"
+$(PY) - <<'PYCODE'
+from datetime import date
+from pathlib import Path
+import os
+import sys
+
+base = os.environ.get("BASE_URL", "").rstrip("/")
+txt = Path(sys.argv[1])
+out = Path("$(PUBLIC_DIR)") / "$(SITEMAP_XML)"
+today = date.today().isoformat()
+
+routes = [
+	line.strip()
+	for line in txt.read_text(encoding="utf-8").splitlines()
+	if line.strip() and not line.lstrip().startswith("#")
+]
+
+xml_lines = [
+	'<?xml version="1.0" encoding="UTF-8"?>',
+	'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+]
+xml_lines.extend(
+	f"  <url><loc>{base + route if base else route}</loc><lastmod>{today}</lastmod></url>"
+	for route in routes
+)
+xml_lines.append("</urlset>")
+
+out.write_text("\n".join(xml_lines) + "\n", encoding="utf-8")
+print(f"Wrote {out} with {len(routes)} routes.")
+PYCODE
+endef
+
+# Generate sitemap.xml for DEV from docs/sitemap.dev.txt
+sitemap-generate-dev:
+	@BASE_URL="$(DEV_BASE_URL)"; \
+	$(call GEN_SITEMAP_XML,$(SITEMAP_DEV_TXT))
+
+# Generate sitemap.xml for PROD from docs/sitemap.prod.txt
+sitemap-generate-prod:
+	@BASE_URL="$(PROD_BASE_URL)"; \
+	$(call GEN_SITEMAP_XML,$(SITEMAP_PROD_TXT))
+
+# Verify all routes in a given list FILE exist (2xx/3xx) at BASE
+# Usage: make verify-sitemap FILE=docs/sitemap.dev.txt BASE=$(DEV_BASE_URL)
+verify-sitemap:
+	@[ -n "$(FILE)" ] || (echo "Usage: make verify-sitemap FILE=docs/sitemap.dev.txt BASE=<url>"; exit 1)
+	@[ -n "$(BASE)" ] || (echo "Usage: make verify-sitemap FILE=... BASE=<url>"; exit 1)
+	@echo "Verifying routes from $(FILE) at $(BASE)"
+	@FAIL=0; \
+	while IFS= read -r route; do \
+		route="$${route%$$'\r'}"; \
+		[ -z "$$route" ] && continue; \
+		case "$$route" in \#*) continue;; esac; \
+		code=$$(curl -s -o /dev/null -w "%{http_code}" "$(BASE)$$route"); \
+		printf "%s  %s%s\n" "$$code" "$(BASE)" "$$route"; \
+		case "$$code" in 2*|3*) : ;; *) FAIL=1; echo "❌ FAIL: $$route";; esac; \
+	done < "$(FILE)"; \
+	exit $$FAIL
+
+verify-sitemap-dev:
+	@$(MAKE) verify-sitemap FILE="$(SITEMAP_DEV_TXT)" BASE="$(DEV_BASE_URL)"
+
+verify-sitemap-prod:
+	@$(MAKE) verify-sitemap FILE="$(SITEMAP_PROD_TXT)" BASE="$(PROD_BASE_URL)"
+
+# Crawl helpers (prints discovered + reachable routes via stdlib crawler)
+crawl-dev:
+	@$(PY) tools/crawl_sitemap.py "$(DEV_BASE_URL)"
+
+crawl-prod:
+	@$(PY) tools/crawl_sitemap.py "$(PROD_BASE_URL)"
+
+crawl-local:
+	@$(PY) tools/crawl_sitemap.py "http://localhost:3000"
+
+# -----------------------------
+# Agents tooling (unchanged)
+# -----------------------------
 .PHONY: agents-new agents-validate agents-test agents-run
 
 agents-new:

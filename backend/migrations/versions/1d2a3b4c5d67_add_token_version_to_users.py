@@ -22,12 +22,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    dialect = bind.dialect.name if bind else None
+
     op.add_column(
         "users",
         sa.Column("token_version", sa.Integer(), nullable=False, server_default="1"),
     )
-    # Drop the server_default now that existing rows have 1
-    op.alter_column("users", "token_version", server_default=None)
+    if dialect != "sqlite":
+        # Drop the server_default now that existing rows have 1
+        op.alter_column("users", "token_version", server_default=None)
 
 
 def downgrade() -> None:

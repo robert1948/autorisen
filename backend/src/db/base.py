@@ -1,9 +1,16 @@
-"""SQLAlchemy declarative base."""
+"""SQLAlchemy declarative base with backwards compatibility."""
 
-from sqlalchemy.orm import DeclarativeBase
+from __future__ import annotations
 
+try:  # SQLAlchemy 2.x
+    from sqlalchemy.orm import DeclarativeBase as _DeclarativeBase
 
-class Base(DeclarativeBase):
-    """Project-wide declarative base class."""
+    class Base(_DeclarativeBase):
+        """Project-wide declarative base class."""
 
-    pass
+        pass
+
+except ImportError:  # pragma: no cover - fallback for SQLAlchemy < 2.0
+    from sqlalchemy.orm import declarative_base as _declarative_base
+
+    Base = _declarative_base()  # type: ignore[assignment]

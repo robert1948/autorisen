@@ -55,6 +55,9 @@ class User(Base):
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     roles = relationship("Role", secondary="user_roles", back_populates="users")
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    password_reset_tokens = relationship(
+        "PasswordResetToken", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Credential(Base):
@@ -138,6 +141,22 @@ class Session(Base):
     revoked_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="sessions")
+
+
+class PasswordResetToken(Base):
+    """One-time password reset token issued to a user."""
+
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String(255), unique=True, nullable=False)
+    purpose = Column(String(32), nullable=False, server_default="password_reset")
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="password_reset_tokens")
 
 
 class LoginAudit(Base):

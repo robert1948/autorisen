@@ -48,12 +48,19 @@ def upgrade() -> None:
             )
 
     existing_checks = {constraint["name"] for constraint in inspector.get_check_constraints("users")}
-    if "ck_users_first_name_length" not in existing_checks:
-        op.create_check_constraint("ck_users_first_name_length", "users", "length(first_name) <= 50")
-    if "ck_users_last_name_length" not in existing_checks:
-        op.create_check_constraint("ck_users_last_name_length", "users", "length(last_name) <= 50")
-    if "ck_users_company_name_length" not in existing_checks:
-        op.create_check_constraint("ck_users_company_name_length", "users", "length(company_name) <= 100")
+    if dialect != "sqlite":
+        if "ck_users_first_name_length" not in existing_checks:
+            op.create_check_constraint(
+                "ck_users_first_name_length", "users", "length(first_name) <= 50"
+            )
+        if "ck_users_last_name_length" not in existing_checks:
+            op.create_check_constraint(
+                "ck_users_last_name_length", "users", "length(last_name) <= 50"
+            )
+        if "ck_users_company_name_length" not in existing_checks:
+            op.create_check_constraint(
+                "ck_users_company_name_length", "users", "length(company_name) <= 100"
+            )
 
     if dialect == "postgresql":
         op.alter_column(

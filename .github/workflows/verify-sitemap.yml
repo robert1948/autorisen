@@ -1,0 +1,92 @@
+name: Verify Sitemap (after Heroku Deploy)
+
+on:
+  # Automatically run after the deploy workflow completes.
+  # IMPORTANT: Change the name below if your deploy workflow is different.
+  workflow_run:
+    workflows: ["Heroku Deploy"]
+    types:
+      - completed
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment to check (dev|prod)"
+        required: true
+        default: "dev"
+
+jobs:
+  verify:
+    name: Verify Sitemap Routes
+    runs-on: ubuntu-latest
+
+    env:
+      DEV_BASE_URL: https://dev.cape-control.com
+      PROD_BASE_URL: https://cape-control.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # Decide which base URL and expected list to use
+      - name: Pick base URL + expected file
+        id: pick
+        shell: bash
+        run: |
+          ENV="${{ github.event.inputs.env || 'dev' }}"
+          if [ "$ENV" = "prod" ]; then
+            echo "base_url=$PROD_BASE_URL" >> "$GITHUB_OUTPUT"
+            echo "expected=docs/sitemap.prod.txt" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_url=$DEV_BASE_URL" >> "$GITHUB_OUTPUT"
+            echo "expected=docs/sitemap.dev.txt" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Environment selected: $ENV"
+
+      - name: Show selection
+        run: |
+          echo "Base URL: ${{ steps.pick.outputs.base_url }}"
+          echo "Expected routes file: ${{ steps.pick.outputs.expected }}"
+
+      - name: Display expected routes
+        run: |
+          echo "Expected routes:"
+          cat "${{ steps.pick.outputs.expected }}"
+
+      - name: Run sitemap crawler (logs only)
+        run: |
+          python3 tools/crawl_sitemap.py "${{ steps.pick.outputs.base_url }}" | tee crawl.out
+          echo "----"
+          tail -n +1 crawl.out || true
+
+      - name: Verify expected routes (require 2xx/3xx)
+        shell: bash
+        run: |
+          BASE="${{ steps.pick.outputs.base_url }}"
+          FILE="${{ steps.pick.outputs.expected }}"
+          FAIL=0
+          while IFS= read -r route; do
+            route="$(echo "$route" | sed 's/\r$//')"
+            [ -z "$route" ] && continue
+            case "$route" in \#*) continue ;; esac
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE$route")
+            printf "%s  %s%s\n" "$CODE" "$BASE" "$route"
+            case "$CODE" in
+              2*|3*) : ;;
+              *) FAIL=1; echo "❌ FAIL: $route" ;;
+            esac
+          done < "$FILE"
+          exit $FAIL
+
+      - name: Upload crawl logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-logs-${{ github.run_id }}
+          path: crawl.out

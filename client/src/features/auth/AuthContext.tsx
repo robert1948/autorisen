@@ -1,6 +1,14 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
-import { login, refreshSession, type TokenResponse } from "../../lib/authApi";
+import {
+  login,
+  loginWithGoogle as loginWithGoogleApi,
+  loginWithLinkedIn as loginWithLinkedInApi,
+  refreshSession,
+  type GoogleLoginPayload,
+  type LinkedInLoginPayload,
+  type TokenResponse,
+} from "../../lib/authApi";
 
 export type AuthState = {
   accessToken: string | null;
@@ -13,7 +21,9 @@ const AuthContext = createContext<{
   state: AuthState;
   loading: boolean;
   error: string | null;
-  loginUser: (email: string, password: string) => Promise<void>;
+  loginUser: (email: string, password: string, recaptchaToken: string | null) => Promise<void>;
+  loginWithGoogle: (payload: GoogleLoginPayload) => Promise<void>;
+  loginWithLinkedIn: (payload: LinkedInLoginPayload) => Promise<void>;
   setAuthFromTokens: (email: string, token: TokenResponse) => void;
   logout: () => void;
 }>({
@@ -21,6 +31,8 @@ const AuthContext = createContext<{
   loading: false,
   error: null,
   loginUser: async () => undefined,
+  loginWithGoogle: async () => undefined,
+  loginWithLinkedIn: async () => undefined,
   setAuthFromTokens: () => undefined,
   logout: () => undefined,
 });
@@ -74,14 +86,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const loginUser = async (email: string, password: string) => {
+  const loginUser = async (email: string, password: string, recaptchaToken: string | null) => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await login(email, password);
+      const resp = await login(email, password, recaptchaToken);
       setAuthFromTokens(email, resp);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async (payload: GoogleLoginPayload) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await loginWithGoogleApi(payload);
+      setAuthFromTokens(resp.email, resp);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Google login failed";
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithLinkedIn = async (payload: LinkedInLoginPayload) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await loginWithLinkedInApi(payload);
+      setAuthFromTokens(resp.email, resp);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "LinkedIn login failed";
       setError(message);
       throw err;
     } finally {
@@ -129,6 +171,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     error,
     loginUser,
+    loginWithGoogle,
+    loginWithLinkedIn,
     setAuthFromTokens,
     logout,
   };
