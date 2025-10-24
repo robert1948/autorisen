@@ -1,0 +1,32 @@
+name: codex-labeler
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-label Codex PRs by branch prefix
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref || "";
+            const labels = new Set(["codex"]);
+            if (branch.startsWith("codex/")) {
+              const parts = branch.split("/");
+              if (parts.length >= 2) {
+                const playbook = parts[1].trim();
+                const allowed = new Set(["doc-clean","plan-sync","ci-tune","test-guardian"]);
+                if (allowed.has(playbook)) labels.add(playbook);
+              }
+            }
+            if (labels.size) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: Array.from(labels)
+              });
+            }

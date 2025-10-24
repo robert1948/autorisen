@@ -1,12 +1,13 @@
-## Summary
-- Provide a sentence or two describing the intent of this PR.
+<!--
+Codex PR Template — optimized for agent-run changes.
+Please keep sections concise and machine-readable where possible.
+-->
 
-## Checklist
-- [ ] CI pipelines / GitHub Actions are green.
-- [ ] `./scripts/context_snapshot.sh` refreshed and relevant excerpts shared with reviewers.
-- [ ] Acceptance criteria (tests, smoke, docs) verified locally.
-- [ ] Linked issue updated (status + notes).
-- [ ] No secrets or credentials committed.
+## 📌 Summary
+- **Playbook:** <!-- e.g., doc-clean | plan-sync | ci-tune | test-guardian -->
+- **Scope labels:** <!-- ensure includes `codex` + specific playbook label -->
+- **Branch:** <!-- auto-filled by Git; expected: codex/<playbook>/<date>-<shortid> -->
 
-## Acceptance Notes
-- Outline verification steps, manual checks, or follow-up tasks.
+## 🧪 Commands Executed (in order)
+<!-- Paste exact commands Codex ran, one per line, no prose -->
+
