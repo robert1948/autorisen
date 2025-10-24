@@ -1,4 +1,35 @@
-id,title,status,owner,priority
-AUTH-005,Security hardening & tests,todo,backend,high
-FE-004,Login page + form,todo,frontend,high
-DEVOPS-035,Prod deploy / Capecraft,blocked,devops,high
+phase,module,area,task_id,task_title,description,owner,priority,priority_rank,estimate,depends_on,status,started_at,updated_at,done_at,notes
+MVP,Auth & Accounts,Backend,AUTH-001,Design auth data model,"Users, credentials, sessions, roles, permissions; ERD + migration scripts.",backend,P1,1,6,,done,2025-09-29,2025-09-29,2025-09-29,"Alembic revision a8d4cc7f6947 adds users/credentials/roles/permissions/sessions; see backend/src/db/models.py"
+MVP,Auth & Accounts,Backend,AUTH-002,Implement /auth/register + hashing,"FastAPI route, Pydantic schemas, validation, bcrypt/argon2 hashing, happy-path tests.",backend,P1,1,8,AUTH-001,done,2025-09-29,2025-09-29,2025-09-29,"DB-backed register/login: see commit bff65e95 + refresh flow commit pending AUTH-004"
+MVP,Auth & Accounts,Backend,AUTH-003,Implement /auth/login + JWT,"Issue access/refresh tokens, rate limit, audit events.",backend,P1,1,8,AUTH-002,done,2025-09-29,2025-09-29,2025-09-29,"Access/refresh, rate limit, audit logging shipped (commit b5c98437)"
+MVP,Auth & Accounts,Backend,AUTH-004,/auth/me and refresh flow,Protected route + token refresh endpoint + middleware.,backend,P1,1,6,AUTH-003,done,2025-09-29,2025-09-29,2025-09-29,
+MVP,Auth & Accounts,Backend,AUTH-005,Security hardening & tests,"Bruteforce protection, CSRF for state-changing ops, unit+integration tests.",backend,P1,1,6,AUTH-003,busy,2025-10-18,2025-10-20,,"2025-10-20: Updated migration 202502191200 to handle SQLite CURRENT_TIMESTAMP; pytest auth security suite still timing out while CSRF fixture is refactored."
+MVP,Auth & Accounts,Backend,AUTH-006,Two-step registration backend,"Temp tokens, role enum, JSONB profiles, welcome email stub.",backend,P1,1,8,AUTH-002,done,2025-10-12,2025-10-13,2025-10-13,"Migration f5b3c9e5a4c2 + new FastAPI endpoints /auth/register/step1 and /auth/register/step2."
+MVP,Auth & Accounts,Backend,AUTH-007,Registration analytics & rate limits,"Analytics events table, reCAPTCHA integration, SlowAPI guard on /api/auth/*.",backend,P1,1,5,"AUTH-006,ANALYT-025",done,2025-10-12,2025-10-13,2025-10-13,"service.record_analytics_event persists events; recaptcha + limiter wired via backend/src/services."
+MVP,Frontend (User & Dev Portals),Frontend,FE-004,Login page + form,"Client validation, submit to /auth/login.",frontend,P1,1,5,AUTH-003,busy,2025-10-18,2025-10-20,,"Blocked pending AUTH-005 backend test harness fix; login wiring resumes once CSRF suite passes."
+MVP,Frontend (User & Dev Portals),Frontend,FE-005,Register page,"Submit to /auth/register, password rules.",frontend,P1,1,5,AUTH-002,done,2025-10-12,2025-10-13,2025-10-13,"Superseded by role-aware wizard with shared password policy + reCAPTCHA."
+MVP,Frontend (User & Dev Portals),Frontend,FE-013,Two-step registration wizard,"Role-based Step 1/2 flow, reCAPTCHA, analytics hooks, onboarding redirects.",frontend,P1,1,8,"FE-005,AUTH-006",done,2025-10-12,2025-10-13,2025-10-13,"Customer/Developer wizard shipped; temp token handling + profile payloads wired to new API."
+MVP,Onboarding Experience,Backend,ONB-048,Onboarding chat tool integration,"Persist guided onboarding runs, wire tool adapters for tenant setup, capture checklist state.",backend,P1,1,8,"CHAT-041,ORCH-013",done,2025-10-12,2025-10-12,2025-10-12,"Checklist state persisted via onboarding_checklists + tools update tasks."
+MVP,Onboarding Experience,Frontend,ONB-049,Onboarding chat UI polish,"Embed CapeAI onboarding flow with run history, checklist progress indicator.",frontend,P1,1,5,ONB-048,done,2025-10-12,2025-10-12,2025-10-12,"Chat modal renders checklist progress with toggle actions; run history card refreshed."
+MVP,Environments & Delivery,DevOps,DEVOPS-034,Staging deploy (Heroku),Autorisen app: build pipelines + smoke tests.,devops,P1,1,8,DEVOPS-033,done,2025-09-27,2025-09-27,2025-09-27,"staging deploy validated; smoke-test passed"
+MVP,Environments & Delivery,DevOps,DEVOPS-035,Prod deploy (Capecraft),Promotion from staging; rollback plan.,devops,P1,1,6,DEVOPS-034,busy,2025-09-27,2025-10-20,,"Waiting on AUTH-005 + FE-004 to complete before promotion; staging slug validated."
+MVP,Admin Console,Backend,ADMIN-030,Health/smoke endpoints,/admin/health; per-service checks.,backend,P1,1,4,,done,2025-09-27,2025-09-27,2025-09-27,"added /alive and smoke endpoints; verified"
+V1,Org & Tenants,Backend,ORG-006,Org model + memberships,"Create orgs, roles, invitations; migrations + seeds.",backend,P1,2,8,AUTH-001,busy,2025-10-18,2025-10-18,,
+V1,Agents Gateway,Backend,AIGW-009,Provider adapter interface,"Define adapter protocol (complete, chat, embed) + error types.",backend,P1,2,6,,busy,2025-10-18,2025-10-18,,
+V1,Agents Gateway,Backend,AIGW-010,OpenAI adapter + quotas,"Implement provider with timeouts, retries, quotas, usage metering.",backend,P1,2,10,"AIGW-009,AUTH-003",busy,2025-10-18,2025-10-18,,
+V1,Orchestrator,Backend,ORCH-012,Run model + state machine,"Design run states, retries, backoff; persistence schema.",backend,P1,2,10,AIGW-011,busy,2025-10-18,2025-10-18,,
+V1,Frontend (User & Dev Portals),Frontend,FE-006,Protected routes & RBAC,"Route guards, role-based menus, org scoping.",frontend,P1,2,6,"AUTH-004,ORG-007",busy,2025-10-18,2025-10-18,,
+V1,Frontend (User & Dev Portals),Frontend,FE-007,Org management screens,"Create org, manage members/roles, invite accept flows.",frontend,P1,2,8,"ORG-007,ORG-008",busy,2025-10-18,2025-10-18,,
+V1,Frontend (User & Dev Portals),Frontend,FE-008,Chat thread UI,"Thread list, message composer, markdown rendering.",frontend,P1,2,8,CONV-016,busy,2025-10-18,2025-10-18,,
+V1,Billing & Plans,Backend,BILL-027,Plan catalog + entitlements,"Plans, limits; middleware hooks.",backend,P1,2,8,,busy,2025-10-18,2025-10-18,,
+V1,Billing & Plans,Backend,BILL-028,Subscriptions + invoices,"Gateway integration + webhooks; reconciliation.",backend,P1,2,10,BILL-027,busy,2025-10-18,2025-10-18,,
+V1,Billing & Plans,Backend,BILL-029,Usage metering & credits,"Track AI usage; per-tenant rollups.",backend,P1,2,10,"AIGW-010,BILL-027",todo,,2025-09-27,,
+V1,Observability & Security,Platform,OBS-036,Structured logs + tracing,"Request IDs; OpenTelemetry exporter; dashboards.",platform,P1,2,8,,busy,2025-09-27,2025-09-27,,
+V1,Security,Platform,SEC-001,CSRF protection roll-out,"CSRF tokens for state-changing endpoints; frontend interceptor; backend middleware.",platform,P1,2,8,AUTH-004,busy,2025-10-18,2025-10-18,,
+V2,Developer Ecosystem,Backend,DEV-001,Developer revenue share engine,"Monthly revenue splits with statements and export; dispute process.",backend,P1,3,10,BILL-029,todo,,2025-09-27,,
+V2,Developer Ecosystem,Platform,DEV-003,Agent submission pipeline,"Linting, tests, security scan, staged rollout to catalog.",platform,P1,3,10,AIGW-011,todo,,2025-09-27,,
+V2,Developer Ecosystem,Docs,DEV-004,Dev Portal docs & SDK,"Quickstarts, API reference, example agents; TypeScript/Python SDK.",docs,P2,4,10,DEV-003,todo,,2025-09-27,,
+V2,Marketplace,Frontend,MKT-054,Marketplace filters & detail pages,"Search/sort, dedicated detail route with pricing & reviews.",frontend,P1,3,5,MKT-047,todo,,2025-10-12,,
+V2,Resilience & Scale,Platform,SCALE-001,Load & soak tests,"Target p95 < 400ms simple calls; <1200ms agent runs queued.",platform,P1,3,8,ORCH-013,todo,,2025-09-27,,
+V2,Resilience & Scale,Platform,SCALE-002,Uptime SLO 99.9% instrumentation,"Error budget dashboards, weekly review.",platform,P1,3,6,OBS-036,todo,,2025-09-27,,
+V2,Resilience & Scale,Platform,SCALE-003,Autoscaling & backpressure policies,"Queue limits, circuit breakers, graceful degradation.",platform,P1,3,10,ORCH-013,todo,,2025-09-27,,

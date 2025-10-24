@@ -1,16 +1,18 @@
 {
   "default": true,
-  "MD013": {
+
+  "MD013": {                       // Line length
     "line_length": 250,
     "code_blocks": false,
-    "tables": false
+    "tables": false,
+    "headings": false
   },
-  "MD025": false,
-  "MD001": false,
-  "MD023": false,
-  "MD032": false,
-  "MD007": {
-    "indent": 2
-  },
-  "MD024": false
+
+  "MD024": { "allow_different_nesting": true },  // No duplicate headings (allow when nested)
+  "MD025": { "front_matter_title": "" },         // Multiple top-level headings OK (docs)
+  "MD026": { "punctuation": ".,;:!?。，；：？！" }, // Trailing punctuation in headings
+  "MD029": { "style": "one" },                   // Ordered lists use 1. 1. 1.
+  "MD033": false,                                // Allow inline HTML (needed in docs)
+  "MD034": false,                                // Allow bare URLs
+  "MD041": false                                 // No need for first line heading in all files
 }
