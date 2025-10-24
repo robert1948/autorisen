@@ -344,3 +344,41 @@ codex-test-dry:
 codex-test-heal:
 	python3 scripts/regenerate_fixtures.py || true
 	pytest -q || true
+
+.PHONY: codex-test
+codex-test:  ## Run backend pytest the same way CI will (quiet, deterministic env)
+	@echo "== Running pytest with CI-safe defaults =="
+	ENV=test \
+	DATABASE_URL=sqlite:////tmp/autolocal_test.db \
+	ALEMBIC_DATABASE_URL=sqlite:////tmp/autolocal_test.db \
+	DISABLE_RECAPTCHA=true \
+	RUN_DB_MIGRATIONS_ON_STARTUP=0 \
+	RATE_LIMIT_BACKEND=memory \
+	PYTHONWARNINGS=default \
+	. $(VENV)/bin/activate 2>/dev/null || true; \
+	$(PY) -m pip install -q -r $(REQ); \
+	pytest -q
+
+.PHONY: codex-test-cov
+codex-test-cov:  ## Run pytest with coverage (xml+term)
+	@echo "== Running pytest with coverage =="
+	ENV=test \
+	DATABASE_URL=sqlite:////tmp/autolocal_test.db \
+	ALEMBIC_DATABASE_URL=sqlite:////tmp/autolocal_test.db \
+	DISABLE_RECAPTCHA=true \
+	RUN_DB_MIGRATIONS_ON_STARTUP=0 \
+	RATE_LIMIT_BACKEND=memory \
+	PYTHONWARNINGS=default \
+	. $(VENV)/bin/activate 2>/dev/null || true; \
+	$(PY) -m pip install -q -r $(REQ) pytest-cov; \
+	pytest -q --cov=backend/src --cov-report=term --cov-report=xml
+
+STAGING_URL ?= https://dev.cape-control.com
+HEROKU_APP  ?= autorisen
+
+.PHONY: smoke-staging
+smoke-staging:  ## Hit health + CSRF endpoints on staging
+	@echo "== Smoke test against $(STAGING_URL) =="
+	@curl -fsS $(STAGING_URL)/api/health | jq . >/dev/null && echo "✓ /api/health OK"
+	@curl -fsS -D- -o /dev/null $(STAGING_URL)/api/auth/csrf >/tmp/csrf_headers.txt && echo "✓ /api/auth/csrf OK"
+	@grep -qi 'set-cookie' /tmp/csrf_headers.txt && echo "✓ CSRF cookie present" || (echo "✗ CSRF cookie missing"; exit 1)
