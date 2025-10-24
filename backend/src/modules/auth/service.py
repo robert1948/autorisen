@@ -6,7 +6,7 @@ import base64
 import hashlib
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 from uuid import uuid4
 
 from sqlalchemy import func, select
@@ -15,7 +15,12 @@ from sqlalchemy.orm import Session
 from backend.src.core.config import settings
 from backend.src.db import models
 from backend.src.modules.auth.schemas import UserRole
-from backend.src.services.security import create_jwt, decode_jwt, hash_password, verify_password
+from backend.src.services.security import (
+    create_jwt,
+    decode_jwt,
+    hash_password,
+    verify_password,
+)
 
 REFRESH_TOKEN_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 TEMP_TOKEN_PURPOSE = "register_step1"
@@ -41,11 +46,29 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+def _token_version_for(user: Any, *, default: int = 0) -> int:
+    raw_version = getattr(user, "token_version", default)
+    try:
+        version = int(raw_version)
+    except (TypeError, ValueError):
+        return default
+    return version if version >= 0 else default
+
+
+def _bool_attr(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return bool(value)
+
+
 def ensure_email_available(db: Session, email: str) -> None:
     """Raise ValueError if the email is already taken."""
-
     normalized = _normalize_email(email)
-    existing = db.scalar(select(models.User).where(func.lower(models.User.email) == normalized))
+    existing = db.scalar(
+        select(models.User).where(func.lower(models.User.email) == normalized)
+    )
     if existing:
         raise ValueError("Email already registered.")
 
@@ -60,7 +83,6 @@ def begin_registration(
     role: UserRole,
 ) -> str:
     """Generate a temporary token carrying registration information."""
-
     ensure_email_available(db, email)
     password_hash = hash_password(password)
     normalized_email = _normalize_email(email)
@@ -85,7 +107,6 @@ def complete_registration(
     profile: Dict[str, Any],
 ) -> Tuple[str, str, datetime, models.User]:
     """Persist the user and profile using the temporary token payload."""
-
     payload = decode_jwt(temp_token)
     if payload.get("purpose") != TEMP_TOKEN_PURPOSE:
         raise ValueError("Invalid registration token.")
@@ -114,22 +135,28 @@ def complete_registration(
         secret_hash=payload["password_hash"],
     )
 
-    user.profile = models.UserProfile(profile=profile)
+    setattr(user, "profile", models.UserProfile(profile=profile))
     db.add(user)
     db.add(credential)
 
-    refresh_token = _generate_refresh_token()
-    session = _create_session(db, user, refresh_token)
+    # Ensure PKs are available before generating tokens
+    db.flush()
 
+    refresh_token = _generate_refresh_token()
+    _create_session(db, user, refresh_token)
+
+    token_version = _token_version_for(user)
     access_payload = {
         "sub": user.email,
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
         "jti": str(uuid4()),
-        "token_version": int(getattr(user, "token_version", 1)),
+        "token_version": token_version,
     }
-    access_token, expires_at = create_jwt(access_payload, settings.access_token_ttl_minutes)
+    access_token, expires_at = create_jwt(
+        access_payload, settings.access_token_ttl_minutes
+    )
 
     db.commit()
 
@@ -164,70 +191,118 @@ def login(
     ip_address: Optional[str] = None,
 ) -> Tuple[str, datetime, str]:
     normalized_email = _normalize_email(email)
-    user = db.scalar(select(models.User).where(func.lower(models.User.email) == normalized_email))
-    if not user or not verify_password(password, user.hashed_password):
+    user = db.scalar(
+        select(models.User).where(func.lower(models.User.email) == normalized_email)
+    )
+    if user is None:
         raise ValueError("bad credentials")
 
-    user.last_login_at = datetime.now(timezone.utc)
+    stored_hash = cast(Optional[str], getattr(user, "hashed_password", None))
+    if not stored_hash or not verify_password(password, stored_hash):
+        raise ValueError("bad credentials")
+
+    now = datetime.now(timezone.utc)
+    setattr(user, "last_login_at", now)
     db.add(user)
 
     refresh_token = _generate_refresh_token()
-    session = _create_session(db, user, refresh_token, user_agent=user_agent, ip_address=ip_address)
+    _create_session(
+        db, user, refresh_token, user_agent=user_agent, ip_address=ip_address
+    )
 
+    token_version = _token_version_for(user)
     access_payload = {
         "sub": user.email,
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
         "jti": str(uuid4()),
-        "token_version": int(getattr(user, "token_version", 1)),
+        "token_version": token_version,
     }
-    access_token, expires_at = create_jwt(access_payload, settings.access_token_ttl_minutes)
+    access_token, expires_at = create_jwt(
+        access_payload, settings.access_token_ttl_minutes
+    )
     db.commit()
     return access_token, expires_at, refresh_token
 
 
 def current_user(db: Session, token: str) -> models.User:
     payload = decode_jwt(token)
+    if payload.get("purpose") != ACCESS_TOKEN_PURPOSE:
+        raise ValueError("invalid token payload")
     email = payload.get("sub")
     if not email:
         raise ValueError("invalid token payload")
 
-    user = db.scalar(select(models.User).where(func.lower(models.User.email) == _normalize_email(email)))
-    if not user or not user.is_active:
+    user = db.scalar(
+        select(models.User).where(
+            func.lower(models.User.email) == _normalize_email(email)
+        )
+    )
+    if user is None:
         raise ValueError("user not found")
+
+    if not _bool_attr(getattr(user, "is_active", True), default=False):
+        raise ValueError("user not found")
+
+    expected_version = _token_version_for(user)
+    raw_version = payload.get("token_version", 0)
+    try:
+        token_version = int(raw_version)
+    except (TypeError, ValueError):
+        token_version = 0
+    if token_version != expected_version:
+        raise ValueError("invalid token payload")
+
+    payload_user_id = payload.get("user_id")
+    if payload_user_id and str(payload_user_id) != str(user.id):
+        raise ValueError("invalid token payload")
+
     return user
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> Tuple[str, datetime, str]:
     token_hash = _refresh_hash(refresh_token)
     session = db.scalar(
-        select(models.Session).where(models.Session.token_hash == token_hash, models.Session.revoked_at.is_(None))
+        select(models.Session).where(
+            models.Session.token_hash == token_hash, models.Session.revoked_at.is_(None)
+        )
     )
     now = datetime.now(timezone.utc)
-    if not session:
+    if session is None:
         raise ValueError("invalid refresh token")
-    expires_at = _ensure_aware(session.expires_at)
+
+    expires_at_raw = cast(Optional[datetime], getattr(session, "expires_at", None))
+    if expires_at_raw is None:
+        raise ValueError("invalid refresh token")
+
+    expires_at = _ensure_aware(expires_at_raw)
     if expires_at <= now:
         raise ValueError("invalid refresh token")
 
     user = session.user
-    if not user or not user.is_active:
+    if user is None:
         raise ValueError("user not found")
 
+    if not _bool_attr(getattr(user, "is_active", True), default=False):
+        raise ValueError("user not found")
+
+    token_version = _token_version_for(user)
     new_access_payload = {
         "sub": user.email,
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
         "jti": str(uuid4()),
-        "token_version": int(getattr(user, "token_version", 1)),
+        "token_version": token_version,
     }
-    new_access, expires_at = create_jwt(new_access_payload, settings.access_token_ttl_minutes)
+    new_access, expires_at = create_jwt(
+        new_access_payload, settings.access_token_ttl_minutes
+    )
     new_refresh = _generate_refresh_token()
 
-    session.token_hash = _refresh_hash(new_refresh)
-    session.expires_at = now + timedelta(days=REFRESH_TOKEN_DAYS)
+    setattr(session, "token_hash", _refresh_hash(new_refresh))
+    setattr(session, "expires_at", now + timedelta(days=REFRESH_TOKEN_DAYS))
     db.add(session)
     db.commit()
 
@@ -236,9 +311,11 @@ def refresh_access_token(db: Session, refresh_token: str) -> Tuple[str, datetime
 
 def revoke_refresh_token(db: Session, refresh_token: str) -> None:
     token_hash = _refresh_hash(refresh_token)
-    session = db.scalar(select(models.Session).where(models.Session.token_hash == token_hash))
+    session = db.scalar(
+        select(models.Session).where(models.Session.token_hash == token_hash)
+    )
     if session:
-        session.revoked_at = datetime.now(timezone.utc)
+        setattr(session, "revoked_at", datetime.now(timezone.utc))
         db.add(session)
         db.commit()
 
@@ -254,10 +331,13 @@ def initiate_password_reset(
 
     Returns (user, raw_token, expires_at) when a user is found; otherwise None.
     """
-
     normalized_email = _normalize_email(email)
-    user = db.scalar(select(models.User).where(func.lower(models.User.email) == normalized_email))
-    if not user or not user.is_active:
+    user = db.scalar(
+        select(models.User).where(func.lower(models.User.email) == normalized_email)
+    )
+    if user is None:
+        return None
+    if not _bool_attr(getattr(user, "is_active", True), default=False):
         return None
 
     now = datetime.now(timezone.utc)
@@ -273,7 +353,7 @@ def initiate_password_reset(
         )
     )
     for token in existing_tokens:
-        token.used_at = now
+        setattr(token, "used_at", now)
         db.add(token)
 
     raw_token = base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip("=")
@@ -300,41 +380,56 @@ def complete_password_reset(
 
     Raises ValueError if the token is invalid or expired.
     """
-
     normalized_token = (token or "").strip()
     if not normalized_token:
         raise ValueError("Invalid reset token")
 
     token_hash = hashlib.sha256(normalized_token.encode()).hexdigest()
     record = db.scalar(
-        select(models.PasswordResetToken).where(models.PasswordResetToken.token_hash == token_hash)
+        select(models.PasswordResetToken).where(
+            models.PasswordResetToken.token_hash == token_hash
+        )
     )
 
     if not record:
         raise ValueError("Invalid reset token")
 
     now = datetime.now(timezone.utc)
-    if record.used_at is not None or record.expires_at <= now:
+    expires_at = cast(Optional[datetime], getattr(record, "expires_at", None))
+    if expires_at is None:
+        raise ValueError("Invalid reset token")
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    used_at = cast(Optional[datetime], getattr(record, "used_at", None))
+    if used_at is not None and used_at.tzinfo is None:
+        used_at = used_at.replace(tzinfo=timezone.utc)
+
+    if used_at is not None or expires_at <= now:
         raise ValueError("Reset token expired")
 
     user = record.user
-    if not user or not user.is_active:
+    if user is None:
+        raise ValueError("Invalid reset token")
+    if not _bool_attr(getattr(user, "is_active", True), default=False):
         raise ValueError("Invalid reset token")
 
+    current_version = _token_version_for(user)
     password_hash = hash_password(new_password)
-    user.hashed_password = password_hash
-    user.password_changed_at = now
-    user.token_version = int(getattr(user, "token_version", 1)) + 1
+    setattr(user, "hashed_password", password_hash)
+    setattr(user, "password_changed_at", now)
+    setattr(user, "token_version", current_version + 1)
 
     # Keep Credential table in sync when present.
     credential = db.scalar(
         select(models.Credential).where(
-            models.Credential.user_id == user.id, models.Credential.provider == "password"
+            models.Credential.user_id == user.id,
+            models.Credential.provider == "password",
         )
     )
     if credential:
-        credential.secret_hash = password_hash
-        credential.last_used_at = now
+        setattr(credential, "secret_hash", password_hash)
+        setattr(credential, "last_used_at", now)
         db.add(credential)
 
     # Revoke outstanding sessions for safety.
@@ -346,10 +441,10 @@ def complete_password_reset(
         )
     )
     for session in sessions:
-        session.revoked_at = now
+        setattr(session, "revoked_at", now)
         db.add(session)
 
-    record.used_at = now
+    setattr(record, "used_at", now)
     db.add(user)
     db.add(record)
     db.commit()
@@ -370,16 +465,17 @@ def social_login(
     """
     Create or update a user via social login and return auth tokens.
     """
-
     normalized_email = _normalize_email(email)
-    user = db.scalar(select(models.User).where(func.lower(models.User.email) == normalized_email))
+    user: Optional[models.User] = db.scalar(
+        select(models.User).where(func.lower(models.User.email) == normalized_email)
+    )
     now = datetime.now(timezone.utc)
 
     first = (first_name or "").strip()
     last = (last_name or "").strip()
     full_name = f"{first} {last}".strip() or None
 
-    if not user:
+    if user is None:
         random_password = base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip("=")
         password_hash = hash_password(random_password)
         user = models.User(
@@ -388,67 +484,78 @@ def social_login(
             last_name=last or "",
             full_name=full_name,
             hashed_password=password_hash,
-            role="Customer",
+            role=UserRole.CUSTOMER.value,  # enum value for consistency
             is_active=True,
             is_email_verified=True,
             password_changed_at=now,
         )
         db.add(user)
-        db.flush()
+        db.flush()  # ensure user.id for subsequent ops
     else:
+        existing_user = cast(models.User, user)
         updated = False
-        if first and not getattr(user, "first_name", ""):
-            user.first_name = first
+        if first and not getattr(existing_user, "first_name", ""):
+            setattr(existing_user, "first_name", first)
             updated = True
-        if last and not getattr(user, "last_name", ""):
-            user.last_name = last
+        if last and not getattr(existing_user, "last_name", ""):
+            setattr(existing_user, "last_name", last)
             updated = True
-        if full_name and not getattr(user, "full_name", None):
-            user.full_name = full_name
+        if full_name and not getattr(existing_user, "full_name", None):
+            setattr(existing_user, "full_name", full_name)
             updated = True
-        if getattr(user, "is_email_verified", None) is False:
-            user.is_email_verified = True
+        if getattr(existing_user, "is_email_verified", None) is False:
+            setattr(existing_user, "is_email_verified", True)
             updated = True
-        user.last_login_at = now
+        setattr(existing_user, "last_login_at", now)
         if updated:
-            db.add(user)
+            db.add(existing_user)
+        user = existing_user
 
-    credential = db.scalar(
+    # Credential
+    credential: Optional[models.Credential] = db.scalar(
         select(models.Credential).where(
             models.Credential.user_id == user.id,
             models.Credential.provider == provider,
         )
     )
-    if not credential:
+    if credential is None:
         credential = models.Credential(
             user=user,
             provider=provider,
             provider_uid=provider_uid,
             secret_hash=None,
+            last_used_at=now,
         )
-    credential.provider_uid = provider_uid
-    credential.last_used_at = now
-    db.add(credential)
+        db.add(credential)
+    else:
+        credential = cast(models.Credential, credential)
+        setattr(credential, "provider_uid", provider_uid)
+        setattr(credential, "last_used_at", now)
+        db.add(credential)
 
+    # Session
     refresh_token = _generate_refresh_token()
-    session = _create_session(
+    _create_session(
         db,
         user,
         refresh_token,
         user_agent=user_agent,
         ip_address=ip_address,
     )
-    db.add(session)
 
+    # Access token
+    token_version = _token_version_for(user)
     access_payload = {
         "sub": user.email,
         "user_id": user.id,
         "role": user.role,
         "purpose": ACCESS_TOKEN_PURPOSE,
         "jti": str(uuid4()),
-        "token_version": int(getattr(user, "token_version", 1)),
+        "token_version": token_version,
     }
-    access_token, expires_at = create_jwt(access_payload, settings.access_token_ttl_minutes)
+    access_token, expires_at = create_jwt(
+        access_payload, settings.access_token_ttl_minutes
+    )
 
     db.commit()
     return access_token, expires_at, refresh_token, user

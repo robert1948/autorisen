@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import get_session
-from backend.src.modules.auth.deps import get_current_user
+from backend.src.modules.auth.deps import get_verified_user as get_current_user
 from backend.src.orchestrator import run_engine
 
 from . import schemas
@@ -47,7 +47,8 @@ def run_flow(
             raise ValueError("placement required when agent_slug is not provided")
 
         tool_calls = [
-            run_engine.ToolCall(name=call.name, payload=call.payload) for call in payload.tool_calls
+            run_engine.ToolCall(name=call.name, payload=call.payload)
+            for call in payload.tool_calls
         ]
         result = run_engine.execute(
             db,
@@ -60,7 +61,9 @@ def run_flow(
             max_attempts=payload.max_attempts,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
     except run_engine.RunExecutionError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -139,7 +142,10 @@ def get_onboarding_checklist(
 ) -> dict:
     thread_stmt = (
         select(models.ChatThread)
-        .where(models.ChatThread.user_id == user.id, models.ChatThread.placement == "onboarding")
+        .where(
+            models.ChatThread.user_id == user.id,
+            models.ChatThread.placement == "onboarding",
+        )
         .order_by(models.ChatThread.updated_at.desc())
     )
     thread = db.scalar(thread_stmt)

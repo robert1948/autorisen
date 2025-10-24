@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import sys
-import yaml
 import pathlib
+import sys
+
+import yaml
 
 SCHEMA_KEYS = {"name", "role", "model", "policies", "context"}
 

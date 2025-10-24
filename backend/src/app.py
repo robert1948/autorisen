@@ -3,20 +3,17 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import date, datetime
 from pathlib import Path
-from datetime import date
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import (
-    FileResponse,
-    HTMLResponse,
-    JSONResponse,
-    PlainTextResponse,
-    Response,
-)
+from starlette.responses import (FileResponse, HTMLResponse, JSONResponse,
+                                 PlainTextResponse, Response)
+
+from backend.src.core.config import settings
 
 # Load .env for local dev (safe in prod; no-op if vars already set)
 load_dotenv()
@@ -28,9 +25,7 @@ load_dotenv()
 # Security middleware (bot probe blocking + headers)
 try:
     from .middleware.bot_hardening import (  # type: ignore
-        BlockProbesMiddleware,
-        SecurityHeadersMiddleware,
-    )
+        BlockProbesMiddleware, SecurityHeadersMiddleware)
 except Exception:
     BlockProbesMiddleware = None  # type: ignore[assignment]
     SecurityHeadersMiddleware = None  # type: ignore[assignment]
@@ -116,6 +111,31 @@ def _inline_sitemap(base_url: str, routes: list[str]) -> str:
 def create_app() -> FastAPI:
     app = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
 
+    required_env = {
+        "EMAIL_TOKEN_SECRET": settings.email_token_secret,
+        "FROM_EMAIL": settings.from_email,
+        "SMTP_HOST": settings.smtp_host,
+        "SMTP_USERNAME": settings.smtp_username,
+        "SMTP_PASSWORD": settings.smtp_password,
+    }
+    missing = [name for name, value in required_env.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "Missing required auth email configuration: " + ", ".join(sorted(missing))
+        )
+
+    optional_env = {
+        "GOOGLE_CLIENT_ID": settings.google_client_id,
+        "GOOGLE_CLIENT_SECRET": settings.google_client_secret,
+        "GOOGLE_CALLBACK_URL": settings.google_callback_url,
+        "LINKEDIN_CLIENT_ID": settings.linkedin_client_id,
+        "LINKEDIN_CLIENT_SECRET": settings.linkedin_client_secret,
+        "LINKEDIN_CALLBACK_URL": settings.linkedin_callback_url,
+    }
+    for name, value in optional_env.items():
+        if not value:
+            log.warning("Optional OAuth configuration %s is not set", name)
+
     # -------------------- Middlewares --------------------
     if BlockProbesMiddleware and BOT_HARDEN:
         app.add_middleware(BlockProbesMiddleware)  # type: ignore[arg-type]
@@ -123,9 +143,18 @@ def create_app() -> FastAPI:
         app.add_middleware(SecurityHeadersMiddleware)  # type: ignore[arg-type]
 
     # CORS (same-origin + localhost dev; allow explicit origin if provided)
-    allow_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    allow_origins = {
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        settings.frontend_origin.rstrip("/"),
+        "https://dev.cape-control.com",
+    }
     if APP_ORIGIN:
-        allow_origins.append(APP_ORIGIN)
+        allow_origins.add(APP_ORIGIN)
+
+    allow_origins = [origin for origin in allow_origins if origin]
 
     app.add_middleware(
         CORSMiddleware,
@@ -166,11 +195,20 @@ def create_app() -> FastAPI:
             or os.getenv("ENV")
             or "local"
         )
-        return {"status": "ok", "version": version, "env": env_name}
+        return {"ok": True, "version": version, "env": env_name}
 
     @app.get("/api/health/alive", include_in_schema=False)
     def api_health_alive():
         return {"alive": True}
+
+    @app.get("/api/version", include_in_schema=False)
+    def api_version():
+        git_sha = os.getenv("GIT_SHA", "").strip()
+        app_version = os.getenv("APP_VERSION", "").strip()
+        version_value = (
+            git_sha or app_version or datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        )
+        return {"version": version_value}
 
     @app.get("/api/health/ping", include_in_schema=False)
     def api_health_ping():

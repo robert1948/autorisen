@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+
 from . import tools
 
 
@@ -47,7 +48,9 @@ def _load_config() -> ChatKitConfig:
     app_id = os.getenv("CHATKIT_APP_ID")
     signing_key = os.getenv("CHATKIT_SIGNING_KEY")
     if not app_id or not signing_key:
-        raise ChatKitConfigError("CHATKIT_APP_ID and CHATKIT_SIGNING_KEY must be configured.")
+        raise ChatKitConfigError(
+            "CHATKIT_APP_ID and CHATKIT_SIGNING_KEY must be configured."
+        )
     issuer = os.getenv("CHATKIT_ISSUER", "autorisen-chatkit")
     audience = os.getenv("CHATKIT_AUDIENCE") or None
     ttl_seconds = int(os.getenv("CHATKIT_TOKEN_TTL_SECONDS", "300"))
@@ -112,7 +115,13 @@ def ensure_thread(
     return _persist_thread(db, thread)
 
 
-def _encode_token(config: ChatKitConfig, *, user: models.User, thread: models.ChatThread, placement: str) -> TokenBundle:
+def _encode_token(
+    config: ChatKitConfig,
+    *,
+    user: models.User,
+    thread: models.ChatThread,
+    placement: str,
+) -> TokenBundle:
     issued_at = _now()
     expires_at = issued_at + timedelta(seconds=config.ttl_seconds)
 
@@ -173,6 +182,8 @@ def invoke_tool(
         payload=payload,
     )
 
-    event = _record_tool_event(db, thread=thread, tool_name=spec.name, payload=payload, result=result)
+    event = _record_tool_event(
+        db, thread=thread, tool_name=spec.name, payload=payload, result=result
+    )
 
     return thread, result, event

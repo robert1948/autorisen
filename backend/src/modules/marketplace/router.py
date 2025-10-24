@@ -55,9 +55,13 @@ def get_agent_detail(slug: str, db: Session = Depends(get_session)) -> dict:
     stmt = select(models.Agent).where(models.Agent.slug == slug)
     agent = db.scalar(stmt)
     if agent is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="agent not found"
+        )
 
-    published_version = next((version for version in agent.versions if version.status == "published"), None)
+    published_version = next(
+        (version for version in agent.versions if version.status == "published"), None
+    )
     versions = [
         {
             "id": version.id,

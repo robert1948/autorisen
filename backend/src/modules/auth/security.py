@@ -20,13 +20,16 @@ JWT_AUD = os.getenv("JWT_AUDIENCE")
 if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET/SECRET_KEY is required")
 
+
 # ---- Password helpers ----
 def verify_password(plain: str, hashed: str) -> bool:
     return _verify_password(plain, hashed)
 
+
 # ---- JWT helpers ----
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
 
 def _encode(payload: Dict[str, Any], minutes: int) -> str:
     n = _now()
@@ -38,6 +41,7 @@ def _encode(payload: Dict[str, Any], minutes: int) -> str:
     if JWT_AUD:
         to_encode.setdefault("aud", JWT_AUD)
     return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALG)
+
 
 def create_access_refresh_tokens(
     *, user_id: int | str, email: str, role: str, token_version: int
@@ -53,6 +57,7 @@ def create_access_refresh_tokens(
     access = _encode(access_payload, ACCESS_MIN)
     refresh = _encode(refresh_payload, REFRESH_MIN)
     return access, refresh
+
 
 def decode_access_token(token: str) -> Dict[str, Any]:
     options = {"verify_aud": bool(JWT_AUD), "verify_iss": bool(JWT_ISS)}

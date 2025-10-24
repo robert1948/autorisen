@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthContext";
 
+const SOCIAL_PROVIDERS = ["google", "linkedin"] as const;
+type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
+const isSocialProvider = (value: string): value is SocialProvider =>
+  SOCIAL_PROVIDERS.includes(value as SocialProvider);
+
 const SocialCallback = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,6 +21,9 @@ const SocialCallback = () => {
     const errorDescription = params.get("error_description");
     const code = params.get("code");
     const stateParam = params.get("state");
+    const nextParam = params.get("next");
+    const targetPath =
+      nextParam && nextParam.startsWith("/") ? nextParam : "/dashboard";
 
     if (errorParam) {
       setStatus("error");
@@ -30,17 +38,29 @@ const SocialCallback = () => {
     }
 
     const [provider] = stateParam.split(":");
-    if (!provider) {
+    if (!isSocialProvider(provider)) {
       setStatus("error");
       setMessage("Invalid OAuth state value.");
       return;
     }
 
-    const storageKey = `oauth:state:${provider}`;
-    const expected = sessionStorage.getItem(storageKey);
-    if (expected !== stateParam) {
+    const stateKey = `oauth:state:${provider}`;
+    const recaptchaKey = `oauth:recaptcha:${provider}`;
+    const storedState = sessionStorage.getItem(stateKey);
+    if (storedState && storedState !== stateParam) {
+      sessionStorage.removeItem(stateKey);
+      sessionStorage.removeItem(recaptchaKey);
       setStatus("error");
       setMessage("OAuth state verification failed. Please try again.");
+      return;
+    }
+
+    const recaptchaToken = sessionStorage.getItem(recaptchaKey);
+    if (!recaptchaToken) {
+      sessionStorage.removeItem(stateKey);
+      sessionStorage.removeItem(recaptchaKey);
+      setStatus("error");
+      setMessage("Verification expired. Please retry the sign-in.");
       return;
     }
 
@@ -48,18 +68,21 @@ const SocialCallback = () => {
 
     const handler =
       provider === "google"
-        ? loginWithGoogle({ code, redirect_uri: redirectUri })
+        ? loginWithGoogle({ code, redirect_uri: redirectUri, recaptcha_token: recaptchaToken })
         : provider === "linkedin"
-        ? loginWithLinkedIn({ code, redirect_uri: redirectUri })
+        ? loginWithLinkedIn({ code, redirect_uri: redirectUri, recaptcha_token: recaptchaToken })
         : Promise.reject(new Error("Unsupported identity provider."));
 
     handler
       .then(() => {
-        sessionStorage.removeItem(storageKey);
+        sessionStorage.removeItem(stateKey);
+        sessionStorage.removeItem(recaptchaKey);
         setMessage("Sign-in successful. Redirecting…");
-        setTimeout(() => navigate("/", { replace: true }), 500);
+        setTimeout(() => navigate(targetPath, { replace: true }), 500);
       })
       .catch((err: unknown) => {
+        sessionStorage.removeItem(stateKey);
+        sessionStorage.removeItem(recaptchaKey);
         const msg =
           err instanceof Error ? err.message : "Unable to complete social login. Please try again.";
         setStatus("error");

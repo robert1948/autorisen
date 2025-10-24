@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "e73b9501791c"
@@ -31,13 +30,20 @@ def upgrade() -> None:
         sa.Column("placement", sa.String(length=64), nullable=False),
         sa.Column("thread_id", sa.String(length=36), nullable=False),
         sa.Column("steps", sa.JSON(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_flow_runs_thread_id", "flow_runs", ["thread_id"], unique=False)
     op.create_index("ix_flow_runs_user_id", "flow_runs", ["user_id"], unique=False)
     op.create_index("ix_flow_runs_agent_id", "flow_runs", ["agent_id"], unique=False)
-    op.create_index("ix_flow_runs_agent_version_id", "flow_runs", ["agent_version_id"], unique=False)
+    op.create_index(
+        "ix_flow_runs_agent_version_id", "flow_runs", ["agent_version_id"], unique=False
+    )
 
 
 def downgrade() -> None:

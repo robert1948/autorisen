@@ -13,7 +13,6 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "224248f081ab"
 down_revision: Union[str, None] = "e73b9501791c"
@@ -25,8 +24,13 @@ def _table_exists(inspector: sa.Inspector, table_name: str) -> bool:
     return table_name in inspector.get_table_names()
 
 
-def _unique_exists(inspector: sa.Inspector, table_name: str, constraint_name: str) -> bool:
-    return any(uc["name"] == constraint_name for uc in inspector.get_unique_constraints(table_name))
+def _unique_exists(
+    inspector: sa.Inspector, table_name: str, constraint_name: str
+) -> bool:
+    return any(
+        uc["name"] == constraint_name
+        for uc in inspector.get_unique_constraints(table_name)
+    )
 
 
 def upgrade() -> None:
@@ -52,7 +56,10 @@ def upgrade() -> None:
             sa.UniqueConstraint("user_id", "thread_id", name=unique_name),
         )
         inspector = sa.inspect(bind)
-    elif not _unique_exists(inspector, table_name, unique_name) and bind.dialect.name != "sqlite":
+    elif (
+        not _unique_exists(inspector, table_name, unique_name)
+        and bind.dialect.name != "sqlite"
+    ):
         op.create_unique_constraint(unique_name, table_name, ["user_id", "thread_id"])
 
 

@@ -4,7 +4,9 @@
 List likely routes by scanning client/src for React Router and anchor usage.
 Stdlib only; no dependencies.
 """
-import os, re, sys
+import os
+import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # repo root
@@ -12,8 +14,9 @@ SRC = ROOT / "client" / "src"
 
 # Regexes to catch common patterns
 ROUTE_PATH = re.compile(r'path\s*[:=]\s*["\'](/[^"\']*)["\']')
-LINK_TO    = re.compile(r'<Link\s+[^>]*to\s*=\s*["\'](/[^"\']*)["\']')
-HREF       = re.compile(r'href\s*=\s*["\'](/[^"\']*)["\']')
+LINK_TO = re.compile(r'<Link\s+[^>]*to\s*=\s*["\'](/[^"\']*)["\']')
+HREF = re.compile(r'href\s*=\s*["\'](/[^"\']*)["\']')
+
 
 def scan():
     routes = set()
@@ -35,6 +38,7 @@ def scan():
     print("Discovered (from source):")
     for r in sorted(norm):
         print(" -", r)
+
 
 if __name__ == "__main__":
     if not SRC.exists():

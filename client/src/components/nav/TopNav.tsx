@@ -27,9 +27,9 @@ const TopNav = ({ onOpenSupport }: Props) => {
           <a href="#faq">FAQ</a>
         </nav>
         <div className="top-nav__auth">
-          <a className="link" href="#auth">
+          <Link className="link" to="/login">
             Login
-          </a>
+          </Link>
           <Link className="btn btn--ghost" to="/register">
             Register
           </Link>

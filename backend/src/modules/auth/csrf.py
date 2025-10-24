@@ -48,4 +48,3 @@ def require_csrf_token(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid CSRF token"
         )
-

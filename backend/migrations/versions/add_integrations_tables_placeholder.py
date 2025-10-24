@@ -12,7 +12,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "add_integrations_tables"
 down_revision: Union[str, None] = "c1e0cc70f7a4"

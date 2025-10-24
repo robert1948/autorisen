@@ -36,7 +36,9 @@ def test_prepare_adapters_flags_missing_env():
     heroku_adapter = adapters[1][3]
 
     assert "GH_TOKEN" in github_adapter.verify_env()
-    assert set(["HEROKU_API_KEY", "HEROKU_APP_NAME"]).issubset(heroku_adapter.verify_env())
+    assert set(["HEROKU_API_KEY", "HEROKU_APP_NAME"]).issubset(
+        heroku_adapter.verify_env()
+    )
 
 
 @pytest.mark.parametrize("status_code", [200, 503, -1])

@@ -184,7 +184,9 @@ def resolve_agent_context(
     if agent is None:
         raise ValueError("agent not found")
 
-    version_stmt = select(models.AgentVersion).where(models.AgentVersion.agent_id == agent.id)
+    version_stmt = select(models.AgentVersion).where(
+        models.AgentVersion.agent_id == agent.id
+    )
     if version:
         version_stmt = version_stmt.where(models.AgentVersion.version == version)
     else:
@@ -293,7 +295,9 @@ def execute(
                 message=str(exc),
             )
             raise
-        except Exception as exc:  # noqa: BLE001 broad but captured for retries exhaustion
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001 broad but captured for retries exhaustion
             _mark_failed(
                 db,
                 flow_run=flow_run,

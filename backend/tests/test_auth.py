@@ -4,6 +4,7 @@ from __future__ import annotations
 """Integration tests for authentication flow (register -> login -> refresh -> me)."""
 
 import json
+import re
 import uuid
 from typing import Any, Dict, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
@@ -11,6 +12,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from sqlalchemy import text
 
+from backend.src.core import mailer as mailer_core
 from backend.src.core.rate_limit import limiter  # single place for limiter
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
@@ -19,13 +21,25 @@ from backend.src.services.security import create_jwt
 CSRF_HEADER = "X-CSRF-Token"
 
 
+def _latest_verification_token() -> str:
+    assert mailer_core.TEST_OUTBOX, "expected verification email to be sent"
+    message = mailer_core.TEST_OUTBOX[-1]
+    body = message.get_body(preferencelist=("html", "plain"))
+    content = body.get_content() if body is not None else message.get_content()
+    match = re.search(r"/verify-email/([A-Za-z0-9._\-]+)", content)
+    assert match, "verification token not found in email content"
+    return match.group(1)
+
+
 def _post_json_or_query_payload(
     client, url: str, body: Dict[str, Any], *, headers: Optional[Dict[str, str]] = None
 ):
     """POST JSON; if API expects ?payload=, retry accordingly."""
     r = client.post(url, json=body, headers=headers or {})
     if r.status_code == 422 and '"query","payload"' in r.text:
-        r = client.post(url, params={"payload": json.dumps(body)}, headers=headers or {})
+        r = client.post(
+            url, params={"payload": json.dumps(body)}, headers=headers or {}
+        )
     return r
 
 
@@ -126,6 +140,7 @@ def _complete_registration(
     last_name: str = "User",
     company_name: str = "Test Co",
     ip: str = "127.0.0.1",
+    auto_verify: bool = True,
 ) -> Tuple[str, str, Dict[str, Any]]:
     # Step 1
     step1_payload = {
@@ -135,7 +150,7 @@ def _complete_registration(
         "password": password,
         "confirm_password": password,
         "role": role,
-        "recaptcha_token": "unit-test-token",
+        "recaptcha_token": "dev-bypass-token",
     }
     r1 = _post_json_or_query_payload(
         client,
@@ -173,6 +188,12 @@ def _complete_registration(
     )
     assert r2.status_code == 200, r2.text
     body = r2.json()
+
+    if auto_verify:
+        token = _latest_verification_token()
+        verify = client.get(f"/api/auth/verify?token={token}", allow_redirects=False)
+        assert verify.status_code == 307, verify.text
+
     return body["access_token"], body["refresh_token"], body["user"]
 
 
@@ -188,10 +209,24 @@ def test_register_login_refresh_me_flow(client):
         first_name="Dev",
         last_name="Example",
         company_name="Dev LLC",
+        auto_verify=False,
     )
     assert user["email"] == email
     assert user["first_name"] == "Dev"
     assert user.get("role") in ("Developer", "developer")
+
+    # Unverified login should fail
+    unverified_login = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": password},
+        headers=_csrf_headers(client),
+    )
+    assert unverified_login.status_code == 403
+    assert "not verified" in unverified_login.text.lower()
+
+    token = _latest_verification_token()
+    verify = client.get(f"/api/auth/verify?token={token}", allow_redirects=False)
+    assert verify.status_code == 307
 
     # Login
     login = client.post(
@@ -235,7 +270,13 @@ def test_login_rate_limit(client):
     ip = "203.0.113.77"  # test IP
 
     _complete_registration(
-        client, email, good, role="Customer", first_name="Rate", last_name="Limit", ip=ip
+        client,
+        email,
+        good,
+        role="Customer",
+        first_name="Rate",
+        last_name="Limit",
+        ip=ip,
     )
 
     # Five bad attempts -> 401
@@ -274,7 +315,7 @@ def test_register_duplicate_email(client):
             "password": password,
             "confirm_password": password,
             "role": "Customer",
-            "recaptcha_token": "unit-test-token",
+            "recaptcha_token": "dev-bypass-token",
         },
         headers=_csrf_headers(client),
     )
@@ -292,7 +333,7 @@ def test_password_policy_enforced(client):
             "password": "short",
             "confirm_password": "short",
             "role": "Customer",
-            "recaptcha_token": "unit-test-token",
+            "recaptcha_token": "dev-bypass-token",
         },
         headers=_csrf_headers(client),
     )
@@ -334,7 +375,11 @@ def test_login_refresh_cookie_logout_flow(client):
 def test_logout_revokes_current_token(client):
     email = f"logout_{uuid.uuid4().hex[:8]}@example.com"
     password = "LogoutPass123!"
-    access_token, _, _ = _complete_registration(client, email, password)
+    _complete_registration(client, email, password)
+
+    login_response = _login(client, email, password)
+    access_token = login_response.json().get("access_token")
+    assert access_token
 
     headers = {"Authorization": f"Bearer {access_token}"}
     logout_headers = _csrf_headers(client, headers)
@@ -350,7 +395,11 @@ def test_logout_revokes_current_token(client):
 def test_logout_all_devices_invalidates_other_tokens(client):
     email = f"logoutall_{uuid.uuid4().hex[:8]}@example.com"
     password = "LogoutAllPass123!"
-    access_token, _, _ = _complete_registration(client, email, password)
+    _complete_registration(client, email, password)
+
+    first_login = _login(client, email, password)
+    access_token = first_login.json().get("access_token")
+    assert access_token
 
     second_login = _login(client, email, password, ip="198.51.100.7")
     access_token_2 = second_login.json().get("access_token")
@@ -365,7 +414,9 @@ def test_logout_all_devices_invalidates_other_tokens(client):
     )
     assert res.status_code == 200
 
-    other_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {access_token_2}"})
+    other_me = client.get(
+        "/api/auth/me", headers={"Authorization": f"Bearer {access_token_2}"}
+    )
     assert other_me.status_code == 401
     assert "Session invalidated" in other_me.text
 
@@ -373,13 +424,19 @@ def test_logout_all_devices_invalidates_other_tokens(client):
 def test_logout_idempotent(client):
     email = f"logoutidem_{uuid.uuid4().hex[:8]}@example.com"
     password = "LogoutIdemPass123!"
-    access_token, _, _ = _complete_registration(client, email, password)
+    _complete_registration(client, email, password)
+
+    login_response = _login(client, email, password)
+    access_token = login_response.json().get("access_token")
+    assert access_token
 
     headers = {"Authorization": f"Bearer {access_token}"}
     logout_headers = _csrf_headers(client, headers)
     first = client.post("/api/auth/logout", json={}, headers=logout_headers)
     assert first.status_code == 200
-    second = client.post("/api/auth/logout", json={}, headers=_csrf_headers(client, headers))
+    second = client.post(
+        "/api/auth/logout", json={}, headers=_csrf_headers(client, headers)
+    )
     assert second.status_code == 200
 
 
@@ -396,12 +453,14 @@ def test_logout_with_expired_token_returns_200(client):
             "role": user.role,
             "purpose": "access",
             "jti": uuid.uuid4().hex,
-            "token_version": int(getattr(user, "token_version", 1)),
+            "token_version": int(getattr(user, "token_version", 0)),
         }
         expired_token, _ = create_jwt(payload, -1)
 
     headers = {"Authorization": f"Bearer {expired_token}"}
-    res = client.post("/api/auth/logout", json={}, headers=_csrf_headers(client, headers))
+    res = client.post(
+        "/api/auth/logout", json={}, headers=_csrf_headers(client, headers)
+    )
     assert res.status_code == 200, res.text
     assert res.json()["message"] == "Logged out"
 
@@ -415,7 +474,7 @@ def test_register_requires_csrf(client):
         "password": "NoCsrfPass123!",
         "confirm_password": "NoCsrfPass123!",
         "role": "Customer",
-        "recaptcha_token": "unit-test-token",
+        "recaptcha_token": "dev-bypass-token",
     }
     res = client.post("/api/auth/register/step1", json=payload)
     assert res.status_code == 403
@@ -428,6 +487,26 @@ def test_login_requires_csrf(client):
 
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     assert res.status_code == 403
+
+
+def test_verification_resend_throttle(client):
+    email = f"verify_{uuid.uuid4().hex[:8]}@example.com"
+    password = "VerifyPass123!"
+    _complete_registration(client, email, password, auto_verify=False)
+
+    first = client.post(
+        "/api/auth/verify/resend",
+        json={"email": email},
+        headers=_csrf_headers(client),
+    )
+    assert first.status_code == 202, first.text
+
+    second = client.post(
+        "/api/auth/verify/resend",
+        json={"email": email},
+        headers=_csrf_headers(client),
+    )
+    assert second.status_code == 429, second.text
 
 
 def test_password_reset_flow(client, monkeypatch):

@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "3d1a7b7b4c1c"
@@ -47,10 +46,16 @@ def upgrade() -> None:
                 server_default="3",
             )
         )
-        batch_op.add_column(sa.Column("idempotency_key", sa.String(length=128), nullable=True))
+        batch_op.add_column(
+            sa.Column("idempotency_key", sa.String(length=128), nullable=True)
+        )
         batch_op.add_column(sa.Column("error_message", sa.Text(), nullable=True))
-        batch_op.add_column(sa.Column("started_at", sa.DateTime(timezone=True), nullable=True))
-        batch_op.add_column(sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True))
+        batch_op.add_column(
+            sa.Column("started_at", sa.DateTime(timezone=True), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True)
+        )
         batch_op.create_unique_constraint(
             "uq_flow_runs_user_idempotency", ["user_id", "idempotency_key"]
         )

@@ -1282,12 +1282,60 @@ a {
 .auth-page {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 24px;
   padding: 48px 16px;
   background: radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 55%),
     radial-gradient(circle at bottom, rgba(124, 58, 237, 0.1), transparent 60%),
     #020617;
+}
+
+.auth-page__brand {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.auth-page__brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: rgba(226, 232, 240, 0.95);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.auth-page__brand-logo {
+  filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.35));
+}
+
+.auth-page__brand-name {
+  font-size: 1.1rem;
+}
+
+.auth-page__brand-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: rgba(148, 163, 184, 0.9);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.auth-page__brand-cta:hover {
+  border-color: rgba(59, 130, 246, 0.7);
+  color: rgba(226, 232, 240, 0.95);
+  transform: translateY(-1px);
 }
 
 .auth-card {
@@ -1378,6 +1426,150 @@ a {
 
 .auth-social__button--linkedin {
   border-color: rgba(59, 130, 246, 0.35);
+}
+
+.auth-pending {
+  margin: 48px auto;
+  max-width: 420px;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(4, 10, 22, 0.9);
+  box-shadow: 0 18px 48px rgba(4, 10, 22, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.auth-pending__button {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(37, 99, 235, 0.85);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.auth-pending__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.auth-pending__status {
+  font-size: 0.9rem;
+}
+
+.auth-pending__status--success {
+  color: rgba(34, 197, 94, 0.85);
+}
+
+.auth-pending__status--error {
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.auth-banner {
+  max-width: 420px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.auth-banner--success {
+  background: rgba(22, 163, 74, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: rgba(34, 197, 94, 0.95);
+}
+
+.verify-email-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 55%),
+    radial-gradient(circle at bottom, rgba(124, 58, 237, 0.1), transparent 60%),
+    #020617;
+}
+
+.verify-email-card {
+  max-width: 420px;
+  width: 100%;
+  padding: 32px;
+  border-radius: 24px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(4, 10, 22, 0.92);
+  box-shadow: 0 18px 48px rgba(4, 10, 22, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: center;
+}
+
+.verify-email-card h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.verify-email-card__message {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.verify-email-card__message--success {
+  color: rgba(34, 197, 94, 0.85);
+}
+
+.verify-email-card__message--error {
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.verify-email-card__resend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.verify-email-card__resend input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(15, 23, 42, 0.85);
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.verify-email-card__resend button {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(37, 99, 235, 0.85);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.verify-email-card__resend button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.verify-email-card__status {
+  font-size: 0.9rem;
+}
+
+.verify-email-card__status--success {
+  color: rgba(34, 197, 94, 0.85);
+}
+
+.verify-email-card__status--error {
+  color: rgba(248, 113, 113, 0.9);
 }
 
 .auth-divider {
@@ -1521,6 +1713,10 @@ a {
 
 .auth-status--error {
   color: #fecdd3;
+}
+
+.auth-status--success {
+  color: #bbf7d0;
 }
 
 .auth-card--callback {

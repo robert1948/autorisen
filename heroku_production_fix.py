@@ -15,7 +15,7 @@ import sys
 
 def fix_model_imports():
     """Fix model import issues for production"""
-    
+
     models_init_content = '''"""
 LocalStorm Models Package - Production Fixed
 ==========================================
@@ -68,11 +68,13 @@ __all__ = [
     "ConversationMessage"
 ]
 '''
-    
-    models_init_path = "/home/robert/Documents/localstorm2/backend/app/models/__init__.py"
-    
+
+    models_init_path = (
+        "/home/robert/Documents/localstorm2/backend/app/models/__init__.py"
+    )
+
     try:
-        with open(models_init_path, 'w') as f:
+        with open(models_init_path, "w") as f:
             f.write(models_init_content)
         print("✅ Fixed models/__init__.py for production")
         return True
@@ -80,9 +82,10 @@ __all__ = [
         print(f"❌ Could not fix models init: {e}")
         return False
 
+
 def create_performance_optimized_auth():
     """Create optimized auth route for production"""
-    
+
     optimized_validation = '''
 # Performance optimized email validation
 @router.get("/v2/validate-email", tags=["auth-v2"])
@@ -130,21 +133,22 @@ async def validate_email(email: str, db: Session = Depends(get_db)):
             "message": "Unable to validate email. Please try again."
         }
 '''
-    
+
     print("✅ Performance optimization patterns identified")
     print("📋 Manual optimization needed:")
     print("   1. Reduce audit logging frequency in registration")
     print("   2. Optimize database queries with proper indexes")
     print("   3. Implement connection pooling")
     print("   4. Add request timeout handling")
-    
+
     return True
+
 
 def create_heroku_deployment_fix():
     """Create fixes for Heroku deployment"""
-    
+
     # Create a deployment script
-    deploy_script = '''#!/bin/bash
+    deploy_script = """#!/bin/bash
 # Heroku Deployment Fix Script
 # August 1, 2025
 
@@ -175,12 +179,12 @@ if [ "$1" = "migrate" ]; then
 fi
 
 echo "🎉 Heroku deployment fixes completed"
-'''
-    
+"""
+
     deploy_script_path = "/home/robert/Documents/localstorm2/heroku_performance_fix.sh"
-    
+
     try:
-        with open(deploy_script_path, 'w') as f:
+        with open(deploy_script_path, "w") as f:
             f.write(deploy_script)
         os.chmod(deploy_script_path, 0o755)
         print("✅ Created Heroku performance fix script")
@@ -189,25 +193,26 @@ echo "🎉 Heroku deployment fixes completed"
         print(f"❌ Could not create deployment script: {e}")
         return False
 
+
 def main():
     """Main execution"""
     print("🚀 Starting production Heroku fixes...")
-    
+
     # Fix model imports
     if not fix_model_imports():
         print("❌ Failed to fix model imports")
         return False
-    
+
     # Create performance optimizations
     if not create_performance_optimized_auth():
         print("❌ Failed to create performance optimizations")
         return False
-    
+
     # Create deployment fixes
     if not create_heroku_deployment_fix():
         print("❌ Failed to create deployment fixes")
         return False
-    
+
     print("🎉 Production fixes completed!")
     print("\n📋 Next steps for Heroku:")
     print("1. Deploy the model relationship fixes")
@@ -215,8 +220,9 @@ def main():
     print("3. Optimize audit logging frequency")
     print("4. Monitor registration endpoint performance")
     print("5. Consider implementing request queuing for high load")
-    
+
     return True
+
 
 if __name__ == "__main__":
     success = main()

@@ -13,7 +13,9 @@ from backend.src.modules.flows.constants import DEFAULT_ONBOARDING_TASKS
 
 ToolPayload = Dict[str, Any]
 ToolResult = Dict[str, Any]
-ToolHandler = Callable[[Session, models.User, models.ChatThread, ToolPayload], ToolResult]
+ToolHandler = Callable[
+    [Session, models.User, models.ChatThread, ToolPayload], ToolResult
+]
 
 
 @dataclass(frozen=True)
@@ -98,7 +100,7 @@ def _money_summary(
     return {
         "summary": {
             "period": period,
-            "top_merchants": ["Cape Supplies", "CloudCompute"]
+            "top_merchants": ["Cape Supplies", "CloudCompute"],
         },
         "note": "Connect accounting for deeper benchmarking.",
     }
@@ -111,7 +113,9 @@ def _onboarding_checklist(
     payload: ToolPayload,
 ) -> ToolResult:
     checklist = db.scalar(
-        select(models.OnboardingChecklist).where(models.OnboardingChecklist.user_id == user.id)
+        select(models.OnboardingChecklist).where(
+            models.OnboardingChecklist.user_id == user.id
+        )
     )
     if checklist is None:
         checklist = models.OnboardingChecklist(

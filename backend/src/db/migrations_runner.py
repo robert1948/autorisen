@@ -47,7 +47,9 @@ def run_migrations_on_startup() -> bool:
         migrations_dir = backend_root / "migrations"
 
         if not alembic_ini.exists():
-            log.warning("Alembic config not found at %s; skipping migrations.", alembic_ini)
+            log.warning(
+                "Alembic config not found at %s; skipping migrations.", alembic_ini
+            )
             _HAS_RUN = True
             return False
 

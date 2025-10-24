@@ -7,14 +7,15 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import (BaseModel, EmailStr, Field, field_validator,
+                      model_validator)
 
 from ...schemas.user import UserOut
 
-PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$")
-PASSWORD_ERROR = (
-    "Password must be at least 12 characters and include uppercase, lowercase, digit, and special character."
+PASSWORD_PATTERN = re.compile(
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$"
 )
+PASSWORD_ERROR = "Password must be at least 12 characters and include uppercase, lowercase, digit, and special character."
 
 
 class UserRole(str, Enum):

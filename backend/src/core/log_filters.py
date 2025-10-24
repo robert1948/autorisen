@@ -11,6 +11,7 @@ _SUPPRESS = re.compile(
     re.IGNORECASE,
 )
 
+
 class AccessPathSuppressFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         try:

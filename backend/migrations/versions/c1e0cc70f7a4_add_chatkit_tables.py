@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c1e0cc70f7a4"
@@ -43,7 +43,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_app_chat_threads_user_id", "app_chat_threads", ["user_id"], unique=False)
+    op.create_index(
+        "ix_app_chat_threads_user_id", "app_chat_threads", ["user_id"], unique=False
+    )
     op.create_index(
         "ix_app_chat_threads_user_placement",
         "app_chat_threads",
@@ -65,10 +67,14 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["thread_id"], ["app_chat_threads.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["thread_id"], ["app_chat_threads.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_app_chat_events_thread_id", "app_chat_events", ["thread_id"], unique=False)
+    op.create_index(
+        "ix_app_chat_events_thread_id", "app_chat_events", ["thread_id"], unique=False
+    )
 
 
 def downgrade() -> None:

@@ -5,3 +5,4 @@
 /register?role=user
 /register?role=developer
 /subscribe
+/verify-email/:token

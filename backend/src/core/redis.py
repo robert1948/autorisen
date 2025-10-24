@@ -71,7 +71,9 @@ def is_jti_denied(jti: str) -> bool:
     return bool(store.get(_key_for_jti(jti)))
 
 
-def cache_user_token_version(user_id: str | int, version: int, ttl_seconds: int = 3600) -> None:
+def cache_user_token_version(
+    user_id: str | int, version: int, ttl_seconds: int = 3600
+) -> None:
     store = _get_store()
     store.setex(_key_for_user_version(user_id), ttl_seconds, str(int(version)))
 

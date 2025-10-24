@@ -57,6 +57,7 @@ class AgentVersionResponse(AgentVersionBase):
     created_at: datetime
     published_at: Optional[datetime]
 
+
 class AgentResponse(AgentBase):
     id: str
     owner_id: Optional[str]

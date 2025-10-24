@@ -12,7 +12,9 @@ class ChatTokenRequest(BaseModel):
     """Request payload for issuing a ChatKit session token."""
 
     placement: str = Field(..., min_length=2, max_length=64, examples=["support"])
-    thread_id: Optional[str] = Field(default=None, description="Existing thread identifier")
+    thread_id: Optional[str] = Field(
+        default=None, description="Existing thread identifier"
+    )
 
 
 class ChatTokenResponse(BaseModel):
