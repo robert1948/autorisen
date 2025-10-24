@@ -197,3 +197,13 @@ Appendix — Helpful commands
     --assume-role-policy-document file://infra/aws-ecs-skel/trust-policy.json
 
 Maintainers: ops@example.com, infra@example.com, repo-admin@example.com
+
+<!-- PLAN:BEGIN -->
+
+| Id | Title | Status | Owner | Priority |
+| --- | --- | --- | --- | --- |
+| AUTH-005 | Security hardening & tests | todo | backend | high |
+| FE-004 | Login page + form | todo | frontend | high |
+| DEVOPS-035 | Prod deploy / Capecraft | blocked | devops | high |
+
+<!-- PLAN:END -->
