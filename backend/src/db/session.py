@@ -12,7 +12,9 @@ try:
     # Your project settings should expose DATABASE_URL
     from backend.src.settings import settings  # type: ignore
 
-    DATABASE_URL = getattr(settings, "DATABASE_URL", None) or os.getenv("DATABASE_URL", "")
+    DATABASE_URL = getattr(settings, "DATABASE_URL", None) or os.getenv(
+        "DATABASE_URL", ""
+    )
 except Exception:
     DATABASE_URL = os.getenv("DATABASE_URL", "")
 
@@ -36,7 +38,9 @@ DB_URL = _normalize_db_url(DATABASE_URL)
 # --- SSL for managed Postgres (Heroku/RDS) ---
 # Opt-in via env var or auto-detect by URL host
 SSL_REQUIRED = os.getenv("DATABASE_SSL", "").lower() in {"1", "true", "yes", "require"}
-if ("amazonaws.com" in DB_URL or "heroku" in DB_URL) and os.getenv("DATABASE_SSL") is None:
+if ("amazonaws.com" in DB_URL or "heroku" in DB_URL) and os.getenv(
+    "DATABASE_SSL"
+) is None:
     SSL_REQUIRED = True
 
 
@@ -74,7 +78,11 @@ engine: Engine = _create_engine(DB_URL)
 
 # Session factory (synchronous)
 SessionLocal = sessionmaker(
-    bind=engine, autocommit=False, autoflush=False, expire_on_commit=False, class_=Session
+    bind=engine,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+    class_=Session,
 )
 
 __all__ = ["engine", "SessionLocal", "get_db", "get_session"]

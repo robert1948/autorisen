@@ -7,15 +7,12 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from backend.src.core.redis import (
-    cache_user_token_version,
-    clear_user_token_version_cache,
-    get_cached_user_token_version,
-    is_jti_denied,
-)
+from backend.src.core.redis import (cache_user_token_version,
+                                    clear_user_token_version_cache,
+                                    get_cached_user_token_version,
+                                    is_jti_denied)
 from backend.src.db.session import get_db
 from backend.src.services.security import decode_jwt
-
 
 log = logging.getLogger("auth.deps")
 
@@ -40,7 +37,9 @@ for path in (
 if User is None:
     log.error("Could not import User model; last import error: %s", _user_import_err)
 
-FORBIDDEN = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+FORBIDDEN = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
+)
 
 
 def _unauthorized(detail: str) -> HTTPException:
@@ -111,7 +110,6 @@ async def get_current_user_with_claims(
     request: Request,
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(default=None, convert_underscores=False),
-
 ) -> Tuple[Any, Dict[str, Any], str]:
     """Return ``(user, claims, token)`` after enforcing auth guards."""
 
@@ -138,7 +136,7 @@ async def get_current_user_with_claims(
 
     expected_version = get_cached_user_token_version(getattr(user, "id", ""))
     if expected_version is None:
-        expected_version = int(getattr(user, "token_version", 1))
+        expected_version = int(getattr(user, "token_version", 0))
         cache_user_token_version(getattr(user, "id", ""), expected_version)
 
     try:
@@ -164,6 +162,20 @@ async def get_current_user(
     return user
 
 
+async def get_verified_user(
+    request: Request,
+    db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(default=None, convert_underscores=False),
+) -> Any:
+    user, _, _ = await get_current_user_with_claims(request, db, authorization)
+    if not getattr(user, "is_email_verified", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Check your inbox or resend.",
+        )
+    return user
+
+
 def require_roles(*allowed_roles: str) -> Callable:
     """
     Usage:
@@ -173,7 +185,7 @@ def require_roles(*allowed_roles: str) -> Callable:
     """
     allowed = {r.lower().strip() for r in allowed_roles}
 
-    async def _dep(user=Depends(get_current_user)):
+    async def _dep(user=Depends(get_verified_user)):
         role = _normalize_role(getattr(user, "role", None))
         if not role or role not in allowed:
             raise FORBIDDEN

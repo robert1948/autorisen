@@ -48,7 +48,9 @@ def main() -> None:
             }
         else:
             result = adapter.run(args.task)
-            entry["status"] = result.get("status", "ok") if isinstance(result, dict) else "ok"
+            entry["status"] = (
+                result.get("status", "ok") if isinstance(result, dict) else "ok"
+            )
             entry["result"] = result
         report["tools"].append(entry)
 

@@ -18,7 +18,9 @@ def ensure_checklist(
     thread_id: Optional[str] = None,
 ) -> models.OnboardingChecklist:
     checklist = db.scalar(
-        select(models.OnboardingChecklist).where(models.OnboardingChecklist.user_id == user_id)
+        select(models.OnboardingChecklist).where(
+            models.OnboardingChecklist.user_id == user_id
+        )
     )
     if checklist is None:
         tasks = {

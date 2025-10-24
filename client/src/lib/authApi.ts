@@ -110,6 +110,7 @@ export type TokenResponse = {
   refresh_token?: string | null;
   expires_at?: string | null;
   token_type?: string;
+  email_verified?: boolean;
 };
 
 export type SocialLoginResponse = TokenResponse & {
@@ -303,6 +304,40 @@ export async function logout(): Promise<void> {
     await parseError(response);
   }
   invalidateCsrfToken();
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  const url = `${AUTH_BASE}/verify?token=${encodeURIComponent(token)}`;
+  const response = await fetch(url, {
+    method: "GET",
+    redirect: "manual" as RequestRedirect,
+    credentials: "include",
+  });
+
+  if (response.status >= 200 && response.status < 300) {
+    return;
+  }
+  if (response.status >= 300 && response.status < 400) {
+    return;
+  }
+  await parseError(response);
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  const csrfToken = await fetchCsrfToken();
+  const response = await fetch(`${AUTH_BASE}/verify/resend`, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      [CSRF_HEADER]: csrfToken,
+    },
+    ...defaultFetchOptions,
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    await parseError(response);
+  }
 }
 
 export async function requestPasswordReset(email: string): Promise<PasswordResetResponse> {

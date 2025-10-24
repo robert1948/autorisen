@@ -4,6 +4,8 @@ Snapshot: 2025-09-27
 
 See also: `senior_devops.md`
 
+<!-- markdownlint-disable MD013 -->
+
 Overview
 
 - Purpose: provide a single, actionable project plan for ops, infra, and product to execute and update. Keep AWS changes minimal and reversible. Where data is missing, tasks include TODO placeholders.
@@ -47,7 +49,8 @@ Snapshot (from `docs/autorisen_project_plan.csv`) — 2025-09-27
 - Total tasks: 70
 - Status counts: todo: 64, busy: 4, done: 2
 
-Recent updates (2025-09-27): DEVOPS-033 set to `busy`; DEVOPS-034 and ADMIN-030 marked `done` after staging deploy and smoke-test validation. DEVOPS-035, OBS-036, and OBS-037 are `busy` as work begins. Many rows updated with today's timestamp.
+Recent updates (2025-09-27): DEVOPS-033 set to `busy`; DEVOPS-034 and ADMIN-030 marked `done` after staging deploy and smoke-test validation. DEVOPS-035, OBS-036, and OBS-037 are `busy` as work begins. Many rows updated with today's timestamp.  
+Recent updates (2025-10-20): AUTH-005 remains `busy` while CSRF/rate-limit pytest refactor completes; migration `202502191200_email_verification.py` now handles SQLite via `CURRENT_TIMESTAMP`, and FE-004/DEVOPS-035 stay blocked until backend suite passes.
 
 Top priority (P1) tasks — quick view
 
@@ -62,7 +65,7 @@ Top priority (P1) tasks — quick view
 | ORG-007 | /orgs CRUD + /orgs/{id}/members | backend | 8 | ORG-006, AUTH-004 |
 | AIGW-009 | Provider adapter interface | backend | 6 | |
 | AIGW-010 | OpenAI adapter + quotas | backend | 10 | AIGW-009, AUTH-003 |
-| AIGW-011 | /ai/complete|/ai/chat routes | backend | 8 | AIGW-010 |
+| AIGW-011 | /ai/complete & /ai/chat routes | backend | 8 | AIGW-010 |
 | ORCH-012 | Run model + state machine | backend | 10 | AIGW-011 |
 | ORCH-013 | POST /flows/{name}/run | backend | 8 | ORCH-012 |
 
@@ -120,19 +123,19 @@ Checklists
 Release checklist (minimal)
 
 1. CI green for `ci-health` and `docker-publish` (or run locally).
-2. `HEROKU_APP_NAME` and `HEROKU_API_KEY` present in repo secrets.
-3. Smoke test `services/health` passes after deploy.
+1. `HEROKU_APP_NAME` and `HEROKU_API_KEY` present in repo secrets.
+1. Smoke test `services/health` passes after deploy.
 
 Rollback checklist
 
 1. Revert release commit and re-run deploy using previous image tag.
-2. Verify `/alive` returns 200.
+1. Verify `/alive` returns 200.
 
 Secrets & Infra change checklist
 
 1. Create mapping in `infra/secrets-mapping.json` (reviewed by SEC).
-2. Run sync in dry-run (`ci/sync-github-to-heroku.yml`).
-3. Approve and run `--apply` in controlled workflow.
+1. Run sync in dry-run (`ci/sync-github-to-heroku.yml`).
+1. Approve and run `--apply` in controlled workflow.
 
 Appendix — Helpful commands
 
@@ -194,3 +197,13 @@ Appendix — Helpful commands
     --assume-role-policy-document file://infra/aws-ecs-skel/trust-policy.json
 
 Maintainers: ops@example.com, infra@example.com, repo-admin@example.com
+
+<!-- PLAN:BEGIN -->
+
+| Id | Title | Status | Owner | Priority |
+| --- | --- | --- | --- | --- |
+| AUTH-005 | Security hardening & tests | todo | backend | high |
+| FE-004 | Login page + form | todo | frontend | high |
+| DEVOPS-035 | Prod deploy / Capecraft | blocked | devops | high |
+
+<!-- PLAN:END -->

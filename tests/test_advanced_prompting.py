@@ -4,7 +4,7 @@ Task 2.1.5: Advanced Prompting Templates Test Suite
 
 Comprehensive test suite for advanced prompting functionality:
 - Template management tests
-- Prompt generation tests  
+- Prompt generation tests
 - Performance tracking tests
 - Personalization integration tests
 - API endpoint tests
@@ -14,16 +14,13 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from app.services.advanced_prompting_service import (
-    AdvancedPromptingService,
-    PromptCategory,
-    PromptComplexity,
-    PromptGenerationRequest,
-    PromptRole,
-    PromptTemplate,
-    TemplateVersion,
-)
+from app.services.advanced_prompting_service import (AdvancedPromptingService,
+                                                     PromptCategory,
+                                                     PromptComplexity,
+                                                     PromptGenerationRequest,
+                                                     PromptRole,
+                                                     PromptTemplate,
+                                                     TemplateVersion)
 
 
 class TestAdvancedPromptingService:
@@ -50,21 +47,24 @@ class TestAdvancedPromptingService:
             updated_at=datetime.now(),
             created_by="test_user",
             tags=["general", "assistance"],
-            language="en"
+            language="en",
         )
 
     @pytest.fixture
     def prompting_service(self):
         """Create AdvancedPromptingService with mocked dependencies"""
-        with patch('app.services.advanced_prompting_service.get_context_service') as mock_context, \
-             patch('app.services.advanced_prompting_service.get_personalization_service') as mock_personalization:
-            
+        with patch(
+            "app.services.advanced_prompting_service.get_context_service"
+        ) as mock_context, patch(
+            "app.services.advanced_prompting_service.get_personalization_service"
+        ) as mock_personalization:
+
             mock_context_service = AsyncMock()
             mock_personalization_service = AsyncMock()
-            
+
             mock_context.return_value = mock_context_service
             mock_personalization.return_value = mock_personalization_service
-            
+
             service = AdvancedPromptingService()
             return service
 
@@ -72,11 +72,11 @@ class TestAdvancedPromptingService:
     async def test_service_initialization(self, prompting_service):
         """Test service initialization with default templates"""
         assert prompting_service is not None
-        
+
         # Test default templates are loaded
         templates = await prompting_service.list_templates()
         assert len(templates) >= 6  # Should have default templates
-        
+
         # Check for key default templates
         template_names = [t.name for t in templates]
         assert "General Chat Assistant" in template_names
@@ -95,9 +95,9 @@ class TestAdvancedPromptingService:
             template_content="As a business consultant, I recommend {{strategy}} for {{business_type}}.",
             variables=["strategy", "business_type"],
             created_by="test_user",
-            tags=["business", "consulting"]
+            tags=["business", "consulting"],
         )
-        
+
         assert template.name == "Custom Test Template"
         assert template.category == PromptCategory.BUSINESS
         assert template.role == PromptRole.CONSULTANT
@@ -119,105 +119,122 @@ class TestAdvancedPromptingService:
             template_content="I'll help you with {{programming_language}} code.",
             variables=["programming_language"],
             created_by="test_user",
-            tags=["coding"]
+            tags=["coding"],
         )
-        
+
         # Filter by category
         code_templates = await prompting_service.list_templates(
             category=PromptCategory.CODE_ASSISTANCE
         )
         assert all(t.category == PromptCategory.CODE_ASSISTANCE for t in code_templates)
-        
+
         # Filter by role
         expert_templates = await prompting_service.list_templates(
             role=PromptRole.EXPERT
         )
         assert all(t.role == PromptRole.EXPERT for t in expert_templates)
-        
+
         # Filter by complexity
         intermediate_templates = await prompting_service.list_templates(
             complexity=PromptComplexity.INTERMEDIATE
         )
-        assert all(t.complexity == PromptComplexity.INTERMEDIATE for t in intermediate_templates)
+        assert all(
+            t.complexity == PromptComplexity.INTERMEDIATE
+            for t in intermediate_templates
+        )
 
     @pytest.mark.asyncio
     async def test_prompt_generation_basic(self, prompting_service, mock_template):
         """Test basic prompt generation without personalization"""
         # Add mock template to service
         prompting_service.templates[mock_template.template_id] = mock_template
-        
+
         request = PromptGenerationRequest(
             template_id=mock_template.template_id,
             user_id="test_user",
             context_variables={"user_name": "Alice", "topic": "Python programming"},
-            personalization_enabled=False
+            personalization_enabled=False,
         )
-        
+
         result = await prompting_service.generate_prompt(request)
-        
-        assert result.prompt_content == "Hello Alice, I'm here to help with Python programming."
+
+        assert (
+            result.prompt_content
+            == "Hello Alice, I'm here to help with Python programming."
+        )
         assert result.template_used == mock_template.template_id
-        assert result.variables_substituted == {"user_name": "Alice", "topic": "Python programming"}
+        assert result.variables_substituted == {
+            "user_name": "Alice",
+            "topic": "Python programming",
+        }
         assert not result.personalization_applied
 
     @pytest.mark.asyncio
-    async def test_prompt_generation_with_personalization(self, prompting_service, mock_template):
+    async def test_prompt_generation_with_personalization(
+        self, prompting_service, mock_template
+    ):
         """Test prompt generation with personalization"""
         # Add mock template to service
         prompting_service.templates[mock_template.template_id] = mock_template
-        
+
         # Mock personalization service
         mock_profile = MagicMock()
         mock_profile.communication_style.value = "professional"
         mock_profile.expertise_level.value = "intermediate"
         mock_profile.learning_style.value = "visual"
         mock_profile.personality_traits = {"openness": 0.8, "conscientiousness": 0.7}
-        
-        with patch('app.services.advanced_prompting_service.get_personalization_service') as mock_personalization:
+
+        with patch(
+            "app.services.advanced_prompting_service.get_personalization_service"
+        ) as mock_personalization:
             mock_personalization_service = AsyncMock()
-            mock_personalization_service.get_personality_profile.return_value = mock_profile
+            mock_personalization_service.get_personality_profile.return_value = (
+                mock_profile
+            )
             mock_personalization.return_value = mock_personalization_service
-            
+
             request = PromptGenerationRequest(
                 template_id=mock_template.template_id,
                 user_id="test_user",
                 context_variables={"user_name": "Alice", "topic": "Python programming"},
-                personalization_enabled=True
+                personalization_enabled=True,
             )
-            
+
             result = await prompting_service.generate_prompt(request)
-            
+
             assert result.personalization_applied
             assert "Alice" in result.prompt_content
             assert "Python programming" in result.prompt_content
 
     @pytest.mark.asyncio
-    async def test_template_performance_tracking(self, prompting_service, mock_template):
+    async def test_template_performance_tracking(
+        self, prompting_service, mock_template
+    ):
         """Test template performance tracking"""
         # Add mock template to service
         prompting_service.templates[mock_template.template_id] = mock_template
         initial_usage = mock_template.usage_count
         initial_success_rate = mock_template.success_rate
-        
+
         # Update performance with success
         await prompting_service.update_template_performance(
             template_id=mock_template.template_id,
             success=True,
             user_rating=4.5,
-            response_time_ms=250
+            response_time_ms=250,
         )
-        
+
         updated_template = prompting_service.templates[mock_template.template_id]
         assert updated_template.usage_count == initial_usage + 1
-        
+
         # Update performance with failure
         await prompting_service.update_template_performance(
             template_id=mock_template.template_id,
             success=False,
             user_rating=2.0,
-            response_time_ms=500
+            response_time_ms=500,
         )
-        
+
         updated_template = prompting_service.templates[mock_template.template_id]
         assert updated_template.usage_count == initial_usage + 2
 
@@ -225,12 +242,12 @@ class TestAdvancedPromptingService:
     async def test_template_analytics(self, prompting_service):
         """Test template analytics generation"""
         analytics = await prompting_service.get_template_analytics()
-        
+
         assert "total_templates" in analytics["overview"]
         assert "category_distribution" in analytics
         assert "role_distribution" in analytics
         assert "top_performing_templates" in analytics
-        
+
         assert analytics["overview"]["total_templates"] >= 0
         assert isinstance(analytics["category_distribution"], dict)
         assert isinstance(analytics["top_performing_templates"], list)
@@ -259,9 +276,9 @@ As an advanced learner, let's explore complex {{subject}} concepts.
 {% endfor %}
             """.strip(),
             variables=["name", "difficulty", "subject", "topics"],
-            created_by="test_user"
+            created_by="test_user",
         )
-        
+
         request = PromptGenerationRequest(
             template_id=complex_template.template_id,
             user_id="test_user",
@@ -269,13 +286,13 @@ As an advanced learner, let's explore complex {{subject}} concepts.
                 "name": "Bob",
                 "difficulty": "intermediate",
                 "subject": "machine learning",
-                "topics": ["neural networks", "deep learning", "transformers"]
+                "topics": ["neural networks", "deep learning", "transformers"],
             },
-            personalization_enabled=False
+            personalization_enabled=False,
         )
-        
+
         result = await prompting_service.generate_prompt(request)
-        
+
         assert "Hello Bob!" in result.prompt_content
         assert "dive deeper into machine learning" in result.prompt_content
         assert "neural networks" in result.prompt_content
@@ -294,15 +311,15 @@ As an advanced learner, let's explore complex {{subject}} concepts.
             complexity=PromptComplexity.SIMPLE,
             template_content="Version 1.0 content: {{message}}",
             variables=["message"],
-            created_by="test_user"
+            created_by="test_user",
         )
-        
+
         assert template.version == TemplateVersion.V1
-        
+
         # Update template (simulate version update)
         template.template_content = "Version 2.0 content with improvements: {{message}}"
         template.version = TemplateVersion.V2
-        
+
         assert template.version == TemplateVersion.V2
         assert "Version 2.0" in template.template_content
 
@@ -313,12 +330,12 @@ As an advanced learner, let's explore complex {{subject}} concepts.
         request = PromptGenerationRequest(
             template_id="non_existent_template",
             user_id="test_user",
-            context_variables={}
+            context_variables={},
         )
-        
+
         with pytest.raises(ValueError, match="Template .* not found"):
             await prompting_service.generate_prompt(request)
-        
+
         # Test template with missing variables
         template = await prompting_service.create_custom_template(
             name="Missing Variables Template",
@@ -328,15 +345,15 @@ As an advanced learner, let's explore complex {{subject}} concepts.
             complexity=PromptComplexity.SIMPLE,
             template_content="Hello {{name}}, your {{item}} is ready.",
             variables=["name", "item"],
-            created_by="test_user"
+            created_by="test_user",
         )
-        
+
         request = PromptGenerationRequest(
             template_id=template.template_id,
             user_id="test_user",
-            context_variables={"name": "Alice"}  # Missing 'item'
+            context_variables={"name": "Alice"},  # Missing 'item'
         )
-        
+
         # Should handle gracefully with default values
         result = await prompting_service.generate_prompt(request)
         assert "Alice" in result.prompt_content
@@ -346,30 +363,32 @@ As an advanced learner, let's explore complex {{subject}} concepts.
         """Test integration with context service"""
         # Add mock template to service
         prompting_service.templates[mock_template.template_id] = mock_template
-        
+
         # Mock context service
         mock_context = {
             "conversation_history": [
                 {"role": "user", "content": "I need help with coding"},
-                {"role": "assistant", "content": "I'd be happy to help with coding!"}
+                {"role": "assistant", "content": "I'd be happy to help with coding!"},
             ],
-            "user_preferences": {"language": "Python", "experience": "intermediate"}
+            "user_preferences": {"language": "Python", "experience": "intermediate"},
         }
-        
-        with patch('app.services.advanced_prompting_service.get_context_service') as mock_context_service_getter:
+
+        with patch(
+            "app.services.advanced_prompting_service.get_context_service"
+        ) as mock_context_service_getter:
             mock_context_service = AsyncMock()
             mock_context_service.get_conversation_context.return_value = mock_context
             mock_context_service_getter.return_value = mock_context_service
-            
+
             request = PromptGenerationRequest(
                 template_id=mock_template.template_id,
                 user_id="test_user",
                 context_variables={"user_name": "Alice", "topic": "Python programming"},
-                conversation_id="conv_123"
+                conversation_id="conv_123",
             )
-            
+
             result = await prompting_service.generate_prompt(request)
-            
+
             assert result.template_used == mock_template.template_id
             # Context should be available in generation metadata
             assert "context_applied" in result.generation_metadata
@@ -389,12 +408,15 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_list_templates_endpoint(self, mock_user):
         """Test the list templates API endpoint"""
+        from app.main import app
         from fastapi.testclient import TestClient
 
-        from app.main import app
-        
-        with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
-            with patch('app.routes.advanced_prompting.get_prompting_service') as mock_service:
+        with patch(
+            "app.routes.advanced_prompting.get_current_user", return_value=mock_user
+        ):
+            with patch(
+                "app.routes.advanced_prompting.get_prompting_service"
+            ) as mock_service:
                 mock_prompting_service = AsyncMock()
                 mock_templates = [
                     MagicMock(
@@ -415,15 +437,15 @@ class TestAdvancedPromptingAPI:
                         updated_at=datetime.now(),
                         created_by="test_user",
                         tags=["test"],
-                        language="en"
+                        language="en",
                     )
                 ]
                 mock_prompting_service.list_templates.return_value = mock_templates
                 mock_service.return_value = mock_prompting_service
-                
+
                 client = TestClient(app)
                 response = client.get("/api/prompting/templates")
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert len(data) == 1
@@ -433,12 +455,15 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_generate_prompt_endpoint(self, mock_user):
         """Test the generate prompt API endpoint"""
+        from app.main import app
         from fastapi.testclient import TestClient
 
-        from app.main import app
-        
-        with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
-            with patch('app.routes.advanced_prompting.get_prompting_service') as mock_service:
+        with patch(
+            "app.routes.advanced_prompting.get_current_user", return_value=mock_user
+        ):
+            with patch(
+                "app.routes.advanced_prompting.get_prompting_service"
+            ) as mock_service:
                 mock_prompting_service = AsyncMock()
                 mock_result = MagicMock(
                     prompt_content="Generated prompt content",
@@ -448,18 +473,21 @@ class TestAdvancedPromptingAPI:
                     complexity_level=PromptComplexity.INTERMEDIATE,
                     role_used=PromptRole.ASSISTANT,
                     generation_metadata={"test": "metadata"},
-                    generated_at=datetime.now()
+                    generated_at=datetime.now(),
                 )
                 mock_prompting_service.generate_prompt.return_value = mock_result
                 mock_service.return_value = mock_prompting_service
-                
+
                 client = TestClient(app)
-                response = client.post("/api/prompting/generate", json={
-                    "template_id": "test_template",
-                    "context_variables": {"var": "value"},
-                    "personalization_enabled": True
-                })
-                
+                response = client.post(
+                    "/api/prompting/generate",
+                    json={
+                        "template_id": "test_template",
+                        "context_variables": {"var": "value"},
+                        "personalization_enabled": True,
+                    },
+                )
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["prompt_content"] == "Generated prompt content"
@@ -469,12 +497,15 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_create_custom_template_endpoint(self, mock_user):
         """Test the create custom template API endpoint"""
+        from app.main import app
         from fastapi.testclient import TestClient
 
-        from app.main import app
-        
-        with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
-            with patch('app.routes.advanced_prompting.get_prompting_service') as mock_service:
+        with patch(
+            "app.routes.advanced_prompting.get_current_user", return_value=mock_user
+        ):
+            with patch(
+                "app.routes.advanced_prompting.get_prompting_service"
+            ) as mock_service:
                 mock_prompting_service = AsyncMock()
                 mock_template = MagicMock(
                     template_id="custom_001",
@@ -494,23 +525,28 @@ class TestAdvancedPromptingAPI:
                     updated_at=datetime.now(),
                     created_by=str(mock_user.id),
                     tags=["custom"],
-                    language="en"
+                    language="en",
                 )
-                mock_prompting_service.create_custom_template.return_value = mock_template
+                mock_prompting_service.create_custom_template.return_value = (
+                    mock_template
+                )
                 mock_service.return_value = mock_prompting_service
-                
+
                 client = TestClient(app)
-                response = client.post("/api/prompting/templates", json={
-                    "name": "Custom Template",
-                    "description": "A custom template",
-                    "category": "BUSINESS",
-                    "role": "CONSULTANT",
-                    "complexity": "ADVANCED",
-                    "template_content": "Custom content {{var}}",
-                    "variables": ["var"],
-                    "tags": ["custom"]
-                })
-                
+                response = client.post(
+                    "/api/prompting/templates",
+                    json={
+                        "name": "Custom Template",
+                        "description": "A custom template",
+                        "category": "BUSINESS",
+                        "role": "CONSULTANT",
+                        "complexity": "ADVANCED",
+                        "template_content": "Custom content {{var}}",
+                        "variables": ["var"],
+                        "tags": ["custom"],
+                    },
+                )
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["template_id"] == "custom_001"
@@ -520,27 +556,36 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_template_analytics_endpoint(self, mock_user):
         """Test the template analytics API endpoint"""
+        from app.main import app
         from fastapi.testclient import TestClient
 
-        from app.main import app
-        
-        with patch('app.routes.advanced_prompting.get_current_user', return_value=mock_user):
-            with patch('app.routes.advanced_prompting.get_prompting_service') as mock_service:
+        with patch(
+            "app.routes.advanced_prompting.get_current_user", return_value=mock_user
+        ):
+            with patch(
+                "app.routes.advanced_prompting.get_prompting_service"
+            ) as mock_service:
                 mock_prompting_service = AsyncMock()
                 mock_analytics = {
                     "total_templates": 10,
                     "category_distribution": {"GENERAL_CHAT": 5, "CODE_ASSISTANCE": 3},
                     "role_distribution": {"ASSISTANT": 6, "EXPERT": 2},
-                    "complexity_distribution": {"BASIC": 4, "INTERMEDIATE": 4, "ADVANCED": 2},
+                    "complexity_distribution": {
+                        "BASIC": 4,
+                        "INTERMEDIATE": 4,
+                        "ADVANCED": 2,
+                    },
                     "top_templates": [],
-                    "performance_metrics": {"average_effectiveness": 0.8}
+                    "performance_metrics": {"average_effectiveness": 0.8},
                 }
-                mock_prompting_service.get_template_analytics.return_value = mock_analytics
+                mock_prompting_service.get_template_analytics.return_value = (
+                    mock_analytics
+                )
                 mock_service.return_value = mock_prompting_service
-                
+
                 client = TestClient(app)
                 response = client.get("/api/prompting/analytics")
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["total_templates"] == 10

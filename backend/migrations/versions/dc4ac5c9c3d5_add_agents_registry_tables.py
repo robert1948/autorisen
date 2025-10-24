@@ -13,7 +13,6 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "dc4ac5c9c3d5"
 down_revision: Union[str, None] = "add_integrations_tables"
@@ -47,9 +46,24 @@ def upgrade() -> None:
             sa.Column("slug", sa.String(length=100), nullable=False, unique=True),
             sa.Column("name", sa.String(length=160), nullable=False),
             sa.Column("description", sa.Text(), nullable=True),
-            sa.Column("visibility", sa.String(length=32), server_default="private", nullable=False),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-            sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+            sa.Column(
+                "visibility",
+                sa.String(length=32),
+                server_default="private",
+                nullable=False,
+            ),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
+            sa.Column(
+                "updated_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
             sa.ForeignKeyConstraint(
                 ["owner_id"],
                 ["users.id"],
@@ -75,19 +89,30 @@ def upgrade() -> None:
             sa.Column("version", sa.String(length=20), nullable=False),
             sa.Column("manifest", sa.JSON(), nullable=False),
             sa.Column("changelog", sa.Text(), nullable=True),
-            sa.Column("status", sa.String(length=32), server_default="draft", nullable=False),
-            sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+            sa.Column(
+                "status", sa.String(length=32), server_default="draft", nullable=False
+            ),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
             sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
             sa.ForeignKeyConstraint(["agent_id"], ["agents.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
-            sa.UniqueConstraint("agent_id", "version", name="uq_agent_versions_version"),
+            sa.UniqueConstraint(
+                "agent_id", "version", name="uq_agent_versions_version"
+            ),
         )
         inspector = sa.inspect(bind)
 
     if _table_exists(inspector, "agent_versions") and not _index_exists(
         inspector, "agent_versions", "ix_agent_versions_agent_id"
     ):
-        op.create_index("ix_agent_versions_agent_id", "agent_versions", ["agent_id"], unique=False)
+        op.create_index(
+            "ix_agent_versions_agent_id", "agent_versions", ["agent_id"], unique=False
+        )
         inspector = sa.inspect(bind)
 
     if (

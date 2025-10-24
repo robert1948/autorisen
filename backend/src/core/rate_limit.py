@@ -16,7 +16,7 @@ Features
 from __future__ import annotations
 
 import os
-from typing import Callable, Optional, Any
+from typing import Any, Callable, Optional
 
 # ---------- Configuration ----------
 DISABLE = os.getenv("DISABLE_RATE_LIMIT", "").strip() in {"1", "true", "yes"}
@@ -24,7 +24,9 @@ DEFAULT_LIMIT = os.getenv("RATE_LIMIT_DEFAULT", "200/minute")
 AUTH_LIMIT = os.getenv("RATE_LIMIT_AUTH", "5/minute")
 
 
-def _dual_use_limit_decorator(limiter_obj: Any, limit: str, arg: Optional[Callable] = None):
+def _dual_use_limit_decorator(
+    limiter_obj: Any, limit: str, arg: Optional[Callable] = None
+):
     """
     Turn a slowapi limiter.limit(limit) into a decorator that works as:
       - @decorator
@@ -43,11 +45,11 @@ try:
     if DISABLE:
         raise ImportError("Rate limiting disabled via DISABLE_RATE_LIMIT=1")
 
-    from slowapi import Limiter  # type: ignore
-    from slowapi.util import get_remote_address  # type: ignore
-    from slowapi.middleware import SlowAPIMiddleware  # type: ignore
-    from slowapi.errors import RateLimitExceeded  # type: ignore
     from fastapi.responses import JSONResponse  # type: ignore
+    from slowapi import Limiter  # type: ignore
+    from slowapi.errors import RateLimitExceeded  # type: ignore
+    from slowapi.middleware import SlowAPIMiddleware  # type: ignore
+    from slowapi.util import get_remote_address  # type: ignore
 
     limiter = Limiter(key_func=get_remote_address, default_limits=[DEFAULT_LIMIT])
 
@@ -78,13 +80,16 @@ try:
         # Middleware
         # Avoid double-adding if user code also adds it
         if not any(
-            type(m).__name__ == "SlowAPIMiddleware" for m in getattr(app, "user_middleware", [])
+            type(m).__name__ == "SlowAPIMiddleware"
+            for m in getattr(app, "user_middleware", [])
         ):
             app.add_middleware(SlowAPIMiddleware)
 
         # JSON handler for 429
         def _429_handler(request, exc):
-            return JSONResponse(status_code=429, content={"detail": "rate limit exceeded"})
+            return JSONResponse(
+                status_code=429, content={"detail": "rate limit exceeded"}
+            )
 
         # Avoid replacing if already present
         existing = app.exception_handlers.get(RateLimitExceeded)

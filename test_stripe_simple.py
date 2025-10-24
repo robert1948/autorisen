@@ -6,6 +6,7 @@ Quick test to verify Stripe integration works.
 # Test 1: Can we import stripe?
 try:
     import stripe
+
     print("✅ Stripe package imported successfully")
     print(f"   Version: {stripe.version.VERSION}")
 except ImportError:
@@ -15,6 +16,7 @@ except ImportError:
 # Test 2: Can we import FastAPI components?
 try:
     from fastapi import APIRouter, FastAPI
+
     print("✅ FastAPI imported successfully")
 except ImportError:
     print("❌ FastAPI not installed. Run: pip install fastapi")
@@ -23,18 +25,18 @@ except ImportError:
 # Test 3: Check if we can create a simple Stripe router
 try:
     router = APIRouter()
-    
+
     @router.get("/status")
     def stripe_status():
         return {"status": "Stripe integration ready"}
-    
-    @router.post("/create-checkout-session")  
+
+    @router.post("/create-checkout-session")
     def create_checkout_session():
         return {"message": "Checkout session endpoint ready"}
-    
+
     print("✅ Stripe router created successfully")
     print(f"   Routes defined: {len(router.routes)}")
-    
+
 except Exception as e:
     print(f"❌ Failed to create router: {e}")
     exit(1)
@@ -42,8 +44,8 @@ except Exception as e:
 # Test 4: Check environment variables
 import os
 
-stripe_publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
-stripe_secret_key = os.getenv('STRIPE_SECRET_KEY')
+stripe_publishable_key = os.getenv("STRIPE_PUBLISHABLE_KEY")
+stripe_secret_key = os.getenv("STRIPE_SECRET_KEY")
 
 if stripe_publishable_key:
     print("✅ STRIPE_PUBLISHABLE_KEY configured")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/health", tags=["health"])

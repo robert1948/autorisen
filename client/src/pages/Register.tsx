@@ -234,11 +234,16 @@ const Register = () => {
 
     try {
       const result: RegisterStep2Response = await step2Mutation.mutateAsync({ payload, token: tempToken });
-      setAuthFromTokens(result.user.email, {
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-        expires_at: result.expires_at,
-      });
+      setAuthFromTokens(
+        result.user.email,
+        {
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+          expires_at: result.expires_at,
+          email_verified: result.user.email_verified,
+        },
+        result.user.email_verified ?? false,
+      );
       await sendAnalytics({ event_type: "step_submit", step: "step2", role: result.user.role });
       await sendAnalytics({ event_type: "complete", role: result.user.role });
 

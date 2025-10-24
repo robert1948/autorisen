@@ -25,7 +25,7 @@ SITEMAP_XML ?= sitemap.xml
 .PHONY: help venv install format lint test build docker-build docker-run docker-push deploy-heroku github-update clean \
 		plan-validate plan-open heroku-deploy-stg migrate-up migrate-revision \
 		sitemap-generate-dev sitemap-generate-prod verify-sitemap-dev verify-sitemap-prod \
-		verify-sitemap crawl-dev crawl-prod crawl-local
+		verify-sitemap crawl-dev crawl-prod crawl-local crawl
 
 help:
 	@echo "Available targets:"
@@ -222,15 +222,20 @@ verify-sitemap-dev:
 verify-sitemap-prod:
 	@$(MAKE) verify-sitemap FILE="$(SITEMAP_PROD_TXT)" BASE="$(PROD_BASE_URL)"
 
-# Crawl helpers (prints discovered + reachable routes via stdlib crawler)
-crawl-dev:
-	@$(PY) tools/crawl_sitemap.py "$(DEV_BASE_URL)"
+# --- Crawl targets ----------------------------------------------------
+CRAWL_OUT ?= docs/crawl
+CRAWL_TOOL ?= tools/crawl_sitemap.py
 
-crawl-prod:
-	@$(PY) tools/crawl_sitemap.py "$(PROD_BASE_URL)"
+crawl-local: ## run tools/crawl_sitemap.py against http://localhost:3000
+	$(PY) $(CRAWL_TOOL) --base-url http://localhost:3000 --outdir $(CRAWL_OUT) --label local
 
-crawl-local:
-	@$(PY) tools/crawl_sitemap.py "http://localhost:3000"
+crawl-dev: ## run crawler against dev.cape-control.com
+	$(PY) $(CRAWL_TOOL) --base-url $(DEV_BASE_URL) --outdir $(CRAWL_OUT) --label dev
+
+crawl-prod: ## run crawler against cape-control.com
+	$(PY) $(CRAWL_TOOL) --base-url https://www.cape-control.com --outdir $(CRAWL_OUT) --label prod
+
+crawl: crawl-local ## default crawl
 
 # -----------------------------
 # Agents tooling (unchanged)
@@ -252,3 +257,90 @@ agents-test:
 agents-run:
 	@[ -n "$$name" ] || (echo "Usage: make agents-run name=<slug> task=\"...\""; exit 1)
 	@python3 scripts/agents_run.py --agent $$name --task "$$task"
+
+sitemap-svg:
+	npx mmdc -i docs/sitemap_v2_final.mmd -o docs/sitemap_v2_final.svg -t neutral -b transparent -s 1.5
+
+# --- Codex helpers ------------------------------------------------------------
+
+# Add/adjust the list to match the Codex context files you expect:
+CODEX_DOCS ?= \
+  docs/DEVELOPMENT_CONTEXT.md \
+  docs/MVP_SCOPE.md \
+  docs/Checklist_MVP.md \
+  docs/agents.md \
+  docs/Heroku_Pipeline_Workflow.md
+
+.PHONY: codex-check codex-open
+
+## codex-check: Show presence, size, and last-modified for Codex context + settings
+codex-check:
+	@echo "== Codex context files =="
+	@for f in $(CODEX_DOCS); do \
+		if [ -f "$$f" ]; then \
+			printf '✅  %-35s  %8s bytes  %s\n' "$$f" "$$(wc -c < "$$f")" "$$(date -r "$$f" '+%Y-%m-%d %H:%M:%S')"; \
+		else \
+			printf '❌  %s (missing)\n' "$$f"; \
+		fi; \
+	done
+		@echo
+	@echo "VS Code prompt:"
+	@if [ -f .vscode/codex.prompt.md ]; then \
+		printf '✅  .vscode/codex.prompt.md        %8s bytes  %s\n' "$$(wc -c < .vscode/codex.prompt.md)" "$$(date -r .vscode/codex.prompt.md '+%Y-%m-%d %H:%M:%S')"; \
+	else \
+		echo "❌  .vscode/codex.prompt.md (missing)"; \
+	fi
+	@echo
+	@echo "settings.json contains Codex keys?"
+	@if [ -f .vscode/settings.json ]; then \
+		if grep -q '"codex.contextFiles"' .vscode/settings.json && grep -q '"codex.systemPromptFile"' .vscode/settings.json; then \
+			echo "✅  codex.* keys present"; \
+		else \
+			echo "⚠️  codex.* keys not found in .vscode/settings.json"; \
+		fi; \
+	else \
+		echo "❌  .vscode/settings.json (missing)"; \
+	fi
+
+## codex-open: Open the Codex prompt and settings in VS Code (best effort)
+codex-open:
+	@which code >/dev/null 2>&1 || { echo "⚠️  'code' CLI not found (install VS Code Shell Command)."; exit 0; }
+	@[ -f .vscode/codex.prompt.md ] && code -g .vscode/codex.prompt.md || true
+	@[ -f .vscode/settings.json ] && code -g .vscode/settings.json || true
+
+# ---- Codex agent targets -------------------------------------------------
+
+.PHONY: codex-docs-lint codex-docs-fix codex-ci-validate \
+        codex-plan-diff codex-plan-apply \
+        codex-test-dry codex-test-heal
+
+# Lint markdown and apply fixes
+codex-docs-lint:
+	@command -v markdownlint >/dev/null 2>&1 || { echo "Installing markdownlint-cli (global)"; npm i -g markdownlint-cli >/dev/null 2>&1; }
+	markdownlint "**/*.md" --ignore node_modules --ignore .venv
+
+codex-docs-fix:
+	@command -v markdownlint >/dev/null 2>&1 || { echo "Installing markdownlint-cli (global)"; npm i -g markdownlint-cli >/dev/null 2>&1; }
+	markdownlint "**/*.md" --ignore node_modules --ignore .venv --fix || true
+	@echo "Re-run lint to verify:"
+	markdownlint "**/*.md" --ignore node_modules --ignore .venv
+
+# Run pre-commit against all files (soft-fail allowed in CI workflow)
+codex-ci-validate:
+	@command -v pre-commit >/dev/null 2>&1 || { echo "Installing pre-commit"; python3 -m pip install --quiet pre-commit; }
+	pre-commit run --all-files || true
+
+# Detect and reconcile drift between CSV plan and MD plan
+codex-plan-diff:
+	python3 scripts/plan_sync.py --check-only
+
+codex-plan-apply:
+	python3 scripts/plan_sync.py --apply
+
+# Pytest "dry" run and optional healing (fixture regen)
+codex-test-dry:
+	pytest -q || true
+
+codex-test-heal:
+	python3 scripts/regenerate_fixtures.py || true
+	pytest -q || true

@@ -10,10 +10,10 @@ Checks:
 
 Exit code 0 on success, non-zero on failure.
 """
-from csv import DictReader
-from collections import Counter
 import re
 import sys
+from collections import Counter
+from csv import DictReader
 
 PATH = "docs/autorisen_project_plan.csv"
 RE_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")

@@ -2,9 +2,9 @@
 """Extract the first Markdown table from a file and write it as CSV.
 Usage: python scripts/plan_md_to_csv.py docs/Master_ProjectPlan.md > tasks.csv
 """
-import sys
 import csv
 import re
+import sys
 
 
 def extract_first_table(lines):
@@ -24,7 +24,8 @@ def extract_first_table(lines):
 def parse_md_table(table_lines):
     # Remove separator line (---|---) if present
     rows = [
-        [cell.strip() for cell in re.split(r"\s*\|\s*", row.strip())[1:-1]] for row in table_lines
+        [cell.strip() for cell in re.split(r"\s*\|\s*", row.strip())[1:-1]]
+        for row in table_lines
     ]
     if len(rows) >= 2 and re.match(r"^:?-+:?$", "".join(rows[1])):
         # naive detect, but leave as-is

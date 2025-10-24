@@ -1,4 +1,5 @@
 """Lightweight adapters for agent tool execution."""
+
 from __future__ import annotations
 
 import json
@@ -66,12 +67,20 @@ class HTTPAdapter(ToolAdapter):
         results: list[dict[str, t.Any]] = []
         for host in hosts:
             if "*" in host:
-                results.append({"host": host, "status": "skipped", "reason": "wildcard host not probed"})
+                results.append(
+                    {
+                        "host": host,
+                        "status": "skipped",
+                        "reason": "wildcard host not probed",
+                    }
+                )
                 continue
             url = host.rstrip("/") + "/api/health"
             start = time.perf_counter()
             try:
-                with urllib.request.urlopen(url, timeout=max(connect_timeout, read_timeout)) as response:
+                with urllib.request.urlopen(
+                    url, timeout=max(connect_timeout, read_timeout)
+                ) as response:
                     body = response.read()
                     latency_ms = (time.perf_counter() - start) * 1000
                     data: t.Any
@@ -88,7 +97,9 @@ class HTTPAdapter(ToolAdapter):
                             "body": data,
                         }
                     )
-            except urllib.error.URLError as exc:  # pragma: no cover - network errors expected
+            except (
+                urllib.error.URLError
+            ) as exc:  # pragma: no cover - network errors expected
                 results.append({"host": host, "status": "error", "reason": str(exc)})
         return {"status": "checked", "probes": results}
 
@@ -127,7 +138,9 @@ def build_adapter(tool_id: str, config_data: dict[str, t.Any]) -> ToolAdapter:
     return ToolAdapter(tool_id, config_data)
 
 
-def prepare_adapters(agent: dict[str, t.Any], env: str) -> list[tuple[str, str, pathlib.Path, ToolAdapter]]:
+def prepare_adapters(
+    agent: dict[str, t.Any], env: str
+) -> list[tuple[str, str, pathlib.Path, ToolAdapter]]:
     adapters: list[tuple[str, str, pathlib.Path, ToolAdapter]] = []
     for tool in agent.get("tools", []) or []:
         tool_id = tool.get("id")
@@ -136,7 +149,9 @@ def prepare_adapters(agent: dict[str, t.Any], env: str) -> list[tuple[str, str, 
             raise SystemExit("tool entries must include id and config_ref")
         config_path = resolve_tool_config(config_ref, env)
         config_data = load_yaml(config_path)
-        adapters.append((tool_id, config_ref, config_path, build_adapter(tool_id, config_data)))
+        adapters.append(
+            (tool_id, config_ref, config_path, build_adapter(tool_id, config_data))
+        )
     return adapters
 
 

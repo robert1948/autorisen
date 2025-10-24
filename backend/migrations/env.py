@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 from logging.config import fileConfig
-from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -90,7 +90,7 @@ def run_migrations_offline() -> None:
         url=sa_url,
         target_metadata=target_metadata,
         literal_binds=True,
-        compare_type=True,            # detect column type changes
+        compare_type=True,  # detect column type changes
         compare_server_default=True,  # detect server_default changes
     )
     with context.begin_transaction():

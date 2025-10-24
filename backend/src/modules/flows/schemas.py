@@ -70,6 +70,7 @@ class FlowRunRecord(SchemaBase):
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
 
+
 class ChecklistUpdateRequest(BaseModel):
     task_id: str = Field(..., min_length=2, max_length=100)
     label: Optional[str] = Field(default=None, max_length=160)

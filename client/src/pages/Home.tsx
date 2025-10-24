@@ -8,7 +8,6 @@ import OnboardingHistory from "../features/chat/OnboardingHistory";
 import AgentWorkbench from "../features/dev/AgentWorkbench";
 import AgentRegistryPanel from "../features/dev/AgentRegistryPanel";
 import MarketplaceShowcase from "../features/marketplace/MarketplaceShowcase";
-import AuthForms from "../features/auth/AuthForms";
 import AuthGate from "../features/auth/AuthGate";
 import logoUrl from "../assets/capecontrol-logo.png";
 
@@ -481,8 +480,6 @@ const Home = () => {
           </div>
         </div>
       </footer>
-      <AuthForms />
-
       {chatModalConfig && (
         <ChatModal
           open={!!activeChat}

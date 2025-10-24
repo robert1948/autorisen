@@ -24,7 +24,11 @@ with open(OUT, "w") as o:
     o.write("# Master Project Plan (generated snapshot) — autorisen\n\n")
     o.write("Snapshot: " + today + "\n\n")
     o.write("- Total tasks: " + str(total) + "\n")
-    o.write("- Status counts: " + ", ".join(f"{k}: {v}" for k, v in status_counts.items()) + "\n\n")
+    o.write(
+        "- Status counts: "
+        + ", ".join(f"{k}: {v}" for k, v in status_counts.items())
+        + "\n\n"
+    )
     o.write("## Top priority (P1) tasks — quick view\n\n")
     o.write("| Task ID | Title | Owner | Estimate | Depends On |\n")
     o.write("|---|---|---:|---:|---:|\n")

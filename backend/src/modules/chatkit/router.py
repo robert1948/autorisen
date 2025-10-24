@@ -1,13 +1,18 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+import base64
+import hashlib
+import hmac
 import os
 import time
-import hmac, hashlib, base64
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/chatkit", tags=["chatkit"])
 
+
 class TokenReq(BaseModel):
     user_id: str | None = None
+
 
 def _make_client_secret(workflow_id: str, user_id: str) -> str:
     """
@@ -22,6 +27,7 @@ def _make_client_secret(workflow_id: str, user_id: str) -> str:
     sig = hmac.new(secret.encode(), payload.encode(), hashlib.sha256).digest()
     token = f"{payload}.{base64.urlsafe_b64encode(sig).decode()}"
     return base64.urlsafe_b64encode(token.encode()).decode()
+
 
 @router.post("/token")
 def issue_token(req: TokenReq):

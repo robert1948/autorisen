@@ -1,0 +1,7 @@
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv", "node_modules", "dist", "build", "migrations"]
+
+[lint]
+select = ["E", "F", "I"]   # pycodestyle errors, pyflakes, isort
+ignore = ["E501"]          # ignore long lines for now

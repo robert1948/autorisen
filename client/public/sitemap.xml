@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://dev.cape-control.com/</loc></url>
+  <url><loc>https://dev.cape-control.com/about</loc></url>
+  <url><loc>https://dev.cape-control.com/login</loc></url>
+  <url><loc>https://dev.cape-control.com/register</loc></url>
+  <url><loc>https://dev.cape-control.com/register?role=user</loc></url>
+  <url><loc>https://dev.cape-control.com/register?role=developer</loc></url>
+  <url><loc>https://dev.cape-control.com/subscribe</loc></url>
+</urlset>

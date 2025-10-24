@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "e5e402c7ab39"
@@ -28,7 +27,9 @@ def upgrade() -> None:
     if "app_chat_events" not in inspector.get_table_names():
         return
 
-    column_names = {column["name"] for column in inspector.get_columns("app_chat_events")}
+    column_names = {
+        column["name"] for column in inspector.get_columns("app_chat_events")
+    }
     if "metadata" not in column_names:
         return
 
@@ -43,7 +44,9 @@ def downgrade() -> None:
     if "app_chat_events" not in inspector.get_table_names():
         return
 
-    column_names = {column["name"] for column in inspector.get_columns("app_chat_events")}
+    column_names = {
+        column["name"] for column in inspector.get_columns("app_chat_events")
+    }
     if "event_metadata" not in column_names:
         return
 

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
 import bcrypt
-from jose import JWTError, ExpiredSignatureError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 
 from backend.src.core.config import settings
 
@@ -50,7 +50,9 @@ def _ensure_expires_delta(expires_in: timedelta | int) -> timedelta:
     return timedelta(minutes=expires_in)
 
 
-def create_jwt(payload: Dict[str, Any], expires_in: timedelta | int) -> Tuple[str, datetime]:
+def create_jwt(
+    payload: Dict[str, Any], expires_in: timedelta | int
+) -> Tuple[str, datetime]:
     """Create a signed JWT containing the payload."""
 
     expires_delta = _ensure_expires_delta(expires_in)

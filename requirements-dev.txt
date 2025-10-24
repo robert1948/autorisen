@@ -1,50 +1,75 @@
 # Development requirements: core runtime + optional integrations (Stripe)
-# This file combines `requirements.txt` and `requirements-optional.txt` for
-# convenience when developing locally.
+# This file is intended for local dev & CI. It supersedes the older pins.
+# Key changes:
+# - Use FastAPI>=0.115,<0.116 paired with Starlette>=0.37,<0.38
+# - Switch to psycopg v3 (drop psycopg2-binary)
+# - Align with Pydantic v2.x and current libs
+# - Include common test/dev deps
 
+############################
 # Core app
-fastapi==0.110.0
-uvicorn[standard]==0.27.1
+############################
+fastapi>=0.115,<0.116
+starlette>=0.37,<0.38
+uvicorn[standard]>=0.33,<0.38
 gunicorn>=21,<22
 
+############################
 # Data + DB
-SQLAlchemy==2.0.27
-psycopg2-binary==2.9.9
+############################
+SQLAlchemy>=2.0.30,<2.1
+psycopg[binary]>=3.2,<3.3
 
+############################
 # Validation & settings
-pydantic==2.6.1
-pydantic-settings==2.2.1
-email-validator==2.1.0
+############################
+pydantic>=2.12,<2.13
+pydantic-settings>=2.2,<2.12
+email-validator>=2.1,<3
 
+############################
 # Env & HTTP
-python-dotenv==1.0.1
-requests==2.32.3
-python-multipart==0.0.9
+############################
+python-dotenv>=1.0.1,<2
+requests>=2.32,<3
+python-multipart>=0.0.9
+httpx>=0.27,<0.29
+aiohttp>=3.9,<4
+anyio>=4,<5
 
+############################
 # Security & utils
+############################
 passlib[bcrypt]==1.7.4
-python-jose[cryptography]==3.3.0
-bleach==6.1.0
-psutil==5.9.8
-
-# ML features used by ConversationManager (TF-IDF)
-numpy==1.26.4
-scipy==1.11.4
-scikit-learn==1.5.1
-joblib==1.4.2
-threadpoolctl==3.5.0
+python-jose[cryptography]>=3.3,<4
+PyJWT>=2.8,<3
+bleach>=6.1,<7
+psutil>=5.9,<6
+redis>=5,<6
 hiredis>=2.0,<3
-redis>=5.0
-user-agents>=2.2
-PyJWT>=2.8.0
-aiohttp>=3.9
-httpx>=0.27
-aiosmtplib>=1.1.6
-pytest-asyncio>=0.21.0
-openai>=1.0.0,<3
-anthropic>=0.8.0
-jinja2>=3.1.2
+user-agents>=2.2,<3
+rsa>=4.9,<5
 
-# Optional integrations
-# Stripe SDK (payments)
-stripe>=5.0.0
+############################
+# ML features (TF-IDF)
+############################
+numpy>=1.26,<2
+scipy>=1.11,<1.13
+scikit-learn>=1.5,<1.6
+joblib>=1.4,<2
+threadpoolctl>=3.5,<4
+
+############################
+# Templates & AI SDKs
+############################
+jinja2>=3.1,<4
+openai>=1,<3
+anthropic>=0.8,<1
+
+############################
+# Testing (add more as needed)
+############################
+pytest>=8.4,<9
+pytest-asyncio>=0.23,<0.24
+# For HTTP mocking of OAuth callbacks, uncomment if used:
+# respx>=0.21,<0.22

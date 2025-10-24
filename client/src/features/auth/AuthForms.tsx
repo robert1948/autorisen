@@ -3,8 +3,16 @@ import { Link } from "react-router-dom";
 
 import Recaptcha from "../../components/Recaptcha";
 import { useAuth } from "./AuthContext";
+import { resendVerification } from "../../lib/authApi";
+
+const SOCIAL_PROVIDERS = ["google", "linkedin"] as const;
+type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
 
 const AuthForms = () => {
+  const API_BASE =
+    (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ??
+    window.location.origin;
+
   const { state, loginUser, logout, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,20 +20,30 @@ const AuthForms = () => {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
   const linkedinClientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID as string | undefined;
+
+  const oauthRecaptchaKey = (provider: SocialProvider) => `oauth:recaptcha:${provider}`;
+  const oauthStateKey = (provider: SocialProvider) => `oauth:state:${provider}`;
 
   const handleRecaptcha = (token: string | null) => {
     setRecaptchaToken(token);
     if (!token) {
       setRecaptchaError("Please complete the verification");
+      SOCIAL_PROVIDERS.forEach((provider) => sessionStorage.removeItem(oauthRecaptchaKey(provider)));
     } else {
       setRecaptchaError(null);
     }
   };
 
-  const startOAuth = (provider: "google" | "linkedin") => {
+  const startOAuth = async (provider: SocialProvider) => {
+    if (!recaptchaToken) {
+      setRecaptchaError("Please complete the verification");
+      return;
+    }
     const clientId = provider === "google" ? googleClientId : linkedinClientId;
     if (!clientId) {
       setSocialError(
@@ -36,25 +54,54 @@ const AuthForms = () => {
       return;
     }
     setSocialError(null);
-    const random = window.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
-    const stateToken = `${provider}:${random}`;
-    sessionStorage.setItem(`oauth:state:${provider}`, stateToken);
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    sessionStorage.setItem(oauthRecaptchaKey(provider), recaptchaToken);
+    const oauthBase = `${API_BASE}/api/auth/oauth/${provider}/start`;
     const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: "openid email profile",
-      state: stateToken,
+      next: "/dashboard",
+      format: "json",
     });
-    if (provider === "google") {
-      params.set("access_type", "offline");
-      params.set("prompt", "select_account");
-      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-    } else {
-      params.set("prompt", "consent");
-      window.location.href = `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
+    const stateKey = oauthStateKey(provider);
+
+    try {
+      const response = await fetch(`${oauthBase}?${params.toString()}`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      if (response.ok && contentType.includes("application/json")) {
+        const data = (await response.json()) as {
+          authorization_url?: string;
+          state?: string;
+        };
+        if (data.state) {
+          sessionStorage.setItem(stateKey, data.state);
+        }
+        if (data.authorization_url) {
+          window.location.href = data.authorization_url;
+          return;
+        }
+      }
+      if (!response.ok) {
+        throw new Error(`Unexpected response (${response.status})`);
+      }
+    } catch (err) {
+      console.error(`Failed to start ${provider} OAuth flow`, err);
+      setSocialError(
+        provider === "google"
+          ? "Unable to connect to Google. Please try again."
+          : "Unable to connect to LinkedIn. Please try again.",
+      );
+      sessionStorage.removeItem(stateKey);
+      return;
     }
+
+    // Fallback to legacy redirect if JSON negotiation failed.
+    sessionStorage.removeItem(stateKey);
+    const fallbackParams = new URLSearchParams({ next: "/dashboard" });
+    window.location.href = `${oauthBase}?${fallbackParams.toString()}`;
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -67,7 +114,63 @@ const AuthForms = () => {
     await loginUser(email, password, recaptchaToken);
   };
 
+  const handleResend = async () => {
+    if (!state.userEmail) {
+      setResendStatus("error");
+      setResendMessage("Sign in again to resend the verification email.");
+      return;
+    }
+    setResendStatus("loading");
+    setResendMessage(null);
+    try {
+      await resendVerification(state.userEmail);
+      setResendStatus("success");
+      setResendMessage(`Verification email sent to ${state.userEmail}.`);
+    } catch (err) {
+      const text = err instanceof Error ? err.message : "Unable to resend the verification email.";
+      setResendStatus("error");
+      setResendMessage(text);
+    }
+  };
+
   if (state.accessToken) {
+    if (!state.isEmailVerified) {
+      return (
+        <section className="auth-card" id="auth">
+          <header className="auth-card__header">
+            <h2>Check your inbox</h2>
+            <p className="auth-card__subtitle">
+              We emailed a verification link to {state.userEmail ?? "your address"}. You need to
+              verify before accessing your account.
+            </p>
+          </header>
+          <button
+            type="button"
+            className="auth-submit"
+            onClick={handleResend}
+            disabled={resendStatus === "loading"}
+          >
+            {resendStatus === "loading" ? "Resending…" : "Resend verification email"}
+          </button>
+          {resendMessage && (
+            <p
+              className={`auth-status ${
+                resendStatus === "error"
+                  ? "auth-status--error"
+                  : resendStatus === "success"
+                  ? "auth-status--success"
+                  : ""
+              }`}
+            >
+              {resendMessage}
+            </p>
+          )}
+          <button type="button" className="btn btn--ghost" onClick={logout}>
+            Logout
+          </button>
+        </section>
+      );
+    }
     return (
       <section className="auth-card" id="auth">
         <header>
@@ -137,7 +240,7 @@ const AuthForms = () => {
             <button
               type="button"
               className="auth-social__button auth-social__button--google"
-              onClick={() => startOAuth("google")}
+              onClick={() => void startOAuth("google")}
               disabled={loading || !googleClientId}
             >
               Continue with Google
@@ -145,7 +248,7 @@ const AuthForms = () => {
             <button
               type="button"
               className="auth-social__button auth-social__button--linkedin"
-              onClick={() => startOAuth("linkedin")}
+              onClick={() => void startOAuth("linkedin")}
               disabled={loading || !linkedinClientId}
             >
               Continue with LinkedIn
