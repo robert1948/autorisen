@@ -1,0 +1,36 @@
+name: Deploy - Staging (Heroku)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner != 'dependabot' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+          heroku container:login
+
+      - name: Build & push container
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku container:push web -a autorisen
+          heroku container:release web -a autorisen
+
+      - name: Run migrations
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku run -a autorisen 'alembic -c backend/alembic.ini upgrade head'
+
+      - name: Smoke test
+        run: |
+          curl -fsS https://dev.cape-control.com/api/health | jq .
