@@ -11,8 +11,20 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: repo
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          git clone --branch "$REF" --single-branch "https://x-access-token:${TOKEN}@github.com/${REPO}.git" repo
+          cd repo
+          git checkout "$SHA"
 
       - name: Read current % from PLAYBOOKS_OVERVIEW.md (if present)
         id: before
@@ -24,7 +36,7 @@ jobs:
           echo "pct=${PCT:-}" >> "$GITHUB_OUTPUT"
 
       - name: Generate overview
-        run: python3 scripts/gen_playbooks_overview.py
+        run: python3 scripts/gen_playbooks_oververview.py
 
       - name: Read new %
         id: after
@@ -47,9 +59,9 @@ jobs:
       - name: Commit changes if any
         shell: bash
         run: |
+          git config user.name "CodexBot"
+          git config user.email "bot@cape-control.com"
           if ! git diff --quiet -- docs/PLAYBOOKS_OVERVIEW.md README.md; then
-            git config user.name "CodexBot"
-            git config user.email "bot@cape-control.com"
             git add docs/PLAYBOOKS_OVERVIEW.md README.md
             git commit -m "chore: update playbooks overview (progress ${{ steps.after.outputs.pct }}%)"
             git push
