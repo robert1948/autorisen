@@ -1,143 +1,159 @@
 # backend/tests/conftest.py
 import os
-import asyncio
 from pathlib import Path
-from typing import Any, Optional, Type
-
 import pytest
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.engine import make_url
+from httpx import AsyncClient, ASGITransport
+from starlette.testclient import TestClient
 
-try:
-    from asgi_lifespan import LifespanManager  # type: ignore[import]
-except ImportError:
-
-    class LifespanManager:
-        """Minimal lifespan manager similar to asgi_lifespan."""
-
-        def __init__(self, app):
-            self._app = app
-            self._context: Optional[Any] = None
-
-        async def __aenter__(self):
-            lifespan_context = self._app.router.lifespan_context(self._app)
-            self._context = lifespan_context
-            await lifespan_context.__aenter__()
-            return self._app
-
-        async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc: Optional[BaseException],
-            tb,
-        ) -> None:
-            if self._context is not None:
-                await self._context.__aexit__(exc_type, exc, tb)
+# ------------------------------------------------------------
+# Test runtime configuration
+# ------------------------------------------------------------
 
 
-# ---- Test environment flags (set BEFORE importing app) ----
-os.environ.setdefault("ENV", "test")
-os.environ.setdefault("RATE_LIMIT_ENABLED", "false")  # disable limiter in tests
-os.environ.setdefault("RATE_LIMIT_BACKEND", "memory")  # force in-memory limiter
-os.environ.setdefault("CSRF_ENABLED", "true")
-os.environ.setdefault("DISABLE_RECAPTCHA", "true")
-os.environ.setdefault("EMAIL_TOKEN_SECRET", "unit-test-secret")
-os.environ.setdefault("FROM_EMAIL", "noreply@example.com")
-os.environ.setdefault("SMTP_HOST", "localhost")
-os.environ.setdefault("SMTP_USERNAME", "test-user")
-os.environ.setdefault("SMTP_PASSWORD", "test-pass")
-os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/autolocal_test.db")
+@pytest.fixture(scope="session", autouse=True)
+def test_env():
+    """Provide required env vars for the app under test."""
+    defaults = {
+        # Core env
+        "ENV": "test",
+        "TESTING": "1",
+        "RUN_DB_MIGRATIONS_ON_STARTUP": "1",
+        # DB (sqlite file for tests)
+        "DATABASE_URL": "sqlite:////tmp/autolocal_test.db",
+        # Auth/JWT secrets (harmless test values)
+        "SECRET_KEY": "dev-test-secret",
+        "JWT_SECRET": "dev-test-secret",
+        "JWT_SECRET_KEY": "dev-test-secret",
+        "JWT_ALGORITHM": "HS256",
+        # Email config (dummy but structurally valid)
+        "EMAIL_TOKEN_SECRET": "dev-token-secret",
+        "FROM_EMAIL": "noreply@example.test",
+        "SMTP_USERNAME": "user",
+        "SMTP_PASSWORD": "pass",
+        "SMTP_HOST": "localhost",
+        "SMTP_PORT": "2525",
+        "SMTP_TLS": "false",
+        "SMTP_SSL": "false",
+        # Test-mode toggles (if your app supports them)
+        "AUTH_TEST_MODE": "1",
+        "AUTH_REQUIRE_EMAIL_VERIFICATION": "0",
+        "DISABLE_EMAIL_SENDING": "1",
+        "DISABLE_EXTERNAL_CALLS": "1",
+        "DISABLE_RECAPTCHA": "true",
+        # Rate limit backend to in-memory for deterministic tests
+        "RATE_LIMIT_BACKEND": "memory",
+    }
+    for k, v in defaults.items():
+        os.environ.setdefault(k, str(v))
 
-from backend.src.app import app  # noqa: E402  (import after env is set)
+    db_url = os.getenv("ALEMBIC_DATABASE_URL") or os.getenv("DATABASE_URL")
+    if db_url and db_url.startswith("sqlite"):
+        db_path: Path | None = None
+        if db_url.startswith("sqlite:////"):
+            db_path = Path("/" + db_url.split("sqlite:////", 1)[1])
+        elif db_url.startswith("sqlite:///"):
+            candidate = db_url.split("sqlite:///", 1)[1]
+            if candidate != ":memory:":
+                db_path = Path(candidate)
+
+        if db_path and db_path.name != ":memory:":
+            try:
+                if not db_path.is_absolute() and not db_path.parent.exists():
+                    db_path.parent.mkdir(parents=True, exist_ok=True)
+                if db_path.exists():
+                    db_path.unlink()
+            except OSError:
+                # Best-effort cleanup; the Alembic runner will create the DB file
+                pass
 
 
-def _reset_sqlite_db_file() -> None:
-    """Remove the on-disk sqlite file before test session starts."""
-    db_url = os.getenv("DATABASE_URL", "")
-    if not db_url:
-        return
+def _load_app():
+    """Lazy-import the FastAPI app after env is prepared."""
     try:
-        url = make_url(db_url)
-    except Exception:
-        return
-    if url.get_backend_name() != "sqlite":
-        return
-    database = url.database
-    if not database or database == ":memory:":
-        return
-    db_path = Path(database)
-    if not db_path.is_absolute():
-        project_root = Path(__file__).resolve().parents[2]
-        db_path = (project_root / database).resolve()
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    if db_path.exists():
-        db_path.unlink()
+        from backend.src.app import app  # import here, not at module top
+    except Exception as e:
+        raise RuntimeError(f"Failed to import FastAPI app: {e}")
+    return app
 
 
-# ---- Pytest / AnyIO plumbing ----
+# ------------------------------------------------------------
+# anyio backend (enables async tests)
+# ------------------------------------------------------------
 
 
 @pytest.fixture(scope="session")
 def anyio_backend():
+    # Allows @pytest.mark.anyio tests to run on asyncio
     return "asyncio"
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+# ------------------------------------------------------------
+# Sync client (for non-async tests) with a tiny adapter so
+# kwargs match httpx style (allow_redirects -> follow_redirects).
+# ------------------------------------------------------------
+
+
+def _map_redirect_kw(kwargs):
+    # Map requests-style allow_redirects -> httpx follow_redirects
+    if "allow_redirects" in kwargs:
+        kwargs["follow_redirects"] = kwargs.pop("allow_redirects")
+    return kwargs
+
+
+class SyncClientAdapter:
+    """Wrap TestClient and normalize kwargs; minimal httpx-like surface."""
+
+    def __init__(self, client: TestClient):
+        self._c = client
+
+    def get(self, url, **kwargs):
+        return self._c.get(url, **_map_redirect_kw(kwargs))
+
+    def post(self, url, **kwargs):
+        return self._c.post(url, **_map_redirect_kw(kwargs))
+
+    def put(self, url, **kwargs):
+        return self._c.put(url, **_map_redirect_kw(kwargs))
+
+    def patch(self, url, **kwargs):
+        return self._c.patch(url, **_map_redirect_kw(kwargs))
+
+    def delete(self, url, **kwargs):
+        return self._c.delete(url, **_map_redirect_kw(kwargs))
+
+    def options(self, url, **kwargs):
+        return self._c.options(url, **_map_redirect_kw(kwargs))
+
+    @property
+    def cookies(self):
+        return self._c.cookies
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return self._c.__exit__(*a)
 
 
 @pytest.fixture(scope="session")
-async def started_app():
-    # Reset DB ONCE, then run full startup/shutdown exactly once for the session
-    _reset_sqlite_db_file()
-    async with LifespanManager(app):
-        yield app
+def client(test_env):
+    app = _load_app()
+    with TestClient(app) as c:
+        yield SyncClientAdapter(c)
 
 
-# ---- Primary client for async tests ----
+# ------------------------------------------------------------
+# Async client (for async tests)
+# ------------------------------------------------------------
 
 
-@pytest.fixture()
-async def client(started_app):
-    """
-    Async HTTPX client bound to the ASGI app (no network).
-    Single lifespan (from started_app); no DB reset here to avoid file locks.
-    """
-    transport = ASGITransport(app=started_app)
+@pytest.fixture
+async def rate_async_client(test_env):
+    from httpx import AsyncClient, ASGITransport
+    from backend.src.app import app
+
+    transport = ASGITransport(app=app)
     async with AsyncClient(
-        transport=transport,
-        base_url="http://test",
-        follow_redirects=True,
-        trust_env=False,  # ignore proxies; prevents odd hangs
-        timeout=30.0,  # hard cap to avoid indefinite stalls
-    ) as ac:
-        yield ac
-
-
-# ---- Helpers / convenience ----
-
-
-@pytest.fixture()
-async def csrf_token(client: AsyncClient) -> str:
-    """Fetch CSRF token if your app exposes an endpoint for it."""
-    r = await client.get("/api/auth/csrf")
-    data = (
-        r.json()
-        if r.headers.get("content-type", "").startswith("application/json")
-        else {}
-    )
-    return data.get("csrf_token") or data.get("token") or ""
-
-
-# Optional: provide a synchronous client without conflicting with 'client'
-# (use sparingly; it manages its own lifespan to avoid double-start with session app)
-@pytest.fixture()
-def sync_client():
-    from fastapi.testclient import TestClient
-
-    # NOTE: do NOT call _reset_sqlite_db_file() here; DB is already in use.
-    with TestClient(app, base_url="http://test") as tc:
-        yield tc
+        transport=transport, base_url="http://test", follow_redirects=True
+    ) as c:
+        yield c

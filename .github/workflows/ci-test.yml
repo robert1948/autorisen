@@ -26,7 +26,7 @@ jobs:
           DATABASE_URL: sqlite:////tmp/autolocal_test.db
           ALEMBIC_DATABASE_URL: sqlite:////tmp/autolocal_test.db
           DISABLE_RECAPTCHA: "true"
-          RUN_DB_MIGRATIONS_ON_STARTUP: "0"
+          RUN_DB_MIGRATIONS_ON_STARTUP: "1"
           RATE_LIMIT_BACKEND: memory
           PYTHONWARNINGS: default
         run: |

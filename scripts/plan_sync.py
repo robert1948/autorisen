@@ -25,6 +25,7 @@ MD_PATH = Path("docs/Master_ProjectPlan.md")
 BEGIN = "<!-- PLAN:BEGIN -->"
 END = "<!-- PLAN:END -->"
 
+
 def load_csv_rows():
     if not CSV_PATH.exists():
         print(f"[PlanSync] Missing {CSV_PATH}", file=sys.stderr)
@@ -35,9 +36,12 @@ def load_csv_rows():
     # Minimal validation
     for required in ("id", "title"):
         if required not in reader.fieldnames:
-            print(f"[PlanSync] CSV missing required column: {required}", file=sys.stderr)
+            print(
+                f"[PlanSync] CSV missing required column: {required}", file=sys.stderr
+            )
             sys.exit(2)
     return rows, reader.fieldnames
+
 
 def extract_fenced(md_text: str):
     pattern = re.compile(
@@ -48,6 +52,7 @@ def extract_fenced(md_text: str):
     if not m:
         return None, None, None
     return m.group(0), m.start(), m.end()
+
 
 def render_table(rows, fieldnames):
     # choose columns to output
@@ -64,6 +69,7 @@ def render_table(rows, fieldnames):
     block = f"{BEGIN}\n\n{header}{sep}{body}\n{END}"
     return block
 
+
 def parse_md_table(md_text: str):
     fenced, s, e = extract_fenced(md_text)
     if not fenced:
@@ -77,6 +83,7 @@ def parse_md_table(md_text: str):
             if cells and cells[0].lower() != "id" and cells[0] != "---":
                 ids.add(cells[0])
     return ids, fenced, s, e
+
 
 def main():
     check_only = "--check-only" in sys.argv
@@ -93,7 +100,10 @@ def main():
         # Create a stub MD with fenced section
         print(f"[PlanSync] {MD_PATH} not found, creating stub with fenced table.")
         MD_PATH.parent.mkdir(parents=True, exist_ok=True)
-        MD_PATH.write_text(f"# Master Project Plan\n\n{render_table(rows, fieldnames)}\n", encoding="utf-8")
+        MD_PATH.write_text(
+            f"# Master Project Plan\n\n{render_table(rows, fieldnames)}\n",
+            encoding="utf-8",
+        )
         sys.exit(1 if check_only else 0)
 
     md_text = MD_PATH.read_text(encoding="utf-8")
@@ -141,6 +151,7 @@ def main():
 
     print("Usage: plan_sync.py --check-only | --apply", file=sys.stderr)
     sys.exit(2)
+
 
 if __name__ == "__main__":
     main()

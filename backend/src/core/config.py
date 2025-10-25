@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     )
 
     # required / core
-    secret_key: str = Field("dev-secret-change-me", alias="SECRET_KEY")
-    database_url: str = Field("sqlite:///./dev.db", alias="DATABASE_URL")
+    secret_key: str = Field(default="dev-secret-change-me", alias="SECRET_KEY")
+    database_url: str = Field(default="sqlite:///./dev.db", alias="DATABASE_URL")
 
     # optional
     email_api_key: Optional[str] = Field(default=None, alias="EMAIL_API_KEY")
@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     rate_limit_per_min: int = Field(default=10, alias="RATE_LIMIT_PER_MIN")
     frontend_origin: str = Field(
         default="http://localhost:5173", alias="FRONTEND_ORIGIN"
+    )
+    run_db_migrations_on_startup: bool = Field(
+        default=False, alias="RUN_DB_MIGRATIONS_ON_STARTUP"
     )
     email_token_secret: Optional[str] = Field(default=None, alias="EMAIL_TOKEN_SECRET")
     from_email: Optional[str] = Field(default=None, alias="FROM_EMAIL")
@@ -78,18 +81,16 @@ class Settings(BaseSettings):
         If ACCESS_TOKEN_EXPIRE_MINUTES is provided and ACCESS_TOKEN_TTL_MINUTES isn't,
         treat EXPIRE as the canonical TTL to stay backward-compatible.
         """
-        if (
-            self.access_token_expire_minutes is not None
-            and "ACCESS_TOKEN_TTL_MINUTES" not in os.environ
-        ):
-            self.access_token_ttl_minutes = int(self.access_token_expire_minutes)
-        self.session_cookie_samesite = str(
-            self.session_cookie_samesite or "lax"
-        ).lower()
-        if self.session_cookie_samesite not in {"lax", "strict", "none"}:
-            self.session_cookie_samesite = "lax"
-        if self.session_cookie_samesite == "none":
-            self.session_cookie_secure = True
+        expire_minutes = self.access_token_expire_minutes
+        if expire_minutes is not None and "ACCESS_TOKEN_TTL_MINUTES" not in os.environ:
+            object.__setattr__(self, "access_token_ttl_minutes", int(expire_minutes))
+
+        cookie_value = str(self.session_cookie_samesite or "lax").lower()
+        if cookie_value not in {"lax", "strict", "none"}:
+            cookie_value = "lax"
+        object.__setattr__(self, "session_cookie_samesite", cookie_value)
+        if cookie_value == "none":
+            object.__setattr__(self, "session_cookie_secure", True)
         return self
 
 
