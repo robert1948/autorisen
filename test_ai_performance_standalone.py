@@ -9,8 +9,7 @@ import sys
 
 sys.path.append("/home/robert/Documents/localstorm250722/backend")
 
-from app.services.ai_performance_service import (AIPerformanceMonitor,
-                                                 AIProvider)
+from app.services.ai_performance_service import AIPerformanceMonitor, AIProvider
 
 
 def test_ai_performance_monitor_initialization():

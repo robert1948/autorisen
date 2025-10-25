@@ -14,8 +14,12 @@ import sys
 # Add the app directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "app"))
 
-from app.utils.input_sanitization import (InputSanitizer, SanitizationLevel,
-                                          sanitize_text, validate_ai_prompt)
+from app.utils.input_sanitization import (
+    InputSanitizer,
+    SanitizationLevel,
+    sanitize_text,
+    validate_ai_prompt,
+)
 
 
 def test_basic_functionality():

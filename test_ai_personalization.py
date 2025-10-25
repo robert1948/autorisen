@@ -16,13 +16,16 @@ import asyncio
 from datetime import datetime
 
 import pytest
+
 # Test the AI Personalization Service
-from app.services.ai_personalization_service import (AIPersonalizationService,
-                                                     CommunicationStyle,
-                                                     ExpertiseLevel,
-                                                     LearningStyle,
-                                                     PersonalityTrait,
-                                                     UserPersonalityProfile)
+from app.services.ai_personalization_service import (
+    AIPersonalizationService,
+    CommunicationStyle,
+    ExpertiseLevel,
+    LearningStyle,
+    PersonalityTrait,
+    UserPersonalityProfile,
+)
 
 
 class TestAIPersonalizationService:

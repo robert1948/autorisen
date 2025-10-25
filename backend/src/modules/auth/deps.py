@@ -7,10 +7,11 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from backend.src.core.redis import (cache_user_token_version,
-                                    clear_user_token_version_cache,
-                                    get_cached_user_token_version,
-                                    is_jti_denied)
+from backend.src.core.redis import (
+    cache_user_token_version,
+    get_cached_user_token_version,
+    is_jti_denied,
+)
 from backend.src.db.session import get_db
 from backend.src.services.security import decode_jwt
 

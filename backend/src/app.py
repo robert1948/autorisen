@@ -10,8 +10,13 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import (FileResponse, HTMLResponse, JSONResponse,
-                                 PlainTextResponse, Response)
+from starlette.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    Response,
+)
 
 from backend.src.core.config import settings
 
@@ -25,7 +30,9 @@ load_dotenv()
 # Security middleware (bot probe blocking + headers)
 try:
     from .middleware.bot_hardening import (  # type: ignore
-        BlockProbesMiddleware, SecurityHeadersMiddleware)
+        BlockProbesMiddleware,
+        SecurityHeadersMiddleware,
+    )
 except Exception:
     BlockProbesMiddleware = None  # type: ignore[assignment]
     SecurityHeadersMiddleware = None  # type: ignore[assignment]
@@ -108,29 +115,47 @@ def _inline_sitemap(base_url: str, routes: list[str]) -> str:
     return "\n".join(lines)
 
 
+def _is_test_mode() -> bool:
+    # Robust detection: ENV=test, or explicit AUTH_TEST_MODE flag, or settings has the flag
+    env = (
+        os.getenv("APP_ENV") or os.getenv("ENVIRONMENT") or os.getenv("ENV") or ""
+    ).lower()
+    flag = os.getenv("AUTH_TEST_MODE", "0").lower() in {"1", "true", "yes"}
+    settings_flag = getattr(settings, "auth_test_mode", False)
+    return env == "test" or flag or bool(settings_flag)
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
 
-    required_env = {
-        "EMAIL_TOKEN_SECRET": settings.email_token_secret,
-        "FROM_EMAIL": settings.from_email,
-        "SMTP_HOST": settings.smtp_host,
-        "SMTP_USERNAME": settings.smtp_username,
-        "SMTP_PASSWORD": settings.smtp_password,
-    }
-    missing = [name for name, value in required_env.items() if not value]
-    if missing:
-        raise RuntimeError(
-            "Missing required auth email configuration: " + ", ".join(sorted(missing))
-        )
+    test_mode = _is_test_mode()
 
+    # Enforce email settings only outside tests
+    if not test_mode:
+        required_env = {
+            "EMAIL_TOKEN_SECRET": getattr(settings, "email_token_secret", None),
+            "FROM_EMAIL": getattr(settings, "from_email", None),
+            "SMTP_HOST": getattr(settings, "smtp_host", None),
+            "SMTP_USERNAME": getattr(settings, "smtp_username", None),
+            "SMTP_PASSWORD": getattr(settings, "smtp_password", None),
+        }
+        missing = [name for name, value in required_env.items() if not value]
+        if missing:
+            raise RuntimeError(
+                "Missing required auth email configuration: "
+                + ", ".join(sorted(missing))
+            )
+    else:
+        log.info("Test mode active: skipping strict email configuration checks")
+
+    # Warn (but don't fail) for optional OAuth in any env
     optional_env = {
-        "GOOGLE_CLIENT_ID": settings.google_client_id,
-        "GOOGLE_CLIENT_SECRET": settings.google_client_secret,
-        "GOOGLE_CALLBACK_URL": settings.google_callback_url,
-        "LINKEDIN_CLIENT_ID": settings.linkedin_client_id,
-        "LINKEDIN_CLIENT_SECRET": settings.linkedin_client_secret,
-        "LINKEDIN_CALLBACK_URL": settings.linkedin_callback_url,
+        "GOOGLE_CLIENT_ID": getattr(settings, "google_client_id", None),
+        "GOOGLE_CLIENT_SECRET": getattr(settings, "google_client_secret", None),
+        "GOOGLE_CALLBACK_URL": getattr(settings, "google_callback_url", None),
+        "LINKEDIN_CLIENT_ID": getattr(settings, "linkedin_client_id", None),
+        "LINKEDIN_CLIENT_SECRET": getattr(settings, "linkedin_client_secret", None),
+        "LINKEDIN_CALLBACK_URL": getattr(settings, "linkedin_callback_url", None),
     }
     for name, value in optional_env.items():
         if not value:
@@ -148,12 +173,11 @@ def create_app() -> FastAPI:
         "http://127.0.0.1:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        settings.frontend_origin.rstrip("/"),
+        getattr(settings, "frontend_origin", "").rstrip("/"),
         "https://dev.cape-control.com",
     }
     if APP_ORIGIN:
         allow_origins.add(APP_ORIGIN)
-
     allow_origins = [origin for origin in allow_origins if origin]
 
     app.add_middleware(
@@ -161,7 +185,14 @@ def create_app() -> FastAPI:
         allow_origins=allow_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
-        allow_headers=["Authorization", "Content-Type"],
+        # CSRF-friendly headers for tests and browser clients
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-CSRF-Token",
+            "X-XSRF-Token",
+            "X-Requested-With",
+        ],
         expose_headers=["Content-Length"],
         max_age=86400,
     )
@@ -188,6 +219,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/health", include_in_schema=False)
     def api_health():
+        # Tests expect a clear textual status
         version = os.getenv("APP_VERSION", "dev")
         env_name = (
             os.getenv("APP_ENV")
@@ -195,7 +227,7 @@ def create_app() -> FastAPI:
             or os.getenv("ENV")
             or "local"
         )
-        return {"ok": True, "version": version, "env": env_name}
+        return {"status": "ok", "version": version, "env": env_name}
 
     @app.get("/api/health/alive", include_in_schema=False)
     def api_health_alive():
@@ -281,15 +313,25 @@ def create_app() -> FastAPI:
         logging.getLogger("uvicorn.error").exception("Unhandled exception")
         return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
-    if run_migrations_on_startup:
+    # --- Optional DB migrations on startup (only if enabled *and* importer succeeded)
+    enable_migrations = bool(getattr(settings, "run_db_migrations_on_startup", False))
+    if enable_migrations and callable(run_migrations_on_startup):
 
         @app.on_event("startup")
         def _apply_db_migrations() -> None:
             try:
-                run_migrations_on_startup()
+                run_migrations_on_startup()  # type: ignore[misc]
+                log.info("Database migrations applied during startup")
             except Exception:
                 log.exception("Database migrations failed during startup")
                 raise
+
+    else:
+        log.info(
+            "Startup migrations skipped (enabled=%s, callable=%s)",
+            enable_migrations,
+            callable(run_migrations_on_startup),
+        )
 
     if spa_index:
         app.mount(

@@ -30,16 +30,20 @@ def db_session():
         session.commit()
 
 
-def _issue_access_token(user: models.User, *, token_version: int | None = None, **extra):
+def _issue_access_token(
+    user: models.User, *, token_version: int | None = None, **extra
+):
     payload = {
         "sub": user.email,
         "user_id": user.id,
         "role": user.role,
         "purpose": service.ACCESS_TOKEN_PURPOSE,
         "jti": str(uuid.uuid4()),
-        "token_version": token_version
-        if token_version is not None
-        else service._token_version_for(user),
+        "token_version": (
+            token_version
+            if token_version is not None
+            else service._token_version_for(user)
+        ),
     }
     payload.update(extra)
     token, _ = create_jwt(payload, expires_in=60)

@@ -15,11 +15,15 @@ from unittest.mock import Mock, patch
 import pytest
 from app.main import app
 from app.middleware.content_moderation import ContentModerationMiddleware
-from app.utils.content_moderation import (ContentCategory, ContentModerator,
-                                          ModerationLevel, ViolationType,
-                                          is_content_safe,
-                                          moderate_ai_response,
-                                          moderate_user_content)
+from app.utils.content_moderation import (
+    ContentCategory,
+    ContentModerator,
+    ModerationLevel,
+    ViolationType,
+    is_content_safe,
+    moderate_ai_response,
+    moderate_user_content,
+)
 from fastapi.testclient import TestClient
 
 

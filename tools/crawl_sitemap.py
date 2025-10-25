@@ -391,7 +391,7 @@ def main():
     else:
         lines.append("- *(none)*")
     lines.append("")
-    lines.append(f"## Summary")
+    lines.append("## Summary")
     lines.append(f"- Total URLs: {len(results)}")
     lines.append(f"- OK (2xx/3xx): {ok}")
     lines.append(f"- FAIL (other): {bad}")

@@ -4,7 +4,6 @@
 List likely routes by scanning client/src for React Router and anchor usage.
 Stdlib only; no dependencies.
 """
-import os
 import re
 import sys
 from pathlib import Path
@@ -21,7 +20,7 @@ HREF = re.compile(r'href\s*=\s*["\'](/[^"\']*)["\']')
 def scan():
     routes = set()
     for p in SRC.rglob("*"):
-        if not p.suffix.lower() in {".tsx", ".jsx", ".ts", ".js"}:
+        if p.suffix.lower() not in {".tsx", ".jsx", ".ts", ".js"}:
             continue
         try:
             text = p.read_text("utf-8", errors="ignore")

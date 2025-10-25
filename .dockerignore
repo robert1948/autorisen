@@ -6,6 +6,10 @@
 *.log
 .env
 .env.*
+*.pyc
+tests/
+docs/
+.github/
 !.env.example
 __pycache__/
 .venv/

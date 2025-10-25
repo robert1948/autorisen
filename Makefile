@@ -1,14 +1,25 @@
+# =============================================================================
+# Makefile — Autolocal / CapeControl
+# =============================================================================
+
 SHELL := /bin/bash
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := help
 
+# ----------------------------------------------------------------------------- 
+# Core vars
+# -----------------------------------------------------------------------------
 PY := python3
 PIP := $(PY) -m pip
 VENV := .venv
 REQ := requirements.txt
+
 IMAGE ?= autorisen:local
 PORT ?= 8000
+
 HEROKU_APP_NAME ?= autorisen
+HEROKU_APP      ?= autorisen
 
 # Domains
 DEV_BASE_URL  ?= https://dev.cape-control.com
@@ -28,54 +39,37 @@ CRAWL_TOOL ?= tools/crawl_sitemap.py
 
 # Staging smoke
 STAGING_URL ?= https://dev.cape-control.com
-HEROKU_APP  ?= autorisen
 
 # Test DB (single source of truth)
 TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 
-.PHONY: help venv install format lint test docker-build docker-run docker-push deploy-heroku github-update clean \
-		plan-validate plan-open heroku-deploy-stg migrate-up migrate-revision \
-		sitemap-generate-dev sitemap-generate-prod verify-sitemap-dev verify-sitemap-prod \
-		verify-sitemap crawl-dev crawl-prod crawl-local crawl sitemap-svg \
-		codex-check codex-open codex-docs-lint codex-docs-fix codex-ci-validate \
-		codex-plan-diff codex-plan-apply codex-test-dry codex-test-heal codex-test codex-test-cov codex-run \
-		smoke-staging smoke-local csrf-probe-staging csrf-probe-local heroku-logs heroku-run-migrate \
-		dockerhub-update-description
-		codex-test-strict codex-smoke smoke-prod
+# ----------------------------------------------------------------------------- 
+# PHONY index (single, authoritative)
+# -----------------------------------------------------------------------------
+.PHONY: help venv install format lint test docker-build docker-run docker-push \
+	deploy-heroku heroku-deploy-stg heroku-logs heroku-run-migrate \
+	github-update clean plan-validate plan-open \
+	migrate-up migrate-revision \
+	sitemap-generate-dev sitemap-generate-prod verify-sitemap verify-sitemap-dev verify-sitemap-prod \
+	crawl-local crawl-dev crawl-prod crawl sitemap-svg \
+	agents-new agents-validate agents-test agents-run \
+	codex-check codex-open codex-docs-lint codex-docs-fix codex-ci-validate \
+	codex-plan-diff codex-plan-apply codex-test-heal codex-test codex-test-cov codex-test-dry codex-run \
+	smoke-staging smoke-local csrf-probe-staging csrf-probe-local codex-smoke smoke-prod \
+	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push \
+	dockerhub-release dockerhub-update-description dockerhub-clean \
+	playbooks-overview playbook-overview playbook-open playbook-new playbooks-check
 
-help:
-	@echo "Available targets:"
-	@echo "  make venv                     - create a virtualenv in $(VENV)"
-	@echo "  make install                  - install project dependencies (uses $(REQ) if present)"
-	@echo "  make format                   - run code formatters (black/isort)"
-	@echo "  make lint                     - run linters (ruff)"
-	@echo "  make test                     - run tests (pytest)"
-	@echo "  make docker-build             - build docker image (IMAGE=$(IMAGE))"
-	@echo "  make docker-run               - run docker image locally (exposes $(PORT))"
-	@echo "  make deploy-heroku            - build/push/release to Heroku Container Registry (retries on transient failures)"
-	@echo "  make heroku-deploy-stg        - quick push/release to $(HEROKU_APP)"
-	@echo "  make heroku-logs              - tail dyno logs"
-	@echo "  make heroku-run-migrate       - run Alembic upgrade on Heroku dyno"
-	@echo "  make github-update            - fast-forward current branch from GitHub origin"
-	@echo "  make clean                    - remove common build artifacts"
-	@echo "  --- Sitemap / verification ---"
-	@echo "  make sitemap-generate-dev     - generate client/public/$(SITEMAP_XML) from $(SITEMAP_DEV_TXT)"
-	@echo "  make sitemap-generate-prod    - generate client/public/$(SITEMAP_XML) from $(SITEMAP_PROD_TXT)"
-	@echo "  make verify-sitemap-dev       - curl-check all dev routes from $(SITEMAP_DEV_TXT) (BASE=$(DEV_BASE_URL))"
-	@echo "  make verify-sitemap-prod      - curl-check all prod routes from $(SITEMAP_PROD_TXT) (BASE=$(PROD_BASE_URL))"
-	@echo "  make crawl-dev|prod|local     - crawl site and save captures to $(CRAWL_OUT)"
-	@echo "  --- Codex helpers ---"
-	@echo "  make codex-check              - verify Codex context files & VS Code settings"
-	@echo "  make codex-run                - docs lint, pre-commit, pytest with CI-safe env"
-	@echo "  --- Smoke tests ---"
-	@echo "  make smoke-staging            - health + OpenAPI CSRF discovery probe"
-	@echo "  make smoke-local              - health + CSRF probe against localhost backend"
-	@echo "  make csrf-probe-staging       - direct CSRF probe (accepts 200/204; checks Set-Cookie)"
-	@echo "  make csrf-probe-local         - direct CSRF probe localhost"
-	@echo "  make codex-smoke              - run both staging smoke + CSRF probe"
-	@echo "  make smoke-prod               - health check against production domain"
+# ----------------------------------------------------------------------------- 
+# Help (auto-docs)
+# -----------------------------------------------------------------------------
+help: ## List Make targets (auto-docs)
+	@awk 'BEGIN {FS=":.*##"; printf "\n\033[1mMake targets\033[0m\n"} /^[a-zA-Z0-9_.-]+:.*##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-venv:
+# ----------------------------------------------------------------------------- 
+# Python env / dev tasks
+# -----------------------------------------------------------------------------
+venv: ## Create a virtualenv in $(VENV)
 	@if [ -d "$(VENV)" ]; then \
 		echo "Virtualenv $(VENV) already exists"; \
 	else \
@@ -83,7 +77,7 @@ venv:
 		echo "Created virtualenv $(VENV)"; \
 	fi
 
-install: venv
+install: venv ## Install project dependencies (uses $(REQ) if present)
 	@echo "Installing dependencies..."
 	@if [ -f "$(REQ)" ]; then \
 		$(VENV)/bin/python -m pip install -r $(REQ); \
@@ -92,25 +86,26 @@ install: venv
 		echo "No requirements.txt found; attempted editable install"; \
 	fi
 
-format:
+format: ## Run code formatters (black/isort)
 	@echo "Running formatters..."
 	@$(VENV)/bin/python -m pip install black isort >/dev/null 2>&1 || true
 	@$(VENV)/bin/black . || true
 	@$(VENV)/bin/isort . || true
 
-lint:
+lint: ## Run ruff linter
 	@echo "Running ruff linter..."
 	@$(VENV)/bin/python -m pip install ruff >/dev/null 2>&1 || true
 	@$(VENV)/bin/ruff check . || true
 
-test:
+test: ## Run tests (pytest)
 	@echo "Running tests..."
 	@$(VENV)/bin/python -m pip install pytest >/dev/null 2>&1 || true
 	@$(VENV)/bin/pytest -q || true
 
-# Docker targets ---------------------------------------------------------
-
-docker-build:
+# ----------------------------------------------------------------------------- 
+# Docker (local) 
+# -----------------------------------------------------------------------------
+docker-build: ## Build docker image (IMAGE=$(IMAGE))
 	@echo "Building docker image $(IMAGE)..."
 	@for i in 1 2 3; do \
 		if docker build -t $(IMAGE) .; then \
@@ -120,12 +115,11 @@ docker-build:
 	done; \
 	echo "Docker build failed after retries"; exit 1
 
-docker-run:
+docker-run: ## Run docker image locally (exposes $(PORT))
 	@echo "Running docker image $(IMAGE) on port $(PORT)..."
 	docker run --rm -p $(PORT):$(PORT) --env PORT=$(PORT) $(IMAGE)
 
-# Push to registry (generic). If you want to push to Heroku, set HEROKU_APP_NAME.
-docker-push:
+docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 	@if [ -z "$(REGISTRY)" ]; then \
 		echo "Please set REGISTRY or use deploy-heroku for Heroku (set HEROKU_APP_NAME)."; exit 1; \
 	fi
@@ -133,9 +127,10 @@ docker-push:
 	docker tag $(IMAGE) $(REGISTRY)/$(IMAGE)
 	docker push $(REGISTRY)/$(IMAGE)
 
-# Heroku container deploy (with basic retries on login/push/release) -----
-
-deploy-heroku: docker-build
+# ----------------------------------------------------------------------------- 
+# Heroku container deploy
+# -----------------------------------------------------------------------------
+deploy-heroku: docker-build ## Build/push/release to Heroku (retries on transient failures)
 	@if [ -z "$(HEROKU_APP_NAME)" ]; then \
 		echo "Set HEROKU_APP_NAME environment variable to your Heroku app name"; exit 1; \
 	fi
@@ -159,59 +154,58 @@ deploy-heroku: docker-build
 		[ $$i -eq 3 ] && { echo "Release failed after retries"; exit 1; } || true; \
 	done
 
-heroku-deploy-stg:
+heroku-deploy-stg: ## Quick push/release to $(HEROKU_APP)
 	heroku container:login
 	heroku container:push web -a $(HEROKU_APP)
 	heroku container:release web -a $(HEROKU_APP)
 	heroku open -a $(HEROKU_APP)
 
-heroku-logs:
+heroku-logs: ## Tail Heroku dyno logs
 	heroku logs -t -a $(HEROKU_APP)
 
-heroku-run-migrate:
-	# Run Alembic upgrade inside a one-off dyno
+heroku-run-migrate: ## Run Alembic upgrade inside a one-off Heroku dyno
 	heroku run -a $(HEROKU_APP) "ENV=prod PYTHONWARNINGS=default alembic -c backend/alembic.ini upgrade head"
 
-# Git helpers ------------------------------------------------------------
-
-github-update:
+# ----------------------------------------------------------------------------- 
+# Git helpers
+# -----------------------------------------------------------------------------
+github-update: ## Fast-forward the current branch from origin
 	@echo "Updating branch $$(git rev-parse --abbrev-ref HEAD) from origin..."
 	@git fetch origin
 	@git pull --ff-only origin $$(git rev-parse --abbrev-ref HEAD)
 
-clean:
+clean: ## Remove common build artifacts
 	rm -rf build/ dist/ *.egg-info .pytest_cache/ .venv
 
-plan-validate:
+plan-validate: ## Validate plan CSV with tools/validate_plan_csv.py
 	python3 tools/validate_plan_csv.py
 
-plan-open:
+plan-open: ## Open plan & Codex project plan
 	code docs/CODEX_PROJECT_PLAN.md data/plan.csv
 
-# Alembic ---------------------------------------------------------------
-
-migrate-up: venv
+# ----------------------------------------------------------------------------- 
+# Alembic
+# -----------------------------------------------------------------------------
+migrate-up: venv ## Alembic upgrade head
 	@echo "Running Alembic upgrade head..."
 	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
 	@$(VENV)/bin/python -m alembic -c backend/alembic.ini upgrade head
 
-migrate-revision: venv
+migrate-revision: venv ## Create Alembic revision: make migrate-revision message="desc"
 	@[ -n "$$message" ] || (echo "Usage: make migrate-revision message=\"<description>\""; exit 1)
 	@echo "Creating Alembic revision: $$message"
 	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
 	@$(VENV)/bin/python -m alembic -c backend/alembic.ini revision -m "$$message"
 
-# -----------------------------
+# ----------------------------------------------------------------------------- 
 # Sitemap generation & checks
-# -----------------------------
-
+# -----------------------------------------------------------------------------
 define GEN_SITEMAP_XML
 mkdir -p "$(PUBLIC_DIR)"
 $(PY) - <<'PYCODE'
 from datetime import date
 from pathlib import Path
-import os
-import sys
+import os, sys
 
 base = os.environ.get("BASE_URL", "").rstrip("/")
 txt = Path(sys.argv[1])
@@ -219,18 +213,18 @@ out = Path("$(PUBLIC_DIR)") / "$(SITEMAP_XML)"
 today = date.today().isoformat()
 
 routes = [
-	line.strip()
-	for line in txt.read_text(encoding="utf-8").splitlines()
-	if line.strip() and not line.lstrip().startswith("#")
+    line.strip()
+    for line in txt.read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.lstrip().startswith("#")
 ]
 
 xml_lines = [
-	'<?xml version="1.0" encoding="UTF-8"?>',
-	'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
 ]
 xml_lines.extend(
-	f"  <url><loc>{base + route if base else route}</loc><lastmod>{today}</lastmod></url>"
-	for route in routes
+    f"  <url><loc>{base + route if base else route}</loc><lastmod>{today}</lastmod></url>"
+    for route in routes
 )
 xml_lines.append("</urlset>")
 
@@ -239,15 +233,15 @@ print(f"Wrote {out} with {len(routes)} routes.")
 PYCODE
 endef
 
-sitemap-generate-dev:
+sitemap-generate-dev: ## Generate $(PUBLIC_DIR)/$(SITEMAP_XML) from $(SITEMAP_DEV_TXT)
 	@BASE_URL="$(DEV_BASE_URL)"; \
 	$(call GEN_SITEMAP_XML,$(SITEMAP_DEV_TXT))
 
-sitemap-generate-prod:
+sitemap-generate-prod: ## Generate $(PUBLIC_DIR)/$(SITEMAP_XML) from $(SITEMAP_PROD_TXT)
 	@BASE_URL="$(PROD_BASE_URL)"; \
 	$(call GEN_SITEMAP_XML,$(SITEMAP_PROD_TXT))
 
-verify-sitemap:
+verify-sitemap: ## Verify routes from FILE=... at BASE=...
 	@[ -n "$(FILE)" ] || (echo "Usage: make verify-sitemap FILE=docs/sitemap.dev.txt BASE=<url>"; exit 1)
 	@[ -n "$(BASE)" ] || (echo "Usage: make verify-sitemap FILE=... BASE=<url>"; exit 1)
 	@echo "Verifying routes from $(FILE) at $(BASE)"
@@ -262,50 +256,51 @@ verify-sitemap:
 	done < "$(FILE)"; \
 	exit $$FAIL
 
-verify-sitemap-dev:
+verify-sitemap-dev: ## Curl-check all dev routes
 	@$(MAKE) verify-sitemap FILE="$(SITEMAP_DEV_TXT)" BASE="$(DEV_BASE_URL)"
 
-verify-sitemap-prod:
+verify-sitemap-prod: ## Curl-check all prod routes
 	@$(MAKE) verify-sitemap FILE="$(SITEMAP_PROD_TXT)" BASE="$(PROD_BASE_URL)"
 
-# --- Crawl targets ----------------------------------------------------
-
-crawl-local: ## run tools/crawl_sitemap.py against http://localhost:3000
+# ----------------------------------------------------------------------------- 
+# Crawl targets
+# -----------------------------------------------------------------------------
+crawl-local: ## Run tools/crawl_sitemap.py against http://localhost:3000
 	$(PY) $(CRAWL_TOOL) --base-url http://localhost:3000 --outdir $(CRAWL_OUT) --label local
 
-crawl-dev: ## run crawler against dev.cape-control.com
+crawl-dev: ## Run crawler against dev.cape-control.com
 	$(PY) $(CRAWL_TOOL) --base-url $(DEV_BASE_URL) --outdir $(CRAWL_OUT) --label dev
 
-crawl-prod: ## run crawler against cape-control.com
+crawl-prod: ## Run crawler against cape-control.com
 	$(PY) $(CRAWL_TOOL) --base-url https://www.cape-control.com --outdir $(CRAWL_OUT) --label prod
 
-crawl: crawl-local ## default crawl
+crawl: crawl-local ## Default crawl
 
-# -----------------------------
-# Agents tooling (unchanged)
-# -----------------------------
+sitemap-svg: ## Render sitemap mermaid to SVG
+	npx mmdc -i docs/sitemap_v2_final.mmd -o docs/sitemap_v2_final.svg -t neutral -b transparent -s 1.5
 
-agents-new:
+# ----------------------------------------------------------------------------- 
+# Agents tooling
+# -----------------------------------------------------------------------------
+agents-new: ## Create a new agent scaffold: make agents-new name=<slug>
 	@[ -n "$$name" ] || (echo "Usage: make agents-new name=<slug>"; exit 1)
 	@mkdir -p agents/$(name)/tests && \
 	printf "name: %s\nrole: <fill>\nmodel: { provider: openai, name: gpt-4.1-mini, temperature: 0.2 }\npolicies: { allow_tools: [] }\ncontext: { system_prompt: |\n  You are %s. }\n" "$(name)" "$(name)" > agents/$(name)/agent.yaml
 	@echo "Created agents/$(name)"
 
-agents-validate:
+agents-validate: ## Validate agents registry
 	@python3 scripts/agents_validate.py agents/registry.yaml
 
-agents-test:
+agents-test: ## Run agents unit tests
 	@python3 -m pytest -q tests/test_agents_tooling.py
 
-agents-run:
+agents-run: ## Run an agent: make agents-run name=<slug> task="..."
 	@[ -n "$$name" ] || (echo "Usage: make agents-run name=<slug> task=\"...\""; exit 1)
 	@python3 scripts/agents_run.py --agent $$name --task "$$task"
 
-sitemap-svg:
-	npx mmdc -i docs/sitemap_v2_final.mmd -o docs/sitemap_v2_final.svg -t neutral -b transparent -s 1.5
-
-# --- Codex helpers ------------------------------------------------------------
-
+# ----------------------------------------------------------------------------- 
+# Codex helpers
+# -----------------------------------------------------------------------------
 CODEX_DOCS ?= \
   docs/DEVELOPMENT_CONTEXT.md \
   docs/MVP_SCOPE.md \
@@ -313,7 +308,7 @@ CODEX_DOCS ?= \
   docs/agents.md \
   docs/Heroku_Pipeline_Workflow.md
 
-codex-check:
+codex-check: ## Verify Codex context files & VS Code settings
 	@echo "== Codex context files =="
 	@for f in $(CODEX_DOCS); do \
 		if [ -f "$$f" ]; then \
@@ -341,38 +336,36 @@ codex-check:
 		echo "❌  .vscode/settings.json (missing)"; \
 	fi
 
-codex-open:
+codex-open: ## Open Codex prompt and settings in VS Code
 	@which code >/dev/null 2>&1 || { echo "⚠️  'code' CLI not found (install VS Code Shell Command)."; exit 0; }
 	@[ -f .vscode/codex.prompt.md ] && code -g .vscode/codex.prompt.md || true
 	@[ -f .vscode/settings.json ] && code -g .vscode/settings.json || true
 
-codex-docs-lint:
+codex-docs-lint: ## Markdown lint all docs (installs markdownlint-cli if needed)
 	@command -v markdownlint >/dev/null 2>&1 || { echo "Installing markdownlint-cli (global)"; npm i -g markdownlint-cli >/dev/null 2>&1; }
 	markdownlint "**/*.md" --ignore node_modules --ignore .venv
 
-codex-docs-fix:
+codex-docs-fix: ## Auto-fix Markdown lint issues
 	@command -v markdownlint >/dev/null 2>&1 || { echo "Installing markdownlint-cli (global)"; npm i -g markdownlint-cli >/dev/null 2>&1; }
 	markdownlint "**/*.md" --ignore node_modules --ignore .venv --fix || true
 	@echo "Re-run lint to verify:"
 	markdownlint "**/*.md" --ignore node_modules --ignore .venv
 
-codex-ci-validate:
+codex-ci-validate: ## Run pre-commit hooks (install if needed)
 	@command -v pre-commit >/dev/null 2>&1 || { echo "Installing pre-commit"; python3 -m pip install --quiet pre-commit; }
 	pre-commit run --all-files || true
 
-codex-plan-diff:
+codex-plan-diff: ## Check plan sync
 	python3 scripts/plan_sync.py --check-only
 
-codex-plan-apply:
+codex-plan-apply: ## Apply plan sync
 	python3 scripts/plan_sync.py --apply
 
-codex-test-heal:
+codex-test-heal: ## Regenerate fixtures (best-effort) then pytest
 	python3 scripts/regenerate_fixtures.py || true
 	pytest -q || true
 
-# -----------------------------
-# Test env macros (DRY)
-# -----------------------------
+# --- Test env macros (DRY)
 define TEST_ENV_EXPORT
 export ENV="test"; \
 export DATABASE_URL="$(TEST_DB_URL)"; \
@@ -389,7 +382,7 @@ export SMTP_USERNAME="dev_dummy_user"; \
 export SMTP_PASSWORD="dev_dummy_pass";
 endef
 
-codex-test:
+codex-test: ## Run pytest with CI-safe defaults
 	@echo "== Running pytest with CI-safe defaults =="
 	@set -e; \
 	$(TEST_ENV_EXPORT) \
@@ -397,7 +390,7 @@ codex-test:
 	$(PY) -m pip install -q -r "$(REQ)"; \
 	pytest -q
 
-codex-test-cov:
+codex-test-cov: ## Run pytest with coverage
 	@echo "== Running pytest with coverage =="
 	@set -e; \
 	$(TEST_ENV_EXPORT) \
@@ -405,20 +398,21 @@ codex-test-cov:
 	$(PY) -m pip install -q -r "$(REQ)" pytest-cov; \
 	pytest -q --cov=backend/src --cov-report=term --cov-report=xml
 
-codex-test-dry:
+codex-test-dry: ## Run pytest (allow failures; no venv bootstrap)
 	@set -e; \
 	$(TEST_ENV_EXPORT) \
 	pytest -q || true
 
-codex-run:
+codex-run: ## Full Codex pass (docs lint, pre-commit, pytest)
 	@$(MAKE) codex-check
 	@$(MAKE) codex-docs-lint || true
 	@$(MAKE) codex-ci-validate
 	@$(MAKE) codex-test
 
-# --- Smoke & CSRF probes ------------------------------------------------
-
-smoke-staging:
+# ----------------------------------------------------------------------------- 
+# Smoke & CSRF probes
+# -----------------------------------------------------------------------------
+smoke-staging: ## Health + CSRF discovery (OpenAPI) against $(STAGING_URL)
 	@echo "== Smoke test against $(STAGING_URL) =="
 	@curl -fsS "$(STAGING_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 	@echo "Discovering CSRF probe path from OpenAPI..."
@@ -456,12 +450,12 @@ smoke-staging:
 	echo "✗ CSRF cookie missing on candidates: $$CSRF_PATHS"; \
 	exit 1
 
-smoke-local:
+smoke-local: ## Health + CSRF probe against localhost backend
 	@echo "== Smoke test against http://localhost:$(PORT) =="
 	@curl -fsS "http://localhost:$(PORT)/api/health" >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 	@$(MAKE) csrf-probe-local || true
 
-csrf-probe-staging:
+csrf-probe-staging: ## Direct CSRF probe (staging)
 	@echo "== CSRF probe (staging) =="
 	@set -e; \
 	status=$$(curl -s -o /tmp/csrf_body.txt -D /tmp/csrf_headers.txt "$(STAGING_URL)/api/auth/csrf" -w "%{http_code}"); \
@@ -469,7 +463,7 @@ csrf-probe-staging:
 	if grep -qi 'set-cookie' /tmp/csrf_headers.txt; then echo "✓ Set-Cookie present"; else echo "✗ No Set-Cookie"; fi; \
 	cat /tmp/csrf_body.txt || true
 
-csrf-probe-local:
+csrf-probe-local: ## Direct CSRF probe (local)
 	@echo "== CSRF probe (local) =="
 	@set -e; \
 	status=$$(curl -s -o /tmp/csrf_body.txt -D /tmp/csrf_headers.txt "http://localhost:$(PORT)/api/auth/csrf" -w "%{http_code}" || true); \
@@ -477,17 +471,16 @@ csrf-probe-local:
 	if [ -f /tmp/csrf_headers.txt ] && grep -qi 'set-cookie' /tmp/csrf_headers.txt; then echo "✓ Set-Cookie present"; else echo "✗ No Set-Cookie"; fi; \
 	[ -f /tmp/csrf_body.txt ] && cat /tmp/csrf_body.txt || true
 
-# Convenience combos
-codex-smoke: smoke-staging csrf-probe-staging
+codex-smoke: smoke-staging csrf-probe-staging ## Combined staging smoke & CSRF
 
-# Optional: quick production health (no CSRF probe)
-smoke-prod:
+smoke-prod: ## Quick production health (no CSRF probe)
 	@echo "== Smoke test against $(PROD_BASE_URL) =="
 	@curl -fsS "$(PROD_BASE_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 
-# --- Strict mode tests --------------------------------------------------
-
-codex-test-strict:
+# ----------------------------------------------------------------------------- 
+# Strict mode tests
+# -----------------------------------------------------------------------------
+codex-test-strict: ## Run pytest with warnings as errors
 	@set -e; \
 	$(TEST_ENV_EXPORT) \
 	export PYTHONWARNINGS="error"; \
@@ -495,11 +488,10 @@ codex-test-strict:
 	$(PY) -m pip install -q -r "$(REQ)"; \
 	pytest -q
 
-# =============================================================================
-# Makefile — Docker Hub (multi-arch) release with safe tags
-# =============================================================================
+# ----------------------------------------------------------------------------- 
+# Docker Hub release (multi-arch) with safe tags
+# -----------------------------------------------------------------------------
 # Usage:
-#   make help
 #   make dockerhub-login
 #   make dockerhub-release APP=autorisen
 #   make dockerhub-release APP=capecraft VERSION=v0.3.0
@@ -507,32 +499,22 @@ codex-test-strict:
 #
 # Notes:
 # - Tags produced: :latest, :$(VERSION), :docker-<engine>, :git-<sha>
-# - All tags are sanitized to Docker's allowed charset [A-Za-z0-9_.-]
-# - Requires Docker Buildx (created automatically if missing)
-# =============================================================================
-
-SHELL := /bin/bash
-.ONESHELL:
-.SHELLFLAGS := -eu -o pipefail -c
-
+# - Requires Docker Buildx
 # -----------------------------------------------------------------------------
+
 # Config (override on CLI, e.g. make dockerhub-release APP=autorisen)
-# -----------------------------------------------------------------------------
 DH_NAMESPACE ?= stinkie
 APP          ?= autorisen
 CONTEXT      ?= .
 DOCKERFILE   ?= Dockerfile
 PLATFORMS    ?= linux/amd64,linux/arm64
 
-# Optional build arguments and cache
+# Optional build args & cache
 BUILD_ARGS        ?=
 BUILD_CACHE_FROM  ?=
 BUILD_CACHE_TO    ?=
 
-# -----------------------------------------------------------------------------
 # Helpers: trim & sanitize variables
-# -----------------------------------------------------------------------------
-# SANITIZE keeps only characters valid for Docker refs: [A-Za-z0-9_.-]
 define SANITIZE
 echo "$1" | sed -E 's/[^A-Za-z0-9_.-]/-/g'
 endef
@@ -555,65 +537,18 @@ SAFE_VERSION := $(shell $(call SANITIZE,$(VERSION)))
 SAFE_ENGINE  := $(shell $(call SANITIZE,$(DOCKER_ENGINE_VERSION)))
 SAFE_SHA     := $(shell $(call SANITIZE,$(GIT_SHA)))
 
-# Final image path
-IMAGE := $(NS)/$(APPNAME)
+# Final image path for Docker Hub
+DH_IMAGE := $(NS)/$(APPNAME)
 
-# Default target
-.DEFAULT_GOAL := help
-
-# -----------------------------------------------------------------------------
-# Info & Help
-# -----------------------------------------------------------------------------
-.PHONY: help show-vars
-help:
-	@echo ""
-	@echo "Targets:"
-	@echo "  dockerhub-login           Login to Docker Hub (interactive)"
-	@echo "  dockerhub-logout          Logout from Docker Hub"
-	@echo "  dockerhub-setup-builder   Ensure Buildx 'multiarch-builder' is ready"
-	@echo "  dockerhub-build           Local single-arch build (no push)"
-	@echo "  dockerhub-push            Push local :$(SAFE_VERSION) and :latest"
-	@echo "  dockerhub-release         Multi-arch buildx + push (recommended)"
-	@echo "  dockerhub-update-description  PATCH repository description via Docker Hub API"
-	@echo "  dockerhub-clean           Prune dangling images"
-	@echo "  release-autorisen         Shortcut for APP=autorisen"
-	@echo "  release-capecraft         Shortcut for APP=capecraft"
-	@echo ""
-	@echo "Variables (override on CLI):"
-	@echo "  DH_NAMESPACE=$(DH_NAMESPACE)  APP=$(APP)"
-	@echo "  CONTEXT=$(CONTEXT)  DOCKERFILE=$(DOCKERFILE)"
-	@echo "  PLATFORMS=$(PLATFORMS)"
-	@echo "  VERSION=$(VERSION)  (sanitized -> $(SAFE_VERSION))"
-	@echo "  DOCKER_ENGINE_VERSION=$(DOCKER_ENGINE_VERSION) (sanitized -> $(SAFE_ENGINE))"
-	@echo "  GIT_SHA=$(GIT_SHA) (sanitized -> $(SAFE_SHA))"
-	@echo "  BUILD_ARGS=$(BUILD_ARGS)"
-	@echo "  BUILD_CACHE_FROM=$(BUILD_CACHE_FROM)"
-	@echo "  BUILD_CACHE_TO=$(BUILD_CACHE_TO)"
-	@echo ""
-	@echo "Image:"
-	@echo "  $(IMAGE)"
-	@echo ""
-
-show-vars:
-	@$(MAKE) --no-print-directory help
-
-# -----------------------------------------------------------------------------
-# Auth
-# -----------------------------------------------------------------------------
-.PHONY: dockerhub-login dockerhub-logout
-dockerhub-login:
+dockerhub-login: ## Login to Docker Hub (interactive)
 	@echo "Logging in to Docker Hub…"
 	docker login
 
-dockerhub-logout:
+dockerhub-logout: ## Logout from Docker Hub
 	@echo "Logging out of Docker Hub…"
 	-docker logout
 
-# -----------------------------------------------------------------------------
-# Buildx setup
-# -----------------------------------------------------------------------------
-.PHONY: dockerhub-setup-builder
-dockerhub-setup-builder:
+dockerhub-setup-builder: ## Ensure Buildx 'multiarch-builder' is ready
 	@echo "Ensuring docker buildx builder is ready…"
 	@if ! docker buildx inspect multiarch-builder >/dev/null 2>&1; then \
 		docker buildx create --name multiarch-builder --use; \
@@ -623,38 +558,29 @@ dockerhub-setup-builder:
 	@docker buildx inspect --bootstrap >/dev/null
 	@echo "Buildx builder 'multiarch-builder' is ready."
 
-# -----------------------------------------------------------------------------
-# Local single-arch build/push (useful for quick tests)
-# -----------------------------------------------------------------------------
-.PHONY: dockerhub-build dockerhub-push
-dockerhub-build:
-	@echo "Building local image: $(IMAGE):$(SAFE_VERSION)"
+dockerhub-build: ## Local single-arch build (no push)
+	@echo "Building local image: $(DH_IMAGE):$(SAFE_VERSION)"
 	docker build \
 		-f "$(DOCKERFILE)" \
-		-t "$(IMAGE):$(SAFE_VERSION)" \
+		-t "$(DH_IMAGE):$(SAFE_VERSION)" \
 		$(BUILD_ARGS) \
 		"$(CONTEXT)"
 	@echo "Tagging latest…"
-	docker tag "$(IMAGE):$(SAFE_VERSION)" "$(IMAGE):latest"
+	docker tag "$(DH_IMAGE):$(SAFE_VERSION)" "$(DH_IMAGE):latest"
 
-dockerhub-push:
-	@echo "Pushing $(IMAGE):$(SAFE_VERSION) and :latest…"
-	docker push "$(IMAGE):$(SAFE_VERSION)"
-	docker push "$(IMAGE):latest"
+dockerhub-push: ## Push local :$(SAFE_VERSION) and :latest
+	@echo "Pushing $(DH_IMAGE):$(SAFE_VERSION) and :latest…"
+	docker push "$(DH_IMAGE):$(SAFE_VERSION)"
+	docker push "$(DH_IMAGE):latest"
 
-# -----------------------------------------------------------------------------
-# Multi-arch Release (recommended)
-# -----------------------------------------------------------------------------
-.PHONY: dockerhub-release
-dockerhub-release: dockerhub-setup-builder
-	@echo "Releasing $(IMAGE) for platforms [$(PLATFORMS)]"
+dockerhub-release: dockerhub-setup-builder ## Multi-arch buildx + push (recommended)
+	@echo "Releasing $(DH_IMAGE) for platforms [$(PLATFORMS)]"
 	@echo "Tags to push:"
-	@echo "  - $(IMAGE):$(SAFE_VERSION)"
-	@echo "  - $(IMAGE):latest"
-	@echo "  - $(IMAGE):docker-$(SAFE_ENGINE)"
-	@echo "  - $(IMAGE):git-$(SAFE_SHA)"
+	@echo "  - $(DH_IMAGE):$(SAFE_VERSION)"
+	@echo "  - $(DH_IMAGE):latest"
+	@echo "  - $(DH_IMAGE):docker-$(SAFE_ENGINE)"
+	@echo "  - $(DH_IMAGE):git-$(SAFE_SHA)"
 	@echo ""
-
 	@if [ -n "$(BUILD_CACHE_FROM)" ]; then CACHE_FROM="--cache-from=$(BUILD_CACHE_FROM)"; else CACHE_FROM=""; fi; \
 	if [ -n "$(BUILD_CACHE_TO)" ]; then CACHE_TO="--cache-to=$(BUILD_CACHE_TO)"; else CACHE_TO=""; fi; \
 	docker buildx build \
@@ -664,63 +590,57 @@ dockerhub-release: dockerhub-setup-builder
 		--provenance=false \
 		--pull \
 		--push \
-		-t "$(IMAGE):$(SAFE_VERSION)" \
-		-t "$(IMAGE):latest" \
-		-t "$(IMAGE):docker-$(SAFE_ENGINE)" \
-		-t "$(IMAGE):git-$(SAFE_SHA)" \
+		-t "$(DH_IMAGE):$(SAFE_VERSION)" \
+		-t "$(DH_IMAGE):latest" \
+		-t "$(DH_IMAGE):docker-$(SAFE_ENGINE)" \
+		-t "$(DH_IMAGE):git-$(SAFE_SHA)" \
 		$$CACHE_FROM $$CACHE_TO \
 		"$(CONTEXT)"
 
-	# -----------------------------------------------------------------------------
-	# Update Docker Hub description (requires DOCKERHUB_TOKEN env var)
-	# -----------------------------------------------------------------------------
-	.PHONY: dockerhub-update-description
-	dockerhub-update-description:
-		@set -e; \
-		[ -n "$(DESCRIPTION)" ] || { echo "Usage: make dockerhub-update-description DESCRIPTION=\"<text>\" [APP=...]"; exit 1; }; \
-		if [ -z "$$DOCKERHUB_TOKEN" ]; then echo "Set DOCKERHUB_TOKEN environment variable to a Docker Hub access token"; exit 1; fi; \
-		BODY=$$(DESC="$(DESCRIPTION)" python3 - <<'PYCODE'
-	import json, os
-	print(json.dumps({"description": os.environ["DESC"]}))
-	PYCODE
-	);
-		URL="https://hub.docker.com/v2/repositories/$(NS)/$(APPNAME)/"; \
-		echo "Updating $$URL description..."; \
-		curl -sSf -X PATCH \
-			-H "Content-Type: application/json" \
-			-H "Authorization: JWT $$DOCKERHUB_TOKEN" \
-			-d "$$BODY" \
-			"$$URL" | tee /tmp/dockerhub_description_response.json >/dev/null; \
-		echo; \
-		echo "Docker Hub API response saved to /tmp/dockerhub_description_response.json"
+dockerhub-update-description: ## PATCH repository description via Docker Hub API (needs DOCKERHUB_TOKEN)
+	@set -e; \
+	[ -n "$(DESCRIPTION)" ] || { echo "Usage: make dockerhub-update-description DESCRIPTION=\"<text>\" [APP=...]"; exit 1; }; \
+	if [ -z "$$DOCKERHUB_TOKEN" ]; then echo "Set DOCKERHUB_TOKEN environment variable to a Docker Hub access token"; exit 1; fi; \
+	BODY=$$(DESC="$(DESCRIPTION)" python3 -c 'import json, os; print(json.dumps({"description": os.environ["DESC"]}))'); \
+	URL="https://hub.docker.com/v2/repositories/$(NS)/$(APPNAME)/"; \
+	echo "Updating $$URL description..."; \
+	curl -sSf -X PATCH \
+		-H "Content-Type: application/json" \
+		-H "Authorization: JWT $$DOCKERHUB_TOKEN" \
+		-d "$$BODY" \
+		"$$URL" | tee /tmp/dockerhub_description_response.json >/dev/null; \
+	echo; \
+	echo "Docker Hub API response saved to /tmp/dockerhub_description_response.json"
 
-# -----------------------------------------------------------------------------
-# Shortcuts for common repos
-# -----------------------------------------------------------------------------
-.PHONY: release-autorisen release-capecraft
-release-autorisen: ; $(MAKE) dockerhub-release APP=autorisen
-release-capecraft: ; $(MAKE) dockerhub-release APP=capecraft
-
-# -----------------------------------------------------------------------------
-# Clean-up
-# -----------------------------------------------------------------------------
-.PHONY: dockerhub-clean
-dockerhub-clean:
+dockerhub-clean: ## Prune dangling images
 	@echo "Pruning dangling images…"
 	-docker image prune -f
 
-## --- Playbooks ---
-.PHONY: playbooks-overview playbook-new playbooks-check
-
+# ----------------------------------------------------------------------------- 
+# Playbooks (Codex loop)
+# -----------------------------------------------------------------------------
 PLAYBOOKS_DIR ?= docs/playbooks
-PLAYBOOK_TEMPLATE ?= $(PLAYBOOKS_DIR)/templates/playbook.template.md
+
+# Resolve template path: prefer dotted name; fallback to underscored
+ifneq ($(wildcard $(PLAYBOOKS_DIR)/templates/playbook.template.md),)
+  PLAYBOOK_TEMPLATE := $(PLAYBOOKS_DIR)/templates/playbook.template.md
+else
+  PLAYBOOK_TEMPLATE := $(PLAYBOOKS_DIR)/templates/playbook_template.md
+endif
+
 PLAYBOOK_SCRIPT ?= scripts/playbooks_overview.py
 
 playbooks-overview: ## Rebuild docs/PLAYBOOKS_OVERVIEW.md
 	@$(PY) $(PLAYBOOK_SCRIPT)
 	@echo "Updated docs/PLAYBOOKS_OVERVIEW.md"
 
-playbook-new: ## Create a new playbook: make playbook-new NUMBER=02 TITLE="X" OWNER="Robert" AGENTS="Codex, CapeAI" PRIORITY=P1
+playbook-overview: ## Alias for playbooks-overview
+	@$(MAKE) playbooks-overview
+
+playbook-open: ## Open docs/PLAYBOOKS_OVERVIEW.md in VS Code if available
+	@which code >/dev/null 2>&1 && code docs/PLAYBOOKS_OVERVIEW.md || echo "Open docs/PLAYBOOKS_OVERVIEW.md in your editor"
+
+playbook-new: ## Create playbook: make playbook-new NUMBER=02 TITLE="X" OWNER="Robert" AGENTS="Codex, CapeAI" PRIORITY=P1
 	@test -n "$(NUMBER)" || (echo "NUMBER= required"; exit 1)
 	@test -n "$(TITLE)"  || (echo "TITLE= required"; exit 1)
 	@test -n "$(OWNER)"  || (echo "OWNER= required"; exit 1)
@@ -730,14 +650,111 @@ playbook-new: ## Create a new playbook: make playbook-new NUMBER=02 TITLE="X" OW
 	    -e "s/\${TITLE}/$(TITLE)/g" \
 	    -e "s/\${OWNER}/$(OWNER)/g" \
 	    -e "s/\${AGENTS}/$(AGENTS)/g" \
-	    -e "s/\${PRIORITY}/$(PRIORITY)/g" $(PLAYBOOK_TEMPLATE) > $$dst; \
+	    -e "s/\${PRIORITY}/$(PRIORITY)/g" "$(PLAYBOOK_TEMPLATE)" > "$$dst"; \
 	echo "Created $$dst"; \
 	$(MAKE) playbooks-overview
 
 playbooks-check: ## Validate required headers exist in all playbooks
 	@missing=0; \
 	for f in $(PLAYBOOKS_DIR)/playbook-*.md; do \
-	  grep -q "^## 1) Outcome" $$f || { echo "Missing Outcome in $$f"; missing=1; }; \
-	  grep -q "^## 5) Checklist (Executable)" $$f || { echo "Missing Checklist in $$f"; missing=1; }; \
+	  grep -q "^## 1) Outcome" "$$f" || { echo "Missing Outcome in $$f"; missing=1; }; \
+	  grep -q "^## 5) Checklist (Executable)" "$$f" || { echo "Missing Checklist in $$f"; missing=1; }; \
 	done; \
 	exit $$missing
+
+# ===== Heroku Pipeline Targets =====
+HEROKU_APP_STG ?= autorisen
+HEROKU_APP_PROD ?= capecraft
+STAGING_URL ?= https://dev.cape-control.com
+PROD_URL ?= https://cape-control.com
+
+
+.PHONY: heroku-login heroku-apps heroku-pipeline heroku-config-stg heroku-config-prod \
+deploy-staging heroku-smoke-staging promote-prod heroku-smoke-prod heroku-logs-stg heroku-logs-prod \
+heroku-open-stg heroku-open-prod heroku-rollback
+
+
+heroku-login:
+	@heroku login
+	@heroku container:login
+
+
+heroku-apps:
+	@heroku create $(HEROKU_APP_STG) --region eu || true
+	@heroku create $(HEROKU_APP_PROD) --region eu || true
+
+
+heroku-pipeline:
+	@heroku pipelines:create capecontrol -a $(HEROKU_APP_STG) -s staging || true
+	@heroku pipelines:add capecontrol -a $(HEROKU_APP_PROD) -s production || true
+
+
+heroku-config-stg:
+	@heroku config:set -a $(HEROKU_APP_STG) ENV=staging RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=true
+
+
+heroku-config-prod:
+	@heroku config:set -a $(HEROKU_APP_PROD) ENV=production RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=false
+
+
+# Build & release container to staging
+deploy-staging: heroku-login
+	@docker build -t $(HEROKU_APP_STG):local .
+	@heroku container:push web -a $(HEROKU_APP_STG)
+	@heroku container:release web -a $(HEROKU_APP_STG)
+	@heroku ps:scale -a $(HEROKU_APP_STG) web=1
+
+
+heroku-smoke-staging:
+	@curl -fsS $(STAGING_URL)/health >/dev/null && echo "✓ health OK" || (echo "✗ health FAIL" && exit 1)
+	@curl -fsSI $(STAGING_URL)/api/auth/csrf >/dev/null && echo "✓ csrf OK" || (echo "✗ csrf FAIL" && exit 1)
+	@heroku logs --tail -a $(HEROKU_APP_STG)
+
+
+promote-prod:
+	@heroku pipelines:promote -a $(HEROKU_APP_STG)
+
+
+heroku-smoke-prod:
+	@curl -fsS $(PROD_URL)/health >/dev/null && echo "✓ prod health OK" || (echo "✗ prod health FAIL" && exit 1)
+	@heroku logs --tail -a $(HEROKU_APP_PROD)
+
+
+heroku-logs-stg:
+	@heroku logs --tail -a $(HEROKU_APP_STG)
+
+
+heroku-logs-prod:
+	@heroku logs --tail -a $(HEROKU_APP_PROD)
+
+
+heroku-open-stg:
+	@heroku open -a $(HEROKU_APP_STG)
+
+
+heroku-open-prod:
+	@heroku open -a $(HEROKU_APP_PROD)
+
+
+# Usage: make heroku-rollback REL=v123
+heroku-rollback:
+	@if [ -z "$$REL" ]; then echo "Set REL=vNNN" && exit 1; fi
+	@heroku rollback -a $(HEROKU_APP_PROD) $$REL
+
+.PHONY: playbook-badge
+playbook-badge: ## Prints current playbooks % (from overview)
+	@grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' docs/PLAYBOOKS_OVERVIEW.md || echo "n/a"
+
+PY ?= python3
+PLAYBOOKS_OVERVIEW ?= docs/PLAYBOOKS_OVERVIEW.md
+
+.PHONY: playbook-overview playbook-open playbook-badge
+playbook-overview:
+	@chmod +x scripts/gen_playbooks_overview.py 2>/dev/null || true
+	@$(PY) scripts/gen_playbooks_overview.py
+
+playbook-open: playbook-overview
+	@xdg-open $(PLAYBOOKS_OVERVIEW) >/dev/null 2>&1 || true
+
+playbook-badge:
+	@grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' $(PLAYBOOKS_OVERVIEW) || echo "n/a"

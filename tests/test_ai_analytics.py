@@ -14,10 +14,13 @@ from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.services.ai_analytics_service import (AIAnalyticsService,
-                                               AnalyticsPeriod,
-                                               QualityDimension, QualityScore,
-                                               ResponseAnalytics)
+from app.services.ai_analytics_service import (
+    AIAnalyticsService,
+    AnalyticsPeriod,
+    QualityDimension,
+    QualityScore,
+    ResponseAnalytics,
+)
 
 
 class TestAIAnalyticsService:

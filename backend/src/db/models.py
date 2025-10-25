@@ -4,9 +4,19 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import (JSON, Boolean, CheckConstraint, Column, DateTime,
-                        ForeignKey, Integer, String, Text, UniqueConstraint,
-                        func)
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import relationship
 
 from .base import Base

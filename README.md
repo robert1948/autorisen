@@ -1,6 +1,16 @@
-# CapeControl 251017B
+# CapeControl 251024A
+
+![Playbooks Progress](https://img.shields.io/badge/Playbooks-6_active-blue?style=flat-square)
 
 FastAPI backend with /api/health, devcontainer, and CI/CD to Heroku.
+
+## Playbooks
+
+- Regenerate the overview table: `make playbook-overview`
+- Open the overview in VS Code (requires the `code` CLI): `make playbook-open`
+- New playbook from the template: `make playbook-new NUMBER=07 TITLE="New Initiative" OWNER="Name" AGENTS="Codex" PRIORITY=P2`
+
+Keep `docs/PLAYBOOKS_OVERVIEW.md` in sync with status changes before merging.
 
 ## Local (devcontainer)
 

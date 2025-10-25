@@ -1,5 +1,6 @@
 # backend/src/modules/auth/router.py
 from __future__ import annotations
+from fastapi.responses import JSONResponse
 
 import asyncio
 import base64
@@ -15,30 +16,56 @@ from typing import Annotated, Any, Callable, Dict, Optional, Tuple
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 
 import httpx
-from fastapi import (APIRouter, BackgroundTasks, Body, Depends, Header,
-                     HTTPException, Request, Response, status)
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import RedirectResponse
-from pydantic import (BaseModel, EmailStr, Field, StringConstraints,
-                      ValidationInfo, field_validator, model_validator,
-                      ConfigDict)
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+    ConfigDict,
+)
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import settings
-from backend.src.core.email_verify import (EmailTokenError, issue_email_token,
-                                           parse_email_token)
-from backend.src.core.redis import (cache_user_token_version,
-                                    clear_user_token_version_cache,
-                                    denylist_jti)
+from backend.src.core.email_verify import (
+    EmailTokenError,
+    issue_email_token,
+    parse_email_token,
+)
+from backend.src.core.redis import (
+    cache_user_token_version,
+    clear_user_token_version_cache,
+    denylist_jti,
+)
 from backend.src.db.session import get_db
 from backend.src.services import recaptcha as recaptcha_service
-from backend.src.services.emailer import (send_password_reset_email,
-                                          send_verification_email)
+from backend.src.services.emailer import (
+    send_password_reset_email,
+    send_verification_email,
+)
 from backend.src.services.security import decode_jwt
 
 from .csrf import issue_csrf_token, require_csrf_token
-from .deps import (_bearer_from_header, _load_user_from_claims,
-                   _token_from_request, get_current_user,
-                   get_current_user_with_claims)
+from .deps import (
+    _bearer_from_header,
+    _load_user_from_claims,
+    _token_from_request,
+    get_current_user,
+    get_current_user_with_claims,
+)
 from .rate_limiter import allow_login, record_login_attempt
 from .security import create_access_refresh_tokens, verify_password
 
@@ -66,12 +93,8 @@ _LINKEDIN_USERINFO_ENDPOINT = "https://api.linkedin.com/v2/userinfo"
 PasswordStr = Annotated[str, StringConstraints(min_length=1, max_length=256)]
 StrongPasswordStr = Annotated[str, StringConstraints(min_length=12, max_length=256)]
 ResetTokenStr = Annotated[str, StringConstraints(min_length=10, max_length=255)]
-FirstNameStr = Annotated[
-    str, StringConstraints(strip_whitespace=True, max_length=50)
-]
-LastNameStr = Annotated[
-    str, StringConstraints(strip_whitespace=True, max_length=50)
-]
+FirstNameStr = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+LastNameStr = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
 RoleStr = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=3, max_length=40)
 ]
@@ -79,6 +102,7 @@ CompanyNameStr = Annotated[
     str, StringConstraints(strip_whitespace=True, max_length=100)
 ]
 IdTokenStr = Annotated[str, StringConstraints(min_length=10, max_length=4096)]
+
 
 class LoginIn(BaseModel):
     email: EmailStr
@@ -128,10 +152,10 @@ class ResetPasswordIn(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def _passwords_match(cls) -> "ResetPasswordIn":
-        if cls.password != cls.confirm_password:
+    def _passwords_match(self) -> "ResetPasswordIn":
+        if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
-        return cls
+        return self
 
 
 class ResetPasswordOut(BaseModel):
@@ -187,10 +211,10 @@ class RegisterIn(BaseModel):
     recaptcha_token: Optional[str] = None
 
     @model_validator(mode="after")
-    def _passwords_match(cls) -> "RegisterIn":
-        if cls.password != cls.confirm_password:
+    def _passwords_match(self) -> "RegisterIn":
+        if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
-        return cls
+        return self
 
 
 class MeOut(BaseModel):
@@ -220,14 +244,14 @@ class GoogleLoginIn(BaseModel):
     recaptcha_token: Optional[str] = None
 
     @model_validator(mode="after")
-    def _require_code_or_token(cls) -> "GoogleLoginIn":
-        if not cls.id_token and not cls.code:
+    def _require_code_or_token(self) -> "GoogleLoginIn":
+        if not self.id_token and not self.code:
             raise ValueError("Provide either id_token or code.")
-        if cls.code and not cls.redirect_uri:
+        if self.code and not self.redirect_uri:
             raise ValueError(
                 "redirect_uri is required when exchanging an authorization code."
             )
-        return cls
+        return self
 
 
 class LinkedInLoginIn(BaseModel):
@@ -237,14 +261,14 @@ class LinkedInLoginIn(BaseModel):
     recaptcha_token: Optional[str] = None
 
     @model_validator(mode="after")
-    def _require_code_or_token(cls) -> "LinkedInLoginIn":
-        if not cls.access_token and not cls.code:
+    def _require_code_or_token(self) -> "LinkedInLoginIn":
+        if not self.access_token and not self.code:
             raise ValueError("Provide either access_token or code.")
-        if cls.code and not cls.redirect_uri:
+        if self.code and not self.redirect_uri:
             raise ValueError(
                 "redirect_uri is required when exchanging an authorization code."
             )
-        return cls
+        return self
 
 
 class LogoutIn(BaseModel):
@@ -936,8 +960,7 @@ _refresh_access: Optional[Callable[..., Any]] = None
 _login_service: Optional[Callable[..., Any]] = None
 _revoke_refresh_service: Optional[Callable[..., Any]] = None
 try:
-    from . import \
-        service as auth_service  # relative import prevents path drift
+    from . import service as auth_service  # relative import prevents path drift
 except Exception as e:
     auth_service = None
     log.warning("auth.router: could not import .service: %s", e)

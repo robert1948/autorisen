@@ -5,12 +5,30 @@ This script creates the analytics tables in the database.
 
 import os
 import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import logging
 
-from app.database import Base, engine
+
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+BACKEND_ROOT = os.path.join(PROJECT_ROOT, "backend")
+# Ensure backend package is importable when running as a script
+if BACKEND_ROOT not in sys.path:
+    sys.path.insert(0, BACKEND_ROOT)
+
+try:
+    from backend.src.db.session import engine
+    from backend.src.db.base import Base
+except ImportError as exc:  # pragma: no cover - defensive guard
+    raise RuntimeError(
+        "Unable to import database session; is backend installed?"
+    ) from exc
+
+# Import models for side effects so SQLAlchemy metadata is populated
+try:
+    from backend.src.db import models  # noqa: F401
+except ImportError:
+    # When backend package isn't installed, attempt relative path import
+    sys.path.insert(0, PROJECT_ROOT)
+    from backend.src.db import models  # type: ignore  # noqa: F401
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

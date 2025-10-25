@@ -19,8 +19,12 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from services.ai_audit_service import (AIAuditService, AuditEntry,
-                                       AuditEventType, ComplianceLevel)
+from services.ai_audit_service import (
+    AIAuditService,
+    AuditEntry,
+    AuditEventType,
+    ComplianceLevel,
+)
 
 
 class TestAIAuditService:

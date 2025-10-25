@@ -7,8 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from pydantic import (BaseModel, EmailStr, Field, field_validator,
-                      model_validator)
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from ...schemas.user import UserOut
 

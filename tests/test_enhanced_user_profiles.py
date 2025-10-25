@@ -9,6 +9,7 @@ Date: July 25, 2025
 import asyncio
 import json
 import os
+
 # Import the components to test
 import sys
 
@@ -16,18 +17,21 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.services.user_profile_service import (AIInteractionProfile,
-                                               CommunicationStyle,
-                                               EnhancedUserProfile,
-                                               LearningStyle,
-                                               SocialConnections,
-                                               UserAchievements,
-                                               UserBehaviorMetrics,
-                                               UserPreferences,
-                                               UserProfileService, UserRole,
-                                               UserStatus,
-                                               create_user_profile_service,
-                                               generate_sample_profile_data)
+from app.services.user_profile_service import (
+    AIInteractionProfile,
+    CommunicationStyle,
+    EnhancedUserProfile,
+    LearningStyle,
+    SocialConnections,
+    UserAchievements,
+    UserBehaviorMetrics,
+    UserPreferences,
+    UserProfileService,
+    UserRole,
+    UserStatus,
+    create_user_profile_service,
+    generate_sample_profile_data,
+)
 
 
 class TestEnhancedUserProfile:

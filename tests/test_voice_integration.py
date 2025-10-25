@@ -11,14 +11,21 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from app.routes.voice import router
+
 # Import the voice service and API components
-from app.services.voice_service import (AudioFormat, SpeechToTextResult,
-                                        TextToSpeechResult, VoiceAnalytics,
-                                        VoiceGender, VoiceProfile,
-                                        VoiceProvider, VoiceService,
-                                        create_voice_service,
-                                        get_supported_audio_formats,
-                                        get_supported_languages)
+from app.services.voice_service import (
+    AudioFormat,
+    SpeechToTextResult,
+    TextToSpeechResult,
+    VoiceAnalytics,
+    VoiceGender,
+    VoiceProfile,
+    VoiceProvider,
+    VoiceService,
+    create_voice_service,
+    get_supported_audio_formats,
+    get_supported_languages,
+)
 from fastapi.testclient import TestClient
 
 

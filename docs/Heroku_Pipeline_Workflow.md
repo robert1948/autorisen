@@ -1,35 +1,40 @@
-# Heroku Container Pipeline – Workflow (Autorisen → Production)
+# 🧭 Heroku Pipeline Workflow — *AutoLocal / CapeControl*
 
-This repo deploys the FastAPI backend (and optionally the frontend) to Heroku’s container stack.
-
-- **Staging app**: `autorisen`
-- **Prod app**: (optional) `cape-control` (set when ready)
-- All commands run from repo root on a machine with Docker + Heroku CLI logged in.
+This document describes how our containerized **FastAPI + React** stack is built, tested, and deployed through **Heroku** using both the `Makefile` and GitHub Actions.
 
 ---
 
-## 1) Build & Push (staging)
+## 🚀 Environments
+
+| Stage | Heroku App | URL | Purpose |
+|-------|-------------|-----|----------|
+| **Local** | Docker Compose | `http://localhost:8000` / `http://localhost:3000` | Development & tests |
+| **Staging** | `autorisen` | <https://dev.cape-control.com> | Continuous Integration & QA |
+| **Production** | `capecraft` (planned) | <https://cape-control.com> | Public release |
+
+---
+
+## 🧪 Continuous Integration (GitHub Actions)
+
+| Workflow | Path | Purpose |
+|-----------|------|----------|
+| **CI – Tests** | `.github/workflows/ci-test.yml` | Runs `pytest -q` with SQLite, uploads coverage XML |
+| **Deploy – Staging** | `.github/workflows/deploy-staging.yml` | Builds Docker image → pushes to Heroku → releases → runs Alembic migrations → smoke-tests `/api/health` |
+
+### CI Secrets (set in GitHub → *Settings → Secrets and variables*)
+
+| Name | Description |
+|------|-------------|
+| `HEROKU_API_KEY` | Token from `heroku auth:token` |
+| *(optional)* `EMAIL_TOKEN_SECRET`, `SMTP_USERNAME`, etc. | For staging email tests if needed |
+
+---
+
+## 🧰 Local Deployment Flow
+
+### 1️⃣ Prepare
 
 ```bash
-# Login once
+# ensure env
+export HEROKU_APP_NAME=autorisen
 heroku container:login
-
-# Build locally (uses Dockerfile at project root)
-docker build -t autorisen:local .
-
-# Push & release to Heroku (staging)
-heroku container:push web -a autorisen
-heroku container:release web -a autorisen
-
-.PHONY: heroku-domain heroku-ssl heroku-warm
-heroku-domain:
-heroku domains:add dev.cape-control.com -a autorisen || true
-heroku domains -a autorisen
-
-heroku-ssl:
-heroku certs:auto:enable -a autorisen || true
-heroku certs:auto -a autorisen
-heroku certs -a autorisen
-
-heroku-warm:
-curl -sS https://dev.cape-control.com/api/health || true

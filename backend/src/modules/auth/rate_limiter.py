@@ -20,8 +20,12 @@ from collections import defaultdict, deque
 from typing import Deque, Dict, Tuple
 
 # Re-export core decorators/middleware from the centralized module
-from backend.src.core.rate_limit import (auth_rate_limit, configure_rate_limit,
-                                         limiter, rate_limit)
+from backend.src.core.rate_limit import (
+    auth_rate_limit,
+    configure_rate_limit,
+    limiter,
+    rate_limit,
+)
 
 __all__ = [
     "limiter",

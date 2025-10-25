@@ -35,8 +35,14 @@ os.environ["DATABASE_URL"] = "sqlite:///./test_models.db"
 # Import models to test
 from app.database import Base
 from app.models import User, UserProfile
-from app.models_enhanced import (AuditLog, DeveloperEarning, PasswordReset,
-                                 Token, UserRole, UserV2)
+from app.models_enhanced import (
+    AuditLog,
+    DeveloperEarning,
+    PasswordReset,
+    Token,
+    UserRole,
+    UserV2,
+)
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_models.db"

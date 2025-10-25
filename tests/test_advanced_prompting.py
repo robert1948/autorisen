@@ -14,13 +14,15 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.services.advanced_prompting_service import (AdvancedPromptingService,
-                                                     PromptCategory,
-                                                     PromptComplexity,
-                                                     PromptGenerationRequest,
-                                                     PromptRole,
-                                                     PromptTemplate,
-                                                     TemplateVersion)
+from app.services.advanced_prompting_service import (
+    AdvancedPromptingService,
+    PromptCategory,
+    PromptComplexity,
+    PromptGenerationRequest,
+    PromptRole,
+    PromptTemplate,
+    TemplateVersion,
+)
 
 
 class TestAdvancedPromptingService:

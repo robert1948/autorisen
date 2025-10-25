@@ -31,8 +31,11 @@ os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "False"
 
 from app.main import app
-from app.utils.input_sanitization import (InputSanitizer, SanitizationLevel,
-                                          validate_ai_prompt)
+from app.utils.input_sanitization import (
+    InputSanitizer,
+    SanitizationLevel,
+    validate_ai_prompt,
+)
 
 # Test client
 client = TestClient(app)

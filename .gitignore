@@ -45,6 +45,12 @@ htmlcov/
 dev.db
 test.db
 
+# Generated/backup artifacts
+*.bak
+*.orig
+*~
+docs/PLAYBOOK_OVERVIEW.md
+
 # OS junk
 .DS_Store
 Thumbs.db

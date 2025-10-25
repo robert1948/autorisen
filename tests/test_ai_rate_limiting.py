@@ -8,8 +8,7 @@ Comprehensive tests for the AI rate limiting functionality
 import asyncio
 
 import pytest
-from app.services.ai_rate_limit_service import (AIRateLimitService,
-                                                check_ai_rate_limit)
+from app.services.ai_rate_limit_service import AIRateLimitService, check_ai_rate_limit
 
 
 class TestAIRateLimitService:
@@ -66,8 +65,7 @@ class TestAIServiceRateLimitIntegration:
         # This would require the actual AI service to be available
         # For now, just test that the integration points exist
 
-        from app.services.multi_provider_ai_service import \
-            MultiProviderAIService
+        from app.services.multi_provider_ai_service import MultiProviderAIService
 
         # Check that the service imports rate limiting
         ai_service = MultiProviderAIService()

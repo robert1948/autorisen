@@ -1,0 +1,58 @@
+name: Update Playbooks Overview
+on:
+  push:
+    paths:
+      - "docs/playbooks/*.md"
+      - "scripts/gen_playbooks_overview.py"
+      - ".github/workflows/update-playbook-tracker.yml"
+  schedule:
+    - cron: "20 5 * * *"   # daily 05:20 UTC
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read current % from PLAYBOOKS_OVERVIEW.md (if present)
+        id: before
+        shell: bash
+        run: |
+          if [[ -f docs/PLAYBOOKS_OVERVIEW.md ]]; then
+            PCT=$(grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' docs/PLAYBOOKS_OVERVIEW.md || true)
+          fi
+          echo "pct=${PCT:-}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate overview
+        run: python3 scripts/gen_playbooks_overview.py
+
+      - name: Read new %
+        id: after
+        shell: bash
+        run: |
+          PCT=$(grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' docs/PLAYBOOKS_OVERVIEW.md || echo "")
+          echo "pct=$PCT" >> "$GITHUB_OUTPUT"
+
+      - name: Update README badge if % changed
+        if: steps.before.outputs.pct != steps.after.outputs.pct
+        shell: bash
+        run: |
+          NEW=${{ steps.after.outputs.pct }}
+          [[ -z "$NEW" ]] && exit 0
+          BADGE_RE='(https://img.shields.io/badge/Playbooks-)[0-9]+(%25_complete-.*)'
+          if [[ -f README.md ]]; then
+            sed -E -i "s#${BADGE_RE}#\1${NEW}\2#g" README.md
+          fi
+
+      - name: Commit changes if any
+        shell: bash
+        run: |
+          if ! git diff --quiet -- docs/PLAYBOOKS_OVERVIEW.md README.md; then
+            git config user.name "CodexBot"
+            git config user.email "bot@cape-control.com"
+            git add docs/PLAYBOOKS_OVERVIEW.md README.md
+            git commit -m "chore: update playbooks overview (progress ${{ steps.after.outputs.pct }}%)"
+            git push
+          else
+            echo "No changes to commit."
+          fi
