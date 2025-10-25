@@ -58,7 +58,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 	smoke-staging smoke-local csrf-probe-staging csrf-probe-local codex-smoke smoke-prod \
 	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push \
 	dockerhub-release dockerhub-update-description dockerhub-clean \
-	playbooks-overview playbook-overview playbook-open playbook-new playbooks-check
+	playbooks-overview playbook-overview playbook-open playbook-badge playbook-new playbooks-check
 
 # ----------------------------------------------------------------------------- 
 # Help (auto-docs)
@@ -640,6 +640,9 @@ playbook-overview: ## Alias for playbooks-overview
 playbook-open: ## Open docs/PLAYBOOKS_OVERVIEW.md in VS Code if available
 	@which code >/dev/null 2>&1 && code docs/PLAYBOOKS_OVERVIEW.md || echo "Open docs/PLAYBOOKS_OVERVIEW.md in your editor"
 
+playbook-badge: ## Print current playbooks % (from overview)
+	@grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' docs/PLAYBOOKS_OVERVIEW.md || echo "n/a"
+
 playbook-new: ## Create playbook: make playbook-new NUMBER=02 TITLE="X" OWNER="Robert" AGENTS="Codex, CapeAI" PRIORITY=P1
 	@test -n "$(NUMBER)" || (echo "NUMBER= required"; exit 1)
 	@test -n "$(TITLE)"  || (echo "TITLE= required"; exit 1)
@@ -740,21 +743,3 @@ heroku-open-prod:
 heroku-rollback:
 	@if [ -z "$$REL" ]; then echo "Set REL=vNNN" && exit 1; fi
 	@heroku rollback -a $(HEROKU_APP_PROD) $$REL
-
-.PHONY: playbook-badge
-playbook-badge: ## Prints current playbooks % (from overview)
-	@grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' docs/PLAYBOOKS_OVERVIEW.md || echo "n/a"
-
-PY ?= python3
-PLAYBOOKS_OVERVIEW ?= docs/PLAYBOOKS_OVERVIEW.md
-
-.PHONY: playbook-overview playbook-open playbook-badge
-playbook-overview:
-	@chmod +x scripts/gen_playbooks_overview.py 2>/dev/null || true
-	@$(PY) scripts/gen_playbooks_overview.py
-
-playbook-open: playbook-overview
-	@xdg-open $(PLAYBOOKS_OVERVIEW) >/dev/null 2>&1 || true
-
-playbook-badge:
-	@grep -oP 'Overall Progress:\s*\d+/\d+\s*\(\K\d+(?=%\))' $(PLAYBOOKS_OVERVIEW) || echo "n/a"
