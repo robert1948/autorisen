@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 from uuid import uuid4
 
-from jose import JWTError, jwt
+from jose import jwt
 
 from backend.src.services.security import verify_password as _verify_password
 

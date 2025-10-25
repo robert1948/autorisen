@@ -9,6 +9,7 @@ Date: July 25, 2025
 import asyncio
 import json
 import os
+
 # Import the conversation management components
 import sys
 from datetime import datetime
@@ -17,13 +18,16 @@ import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.services.conversation_manager import (ConversationMessage,
-                                               ConversationStatus,
-                                               ConversationThread,
-                                               ConversationType,
-                                               EnhancedConversation,
-                                               MessageRole, ThreadingStrategy,
-                                               create_conversation_manager)
+from app.services.conversation_manager import (
+    ConversationMessage,
+    ConversationStatus,
+    ConversationThread,
+    ConversationType,
+    EnhancedConversation,
+    MessageRole,
+    ThreadingStrategy,
+    create_conversation_manager,
+)
 
 
 class TestConversationMessage:

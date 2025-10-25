@@ -5,6 +5,7 @@ Tests for context-aware AI response generation, analysis, and optimization.
 
 import asyncio
 import os
+
 # Import the modules to test
 import sys
 from datetime import datetime, timedelta
@@ -13,11 +14,15 @@ import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from app.services.context_aware_ai import (ContextAnalyzer,
-                                           ContextAwareAIService,
-                                           ContextWindow, ResponseContext,
-                                           ResponseGenerator, ResponseStrategy,
-                                           UserContext)
+from app.services.context_aware_ai import (
+    ContextAnalyzer,
+    ContextAwareAIService,
+    ContextWindow,
+    ResponseContext,
+    ResponseGenerator,
+    ResponseStrategy,
+    UserContext,
+)
 
 
 class TestContextAwareAI:

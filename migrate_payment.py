@@ -12,9 +12,15 @@ from sqlalchemy import text
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import DATABASE_URL, Base, engine
-from app.models.payment import (AnalyticsEvent, Credits, CreditTransaction,
-                                CustomRequest, PaymentMethod, Subscription,
-                                SupportTicket)
+from app.models.payment import (
+    AnalyticsEvent,
+    Credits,
+    CreditTransaction,
+    CustomRequest,
+    PaymentMethod,
+    Subscription,
+    SupportTicket,
+)
 
 
 def run_payment_migration():

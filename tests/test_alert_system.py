@@ -16,9 +16,15 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from app.main import app
-from app.services.alert_service import (AlertChannel, AlertRule, AlertSeverity,
-                                        AlertStatus, AlertType,
-                                        NotificationChannel, get_alert_system)
+from app.services.alert_service import (
+    AlertChannel,
+    AlertRule,
+    AlertSeverity,
+    AlertStatus,
+    AlertType,
+    NotificationChannel,
+    get_alert_system,
+)
 from fastapi.testclient import TestClient
 
 

@@ -5,12 +5,14 @@
 **Inputs:** `.pre-commit-config.yaml`, any `.markdownlint*`, `docs/**/*.md`, `README.md`
 
 **Commands (in order):**
+
 1) `make codex-docs-fix`
 2) `make codex-docs-lint`
 
 **Allowed edits:** `**/*.md` only.
 
 **Done when:**
+
 - Lint returns exit 0
 - PR opened with labels: `codex`, `doc-clean`, `needs-review`
 - PR body includes:

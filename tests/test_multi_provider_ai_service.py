@@ -17,8 +17,11 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from app.services.ai_performance_service import AIProvider
 from app.services.multi_provider_ai_service import (
-    AIProviderResponse, ModelProvider, MultiProviderAIService,
-    get_multi_provider_ai_service)
+    AIProviderResponse,
+    ModelProvider,
+    MultiProviderAIService,
+    get_multi_provider_ai_service,
+)
 
 
 class TestMultiProviderAIService:

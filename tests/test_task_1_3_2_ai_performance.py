@@ -14,9 +14,11 @@ from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 from app.main import app
-from app.services.ai_performance_service import (AIPerformanceMonitor,
-                                                 AIProvider,
-                                                 get_ai_performance_monitor)
+from app.services.ai_performance_service import (
+    AIPerformanceMonitor,
+    AIProvider,
+    get_ai_performance_monitor,
+)
 from fastapi.testclient import TestClient
 
 

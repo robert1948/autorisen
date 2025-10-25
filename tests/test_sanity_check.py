@@ -60,6 +60,7 @@ class TestDatabaseModels:
         ]
         try:
             import app.models as models_module
+
             # Import specific models instead of using wildcard
             from app.models import AuditLog, User, UserProfile
 
@@ -99,6 +100,7 @@ class TestDatabaseModels:
         """Test individual model structure"""
         try:
             import app.models as models_module
+
             # Import specific models instead of using wildcard
             from app.models import AuditLog, User, UserProfile
 

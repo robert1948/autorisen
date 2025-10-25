@@ -7,8 +7,7 @@ import sys
 
 sys.path.insert(0, "/home/robert/Documents/localstorm250722/backend")
 
-from app.services.conversation_manager import (MessageRole,
-                                               create_conversation_manager)
+from app.services.conversation_manager import MessageRole, create_conversation_manager
 
 
 async def debug_thread_creation():
