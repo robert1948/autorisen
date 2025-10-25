@@ -11,8 +11,6 @@
 ## 🧪 Commands Executed (in order)
 
 <!-- Paste exact commands Codex ran, one per line, no prose -->
-
-
 ## 📁 Changes
 
 - **Files changed (count):** <!-- number -->
