@@ -1,15 +1,19 @@
-# backend/src/app.py
+"""Application factory for the autorisen backend."""
+
 from __future__ import annotations
 
 import logging
 import os
+import sys
 from datetime import date, datetime
 from pathlib import Path
+from typing import Optional, TYPE_CHECKING, cast
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import (
     FileResponse,
     HTMLResponse,
@@ -19,15 +23,11 @@ from starlette.responses import (
 )
 
 from backend.src.core.config import settings
+from backend.src.modules.auth.csrf import csrf_middleware
 
-# Load .env for local dev (safe in prod; no-op if vars already set)
+
 load_dotenv()
 
-# ------------------------------------------------------------------------------
-# Soft imports — never fail app boot if an optional module/file is missing
-# ------------------------------------------------------------------------------
-
-# Security middleware (bot probe blocking + headers)
 try:
     from .middleware.bot_hardening import (  # type: ignore
         BlockProbesMiddleware,
@@ -37,19 +37,30 @@ except Exception:
     BlockProbesMiddleware = None  # type: ignore[assignment]
     SecurityHeadersMiddleware = None  # type: ignore[assignment]
 
-# Access-log noise suppression (hide wp/xmlrpc scans)
 try:
     from .core.log_filters import AccessPathSuppressFilter  # type: ignore
 except Exception:
     AccessPathSuppressFilter = None  # type: ignore[assignment]
 
-# Database migrations auto-runner (optional)
 try:
     from .db.migrations_runner import run_migrations_on_startup  # type: ignore
 except Exception:
     run_migrations_on_startup = None  # type: ignore[assignment]
 
-# Routers (auth/agents/chatkit/flows/marketplace)
+if TYPE_CHECKING:  # pragma: no cover
+    from backend.src.agents.mcp_host import MCPHost
+
+try:
+    from backend.src.agents.mcp_host import (  # type: ignore
+        MCPConfigError as MCPConfigError_,
+        mcp_host as _imported_mcp_host,
+    )
+except Exception:  # pragma: no cover
+    MCPConfigError_ = RuntimeError  # type: ignore[assignment]
+    _imported_mcp_host = None  # type: ignore[assignment]
+
+mcp_host = cast(Optional["MCPHost"], _imported_mcp_host)
+
 log = logging.getLogger("uvicorn.error")
 
 
@@ -73,8 +84,8 @@ flows_router = _safe_import("flows", "backend.src.modules.flows.router", "router
 marketplace_router = _safe_import(
     "marketplace", "backend.src.modules.marketplace.router", "router"
 )
+ops_router = _safe_import("ops", "backend.src.modules.ops.router", "router")
 
-# ------------------------------------------------------------------------------
 APP_ORIGIN = os.getenv("APP_ORIGIN", "").strip()
 BOT_HARDEN = os.getenv("BOT_HARDEN", "1").lower() in {"1", "true", "yes"}
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -115,40 +126,69 @@ def _inline_sitemap(base_url: str, routes: list[str]) -> str:
     return "\n".join(lines)
 
 
+# Email config gate — call this early in create_app()
+def _ensure_email_config(test_mode: bool) -> None:
+    email_enabled = os.getenv("EMAIL_ENABLED", "1").lower() in {"1", "true", "yes"}
+
+    required_env = {
+        "EMAIL_TOKEN_SECRET": getattr(settings, "email_token_secret", None),
+        "FROM_EMAIL": getattr(settings, "from_email", None),
+        "SMTP_USERNAME": getattr(settings, "smtp_username", None),
+        "SMTP_PASSWORD": getattr(settings, "smtp_password", None),
+        "SMTP_HOST": getattr(settings, "smtp_host", None),
+        "SMTP_PORT": getattr(settings, "smtp_port", None),
+    }
+
+    # In test/dev or when EMAIL_ENABLED=0, don't hard-fail — just log what’s missing.
+    if test_mode or not email_enabled:
+        missing = [name for name, value in required_env.items() if not value]
+        if missing:
+            reasons = []
+            if test_mode:
+                reasons.append("test mode active")
+            if not email_enabled:
+                reasons.append("EMAIL_ENABLED=0")
+            reason_text = " and ".join(reasons) or "development settings"
+            log.info(
+                "%s: skipping strict email configuration checks (missing: %s)",
+                reason_text,
+                ", ".join(sorted(missing)),
+            )
+        if not email_enabled:
+            log.info("EMAIL_ENABLED=0 — transactional email disabled for this run")
+        return
+
+    # In non-test envs with email enabled, enforce strictly
+    missing = [name for name, value in required_env.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "Missing required auth email configuration: " + ", ".join(sorted(missing))
+        )
+
+
 def _is_test_mode() -> bool:
-    # Robust detection: ENV=test, or explicit AUTH_TEST_MODE flag, or settings has the flag
     env = (
         os.getenv("APP_ENV") or os.getenv("ENVIRONMENT") or os.getenv("ENV") or ""
     ).lower()
+    settings_env = str(getattr(settings, "env", "")).lower()
     flag = os.getenv("AUTH_TEST_MODE", "0").lower() in {"1", "true", "yes"}
-    settings_flag = getattr(settings, "auth_test_mode", False)
-    return env == "test" or flag or bool(settings_flag)
+    settings_flag = bool(getattr(settings, "auth_test_mode", False))
+    pytest_active = "pytest" in sys.modules
+    return (
+        env == "test"
+        or settings_env == "test"
+        or flag
+        or settings_flag
+        or pytest_active
+    )
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
-
     test_mode = _is_test_mode()
+    # Enforce/relax email settings according to ENV and EMAIL_ENABLED
+    _ensure_email_config(test_mode)
 
-    # Enforce email settings only outside tests
-    if not test_mode:
-        required_env = {
-            "EMAIL_TOKEN_SECRET": getattr(settings, "email_token_secret", None),
-            "FROM_EMAIL": getattr(settings, "from_email", None),
-            "SMTP_HOST": getattr(settings, "smtp_host", None),
-            "SMTP_USERNAME": getattr(settings, "smtp_username", None),
-            "SMTP_PASSWORD": getattr(settings, "smtp_password", None),
-        }
-        missing = [name for name, value in required_env.items() if not value]
-        if missing:
-            raise RuntimeError(
-                "Missing required auth email configuration: "
-                + ", ".join(sorted(missing))
-            )
-    else:
-        log.info("Test mode active: skipping strict email configuration checks")
-
-    # Warn (but don't fail) for optional OAuth in any env
     optional_env = {
         "GOOGLE_CLIENT_ID": getattr(settings, "google_client_id", None),
         "GOOGLE_CLIENT_SECRET": getattr(settings, "google_client_secret", None),
@@ -161,13 +201,13 @@ def create_app() -> FastAPI:
         if not value:
             log.warning("Optional OAuth configuration %s is not set", name)
 
-    # -------------------- Middlewares --------------------
     if BlockProbesMiddleware and BOT_HARDEN:
         app.add_middleware(BlockProbesMiddleware)  # type: ignore[arg-type]
     if SecurityHeadersMiddleware:
         app.add_middleware(SecurityHeadersMiddleware)  # type: ignore[arg-type]
 
-    # CORS (same-origin + localhost dev; allow explicit origin if provided)
+    app.add_middleware(BaseHTTPMiddleware, dispatch=csrf_middleware)
+
     allow_origins = {
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -177,7 +217,8 @@ def create_app() -> FastAPI:
         "https://dev.cape-control.com",
     }
     if APP_ORIGIN:
-        allow_origins.add(APP_ORIGIN)
+        allow_origins.add(APP_ORIGIN.rstrip("/"))
+
     allow_origins = [origin for origin in allow_origins if origin]
 
     app.add_middleware(
@@ -185,11 +226,11 @@ def create_app() -> FastAPI:
         allow_origins=allow_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
-        # CSRF-friendly headers for tests and browser clients
         allow_headers=[
             "Authorization",
             "Content-Type",
             "X-CSRF-Token",
+            "X-CSRFToken",
             "X-XSRF-Token",
             "X-Requested-With",
         ],
@@ -197,12 +238,31 @@ def create_app() -> FastAPI:
         max_age=86400,
     )
 
-    # Trim access-log spam from known bot probes
     if AccessPathSuppressFilter:
         logging.getLogger("uvicorn.access").addFilter(AccessPathSuppressFilter())
 
-    # -------------------- Health & utility --------------------
-    landing_html = """<!doctype html><html lang='en'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/><title>autorisen</title><style>body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:0;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;}main{max-width:640px;padding:3rem 1.5rem;text-align:center;background:rgba(15,23,42,0.85);border-radius:16px;box-shadow:0 25px 50px -12px rgba(15,23,42,0.6);}h1{font-size:2.5rem;margin-bottom:0.75rem;}p{line-height:1.6;margin:0.75rem 0;}a{color:#38bdf8;text-decoration:none;font-weight:600;}a:hover{text-decoration:underline;}footer{margin-top:2rem;font-size:0.875rem;color:#94a3b8;}nav{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;}nav a{padding:0.75rem 1.5rem;border-radius:999px;background:#1e293b;transition:background 0.2s ease;}nav a:hover{background:#334155;}</style></head><body><main><h1>autorisen Platform API</h1><p>Welcome! This deployment powers authentication, agent tooling, and ChatKit capabilities for the autorisen platform.</p><p>Use the quick links below to inspect the live API and health checks.</p><nav><a href="/docs">Interactive Docs</a><a href="/redoc">ReDoc Spec</a><a href="/api/health">API Health</a></nav><footer>Release: {version} · Origin: {origin}</footer></main></body></html>"""
+    landing_html = (
+        "<!doctype html><html lang='en'><head><meta charset='utf-8'/>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
+        "<title>autorisen</title><style>body{font-family:system-ui,-apple-system,"
+        "BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;padding:0;background:#0f172a;"
+        "color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;}"
+        "main{max-width:640px;padding:3rem 1.5rem;text-align:center;background:rgba(15,23,42,0.85);"
+        "border-radius:16px;box-shadow:0 25px 50px -12px rgba(15,23,42,0.6);}"
+        "h1{font-size:2.5rem;margin-bottom:0.75rem;}"
+        "p{line-height:1.6;margin:0.75rem 0;}"
+        "a{color:#38bdf8;text-decoration:none;font-weight:600;}"
+        "a:hover{text-decoration:underline;}"
+        "footer{margin-top:2rem;font-size:0.875rem;color:#94a3b8;}"
+        "nav{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;}"
+        "nav a{padding:0.75rem 1.5rem;border-radius:999px;background:#1e293b;transition:background 0.2s ease;}"
+        "nav a:hover{background:#334155;}"
+        "</style></head><body><main><h1>autorisen Platform API</h1>"
+        "<p>Welcome! This deployment powers authentication, agent tooling, and ChatKit capabilities for the autorisen platform.</p>"
+        "<p>Use the quick links below to inspect the live API and health checks.</p>"
+        "<nav><a href='/docs'>Interactive Docs</a><a href='/redoc'>ReDoc Spec</a><a href='/api/health'>API Health</a></nav>"
+        "<footer>Release: {version} · Origin: {origin}</footer></main></body></html>"
+    )
 
     spa_index = SPA_INDEX if SPA_INDEX.exists() else None
 
@@ -219,7 +279,6 @@ def create_app() -> FastAPI:
 
     @app.get("/api/health", include_in_schema=False)
     def api_health():
-        # Tests expect a clear textual status
         version = os.getenv("APP_VERSION", "dev")
         env_name = (
             os.getenv("APP_ENV")
@@ -246,7 +305,6 @@ def create_app() -> FastAPI:
     def api_health_ping():
         return {"ping": "pong", "version": os.getenv("APP_VERSION", "dev")}
 
-    # Silence favicon 404 noise
     @app.get("/favicon.ico", include_in_schema=False)
     def favicon():
         return Response(
@@ -255,7 +313,6 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "public, max-age=31536000"},
         )
 
-    # Polite hint to good crawlers (bad ones ignore this)
     @app.get("/robots.txt", include_in_schema=False)
     def robots_txt():
         base = os.getenv("PUBLIC_BASE_URL", "https://dev.cape-control.com").rstrip("/")
@@ -278,12 +335,16 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "public, max-age=3600"},
         )
 
-    # Explicit short-circuits for common WP probes
     @app.get("/xmlrpc.php", include_in_schema=False)
     def _bots_xmlrpc():
         return PlainTextResponse(
             "Not found", status_code=404, headers={"Cache-Control": "no-store"}
         )
+
+    # backend/src/app.py
+    @app.get("/health")
+    def health_alias():
+        return {"status": "ok"}
 
     @app.get("/{prefix:path}/wp-includes/wlwmanifest.xml", include_in_schema=False)
     def _bots_wlw(prefix: str):
@@ -291,7 +352,6 @@ def create_app() -> FastAPI:
             "Not found", status_code=404, headers={"Cache-Control": "no-store"}
         )
 
-    # -------------------- API Routers --------------------
     api = APIRouter()
     if auth_router:
         api.include_router(auth_router, prefix="/auth")
@@ -304,16 +364,16 @@ def create_app() -> FastAPI:
     if marketplace_router:
         api.include_router(marketplace_router)
 
-    # Namespace all app routes under /api
+    if ops_router:
+        api.include_router(ops_router)
+
     app.include_router(api, prefix="/api")
 
-    # -------------------- Error handling --------------------
     @app.exception_handler(Exception)
     async def _unhandled_error(_, exc: Exception):
         logging.getLogger("uvicorn.error").exception("Unhandled exception")
         return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
-    # --- Optional DB migrations on startup (only if enabled *and* importer succeeded)
     enable_migrations = bool(getattr(settings, "run_db_migrations_on_startup", False))
     if enable_migrations and callable(run_migrations_on_startup):
 
@@ -333,18 +393,35 @@ def create_app() -> FastAPI:
             callable(run_migrations_on_startup),
         )
 
+    if mcp_host is not None and os.getenv("ENABLE_MCP_HOST", "0") == "1":
+
+        @app.on_event("startup")
+        def _start_mcp_host() -> None:
+            host = mcp_host
+            if host is None:
+                log.warning("ENABLE_MCP_HOST=1 but MCP host import failed")
+                return
+            try:
+                host.start()
+            except MCPConfigError_ as exc:  # type: ignore[misc]
+                log.error("MCP host disabled: %s", exc)
+            except Exception:  # pragma: no cover
+                log.exception("Unexpected MCP host start failure")
+
+        log.info("MCP host startup hook registered")
+
     if spa_index:
         app.mount(
-            "/", StaticFiles(directory=str(CLIENT_DIST), html=True), name="frontend"
+            "/",
+            StaticFiles(directory=str(CLIENT_DIST), html=True),
+            name="frontend",
         )
 
     return app
 
 
-# Uvicorn entrypoint
 app = create_app()
 
-# Concise boot log (helps when tailing Heroku logs)
 logging.getLogger("uvicorn.error").info(
     "autorisen boot: origin=%s harden=%s version=%s",
     APP_ORIGIN or "(unset)",
