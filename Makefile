@@ -1,3 +1,28 @@
+# --- DEV email stubs (safe defaults) ---
+EMAIL_TOKEN_SECRET ?= dev-insecure-token
+FROM_EMAIL         ?= dev@localhost
+SMTP_USERNAME      ?= dev
+SMTP_PASSWORD      ?= dev
+SMTP_HOST          ?= localhost
+SMTP_PORT          ?= 1025
+SMTP_TLS           ?= false
+MCP_BIND_HOST      ?= 0.0.0.0
+MCP_PORT           ?= 8000
+MCP_SMOKE_PORT     ?= 8787
+
+mcp-host:
+	@echo "== Starting MCP host (ENV=$(ENV)) =="
+	@set -euo pipefail; \
+	: $${OPENAI_API_KEY:?OPENAI_API_KEY must be set for mcp-host}; \
+	UVICORN_BIN=$$( [ -x "$(VENV)/bin/uvicorn" ] && echo "$(VENV)/bin/uvicorn" || command -v uvicorn ); \
+	if [ -z "$$UVICORN_BIN" ]; then echo "uvicorn not found; run 'make install' first" >&2; exit 127; fi; \
+	ENABLE_MCP_HOST=1 ENV=$(ENV) OPENAI_API_KEY=$$OPENAI_API_KEY \
+		EMAIL_TOKEN_SECRET="$(EMAIL_TOKEN_SECRET)" FROM_EMAIL="$(FROM_EMAIL)" \
+		SMTP_USERNAME="$(SMTP_USERNAME)" SMTP_PASSWORD="$(SMTP_PASSWORD)" \
+		SMTP_HOST="$(SMTP_HOST)" SMTP_PORT="$(SMTP_PORT)" SMTP_TLS="$(SMTP_TLS)" \
+		PORT=$(MCP_PORT) \
+		"$$UVICORN_BIN" backend.src.app:app --host $(MCP_BIND_HOST) --port $(MCP_PORT)
+
 # =============================================================================
 # Makefile — Autolocal / CapeControl
 # =============================================================================
@@ -56,7 +81,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 	codex-check codex-open codex-docs-lint codex-docs-fix codex-ci-validate \
 	codex-plan-diff codex-plan-apply codex-test-heal codex-test codex-test-cov codex-test-dry codex-run \
 	smoke-staging smoke-local csrf-probe-staging csrf-probe-local codex-smoke smoke-prod \
-	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push \
+	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push dockerhub-build-push \
 	dockerhub-release dockerhub-update-description dockerhub-clean \
 	playbooks-overview playbook-overview playbook-open playbook-badge playbook-new playbooks-check
 
@@ -414,7 +439,7 @@ codex-run: ## Full Codex pass (docs lint, pre-commit, pytest)
 # -----------------------------------------------------------------------------
 smoke-staging: ## Health + CSRF discovery (OpenAPI) against $(STAGING_URL)
 	@echo "== Smoke test against $(STAGING_URL) =="
-	@curl -fsS "$(STAGING_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
+	@curl -fsS "$(STAGING_URL)/api/api/health" | jq . >/dev/null && echo "✓ /api/api/health OK" || { echo "✗ /api/api/health failed"; exit 1; }
 	@echo "Discovering CSRF probe path from OpenAPI..."
 	@set -e; \
 	if ! command -v jq >/dev/null 2>&1; then echo "⚠️  jq not found; install jq to use OpenAPI discovery"; exit 0; fi; \
@@ -452,7 +477,7 @@ smoke-staging: ## Health + CSRF discovery (OpenAPI) against $(STAGING_URL)
 
 smoke-local: ## Health + CSRF probe against localhost backend
 	@echo "== Smoke test against http://localhost:$(PORT) =="
-	@curl -fsS "http://localhost:$(PORT)/api/health" >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
+	@curl -fsS "http://localhost:$(PORT)/api/api/health" >/dev/null && echo "✓ /api/api/health OK" || { echo "✗ /api/api/health failed"; exit 1; }
 	@$(MAKE) csrf-probe-local || true
 
 csrf-probe-staging: ## Direct CSRF probe (staging)
@@ -475,7 +500,7 @@ codex-smoke: smoke-staging csrf-probe-staging ## Combined staging smoke & CSRF
 
 smoke-prod: ## Quick production health (no CSRF probe)
 	@echo "== Smoke test against $(PROD_BASE_URL) =="
-	@curl -fsS "$(PROD_BASE_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
+	@curl -fsS "$(PROD_BASE_URL)/api/api/health" | jq . >/dev/null && echo "✓ /api/api/health OK" || { echo "✗ /api/api/health failed"; exit 1; }
 
 # ----------------------------------------------------------------------------- 
 # Strict mode tests
@@ -532,6 +557,11 @@ GIT_DESCRIBE   := $(shell (git describe --tags --always --dirty 2>/dev/null) || 
 VERSION        ?= $(if $(GIT_DESCRIBE),$(GIT_DESCRIBE),$(DATE_TAG))
 DOCKER_ENGINE_VERSION := $(shell docker version --format '{{.Server.Version}}' 2>/dev/null || echo unknown)
 
+# Backwards compatibility: allow TAG=... to override VERSION
+ifneq ($(strip $(TAG)),)
+	VERSION := $(TAG)
+endif
+
 # Sanitized values for tags
 SAFE_VERSION := $(shell $(call SANITIZE,$(VERSION)))
 SAFE_ENGINE  := $(shell $(call SANITIZE,$(DOCKER_ENGINE_VERSION)))
@@ -569,9 +599,21 @@ dockerhub-build: ## Local single-arch build (no push)
 	docker tag "$(DH_IMAGE):$(SAFE_VERSION)" "$(DH_IMAGE):latest"
 
 dockerhub-push: ## Push local :$(SAFE_VERSION) and :latest
+ifeq ($(SAFE_VERSION),)
+	$(error SAFE_VERSION is empty; set VERSION= or TAG= with a non-empty value)
+endif
+	@if ! docker image inspect "$(DH_IMAGE):$(SAFE_VERSION)" >/dev/null 2>&1; then \
+		echo "Image $(DH_IMAGE):$(SAFE_VERSION) missing; building it now…"; \
+		$(MAKE) dockerhub-build VERSION=$(VERSION); \
+	fi
 	@echo "Pushing $(DH_IMAGE):$(SAFE_VERSION) and :latest…"
 	docker push "$(DH_IMAGE):$(SAFE_VERSION)"
 	docker push "$(DH_IMAGE):latest"
+
+.PHONY: dockerhub-build-push
+dockerhub-build-push: ## Convenience target: build (single-arch) then push
+	@$(MAKE) dockerhub-build VERSION=$(VERSION)
+	@$(MAKE) dockerhub-push VERSION=$(VERSION)
 
 dockerhub-release: dockerhub-setup-builder ## Multi-arch buildx + push (recommended)
 	@echo "Releasing $(DH_IMAGE) for platforms [$(PLATFORMS)]"
@@ -709,7 +751,7 @@ deploy-staging: heroku-login
 
 
 heroku-smoke-staging:
-	@curl -fsS $(STAGING_URL)/health >/dev/null && echo "✓ health OK" || (echo "✗ health FAIL" && exit 1)
+	@curl -fsS $(STAGING_URL)/api/health >/dev/null && echo "✓ health OK" || (echo "✗ health FAIL" && exit 1)
 	@curl -fsSI $(STAGING_URL)/api/auth/csrf >/dev/null && echo "✓ csrf OK" || (echo "✗ csrf FAIL" && exit 1)
 	@heroku logs --tail -a $(HEROKU_APP_STG)
 
@@ -719,7 +761,7 @@ promote-prod:
 
 
 heroku-smoke-prod:
-	@curl -fsS $(PROD_URL)/health >/dev/null && echo "✓ prod health OK" || (echo "✗ prod health FAIL" && exit 1)
+	@curl -fsS $(PROD_URL)/api/health >/dev/null && echo "✓ prod health OK" || (echo "✗ prod health FAIL" && exit 1)
 	@heroku logs --tail -a $(HEROKU_APP_PROD)
 
 
@@ -743,3 +785,76 @@ heroku-open-prod:
 heroku-rollback:
 	@if [ -z "$$REL" ]; then echo "Set REL=vNNN" && exit 1; fi
 	@heroku rollback -a $(HEROKU_APP_PROD) $$REL
+
+## codex-status: show Codex active files and playbook
+codex-status:
+	@echo "== Codex active context =="
+	@grep -A1 'Codex context' docs/DEVELOPMENT_CONTEXT.md || true
+	@echo
+	@echo "== Latest playbook =="
+	@ls -lt docs/playbooks | head -n 3
+## codex-next: advance Active Playbook to the next numbered file
+codex-next:
+	@set -euo pipefail; \
+	ACTIVE=$$(grep -Eo 'Active Playbook:\s*\S+' .vscode/codex.prompt.md 2>/dev/null | awk '{print $$3}'); \
+	[ -z "$$ACTIVE" ] && ACTIVE=$$(ls -1 docs/playbooks/playbook-*.md 2>/dev/null | sort | tail -n1); \
+	[ -z "$$ACTIVE" ] && { echo "No playbooks found."; exit 1; }; \
+	cur_n=$$(basename "$$ACTIVE" | sed -n 's/^playbook-\([0-9][0-9]*\)-.*/\1/p'); \
+	[ -z "$$cur_n" ] && { echo "Could not parse current playbook number from $$ACTIVE"; exit 1; }; \
+	next=$$(ls -1 docs/playbooks/playbook-*.md | sort | awk -v n="$$cur_n" ' \
+		{ m=$$0; sub(/^.*playbook-([0-9]+)-.*/,"\\1",m); if (m>n) print $$0 }' | head -n1); \
+	[ -z "$$next" ] && { echo "No higher-numbered playbook found. You are at the last one."; exit 0; }; \
+	sed -i.bak -E "s|^Active Playbook:.*|Active Playbook: $$next|" .vscode/codex.prompt.md || \
+	echo "Active Playbook: $$next" >> .vscode/codex.prompt.md; \
+	rm -f .vscode/codex.prompt.md.bak; \
+	echo "Advanced to: $$next"
+
+.PHONY: mcp-smoke mcp-host run-local
+
+ENV ?= dev
+
+mcp-smoke:
+	@echo "== MCP smoke test =="
+	@set -euo pipefail; \
+	: $${OPENAI_API_KEY:?OPENAI_API_KEY must be set for MCP smoke test}; \
+	LOG_FILE=$$(mktemp -t mcp-smoke.XXXXXX.log); \
+	SERVER_PID=; \
+	cleanup() { trap - INT TERM EXIT; \
+		if [ -n "$$SERVER_PID" ]; then \
+			kill $$SERVER_PID >/dev/null 2>&1 || true; \
+			wait $$SERVER_PID 2>/dev/null || true; \
+		fi; \
+		rm -f "$$LOG_FILE"; \
+	}; \
+	trap cleanup INT TERM EXIT; \
+	UVICORN_BIN=$$( [ -x "$(VENV)/bin/uvicorn" ] && echo "$(VENV)/bin/uvicorn" || command -v uvicorn ); \
+	if [ -z "$$UVICORN_BIN" ]; then echo "uvicorn not found; run 'make install' first" >&2; exit 127; fi; \
+	ENABLE_MCP_HOST=1 ENV=$(ENV) OPENAI_API_KEY=$$OPENAI_API_KEY \
+		EMAIL_TOKEN_SECRET=$${EMAIL_TOKEN_SECRET:-dev-mcp-smoke-secret} \
+		FROM_EMAIL=$${FROM_EMAIL:-mcp-smoke@example.com} \
+		SMTP_HOST=$${SMTP_HOST:-localhost} \
+		SMTP_USERNAME=$${SMTP_USERNAME:-mcp-smoke-user} \
+		SMTP_PASSWORD=$${SMTP_PASSWORD:-mcp-smoke-pass} \
+		PORT=$(MCP_SMOKE_PORT) \
+		"$$UVICORN_BIN" backend.src.app:app --host 127.0.0.1 --port $(MCP_SMOKE_PORT) >>"$$LOG_FILE" 2>&1 & \
+	SERVER_PID=$$!; \
+	for i in $$(seq 1 20); do \
+		if curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/api/health >/dev/null 2>&1; then break; fi; \
+		sleep 0.25; \
+	done; \
+	if ! curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/api/health >/dev/null 2>&1; then \
+		echo "MCP host failed to start:" >&2; \
+		cat "$$LOG_FILE" >&2 || true; \
+		exit 1; \
+	fi; \
+	RESP=$$(curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/ops/mcp/smoke); \
+	echo "$$RESP" | jq .; \
+	if ! echo "$$RESP" | jq -e '.ok == true' >/dev/null; then \
+		echo "MCP smoke failed" >&2; \
+		echo "See details above (last_error/servers)." >&2; \
+		exit 1; \
+	fi
+
+run-local:
+	@echo "== Backend (with MCP) =="
+	$(MAKE) mcp-host
