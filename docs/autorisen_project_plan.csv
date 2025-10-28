@@ -1,4 +1,1 @@
-id,title,status,owner,priority
-AUTH-005,Security hardening & tests,todo,backend,high
-FE-004,Login page + form,todo,frontend,high
-DEVOPS-035,Prod deploy / Capecraft,blocked,devops,high
+file,group,subgroup,task,status
