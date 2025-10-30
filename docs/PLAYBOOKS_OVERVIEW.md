@@ -1,16 +1,4 @@
 # Playbooks Overview
-
-| # | Title | Owner | Status | Priority | File |
-|---:|---|---|---|---|---|
-| 01 | MVP Launch | Release Captain (Robert) | Doing | P0 | `docs/playbooks/playbook-01-mvp-launch.md` |
-| 02 | Backend Auth & Security | Auth Guardian | Doing | P0 | `docs/playbooks/playbook-02-backend-auth-security.md` |
-| 03 | Frontend Onboarding & Dashboard | Onboarding Maestro | Planned | P1 | `docs/playbooks/playbook-03-frontend-onboarding.md` |
-| 04 | DevOps CI/CD & Deployments | DevOps Pilot | Doing | P0 | `docs/playbooks/playbook-04-devops-cicd.md` |
-| 05 | Quality & Test Readiness | TestGuardianAgent | Planned | P1 | `docs/playbooks/playbook-05-quality-testing.md` |
-| 06 | GTM & Support Readiness | GTM Steward | Planned | P2 | `docs/playbooks/playbook-06-gtm-support.md` |
-
-## ✅ Next Steps
-1. Keep this index synced as playbook statuses change.
-2. Ensure every new commit touching playbooks updates this table.
-3. Add Phase 3 playbooks (Marketplace, Payments) once MVP stabilization is complete.
-
+- P1: MVP Launch (P0, Doing)
+- P2: Auth & Onboarding Hardening (P0, Doing)
+- P3: Agents & Marketplace Scaffold (P1, Todo)

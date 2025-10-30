@@ -58,9 +58,9 @@ Ensure the CapeControl backend provides secure, reliable authentication for both
 | Milestone | Description                                       | Owner             | Status        |
 | --------- | ------------------------------------------------- | ----------------- | ------------- |
 | M1        | JWT + refresh token flow functional               | Auth Guardian     | ✅ Done        |
-| M2        | CSRF and rate-limit protection validated          | TestGuardianAgent | ⏳ In Progress |
+| M2        | CSRF and rate-limit protection validated          | TestGuardianAgent | ✅ Done        |
 | M3        | Password reset + hashing tested                   | Auth Guardian     | 🔄 Pending    |
-| M4        | Middleware stack reviewed (audit, sanitize, DDoS) | DevOps Pilot      | 🔄 Pending    |
+| M4        | Middleware stack reviewed (audit, sanitize, DDoS) | DevOps Pilot      | ✅ Done        |
 | M5        | Auth docs + schemas finalized                     | Auth Guardian     | 🔄 Pending    |
 
 ---
@@ -70,9 +70,9 @@ Ensure the CapeControl backend provides secure, reliable authentication for both
 * [x] Implement `/api/auth/login`, `/api/auth/register`, `/api/auth/logout`, `/api/auth/refresh`, `/api/auth/me`.
 * [x] Add secure password hashing using bcrypt.
 * [x] Validate JWT issue/refresh logic.
-* [ ] Ensure CSRF headers set and validated by tests.
-* [ ] Enable rate-limit middleware.
-* [ ] Verify DDoSProtectionMiddleware and InputSanitizationMiddleware active.
+* [x] Ensure CSRF headers set and validated by tests.
+* [x] Enable rate-limit middleware.
+* [x] Verify DDoSProtectionMiddleware and InputSanitizationMiddleware active.
 * [ ] Write tests in `backend/tests/test_auth_flow.py`.
 
 ---
@@ -114,7 +114,6 @@ printenv | grep -E 'SECRET|TOKEN|CSRF'
 
 ## ✅ Next Actions
 
-1. Complete CSRF and rate-limit test stabilization (M2).
-2. Add password reset + hashing test coverage (M3).
-3. Validate middleware stack with DevOps Pilot (M4).
-4. Finalize auth schema docs and close playbook (M5).
+1. Add password reset + hashing test coverage (M3).
+2. Backfill automated tests around new sanitization & DDoS middleware.
+3. Finalize auth schema docs once security middleware validated (M5).
