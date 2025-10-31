@@ -1,0 +1,8 @@
+
+:root{
+  --cc-bg:#0E0E12; --cc-surface:#1C1F26; --cc-border:#2C2F36;
+  --cc-text:#FFFFFF; --cc-text-muted:#A0A3AD;
+  --cc-accent-frontend:#6BA6DB; --cc-accent-backend:#F9D86C;
+  --cc-accent-agents:#B18FD6; --cc-accent-data:#9FE6B3;
+  --cc-accent-infra:#F2C39A; --cc-accent-integrations:#8AD6F1; --cc-accent-ops:#FFB999;
+}

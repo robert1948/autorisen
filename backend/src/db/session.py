@@ -2,21 +2,29 @@
 from __future__ import annotations
 
 import os
+import sys
 from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-try:
-    # Your project settings should expose DATABASE_URL
-    from backend.src.settings import settings  # type: ignore
 
-    DATABASE_URL = getattr(settings, "DATABASE_URL", None) or os.getenv(
-        "DATABASE_URL", ""
-    )
-except Exception:
-    DATABASE_URL = os.getenv("DATABASE_URL", "")
+def _determine_database_url() -> str:
+    if "pytest" in sys.modules:
+        return "sqlite:///" + os.path.join("/tmp", "autolocal_test_pytest.db")
+
+    try:
+        from backend.src.settings import settings  # type: ignore
+
+        configured = getattr(settings, "DATABASE_URL", None)
+    except Exception:
+        configured = None
+
+    return configured or os.getenv("DATABASE_URL", "")
+
+
+DATABASE_URL = _determine_database_url()
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")

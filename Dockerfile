@@ -47,6 +47,7 @@ COPY requirements.txt /app/requirements.txt
 RUN set -eux; \
     python --version; pip --version; \
     pip install --upgrade pip setuptools wheel; \
+    pip install --no-cache-dir pyyaml openai; \
     PIP_PROGRESS_BAR=off pip install --prefer-binary -r /app/backend/requirements.txt
 
 # ---- App code & built SPA ----

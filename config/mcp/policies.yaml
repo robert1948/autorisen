@@ -1,0 +1,19 @@
+version: 1
+allow:
+  servers:
+    - fs-ro
+    - heroku-stg
+  fs_ro_paths:
+    - "/workspace/*"
+  http_domains:
+    - "status.heroku.com"
+    - "dev.cape-control.com"
+deny:
+  servers:
+    - ".*prod.*"
+  dangerous_tools:
+    - "shell.exec"
+    - "fs.write"   # fs-ro server shouldn't expose write anyway
+limits:
+  tokenBudgetPerRequest: 4000
+  maxDurationSeconds: 30

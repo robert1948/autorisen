@@ -1,0 +1,27 @@
+# Minimal, safe-by-default MCP server registry (DEV)
+version: 1
+defaults:
+  network_allowlist:
+    http_get:
+      - "https://status.heroku.com"
+      - "https://dev.cape-control.com"
+servers:
+  fs-ro:
+    transport: stdio
+    command: mcp-filesystem
+    args: ["--root", "/workspace", "--readOnly", "true"]
+    env: {}
+    tags: ["repo", "readonly"]
+    limits:
+      maxCallsPerMinute: 120
+      maxConcurrent: 4
+
+  heroku-stg:
+    transport: http
+    url: "${MCP_HEROKU_STG_URL}"   # e.g. https://mcp-heroku-stg.example.com
+    headers:
+      Authorization: "Bearer ${MCP_HEROKU_STG_TOKEN}"
+    tags: ["deploy", "staging"]
+    limits:
+      maxCallsPerMinute: 30
+      maxConcurrent: 2

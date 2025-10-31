@@ -4,11 +4,12 @@ Generate docs/PLAYBOOKS_OVERVIEW.md with status summary + progress stats
 """
 
 from __future__ import annotations
+
 import re
 import sys
-from pathlib import Path
-from typing import List, Dict, Tuple
 from collections import Counter
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAYBOOKS_DIR = ROOT / "docs" / "playbooks"

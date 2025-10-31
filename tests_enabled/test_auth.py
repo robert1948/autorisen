@@ -17,6 +17,7 @@ from backend.src.core.rate_limit import limiter  # single place for limiter
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
 from backend.src.services.security import create_jwt
+from backend.src.modules.auth.csrf import CSRF_COOKIE_NAME
 
 CSRF_HEADER = "X-CSRF-Token"
 
@@ -98,7 +99,7 @@ def _clean_auth_state():
 
     # Limiter reset (memory/redis)
     try:
-        limiter.reset("*")  # if your limiter supports wildcard
+        limiter.reset()
     except Exception:
         pass
 
@@ -113,7 +114,12 @@ def _headers_for_ip(ip: str) -> Dict[str, str]:
 def _csrf_headers(client, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     resp = client.get("/api/auth/csrf")
     assert resp.status_code == 200, resp.text
-    token = resp.json()["csrf_token"]
+    data = resp.json()
+    token = data.get("csrf_token") or data.get("csrf") or data.get("token")
+    assert token, f"missing csrf token in response: {data}"
+    cookie_jar = getattr(client, "cookies", None)
+    if cookie_jar is not None:
+        cookie_jar.set(CSRF_COOKIE_NAME, token, path="/")
     headers: Dict[str, str] = {CSRF_HEADER: token}
     if extra:
         headers.update(extra)

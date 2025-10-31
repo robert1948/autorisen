@@ -1,0 +1,32 @@
+name: design-check
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  figma-version:
+    runs-on: ubuntu-latest
+
+    # Set the expected version for all steps in this job
+    env:
+      CI_EXPECT_FIGMA_VERSION: ${{ vars.CI_EXPECT_FIGMA_VERSION }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check Figma version gate
+        run: |
+          python3 tools/figma_version.py check \
+            --expect "${CI_EXPECT_FIGMA_VERSION}" \
+            --file docs/figma/version.json
+
+      # .github/workflows/design-check.yml (append another step)
+      - name: Rebuild docs index
+        run: |
+          python3 tools/build_docs_index.py
+          git status --porcelain
+      

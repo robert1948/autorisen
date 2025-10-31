@@ -1,6 +1,5 @@
 # CapeControl 251024A
 
-
 ![Playbooks Progress](https://img.shields.io/badge/Playbooks-0%25_complete-blue?style=flat-square)
 
 FastAPI backend with /api/health, devcontainer, and CI/CD to Heroku.

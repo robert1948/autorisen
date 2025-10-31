@@ -1,50 +1,134 @@
-"""CSRF utilities for the auth API."""
-
 from __future__ import annotations
 
-from typing import Optional
+import secrets
+from typing import Awaitable, Callable, Iterable, Literal, cast
 
-from fastapi import Cookie, Header, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
+from starlette.responses import JSONResponse
 
 from backend.src.core.config import settings
 from backend.src.services.csrf import generate_csrf_token, validate_csrf_token
 
-CSRF_COOKIE_NAME = "autorisen_csrf"
-CSRF_HEADER_NAME = "X-CSRF-Token"
-CSRF_TOKEN_MAX_AGE = 60 * 60  # 1 hour
+CSRF_COOKIE = "csrftoken"
+CSRF_HEADER_CANDIDATES: tuple[str, ...] = (
+    "X-CSRF-Token",
+    "X-CSRFToken",
+    "X-XSRF-TOKEN",
+)
+CSRF_COOKIE_CANDIDATES: tuple[str, ...] = (
+    "csrftoken",
+    "csrf_token",
+    "XSRF-TOKEN",
+)
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
+EXEMPT_PATHS = {
+    "/api/auth/refresh",
+}
+
+CSRF_COOKIE_NAME = CSRF_COOKIE
+CSRF_HEADER_NAME = CSRF_HEADER_CANDIDATES[0]
+
+csrf_router = APIRouter(tags=["csrf"])
+
+
+def _resolve_first(values: Iterable[str | None]) -> str | None:
+    for value in values:
+        if value:
+            return value
+    return None
+
+
+def _resolve_cookie_settings() -> tuple[bool, Literal["lax", "strict", "none"]]:
+    desired = settings.session_cookie_samesite
+    normalized = desired if desired in {"lax", "strict", "none"} else "lax"
+    secure = settings.session_cookie_secure or normalized == "none"
+    samesite_literal = cast(Literal["lax", "strict", "none"], normalized)
+    return secure, samesite_literal
 
 
 def issue_csrf_token(response: Response) -> str:
-    """Generate a CSRF token and attach it as a cookie."""
-
     token = generate_csrf_token()
+    secure, samesite_value = _resolve_cookie_settings()
     response.set_cookie(
-        CSRF_COOKIE_NAME,
+        CSRF_COOKIE,
         token,
-        max_age=CSRF_TOKEN_MAX_AGE,
-        secure=settings.env in {"staging", "prod"},
-        httponly=False,  # allow SPA to read and mirror into header
-        samesite="strict",
+        httponly=False,
+        secure=secure,
+        samesite=samesite_value,
         path="/",
     )
+    response.headers[CSRF_HEADER_NAME] = token
     return token
 
 
-def require_csrf_token(
-    csrf_header: Optional[str] = Header(default=None, alias=CSRF_HEADER_NAME),
-    csrf_cookie: Optional[str] = Cookie(default=None, alias=CSRF_COOKIE_NAME),
-) -> None:
-    """Validate CSRF header + cookie. Raises HTTP 403 on failure."""
+def _extract_token_from_headers(request: Request) -> str | None:
+    return _resolve_first(request.headers.get(name) for name in CSRF_HEADER_CANDIDATES)
 
-    if not csrf_header or not csrf_cookie:
+
+def _extract_token_from_cookies(request: Request) -> str | None:
+    return _resolve_first(request.cookies.get(name) for name in CSRF_COOKIE_CANDIDATES)
+
+
+def require_csrf_token(request: Request) -> None:
+    method = (request.method or "").upper()
+    if method in SAFE_METHODS:
+        return None
+
+    if request.url.path in EXEMPT_PATHS:
+        return None
+
+    header_token = _extract_token_from_headers(request)
+    cookie_token = _extract_token_from_cookies(request)
+
+    if not header_token or not cookie_token:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Missing CSRF token"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF token missing or invalid",
         )
-    if csrf_header != csrf_cookie:
+
+    if not secrets.compare_digest(header_token, cookie_token):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="CSRF token mismatch"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF token mismatch",
         )
-    if not validate_csrf_token(csrf_header):
+
+    if not validate_csrf_token(header_token):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid CSRF token"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid CSRF token",
         )
+    return None
+
+
+async def csrf_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    method = (request.method or "").upper()
+    if method in SAFE_METHODS:
+        return await call_next(request)
+
+    try:
+        require_csrf_token(request)
+    except HTTPException as exc:
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+    return await call_next(request)
+
+
+@csrf_router.get("/csrf")
+def get_csrf(response: Response) -> dict[str, str]:
+    token = issue_csrf_token(response)
+    return {"csrf": token, "csrf_token": token, "token": token}
+
+
+__all__ = [
+    "CSRF_COOKIE",
+    "CSRF_COOKIE_NAME",
+    "CSRF_COOKIE_CANDIDATES",
+    "CSRF_HEADER_CANDIDATES",
+    "CSRF_HEADER_NAME",
+    "csrf_middleware",
+    "csrf_router",
+    "issue_csrf_token",
+    "require_csrf_token",
+]

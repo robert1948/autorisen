@@ -1,0 +1,19 @@
+version: 1
+defaults:
+  network_allowlist:
+    http_get:
+      - "https://status.heroku.com"
+      - "https://dev.cape-control.com"
+servers:
+  fs-ro:
+    transport: stdio
+    command: mcp-filesystem
+    args: ["--root", "/workspace", "--readOnly", "true"]
+    limits: { maxCallsPerMinute: 60, maxConcurrent: 2 }
+
+  heroku-stg:
+    transport: http
+    url: "${MCP_HEROKU_STG_URL}"
+    headers:
+      Authorization: "Bearer ${MCP_HEROKU_STG_TOKEN}"
+    limits: { maxCallsPerMinute: 20, maxConcurrent: 1 }

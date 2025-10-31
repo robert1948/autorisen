@@ -1,0 +1,40 @@
+{
+  "board": "https://www.figma.com/file/EXAMPLE_AUTH_FLOW",
+  "playbooks": [
+    {
+      "path": "docs/playbooks/design/01-auth-flow.md",
+      "slug": "01-auth-flow",
+      "title": "Design Playbook 01 \u2014 Auth Flow",
+      "owner": "UX Design / Robert",
+      "figma_link": "https://www.figma.com/file/EXAMPLE_AUTH_FLOW",
+      "status": "In Sync",
+      "purpose": "Maintain parity between the auth journey in Figma and the React implementation.",
+      "components": [
+        {
+          "figma_component": "Login Card",
+          "react_component": "`<AuthForms />`",
+          "file_path": "client/src/features/auth/AuthForms.tsx",
+          "status": "\u2705 Synced"
+        },
+        {
+          "figma_component": "Auth Layout",
+          "react_component": "`<AuthGate />`",
+          "file_path": "client/src/features/auth/AuthGate.tsx",
+          "status": "\u2705 Synced"
+        },
+        {
+          "figma_component": "Recaptcha Widget",
+          "react_component": "`<Recaptcha />`",
+          "file_path": "client/src/components/Recaptcha.tsx",
+          "status": "\ud83d\udee0 In Review"
+        },
+        {
+          "figma_component": "Primary Nav",
+          "react_component": "`<TopNav />`",
+          "file_path": "client/src/components/nav/TopNav.tsx",
+          "status": "\u26a0\ufe0f Needs Update"
+        }
+      ]
+    }
+  ]
+}

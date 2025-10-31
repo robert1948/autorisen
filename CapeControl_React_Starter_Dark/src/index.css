@@ -1,0 +1,10 @@
+
+@tailwind base; @tailwind components; @tailwind utilities;
+html,body,#root{height:100%} body{background:theme('colors.bg'); color:theme('colors.text.DEFAULT')}
+.container-cc{max-width:1200px;margin:0 auto;padding:1rem}
+.card{background:theme('colors.surface');border:1px solid theme('colors.border');border-radius:.75rem}
+.btn{@apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-semibold}
+.btn-primary{background:var(--cc-accent-agents);color:#0E0E12}
+.btn-secondary{background:var(--cc-accent-frontend);color:#0E0E12}
+.btn-ghost{border:1px solid theme('colors.border');color:theme('colors.text.DEFAULT')}
+.muted{color:theme('colors.text.muted')} hr.div{border:0;height:1px;background:theme('colors.border')}
