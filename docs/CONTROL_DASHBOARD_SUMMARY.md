@@ -9,13 +9,13 @@
 
 | System | Status | Notes |
 |---------|---------|-------|
-| **MVP Phase** | ![MVP Stabilization](https://img.shields.io/badge/MVP-Stabilization-blue?style=flat-square) | Final polishing before public showcase |
-| **Auth System** | ![Auth OK](https://img.shields.io/badge/Auth-CSRF%20%26%20Login%20Verified-success?style=flat-square) | Fully tested in staging |
-| **Frontend Build** | ![Frontend In Progress](https://img.shields.io/badge/Frontend-Login%20Integration%20WIP-yellow?style=flat-square) | FE-004 pending test |
-| **Backend Health** | ![Backend Healthy](https://img.shields.io/badge/Backend-Healthy-brightgreen?style=flat-square) | Staging Heroku OK |
-| **Documentation** | ![Docs Sync Active](https://img.shields.io/badge/Docs-Sync%20Active-lightblue?style=flat-square) | Maintained via `make codex-docs` |
-| **Deployment** | ![Heroku Stable](https://img.shields.io/badge/Heroku-Stable-green?style=flat-square) | Pipeline connected |
-| **AI Agents** | ![Agents Online](https://img.shields.io/badge/Agents-Online-purple?style=flat-square) | Codex + TestGuardian running |
+| **MVP Phase** | ![MVP](https://img.shields.io/badge/MVP-Stabilization-blue?style=flat-square) | Final polishing before public showcase |
+| **Auth System** | ![Auth](https://img.shields.io/badge/Auth-CSRF%20%26%20Login%20Verified-success?style=flat-square) | Fully tested in staging |
+| **Frontend Build** | ![Frontend](https://img.shields.io/badge/Frontend-Login%20Integration%20WIP-yellow?style=flat-square) | FE-004 pending test |
+| **Backend Health** | ![Backend](https://img.shields.io/badge/Backend-Healthy-brightgreen?style=flat-square) | Staging Heroku OK |
+| **Documentation** | ![Docs](https://img.shields.io/badge/Docs-Sync%20Active-blue?style=flat-square) | Maintained via `make codex-docs` |
+| **Deployment** | ![Heroku](https://img.shields.io/badge/Heroku-Stable-brightgreen?style=flat-square) | Pipeline connected |
+| **AI Agents** | ![Agents](https://img.shields.io/badge/Agents-Online-purple?style=flat-square) | Codex + TestGuardian running |
 
 ---
 
