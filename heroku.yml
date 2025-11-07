@@ -1,0 +1,14 @@
+# Heroku Container Deployment Configuration
+# Optimized for production deployment with security hardening
+
+build:
+  docker:
+    web: Dockerfile
+
+release:
+  image: web
+  command:
+    - python backend/src/core/migrate.py
+
+run:
+  web: uvicorn backend.src.app:app --host 0.0.0.0 --port $PORT --workers 1

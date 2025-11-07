@@ -23,6 +23,13 @@ pip-wheel-metadata/
 .env
 .env.*
 
+# Production secrets (never commit)
+.env.production
+.env.prod
+*.pem
+*.key
+secrets/
+
 # IDE
 .vscode/
 
@@ -53,6 +60,16 @@ test.db
 *.orig
 *~
 docs/PLAYBOOK_OVERVIEW.md
+
+# Production logs and monitoring
+logs/
+*.access.log
+*.error.log
+monitoring/
+metrics/
+
+# Heroku specific
+.heroku/
 
 # OS junk
 .DS_Store

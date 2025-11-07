@@ -1,27 +1,60 @@
+# Git and IDE
 .git
 .gitignore
 .vscode
 .idea
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Logs and temporary files
 *.log
+*.tmp
+*.temp
+
+# Environment and secrets (security)
 .env
 .env.*
+.env.production
+.env.prod
+*.pem
+*.key
+secrets/
+
+# Python cache and artifacts
 *.pyc
-tests/
-docs/
-.github/
-!.env.example
 __pycache__/
 .venv/
 .venv_tmp/
 venv/
 env/
-client/node_modules/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.coverage
+coverage.xml
+htmlcov/
+
+# Test and development files
+tests/
+docs/
+.github/
+dev.db
+test.db
+
+# Build artifacts
 build/
 dist/
 docker-data/
+
+# Legacy app structure (excluding from build)
 app/
 src/
+
+# Node.js dependencies (built separately)
+client/node_modules/
 
 # Include client source and public assets for Docker build
 !client/src/
@@ -30,3 +63,12 @@ src/
 !client/tsconfig*.json
 !client/vite.config.ts
 !client/index.html
+!client/tailwind.config.js
+!client/postcss.config.js
+
+# Include backend source
+!backend/
+!requirements*.txt
+!Dockerfile
+!Procfile
+!runtime.txt
