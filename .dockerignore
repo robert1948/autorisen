@@ -12,6 +12,9 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+*.bak
+*.orig
+*~
 
 # Environment and secrets (security)
 .env
@@ -24,6 +27,9 @@ secrets/
 
 # Python cache and artifacts
 *.pyc
+*.py[cod]
+*.pyo
+*.pyd
 __pycache__/
 .venv/
 .venv_tmp/
@@ -32,10 +38,20 @@ env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tox/
+.cache/
+pip-wheel-metadata/
 .coverage
 *.coverage
 coverage.xml
 htmlcov/
+
+# Node.js build artifacts and dependencies
+client/node_modules/
+client/dist/
+client/.cache/
+client/.turbo/
+package-lock.json
 
 # Test and development files
 tests/
@@ -43,6 +59,43 @@ docs/
 .github/
 dev.db
 test.db
+
+# Development artifacts and analysis
+figma_analysis/
+figma_analysis_page/
+client/src/components/generated/
+client/src/App.tsx.backup
+
+# Figma integration cache
+docs/CapeWire_Tokens_Typography_Board.json
+docs/Typography_Reference_Frame_Simple.json
+docs/figma/capecraft_design_spec.json
+
+# Development scripts and tools
+scripts/*.sh
+tools/*.py
+
+# Generated documentation (exclude from Docker build)
+docs/FIGMA_API_QUICKSTART.md
+docs/FIGMA_INTEGRATION_COMPLETE.md
+docs/GITHUB_UPDATE_COMPLETE_251107.md
+docs/PRODUCTION_READINESS_CHECKLIST.md
+docs/pages_overview.md
+docs/checklists/
+docs/playbooks/design/06-target-frame.md
+
+# Generated/demo pages (development only)
+client/src/pages/AboutPage.tsx
+client/src/pages/CapeLoginPage.tsx
+client/src/pages/CapeRegisterPage.tsx
+client/src/pages/Demo1Demo.tsx
+client/src/pages/FigmaDemo.tsx
+client/src/pages/HomePage.tsx
+client/src/pages/HomePagePage.tsx
+client/src/pages/MainPageDemo.tsx
+client/src/pages/SubscribePage.tsx
+client/src/pages/SubscribePagePage.tsx
+client/src/pages/TestPage.tsx
 
 # Build artifacts
 build/
@@ -53,11 +106,26 @@ docker-data/
 app/
 src/
 
-# Node.js dependencies (built separately)
-client/node_modules/
+# Logo files in root (should be in proper assets directory)
+LogoW.png
 
-# Include client source and public assets for Docker build
-!client/src/
+# Production logs and monitoring
+logs/
+*.access.log
+*.error.log
+monitoring/
+metrics/
+
+# Heroku specific
+.heroku/
+
+# Include essential client source and assets for Docker build
+!client/src/components/
+!client/src/lib/
+!client/src/types/
+!client/src/App.tsx
+!client/src/main.tsx
+!client/src/index.css
 !client/public/
 !client/package*.json
 !client/tsconfig*.json
@@ -72,3 +140,4 @@ client/node_modules/
 !Dockerfile
 !Procfile
 !runtime.txt
+!heroku.yml
