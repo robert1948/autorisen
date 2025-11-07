@@ -1,82 +1,51 @@
-# syntax=docker/dockerfile:1
+# Production-Ready Docker Image for DockerHub
+# Optimized multi-stage build for stinkie/autorisen
 
-############################
-# Stage 1: Build frontend
-############################
-FROM node:20-alpine AS webbuild
-WORKDIR /web/client
+FROM node:20-alpine AS frontend-build
+WORKDIR /app
 
-# Install system dependencies for any native builds
-RUN apk add --no-cache git python3 make g++
-
-# Install deps (need devDependencies so Vite is available)
+# Copy package files
 COPY client/package*.json ./
-# Install all dependencies (dev deps required to build the SPA).
-RUN npm ci --no-audit --no-fund
+RUN npm ci
 
-# Copy frontend source and assets (including logo assets)
-COPY client/ ./
+# Copy frontend source
+COPY client/src ./src
+COPY client/public ./public
+COPY client/index.html ./
+COPY client/vite.config.ts ./
+COPY client/tsconfig*.json ./
 
-# Verify logo assets are present before build
-RUN ls -la public/LogoW.png public/favicon.ico public/icons/ public/site.webmanifest
-
-# Build the SPA for production
+# Build for production
 ENV NODE_ENV=production
 RUN npm run build
 
-# Verify build output includes assets
-RUN ls -la dist/ && find dist/ -name "*.ico" -o -name "*.png" -o -name "*.webmanifest"
-
-############################
-# Stage 2: Backend runtime (Production Optimized)
-############################
-FROM python:3.12-slim AS runtime
+# Production Python runtime
+FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
     ENV=prod \
     DEBUG=false
 
 WORKDIR /app
 
-# ---- System deps for native builds & VCS installs ----
-# - git: VCS requirements
-# - build-essential, python3-dev, pkg-config: compile extensions
-# - libpq-dev: psycopg/psycopg2
-# - libffi-dev, libssl-dev: cryptography, etc.
-# - rustc, cargo: some packages (e.g., cryptography when wheels unavailable) need Rust
+# Install minimal system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl ca-certificates \
-    build-essential python3-dev pkg-config \
-    libpq-dev libffi-dev libssl-dev \
-    rustc cargo \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    curl libpq5 && rm -rf /var/lib/apt/lists/*
 
-# ---- Python deps (production optimized) ----
-COPY backend/requirements.txt /app/backend/requirements.txt
-COPY requirements.txt /app/requirements.txt
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Prefer wheels, but allow source builds if needed (now that toolchain is present)
-RUN set -eux; \
-    python --version; pip --version; \
-    pip install --upgrade pip setuptools wheel; \
-    pip install --no-cache-dir pyyaml openai; \
-    PIP_PROGRESS_BAR=off pip install --prefer-binary -r /app/backend/requirements.txt; \
-    pip cache purge
+# Copy application code
+COPY backend/ ./backend/
+COPY --from=frontend-build /app/dist ./client/dist
 
-# ---- App code & built SPA ----
-COPY backend/ /app/backend/
-COPY --from=webbuild /web/client/dist /app/client/dist
-
-# Create non-root user for security
-RUN useradd --create-home --shell /bin/bash app
-RUN chown -R app:app /app
+# Security: Non-root user
+RUN useradd -m app && chown -R app:app /app
 USER app
 
-# ---- Runtime (Production) ----
-EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
+# Health check
+HEALTHCHECK CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
 
-CMD ["sh", "-c", "uvicorn backend.src.app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+EXPOSE 8000
+CMD ["sh", "-c", "uvicorn backend.src.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
