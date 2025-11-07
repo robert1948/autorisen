@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 *.log
 *.sqlite
 *.sqlite3
@@ -32,6 +33,7 @@ secrets/
 
 # IDE
 .vscode/
+.idea/
 
 # Build / dist
 dist/
@@ -45,6 +47,15 @@ client/node_modules/
 client/dist/
 client/.cache/
 client/.turbo/
+package-lock.json
+
+# Backup and temporary files
+*.backup
+*.tmp
+*.temp
+*.bak
+*.orig
+*~
 
 # Keep logo assets and favicons in version control
 # (they are optimized build outputs needed for deployment)
@@ -56,10 +67,34 @@ dev.db
 test.db
 
 # Generated/backup artifacts
-*.bak
-*.orig
-*~
 docs/PLAYBOOK_OVERVIEW.md
+
+# Development artifacts and analysis
+figma_analysis/
+figma_analysis_page/
+client/src/components/generated/
+client/src/App.tsx.backup
+
+# Figma integration cache
+docs/CapeWire_Tokens_Typography_Board.json
+docs/Typography_Reference_Frame_Simple.json
+docs/figma/capecraft_design_spec.json
+
+# Development scripts and tools
+scripts/*.sh
+tools/*.py
+
+# Generated documentation
+docs/FIGMA_API_QUICKSTART.md
+docs/FIGMA_INTEGRATION_COMPLETE.md
+docs/GITHUB_UPDATE_COMPLETE_251107.md
+docs/PRODUCTION_READINESS_CHECKLIST.md
+docs/pages_overview.md
+docs/checklists/
+docs/playbooks/design/06-target-frame.md
+
+# Logo files in root (should be in proper assets directory)
+LogoW.png
 
 # Production logs and monitoring
 logs/
