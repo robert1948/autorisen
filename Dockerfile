@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl libpq5 && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt ./
+COPY merged-requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
