@@ -17,9 +17,16 @@ __pycache__/
 venv/
 env/
 client/node_modules/
-client/dist/
 build/
 dist/
 docker-data/
 app/
 src/
+
+# Include client source and public assets for Docker build
+!client/src/
+!client/public/
+!client/package*.json
+!client/tsconfig*.json
+!client/vite.config.ts
+!client/index.html

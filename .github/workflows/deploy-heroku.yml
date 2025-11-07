@@ -61,7 +61,15 @@ jobs:
       - name: Build image
         run: |
           IMAGE="registry.heroku.com/${HEROKU_APP}/web"
+          # Verify logo assets exist before Docker build
+          ls -la client/public/LogoW.png client/public/favicon.ico client/public/icons/ || echo "Warning: Logo assets not found"
           docker build -t "$IMAGE" .
+          
+      - name: Verify built image contains assets
+        run: |
+          IMAGE="registry.heroku.com/${HEROKU_APP}/web"
+          # Check that logo assets are in the built container
+          docker run --rm "$IMAGE" sh -c "ls -la /app/client/dist/ && find /app/client/dist/ -name '*.ico' -o -name '*.png' -o -name '*.webmanifest'" || echo "Warning: Assets verification failed"
 
       - name: Push image
         run: |

@@ -39,6 +39,9 @@ client/dist/
 client/.cache/
 client/.turbo/
 
+# Keep logo assets and favicons in version control
+# (they are optimized build outputs needed for deployment)
+
 # Local test artifacts
 coverage.xml
 htmlcov/

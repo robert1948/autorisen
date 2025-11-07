@@ -6,14 +6,25 @@
 FROM node:20-alpine AS webbuild
 WORKDIR /web/client
 
+# Install system dependencies for any native builds
+RUN apk add --no-cache git python3 make g++
+
 # Install deps (need devDependencies so Vite is available)
 COPY client/package*.json ./
 # Install all dependencies (dev deps required to build the SPA).
 RUN npm ci --no-audit --no-fund
 
-# Build the SPA
+# Copy frontend source and assets (including logo assets)
 COPY client/ ./
+
+# Verify logo assets are present before build
+RUN ls -la public/LogoW.png public/favicon.ico public/icons/ public/site.webmanifest
+
+# Build the SPA
 RUN npm run build
+
+# Verify build output includes assets
+RUN ls -la dist/ && find dist/ -name "*.ico" -o -name "*.png" -o -name "*.webmanifest"
 # dist -> /web/client/dist
 
 ############################

@@ -1,4 +1,9 @@
-id,title,status,owner,priority
-AUTH-005,Security hardening & tests,todo,backend,high
-FE-004,Login page + form,todo,frontend,high
-DEVOPS-035,Prod deploy / Capecraft,blocked,devops,high
+id,title,status,owner,priority,completion_date,notes
+AUTH-005,Security hardening & tests,todo,backend,high,,
+FE-004,Login page + form,completed,frontend,high,2025-11-07,CapeControl auth UI with LoginPage MFAChallenge MFAEnroll components
+FE-005,Logo integration & favicon system,completed,frontend,medium,2025-11-07,Multi-size logo system with favicon.ico and PWA manifest
+FE-006,Authentication flow testing,completed,frontend,high,2025-11-07,Localhost testing verified all auth components working
+UI-001,Logo component with size variants,completed,frontend,low,2025-11-07,Smart Logo component serves optimized image sizes
+UI-002,Responsive logo design system,completed,frontend,low,2025-11-07,Mobile-first CSS with breakpoints for logo scaling
+DEVOPS-035,Prod deploy / Capecraft,blocked,devops,high,,Pending backend integration
+DEVOPS-036,Static asset optimization,completed,devops,medium,2025-11-07,Multiple logo sizes for performance optimization
