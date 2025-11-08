@@ -132,6 +132,24 @@
 /* focus styles for accessibility */
 .cc-input:focus,.cc-social-btn:focus,.cc-primary-btn:focus,.cc-pass-toggle:focus{outline:3px solid rgba(0,123,255,0.12);outline-offset:2px}
 
+@media(max-width:480px){
+  .cc-auth-wrapper{
+    padding: 16px;
+  }
+  .cc-card{
+    padding:16px;
+    border-radius:12px;
+    max-width: 100%;
+  }
+  .cc-logo{
+    width: 56px;
+    height: 56px;
+  }
+  .cc-logo-container{
+    margin-bottom: 12px;
+  }
+}
+
 @media(max-width:420px){
   .cc-card{padding:18px;border-radius:10px}
 }
