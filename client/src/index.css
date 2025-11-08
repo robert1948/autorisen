@@ -99,6 +99,43 @@ a {
   gap: 16px;
 }
 
+/* Hamburger Menu */
+.top-nav__hamburger {
+  display: none;
+  flex-direction: column;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.top-nav__hamburger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.top-nav__hamburger-line {
+  width: 24px;
+  height: 3px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  margin: 2px 0;
+}
+
+.top-nav__hamburger-line:first-child.top-nav__hamburger-line--open {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.top-nav__hamburger-line:nth-child(2).top-nav__hamburger-line--open {
+  opacity: 0;
+}
+
+.top-nav__hamburger-line:last-child.top-nav__hamburger-line--open {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -2291,8 +2328,57 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .top-nav__hamburger {
+    display: flex;
+  }
+
   .top-nav__nav-links {
     display: none;
+  }
+
+  .top-nav__actions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(8, 21, 43, 0.95);
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-top: none;
+    border-radius: 0 0 18px 18px;
+    backdrop-filter: blur(12px);
+    flex-direction: column;
+    padding: 20px 28px 28px;
+    gap: 20px;
+    z-index: 1000;
+  }
+
+  .top-nav__actions--open {
+    display: flex;
+  }
+
+  .top-nav__actions--open .top-nav__nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .top-nav__actions--open .top-nav__auth {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .top-nav__actions--open .top-nav__auth .btn,
+  .top-nav__actions--open .top-nav__auth .link {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .top-nav {
+    position: relative;
   }
 
   .landing__main {
@@ -2373,14 +2459,28 @@ a {
   .top-nav {
     width: calc(100% - 24px);
     margin: 32px 12px 0 12px;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     gap: 18px;
+    position: relative;
+  }
+
+  .top-nav__hamburger {
+    display: flex;
+  }
+
+  .top-nav__menu {
+    display: none;
+  }
+
+  .top-nav__menu.open {
+    display: flex;
   }
 
   .top-nav__actions {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: flex-end;
   }
 
   .hero__actions {
