@@ -1,8 +1,8 @@
 # Design Playbook 03 — Agent Hub
 
 **Owner:** Robert (Product Design)
-**Figma Link:** [CapeWire — Agent Hub](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-92&mode=design)
-**Status:** ⚪ Pending
+**Figma Link:** [Agent Hub](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1&p=f&t=fqyTV6VUfkaTGa5a-0)
+**Status:** 🔄 Migrating to new board
 **Purpose:** Bridge the Agent Hub frames (registry + marketplace) with the current developer portal and ensure publishing flows stay aligned.
 
 ---
@@ -40,7 +40,7 @@
 ## 5) Sync & Validation Commands
 
 ```bash
-make design-sync FIGMA_BOARD=https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-92
+make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=agent-hub
 ```
 

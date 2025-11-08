@@ -1,8 +1,8 @@
 # Design Playbook 02 — Dashboard Layout
 
 **Owner:** Robert (UX + Eng)
-**Figma Link:** [CapeWire — Dashboard Layout](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-103&mode=design)
-**Status:** 🔵 In Design
+**Figma Link:** [Dashboard Layout](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1&p=f&t=fqyTV6VUfkaTGa5a-0)
+**Status:** � Migrating to new board
 **Purpose:** Translate the authenticated CapeControl dashboard frames into the live React shell while keeping telemetry and marketplace surfaces aligned.
 
 ---
@@ -44,7 +44,7 @@
 ## 5) Sync & Validation Commands
 
 ```bash
-make design-sync FIGMA_BOARD=https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-103
+make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=dashboard-layout
 ```
 

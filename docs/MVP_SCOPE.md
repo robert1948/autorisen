@@ -33,7 +33,7 @@ The MVP serves as a public proof-of-concept and developer baseline for the full 
 
 ### 1. Backend (FastAPI + PostgreSQL)
 
-#### Scope
+#### Backend Scope
 
 - `/api/health`, `/api/version`
 - `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/me`
@@ -42,7 +42,7 @@ The MVP serves as a public proof-of-concept and developer baseline for the full 
 - Alembic migration sanity (PostgreSQL + Heroku)
 - Lightweight middleware: `AuditLoggingMiddleware`, `InputSanitizationMiddleware`
 
-#### Out of scope
+#### Backend Out of scope
 
 - Complex agent execution engine
 - Task queue, Redis, or async orchestration
@@ -51,15 +51,15 @@ The MVP serves as a public proof-of-concept and developer baseline for the full 
 
 ### 2. Frontend (React + Vite + Tailwind)
 
-#### Scope
+#### Frontend Scope
 
 - Landing page with link to login
 - Login & Register forms (working against backend API)
 - Auth context: token storage + `/me` fetch + redirect logic
-- Agent list page with mock data + “Run” button calling `/agents/:id/run`
+- Agent list page with mock data + "Run" button calling `/agents/:id/run`
 - Activity pane listing past runs (simple local state)
 
-#### Out of scope
+#### Frontend Out of scope
 
 - Full dashboard analytics
 - Onboarding wizard
@@ -69,14 +69,14 @@ The MVP serves as a public proof-of-concept and developer baseline for the full 
 
 ### 3. DevOps / Deployment
 
-#### Scope
+#### DevOps Scope
 
 - GitHub Actions CI: lint, test, build, smoke
 - Heroku container deployment (backend + frontend)
 - Environment config via `.env` and `Makefile`
 - `/api/health` and `/api/version` checks post-deploy
 
-#### Out of scope
+#### DevOps Out of scope
 
 - AWS or Kubernetes deployment
 - Advanced monitoring and alerts

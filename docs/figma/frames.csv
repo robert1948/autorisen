@@ -6,3 +6,7 @@ home,1:56,png,2,ui/,ui/
 marketplace,1:31,png,2,ui/,ui/
 pricing,1:15,png,2,ui/,ui/
 workbench,1:2,png,2,ui/,ui/
+target_frame,2:9,png,2,ui/,ui/
+mainpage,0:1,png,2,ui/,ui/
+aboutpage,10:2,png,2,ui/,ui/
+aboutpage,19:2,png,2,ui/,ui/

@@ -9,9 +9,7 @@ const SOCIAL_PROVIDERS = ["google", "linkedin"] as const;
 type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
 
 const AuthForms = () => {
-  const API_BASE =
-    (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ??
-    window.location.origin;
+  const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 
   const { state, loginUser, logout, loading, error } = useAuth();
   const [email, setEmail] = useState("");

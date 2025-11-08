@@ -1,9 +1,9 @@
 # Design Playbook 05 — Home / Landing
 
 **Owner:** Marketing Design
-**Figma Link:** [CapeWire — Home / Landing](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-31&mode=design)
-**Status:** ⚪ Pending
-**Purpose:** Keep the public marketing shell aligned with the CapeWire landing frames while sharing components with the in-app experience.
+**Figma Link:** [Home / Landing](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1&p=f&t=fqyTV6VUfkaTGa5a-0)
+**Status:** 🔄 Migrating to new board
+**Purpose:** Keep the public marketing shell aligned with the landing frames while sharing components with the in-app experience.
 
 ---
 
@@ -44,7 +44,7 @@
 ## 5) Sync & Validation Commands
 
 ```bash
-make design-sync FIGMA_BOARD=https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-31
+make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=home-landing
 ```
 

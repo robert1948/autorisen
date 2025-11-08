@@ -32,6 +32,7 @@ Codex reads from these Markdown files each time it activates:
 | `.vscode/codex.prompt.md` | System prompt (Codex behavior + rules) |
 
 > 🧩 To verify these at any time:  
+>
 > ```bash
 > make codex-check
 > ```

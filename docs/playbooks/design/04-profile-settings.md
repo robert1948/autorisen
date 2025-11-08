@@ -1,9 +1,9 @@
 # Design Playbook 04 — Profile & Settings
 
 **Owner:** Product Design
-**Figma Link:** [CapeWire — Profile & Settings](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-74&mode=design)
-**Status:** ⚪ Pending
-**Purpose:** Track the upcoming profile management experience so the engineering plan lines up with the CapeWire mocks before work starts.
+**Figma Link:** [Profile & Settings](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1&p=f&t=fqyTV6VUfkaTGa5a-0)
+**Status:** 🔄 Migrating to new board
+**Purpose:** Track the upcoming profile management experience so the engineering plan lines up with the design mocks before work starts.
 
 ---
 
@@ -40,7 +40,7 @@
 ## 5) Sync & Validation Commands
 
 ```bash
-make design-sync FIGMA_BOARD=https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-74
+make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=profile-settings
 ```
 

@@ -210,7 +210,7 @@ clean: ## Remove common build artifacts
 	rm -rf build/ dist/ *.egg-info .pytest_cache/ .venv
 
 plan-validate: ## Validate plan CSV with tools/validate_plan_csv.py
-	python3 tools/validate_plan_csv.py
+	$(PY) tools/validate_plan_csv.py
 
 plan-open: ## Open plan & Codex project plan
 	code docs/CODEX_PROJECT_PLAN.md data/plan.csv
@@ -321,14 +321,14 @@ agents-new: ## Create a new agent scaffold: make agents-new name=<slug>
 	@echo "Created agents/$(name)"
 
 agents-validate: ## Validate agents registry
-	@python3 scripts/agents_validate.py agents/registry.yaml
+	@$(PY) scripts/agents_validate.py agents/registry.yaml
 
 agents-test: ## Run agents unit tests
-	@python3 -m pytest -q tests/test_agents_tooling.py
+	@$(PY) -m pytest -q tests/test_agents_tooling.py
 
 agents-run: ## Run an agent: make agents-run name=<slug> task="..."
 	@[ -n "$$name" ] || (echo "Usage: make agents-run name=<slug> task=\"...\""; exit 1)
-	@python3 scripts/agents_run.py --agent $$name --task "$$task"
+	@$(PY) scripts/agents_run.py --agent $$name --task "$$task"
 
 # ----------------------------------------------------------------------------- 
 # Codex helpers
@@ -384,17 +384,17 @@ codex-docs-fix: ## Auto-fix Markdown lint issues
 	markdownlint "**/*.md" --ignore node_modules --ignore .venv
 
 codex-ci-validate: ## Run pre-commit hooks (install if needed)
-	@command -v pre-commit >/dev/null 2>&1 || { echo "Installing pre-commit"; python3 -m pip install --quiet pre-commit; }
+	@command -v pre-commit >/dev/null 2>&1 || { echo "Installing pre-commit"; $(PY) -m pip install --quiet pre-commit; }
 	pre-commit run --all-files || true
 
 codex-plan-diff: ## Check plan sync
-	python3 scripts/plan_sync.py --check-only
+	$(PY) scripts/plan_sync.py --check-only
 
 codex-plan-apply: ## Apply plan sync
-	python3 scripts/plan_sync.py --apply
+	$(PY) scripts/plan_sync.py --apply
 
 codex-test-heal: ## Regenerate fixtures (best-effort) then pytest
-	python3 scripts/regenerate_fixtures.py || true
+	$(PY) scripts/regenerate_fixtures.py || true
 	pytest -q || true
 
 # --- Test env macros (DRY)
@@ -650,7 +650,7 @@ dockerhub-update-description: ## PATCH repository description via Docker Hub API
 	@set -e; \
 	[ -n "$(DESCRIPTION)" ] || { echo "Usage: make dockerhub-update-description DESCRIPTION=\"<text>\" [APP=...]"; exit 1; }; \
 	if [ -z "$$DOCKERHUB_TOKEN" ]; then echo "Set DOCKERHUB_TOKEN environment variable to a Docker Hub access token"; exit 1; fi; \
-	BODY=$$(DESC="$(DESCRIPTION)" python3 -c 'import json, os; print(json.dumps({"description": os.environ["DESC"]}))'); \
+	BODY=$$(DESC="$(DESCRIPTION)" $(PY) -c 'import json, os; print(json.dumps({"description": os.environ["DESC"]}))'); \
 	URL="https://hub.docker.com/v2/repositories/$(NS)/$(APPNAME)/"; \
 	echo "Updating $$URL description..."; \
 	curl -sSf -X PATCH \
@@ -877,23 +877,23 @@ codex-bootstrap: codex-docs codex-check
 codex-guardian:
 	@echo "Running tests..."
 	@ENV=test DATABASE_URL=sqlite:////tmp/autolocal_test.db DISABLE_RECAPTCHA=true RUN_DB_MIGRATIONS_ON_STARTUP=0 RATE_LIMIT_BACKEND=memory \
-	pytest || true
+	$(PY) -m pytest || true
 	@echo "Attempting fixture heal..."
-	@scripts/regenerate_fixtures.py || true
+	@$(PY) scripts/regenerate_fixtures.py || true
 
 .PHONY: dev-install
 dev-install:
-	@python -m pip install --upgrade pip
-	@pip install -r requirements.txt || true
-	@pip install -r requirements-dev.txt
+	@$(PY) -m pip install --upgrade pip
+	@$(PY) -m pip install -r requirements.txt || true
+	@$(PY) -m pip install -r requirements-dev.txt
 
 .PHONY: codex-focus
 codex-focus:
-	@pytest -v tests_enabled/test_security_csrf.py
+	@$(PY) -m pytest -v tests_enabled/test_security_csrf.py
 
 .PHONY: auth-tests
 auth-tests:
-	@pytest -v tests_enabled/test_auth.py || true
+	@$(PY) -m pytest -v tests_enabled/test_auth.py || true
 
 # --- Figma integration ---------------------------------------------------------
 FIGMA_TOKEN        ?= $(FIGMA_API_TOKEN)   # allow either name
@@ -955,7 +955,7 @@ design-validate: ## Validate design playbooks (use PLAYBOOK=slug to scope)
 .PHONY: figma-gallery
 ## figma-gallery: Build Markdown gallery from exported frames
 figma-gallery:
-	@python3 tools/figma_gallery.py \
+	@$(PY) tools/figma_gallery.py \
 		--export-dir "docs/figma/_export" \
 		--gallery-md "docs/figma/GALLERY.md" \
 		--mirror-docs "docs/img/figma"
@@ -964,8 +964,63 @@ figma-gallery:
 .PHONY: docs-index
 ## docs-index: Rebuild docs/INDEX.md (includes design_version + gallery link)
 docs-index:
-	@python3 tools/build_docs_index.py
+	@$(PY) tools/build_docs_index.py
 	@echo "✓ Updated docs/INDEX.md"
+
+# ---- Enhanced Figma API Integration (Zeonita) -------------------------------
+FIGMA_OUTPUT_DIR ?= ./figma_analysis
+FIGMA_NODE_ID    ?= 2:9
+FIGMA_COMPONENT_NAME ?= TargetFrame
+FIGMA_CLIENT_OUTPUT_DIR ?= client/src/components/generated
+
+.PHONY: figma-analyze figma-generate-component figma-workflow figma-inspect
+
+## figma-analyze: Deep analysis of Figma node with Zeonita API
+figma-analyze:
+	@test -n "$(FIGMA_TOKEN)" || (echo "ERR: Set FIGMA_TOKEN or FIGMA_API_TOKEN"; exit 1)
+	@test -n "$(FIGMA_FILE_ID)" || (echo "ERR: Set FIGMA_FILE_ID or FIGMA_FILE"; exit 1)
+	@$(PY) tools/figma_api_client.py \
+		--token "$(FIGMA_TOKEN)" \
+		--file-id "$(FIGMA_FILE_ID)" \
+		--node-id "$(FIGMA_NODE_ID)" \
+		--action all \
+		--output-dir "$(FIGMA_OUTPUT_DIR)"
+	@echo "✓ Figma analysis complete → $(FIGMA_OUTPUT_DIR)"
+
+## figma-generate-component: Generate React component from Figma analysis
+figma-generate-component: figma-analyze
+	@mkdir -p "$(FIGMA_CLIENT_OUTPUT_DIR)"
+	@$(PY) tools/generate_react_component.py \
+		--analysis-file "$(FIGMA_OUTPUT_DIR)/component_analysis.json" \
+		--tokens-file "$(FIGMA_OUTPUT_DIR)/design_tokens.json" \
+		--component-name "$(FIGMA_COMPONENT_NAME)" \
+		--output-dir "$(FIGMA_CLIENT_OUTPUT_DIR)"
+	@echo "✓ React component generated → $(FIGMA_CLIENT_OUTPUT_DIR)/$(FIGMA_COMPONENT_NAME).tsx"
+
+## figma-workflow: Complete Figma to React workflow
+figma-workflow: figma-generate-component
+	@echo "==> Updating frames.csv with new component..."
+	@echo "==> Updating component inventory..."
+	@$(MAKE) design-sync
+	@echo "==> Updating gallery..."
+	@$(MAKE) figma-gallery
+	@echo "✅ Complete Figma workflow finished!"
+	@echo "📁 Generated files:"
+	@echo "   • Component: $(FIGMA_CLIENT_OUTPUT_DIR)/$(FIGMA_COMPONENT_NAME).tsx"
+	@echo "   • Styles: $(FIGMA_CLIENT_OUTPUT_DIR)/$(FIGMA_COMPONENT_NAME).css"
+	@echo "   • Analysis: $(FIGMA_OUTPUT_DIR)/"
+
+## figma-inspect: Quick inspection of Figma file structure
+figma-inspect:
+	@test -n "$(FIGMA_TOKEN)" || (echo "ERR: Set FIGMA_TOKEN or FIGMA_API_TOKEN"; exit 1)
+	@test -n "$(FIGMA_FILE_ID)" || (echo "ERR: Set FIGMA_FILE_ID or FIGMA_FILE"; exit 1)
+	@$(PY) tools/figma_api_client.py \
+		--token "$(FIGMA_TOKEN)" \
+		--file-id "$(FIGMA_FILE_ID)" \
+		--node-id "$(FIGMA_NODE_ID)" \
+		--action metadata \
+		--output-dir "$(FIGMA_OUTPUT_DIR)"
+	@echo "✓ File inspection complete → $(FIGMA_OUTPUT_DIR)/file_metadata.json"
 # ---- Dashboard Auto-Refresh ---------------------------------------------------
 DASHBOARD_SUMMARY ?= docs/CONTROL_DASHBOARD_SUMMARY.md
 DASHBOARD_STAGING_URL ?= https://dev.cape-control.com
@@ -1006,3 +1061,81 @@ dashboard-open:
 .PHONY: codex-docs
 codex-docs:
 	@echo "[codex-docs] No-op fallback (replace with your real docs sync if needed)"
+
+# --- Figma Design System Workflow ------------------------------------------------
+.PHONY: design-helper design-status design-list design-generate design-watch figma-setup
+
+design-helper:
+	@echo "🎨 Starting CapeWire Design System Helper..."
+	cd $(CURDIR) && $(PY) scripts/design_helper.py
+
+design-status:
+	@echo "📊 Design System Status..."
+	cd $(CURDIR) && ./scripts/figma_sync.sh scan
+
+design-list:
+	@echo "📋 Listing available Figma frames..."
+	cd $(CURDIR) && ./scripts/figma_sync.sh list
+
+design-generate:
+	@if [ -z "$(NODE_ID)" ] || [ -z "$(COMPONENT)" ]; then \
+		echo "❌ Usage: make design-generate NODE_ID=2:9 COMPONENT=MyComponent"; \
+		exit 1; \
+	fi
+	@echo "⚛️  Generating $(COMPONENT) from node $(NODE_ID)..."
+	cd $(CURDIR) && ./scripts/figma_sync.sh generate $(NODE_ID) $(COMPONENT)
+
+design-watch:
+	@echo "👀 Starting Figma change watcher..."
+	cd $(CURDIR) && ./scripts/figma_sync.sh watch
+
+figma-setup:
+	@echo "🚀 Figma Design System Setup Complete!"
+	@echo ""
+	@echo "Available commands:"
+	@echo "  make design-helper    - Interactive design system helper"
+	@echo "  make design-status    - Show design system status"
+	@echo "  make design-list      - List available Figma frames"
+	@echo "  make design-generate NODE_ID=2:9 COMPONENT=MyComponent"
+	@echo "  make design-watch     - Watch for Figma changes"
+	@echo "  make capecraft       - CapeCraft implementation workflow"
+	@echo ""
+	@echo "🌐 Demo pages available at:"
+	@echo "  http://localhost:3000/mainpage-demo - MainPage component demo"
+	@echo "  http://localhost:3000/figma-demo    - Frame1 component demo"
+	@echo ""
+	@echo "🔧 Figma API Token: $${FIGMA_API_TOKEN:0:12}..."
+	@echo "📁 File ID: gRtWgiHmLTrIZGvkhF2aUC"
+
+# --- CapeCraft Implementation Workflow ------------------------------------------------
+.PHONY: capecraft capecraft-spec capecraft-help
+
+capecraft:
+	@echo "🎨 Starting CapeCraft implementation workflow..."
+	cd $(CURDIR) && ./scripts/capecraft_workflow.sh
+
+capecraft-spec:
+	@echo "📋 CapeCraft Design Specification:"
+	@echo "  Spec file: docs/figma/capecraft_design_spec.json"
+	@echo "  Guide: docs/checklists/capecraft_implementation_guide.md"
+	@echo "  Figma URL: https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/CapeCraft"
+	@if [ -f "docs/figma/capecraft_design_spec.json" ]; then \
+		echo "✅ Specification file exists"; \
+	else \
+		echo "❌ Specification file missing"; \
+	fi
+
+capecraft-help:
+	@echo "🎨 CapeCraft Development Workflow"
+	@echo "================================="
+	@echo ""
+	@echo "Available commands:"
+	@echo "  make capecraft       - Run full implementation workflow"
+	@echo "  make capecraft-spec  - Show specification status"
+	@echo "  make capecraft-help  - Show this help"
+	@echo ""
+	@echo "MindMup → Figma → React workflow:"
+	@echo "1. Design specification created from MindMup"
+	@echo "2. Import spec into Figma for visual design"
+	@echo "3. Use figma_sync.sh to generate React components"
+	@echo "4. Integrate components into page routing"

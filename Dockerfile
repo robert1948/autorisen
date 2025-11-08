@@ -17,6 +17,7 @@ COPY client/tsconfig*.json ./
 
 # Build for production
 ENV NODE_ENV=production
+ENV VITE_API_BASE=https://cape-control.com/api
 RUN npm run build
 
 # Production Python runtime

@@ -1,9 +1,9 @@
 # Design Playbook 01 — Auth Flow
 
 **Owner:** Robert (UX + Eng)
-**Figma Link:** [CapeWire — Auth Flow](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-56&mode=design)
-**Status:** 🟡 In Sync
-**Purpose:** Keep the authentication journey aligned between the CapeWire Figma board and the React + FastAPI implementation.
+**Figma Link:** [Auth Flow](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1&p=f&t=fqyTV6VUfkaTGa5a-0)
+**Status:** � Migrating to new board
+**Purpose:** Keep the authentication journey aligned between the new Figma board and the React + FastAPI implementation.
 
 ---
 
@@ -36,7 +36,7 @@ Login → Register → Email Verification (optional) → Onboarding → Dashboar
 ## 5) Sync & Validation Commands
 
 ```bash
-make design-sync FIGMA_BOARD=https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire
+make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=auth-flow
 ```
 

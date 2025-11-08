@@ -31,10 +31,10 @@ The playbooks catalog captures the cross-functional initiatives that keep Cape C
 
 | Figma Board | Module | Status | Linked Playbook |
 |---|---|---|---|
-| [Auth Flow](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-56) | Auth & Onboarding | 🟡 In Sync | `docs/playbooks/design/01-auth-flow.md` |
-| [Dashboard Layout](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-103) | Core Dashboard | 🔵 In Design | `docs/playbooks/design/02-dashboard-layout.md` |
-| [Agent Hub](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-92) | Agents Marketplace | ⚪ Pending | `docs/playbooks/design/03-agent-hub.md` |
-| [Profile & Settings](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-74) | Accounts | ⚪ Pending | `docs/playbooks/design/04-profile-settings.md` |
-| [Home / Landing](https://www.figma.com/design/HK7SbPtB0uJxeCUDVcrbzM/CapeWire?node-id=1-31) | Marketing Shell | ⚪ Pending | `docs/playbooks/design/05-home-landing.md` |
+| [Auth Flow](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1) | Auth & Onboarding | � Migrating | `docs/playbooks/design/01-auth-flow.md` |
+| [Dashboard Layout](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1) | Core Dashboard | � Migrating | `docs/playbooks/design/02-dashboard-layout.md` |
+| [Agent Hub](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1) | Agents Marketplace | 🔄 Migrating | `docs/playbooks/design/03-agent-hub.md` |
+| [Profile & Settings](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1) | Accounts | 🔄 Migrating | `docs/playbooks/design/04-profile-settings.md` |
+| [Home / Landing](https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1) | Marketing Shell | 🔄 Migrating | `docs/playbooks/design/05-home-landing.md` |
 
-> Source of truth for the design layer is the CapeWire board above. Each playbook tracks a component map, API touchpoints, acceptance criteria, and sync commands.
+> Source of truth for the design layer is the new Figma board above. Each playbook tracks a component map, API touchpoints, acceptance criteria, and sync commands.
