@@ -4,5 +4,14 @@
 /register
 /register?role=user
 /register?role=developer
-/subscribe
+/forgot-password
+/reset-password
+/auth/callback
+/onboarding/customer
+/onboarding/developer
 /verify-email/:token
+/auth/login
+/auth/mfa
+/account/mfa-enroll
+/test/logo
+/subscribe

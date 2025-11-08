@@ -714,6 +714,9 @@ playbooks-check: ## Validate required headers exist in all playbooks
 	done; \
 	exit $$missing
 
+playbook-sync: ## Sync PROJECT_PLAYBOOK_TRACKER docs from CSV
+	@python3 scripts/sync_playbooks_tracker.py
+
 # ===== Heroku Pipeline Targets =====
 
 .PHONY: heroku-login heroku-apps heroku-pipeline heroku-config-stg heroku-config-prod \

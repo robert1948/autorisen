@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://dev.cape-control.com/</loc></url>
-  <url><loc>https://dev.cape-control.com/about</loc></url>
-  <url><loc>https://dev.cape-control.com/login</loc></url>
-  <url><loc>https://dev.cape-control.com/register</loc></url>
-  <url><loc>https://dev.cape-control.com/register?role=user</loc></url>
-  <url><loc>https://dev.cape-control.com/register?role=developer</loc></url>
-  <url><loc>https://dev.cape-control.com/subscribe</loc></url>
+  <url><loc>https://cape-control.com/</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/about</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/login</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/register</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/register?role=user</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/register?role=developer</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/forgot-password</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/reset-password</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/auth/callback</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/onboarding/customer</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/onboarding/developer</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/verify-email/:token</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/auth/login</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/auth/mfa</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/account/mfa-enroll</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/test/logo</loc><lastmod>2025-11-08</lastmod></url>
+  <url><loc>https://cape-control.com/subscribe</loc><lastmod>2025-11-08</lastmod></url>
 </urlset>
