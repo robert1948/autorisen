@@ -1,4 +1,4 @@
-name: Deploy to Heroku (autorisen)
+name: Deploy to Heroku Production
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
       - "backend/**"
       - "client/**"
       - "infra/**"
+      - "requirements*.txt"
+      - "Dockerfile*"
+      - "heroku.yml"
       - ".github/workflows/deploy-heroku.yml"
   workflow_dispatch: {}
 
@@ -53,36 +56,81 @@ jobs:
         run: |
           echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
 
-      - name: (Optional) Enable Buildx if available
+      - name: Verify project structure
         run: |
-          docker buildx version || true
-          docker buildx create --use || true
+          echo "=== Project Structure Verification ==="
+          ls -la
+          echo "=== Backend Structure ==="
+          find backend/ -name "*.py" | head -10 || echo "Backend files not found"
+          echo "=== Client Structure ==="
+          ls -la client/ || echo "Client directory not found"
+          echo "=== Client Assets ==="
+          ls -la client/public/ || echo "Client public directory not found"
+          find client/public/ -name "*.png" -o -name "*.ico" | head -5 || echo "Assets not found"
 
-      - name: Build image
+      - name: Build production image
         run: |
           IMAGE="registry.heroku.com/${HEROKU_APP}/web"
-          # Verify logo assets exist before Docker build
-          ls -la client/public/LogoW.png client/public/favicon.ico client/public/icons/ || echo "Warning: Logo assets not found"
-          docker build -t "$IMAGE" .
+          echo "Building image: $IMAGE"
           
-      - name: Verify built image contains assets
+          # Build with production optimizations
+          docker build \
+            --tag "$IMAGE" \
+            --file Dockerfile \
+            --build-arg NODE_ENV=production \
+            --build-arg ENV=prod \
+            .
+          
+      - name: Verify built image
         run: |
           IMAGE="registry.heroku.com/${HEROKU_APP}/web"
-          # Check that logo assets are in the built container
-          docker run --rm "$IMAGE" sh -c "ls -la /app/client/dist/ && find /app/client/dist/ -name '*.ico' -o -name '*.png' -o -name '*.webmanifest'" || echo "Warning: Assets verification failed"
+          echo "=== Container Structure Verification ==="
+          docker run --rm "$IMAGE" sh -c "ls -la /app/"
+          echo "=== Frontend Assets Verification ==="
+          docker run --rm "$IMAGE" sh -c "find /app/client/dist/ -name '*.html' -o -name '*.js' -o -name '*.css' | head -10" || echo "Frontend assets not found"
+          echo "=== Backend Modules Verification ==="
+          docker run --rm "$IMAGE" sh -c "find /app/backend/ -name '*.py' | head -10" || echo "Backend modules not found"
 
-      - name: Push image
+      - name: Push image to Heroku registry
         run: |
           IMAGE="registry.heroku.com/${HEROKU_APP}/web"
           docker push "$IMAGE"
 
-      - name: Release container
+      - name: Release container to production
         run: |
           heroku container:release web -a "$HEROKU_APP"
 
-      # OPTIONAL: run DB migrations (adjust or remove)
-      - name: Run Alembic migrations
+      - name: Run database migrations
         if: always()
         run: |
+          echo "=== Database Migration ==="
           heroku run -a "$HEROKU_APP" -- \
             python -m alembic -c backend/alembic.ini upgrade head
+
+      - name: Verify deployment health
+        run: |
+          echo "=== Deployment Health Check ==="
+          sleep 30  # Allow time for deployment
+          
+          # Health check
+          curl -f -sS "https://${HEROKU_APP}.herokuapp.com/api/health" || {
+            echo "Health check failed"
+            exit 1
+          }
+          
+          # CSRF endpoint check
+          curl -f -sS -I "https://${HEROKU_APP}.herokuapp.com/api/auth/csrf" || {
+            echo "CSRF endpoint check failed"
+            exit 1
+          }
+          
+          echo "✅ Deployment verified successfully!"
+
+      - name: Post-deployment summary
+        if: always()
+        run: |
+          echo "=== Deployment Summary ==="
+          echo "App: https://${HEROKU_APP}.herokuapp.com"
+          echo "Health: https://${HEROKU_APP}.herokuapp.com/api/health"
+          echo "Login: https://${HEROKU_APP}.herokuapp.com/auth/login"
+          echo "Deployment completed at: $(date -u)"

@@ -21,8 +21,13 @@ pip-wheel-metadata/
 
 # Virtualenv / local env
 .venv/
+.venv_*/
+venv/
+env/
 .env
 .env.*
+.env.local
+.env.dev
 
 # Production secrets (never commit)
 .env.production
@@ -30,10 +35,13 @@ pip-wheel-metadata/
 *.pem
 *.key
 secrets/
+config/secrets/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Build / dist
 dist/
@@ -47,7 +55,10 @@ client/node_modules/
 client/dist/
 client/.cache/
 client/.turbo/
+client/coverage/
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Backup and temporary files
 *.backup
@@ -65,6 +76,7 @@ coverage.xml
 htmlcov/
 dev.db
 test.db
+.coverage.*
 
 # Generated/backup artifacts
 docs/PLAYBOOK_OVERVIEW.md
@@ -80,18 +92,31 @@ docs/CapeWire_Tokens_Typography_Board.json
 docs/Typography_Reference_Frame_Simple.json
 docs/figma/capecraft_design_spec.json
 
-# Development scripts and tools
-scripts/*.sh
-tools/*.py
+# Development scripts and tools (development artifacts)
+tools/generated/
+scripts/temp/
 
-# Generated documentation
+# Generated documentation (development artifacts)
 docs/FIGMA_API_QUICKSTART.md
 docs/FIGMA_INTEGRATION_COMPLETE.md
 docs/GITHUB_UPDATE_COMPLETE_251107.md
 docs/PRODUCTION_READINESS_CHECKLIST.md
 docs/pages_overview.md
-docs/checklists/
+docs/checklists/temp/
 docs/playbooks/design/06-target-frame.md
+
+# Generated/demo pages (development only)
+client/src/pages/AboutPage.tsx
+client/src/pages/CapeLoginPage.tsx
+client/src/pages/CapeRegisterPage.tsx
+client/src/pages/Demo1Demo.tsx
+client/src/pages/FigmaDemo.tsx
+client/src/pages/HomePage.tsx
+client/src/pages/HomePagePage.tsx
+client/src/pages/MainPageDemo.tsx
+client/src/pages/SubscribePage.tsx
+client/src/pages/SubscribePagePage.tsx
+client/src/pages/TestPage.tsx
 
 # Logo files in root (should be in proper assets directory)
 LogoW.png
@@ -100,11 +125,27 @@ LogoW.png
 logs/
 *.access.log
 *.error.log
-monitoring/
-metrics/
+monitoring/temp/
+metrics/temp/
 
 # Heroku specific
 .heroku/
+
+# Docker
+docker-data/
+.docker/
+
+# Testing artifacts
+.testcache/
+test-results/
+playwright-report/
+
+# Agent framework development
+agents/temp/
+config/temp/
+
+# ChatKit development
+chatkit-cache/
 
 # OS junk
 .DS_Store

@@ -1,52 +1,71 @@
-# Production-Ready Docker Image for DockerHub
-# Optimized multi-stage build for stinkie/autorisen
+# Production-Ready Docker Image for CapeControl
+# Multi-stage optimized build for autorisen Heroku deployment
 
-FROM node:20-alpine AS frontend-build
+ARG NODE_VERSION=20
+ARG PYTHON_VERSION=3.12
+
+# Frontend build stage
+FROM node:${NODE_VERSION}-alpine AS frontend-build
 WORKDIR /app
 
-# Copy package files
+# Copy package files for dependency installation
 COPY client/package*.json ./
+# Need devDependencies for Vite/TypeScript build tooling
 RUN npm ci
 
-# Copy frontend source
+# Copy frontend source files
 COPY client/src ./src
 COPY client/public ./public
 COPY client/index.html ./
 COPY client/vite.config.ts ./
 COPY client/tsconfig*.json ./
 
-# Build for production
+# Build for production with proper API base
 ENV NODE_ENV=production
-ENV VITE_API_BASE=https://cape-control.com/api
+ENV VITE_API_BASE=/api
 RUN npm run build
 
-# Production Python runtime
-FROM python:3.12-slim
+# Production Python runtime stage
+FROM python:${PYTHON_VERSION}-slim AS production
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     ENV=prod \
-    DEBUG=false
+    DEBUG=false \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
-# Install minimal system dependencies
+# Install system dependencies (minimal set)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl libpq5 && rm -rf /var/lib/apt/lists/*
+    curl \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Install Python dependencies
-COPY merged-requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies (using merged requirements for production)
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY backend/ ./backend/
-COPY --from=frontend-build /app/dist ./client/dist
+# Create non-root user for security
+RUN useradd -m -u 1000 app
 
-# Security: Non-root user
-RUN useradd -m app && chown -R app:app /app
+# Copy application code with proper permissions
+COPY --chown=app:app backend/ ./backend/
+COPY --chown=app:app app/ ./app/
+COPY --chown=app:app --from=frontend-build /app/dist ./client/dist
+
+# Copy essential configuration
+COPY --chown=app:app runtime.txt ./
+
+# Switch to non-root user
 USER app
 
-# Health check
-HEALTHCHECK CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
 
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn backend.src.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
+# Production startup command (Gunicorn with Uvicorn workers)
+CMD ["sh", "-c", "gunicorn backend.src.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --worker-tmp-dir /dev/shm"]

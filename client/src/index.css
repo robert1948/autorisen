@@ -26,6 +26,9 @@ a {
   flex-direction: column;
   align-items: center;
   padding-bottom: 96px;
+  width: 94%;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 .landing__main {
@@ -917,7 +920,9 @@ a {
 }
 
 .footer__content {
-  width: 100%;
+  width: 94%;
+  max-width: 1600px;
+  margin: 0 auto;
   padding: 0 24px;
   display: flex;
   flex-direction: column;
@@ -976,6 +981,13 @@ a {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .landing,
+  .footer__content {
+    width: 100%;
+  }
 }
 
 .footer__links-list a,

@@ -8,7 +8,7 @@ build:
 release:
   image: web
   command:
-    - python backend/src/core/migrate.py
+    - python -m alembic -c backend/alembic.ini upgrade head
 
 run:
-  web: uvicorn backend.src.app:app --host 0.0.0.0 --port $PORT --workers 1
+  web: bash -lc "gunicorn backend.src.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-2} --worker-tmp-dir /dev/shm"

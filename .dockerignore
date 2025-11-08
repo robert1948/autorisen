@@ -3,6 +3,8 @@
 .gitignore
 .vscode
 .idea
+*.swp
+*.swo
 
 # OS files
 .DS_Store
@@ -19,11 +21,13 @@ Thumbs.db
 # Environment and secrets (security)
 .env
 .env.*
+.env.local
 .env.production
 .env.prod
 *.pem
 *.key
 secrets/
+config/secrets/
 
 # Python cache and artifacts
 *.pyc
@@ -32,7 +36,7 @@ secrets/
 *.pyd
 __pycache__/
 .venv/
-.venv_tmp/
+.venv_*/
 venv/
 env/
 .pytest_cache/
@@ -51,7 +55,10 @@ client/node_modules/
 client/dist/
 client/.cache/
 client/.turbo/
+client/coverage/
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Test and development files
 tests/
@@ -59,6 +66,9 @@ docs/
 .github/
 dev.db
 test.db
+.testcache/
+test-results/
+playwright-report/
 
 # Development artifacts and analysis
 figma_analysis/
@@ -71,9 +81,9 @@ docs/CapeWire_Tokens_Typography_Board.json
 docs/Typography_Reference_Frame_Simple.json
 docs/figma/capecraft_design_spec.json
 
-# Development scripts and tools
-scripts/*.sh
-tools/*.py
+# Development scripts and tools (exclude temp artifacts)
+tools/generated/
+scripts/temp/
 
 # Generated documentation (exclude from Docker build)
 docs/FIGMA_API_QUICKSTART.md
@@ -81,7 +91,7 @@ docs/FIGMA_INTEGRATION_COMPLETE.md
 docs/GITHUB_UPDATE_COMPLETE_251107.md
 docs/PRODUCTION_READINESS_CHECKLIST.md
 docs/pages_overview.md
-docs/checklists/
+docs/checklists/temp/
 docs/playbooks/design/06-target-frame.md
 
 # Generated/demo pages (development only)
@@ -101,10 +111,7 @@ client/src/pages/TestPage.tsx
 build/
 dist/
 docker-data/
-
-# Legacy app structure (excluding from build)
-app/
-src/
+.docker/
 
 # Logo files in root (should be in proper assets directory)
 LogoW.png
@@ -113,16 +120,24 @@ LogoW.png
 logs/
 *.access.log
 *.error.log
-monitoring/
-metrics/
+monitoring/temp/
+metrics/temp/
 
 # Heroku specific
 .heroku/
+
+# Agent framework development artifacts  
+agents/temp/
+config/temp/
+
+# ChatKit development
+chatkit-cache/
 
 # Include essential client source and assets for Docker build
 !client/src/components/
 !client/src/lib/
 !client/src/types/
+!client/src/context/
 !client/src/App.tsx
 !client/src/main.tsx
 !client/src/index.css
@@ -137,7 +152,7 @@ metrics/
 # Include backend source
 !backend/
 !requirements*.txt
-!Dockerfile
+!Dockerfile*
 !Procfile
 !runtime.txt
 !heroku.yml

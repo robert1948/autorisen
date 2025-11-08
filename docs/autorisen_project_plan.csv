@@ -1,7 +1,13 @@
-id,task,owner,status,priority,blocked_by,artifact,command_or_check,notes
-M3-ONB-001,Verify CSRF + login flow end-to-end (frontend ↔ backend),"frontend, backend",Done,P0,,backend/src/modules/auth/* ; client/src/pages/login/* ; backend/tests/test_security_csrf.py,curl -sS -I https://dev.cape-control.com/api/auth/csrf ; pytest -q backend/tests/test_security_csrf.py,2025-10-26: CSRF middleware and async/trio test suite verified — backend secure for staging.
-M3-ONB-002,Wire frontend login form to backend and show error/success states,frontend,Todo,P0,M3-ONB-001,client/src/pages/Login.tsx ; client/src/lib/api.ts,Manual: login with test user on dev and staging; check localStorage/session and redirect.,Include CSRF header and credentials mode for cookies if used.
-M4-SMK-001,Run full smoke on staging (dev.cape-control.com),devops,Todo,P0,M3-ONB-002,docs/Release_Runbook.md ; scripts/smoke.sh,bash scripts/smoke.sh dev || true,Record results in Release_Runbook.md (table + timestamps).
-M5-SMK-002,Run final smoke on production (cape-control.com),devops,Todo,P0,M4-SMK-001,docs/Release_Runbook.md,bash scripts/smoke.sh prod || true,Only after staging is green. Capture rollback notes.
-DOC-RUN-001,Create/complete Release Runbook skeleton,devops,Todo,P1,,docs/Release_Runbook.md,"Open and fill sections: Preconditions, Deploy steps, Smoke list, Rollback, Contacts.",Link to Make targets and PRs.
-CHK-LST-001,Execute full pre-release checklist,project,Todo,P1,M4-SMK-001,docs/Checklist_MVP.md,Tick items as you complete smoke and docs.,Gate before promotion to prod.
+id,task,owner,status,priority,blocked_by,artifact,command_or_check,notes,completion_date
+# ARCHIVED MILESTONES - NOW COMPLETED
+M3-ONB-001,Verify CSRF + login flow end-to-end (frontend ↔ backend),"frontend, backend",Done,P0,,backend/src/modules/auth/* ; client/src/pages/login/* ; backend/tests/test_security_csrf.py,curl -sS -I https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf ; pytest -q backend/tests/test_security_csrf.py,2025-11-07: CSRF middleware and async/trio test suite verified — backend secure for production.,2025-11-07
+M3-ONB-002,Wire frontend login form to backend and show error/success states,frontend,Done,P0,M3-ONB-001,client/src/pages/Login.tsx ; client/src/lib/api.ts,Manual: login with test user on production; check localStorage/session and redirect.,Production authentication system completed with CSRF protection and MFA support.,2025-11-07
+M4-SMK-001,Run full smoke on staging (dev.cape-control.com),devops,Done,P0,M3-ONB-002,docs/Release_Runbook.md ; scripts/smoke.sh,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health,Production smoke tests passed on live Heroku deployment.,2025-11-07
+M5-SMK-002,Run final smoke on production (cape-control.com),devops,Done,P0,M4-SMK-001,docs/Release_Runbook.md,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf,Production deployment live and verified with security hardening.,2025-11-07
+DOC-RUN-001,Create/complete Release Runbook skeleton,devops,Done,P1,,docs/Release_Runbook.md,"Production deployment documented in README.md with comprehensive deployment and verification procedures.",2025-11-07
+CHK-LST-001,Execute full pre-release checklist,project,Done,P1,M4-SMK-001,docs/Checklist_MVP.md,Production checklist completed - system live and operational.,Production system deployed and operational on Heroku with full security hardening.,2025-11-07
+
+# CURRENT ACTIVE PROJECTS - See docs/project-plan.csv for current roadmap
+# This file is now archived for historical reference
+# Active project tracking moved to docs/project-plan.csv with comprehensive roadmap
+MIGRATION-001,Migrate project tracking to new format,project,Done,P1,,docs/project-plan.csv,Updated project plan with comprehensive current and future phases,2025-11-08
