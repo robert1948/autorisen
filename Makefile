@@ -78,7 +78,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 # PHONY index (single, authoritative)
 # -----------------------------------------------------------------------------
 .PHONY: help venv install format lint test docker-build docker-run docker-push \
-	deploy-heroku heroku-deploy-stg heroku-logs heroku-run-migrate \
+	deploy-heroku heroku-deploy-stg heroku-deploy-prod heroku-logs heroku-run-migrate \
 	github-update clean plan-validate plan-open \
 	migrate-up migrate-revision \
 	sitemap-generate-dev sitemap-generate-prod verify-sitemap verify-sitemap-dev verify-sitemap-prod \
@@ -87,6 +87,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 	codex-check codex-open codex-docs-lint codex-docs-fix codex-ci-validate \
 	codex-plan-diff codex-plan-apply codex-test-heal codex-test codex-test-cov codex-test-dry codex-run \
 	smoke-staging smoke-local csrf-probe-staging csrf-probe-local codex-smoke smoke-prod \
+	payments-checkout \
 	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push dockerhub-build-push \
 	dockerhub-release dockerhub-update-description dockerhub-clean \
 	playbooks-overview playbook-overview playbook-open playbook-badge playbook-new playbooks-check \
@@ -134,6 +135,9 @@ test: ## Run tests (pytest)
 	@$(VENV)/bin/python -m pip install pytest >/dev/null 2>&1 || true
 	@$(VENV)/bin/pytest -q || true
 
+payments-checkout: ## Generate a sample PayFast checkout payload
+	@$(VENV)/bin/python scripts/payfast_checkout.py
+
 # ----------------------------------------------------------------------------- 
 # Docker (local) 
 # -----------------------------------------------------------------------------
@@ -162,38 +166,66 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 # ----------------------------------------------------------------------------- 
 # Heroku container deploy (Enhanced)
 # -----------------------------------------------------------------------------
-deploy-heroku: docker-build ## Build/push/release to Heroku with enhanced logging (retries on failures)
-	@if [ -z "$(HEROKU_APP_NAME)" ]; then \
-		echo "❌ Set HEROKU_APP_NAME environment variable to your Heroku app name"; exit 1; \
-	fi
-	@echo "🏷️  Tagging image for Heroku registry..."
-	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_NAME)/web
+deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) and production (capecraft) with enhanced logging
 	@echo "🔐 Logging in to Heroku Container Registry..."
 	@for i in 1 2 3; do \
 		if heroku container:login >/dev/null 2>&1; then echo "✅ Login successful"; break; fi; \
 		echo "⚠️  Login failed (attempt $$i/3). Retrying in 5s..."; sleep 5; \
 	done
-	@echo "📤 Pushing image to Heroku registry..."
+	@echo ""
+	@echo "🚀 === DEPLOYING TO STAGING ($(HEROKU_APP_STG)) ==="
+	@echo "🏷️  Tagging image for staging registry..."
+	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_STG)/web
+	@echo "� Pushing image to staging registry..."
 	@for i in 1 2 3; do \
-		if docker push registry.heroku.com/$(HEROKU_APP_NAME)/web; then echo "✅ Push successful"; break; fi; \
-		echo "⚠️  Push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
-		[ $$i -eq 3 ] && { echo "❌ Push failed after retries"; exit 1; } || true; \
+		if docker push registry.heroku.com/$(HEROKU_APP_STG)/web; then echo "✅ Staging push successful"; break; fi; \
+		echo "⚠️  Staging push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Staging push failed after retries"; exit 1; } || true; \
+	done
+	@echo "🚀 Releasing container to staging..."
+	@for i in 1 2 3; do \
+		if heroku container:release web --app $(HEROKU_APP_STG); then echo "✅ Staging release successful"; break; fi; \
+		echo "⚠️  Staging release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Staging release failed after retries"; exit 1; } || true; \
+	done
+	@echo "✅ Staging deployment completed! App URL: https://$(HEROKU_APP_STG).herokuapp.com"
+	@echo ""
+	@echo "🚀 === DEPLOYING TO PRODUCTION ($(HEROKU_APP_PROD)) ==="
+	@echo "🏷️  Tagging image for production registry..."
+	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_PROD)/web
+	@echo "📤 Pushing image to production registry..."
+	@for i in 1 2 3; do \
+		if docker push registry.heroku.com/$(HEROKU_APP_PROD)/web; then echo "✅ Production push successful"; break; fi; \
+		echo "⚠️  Production push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Production push failed after retries"; exit 1; } || true; \
 	done
 	@echo "🚀 Releasing container to production..."
 	@for i in 1 2 3; do \
-		if heroku container:release web --app $(HEROKU_APP_NAME); then echo "✅ Release successful"; break; fi; \
-		echo "⚠️  Release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
-		[ $$i -eq 3 ] && { echo "❌ Release failed after retries"; exit 1; } || true; \
+		if heroku container:release web --app $(HEROKU_APP_PROD); then echo "✅ Production release successful"; break; fi; \
+		echo "⚠️  Production release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Production release failed after retries"; exit 1; } || true; \
 	done
-	@echo "🎉 Deployment completed! App URL: https://$(HEROKU_APP_NAME).herokuapp.com"
+	@echo "✅ Production deployment completed! App URL: https://$(HEROKU_APP_PROD).herokuapp.com"
+	@echo ""
+	@echo "🎉 DUAL DEPLOYMENT COMPLETED!"
+	@echo "   📋 Staging:    https://$(HEROKU_APP_STG).herokuapp.com"
+	@echo "   🚀 Production: https://$(HEROKU_APP_PROD).herokuapp.com"
 
-heroku-deploy-stg: ## Quick push/release to $(HEROKU_APP)
-	@echo "🚀 Quick staging deployment to $(HEROKU_APP)..."
+heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
+	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP)
-	heroku container:release web -a $(HEROKU_APP)
+	heroku container:push web -a $(HEROKU_APP_STG)
+	heroku container:release web -a $(HEROKU_APP_STG)
 	@echo "✅ Staging deployment complete"
-	heroku open -a $(HEROKU_APP)
+	heroku open -a $(HEROKU_APP_STG)
+
+heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD))
+	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
+	heroku container:login
+	heroku container:push web -a $(HEROKU_APP_PROD)
+	heroku container:release web -a $(HEROKU_APP_PROD)
+	@echo "✅ Production deployment complete"
+	heroku open -a $(HEROKU_APP_PROD)
 
 heroku-logs: ## Tail Heroku logs for $(HEROKU_APP_NAME)
 	@echo "📋 Tailing logs for $(HEROKU_APP_NAME)..."
