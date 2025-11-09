@@ -11,8 +11,9 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY client/package*.json ./
-# Install dependencies including devDependencies for build tools
-RUN npm ci --only=production=false
+COPY client/pnpm-lock.yaml* ./
+# Install pnpm and dependencies
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 # Copy frontend source files and configuration
 COPY client/src ./src
@@ -26,10 +27,8 @@ RUN touch tailwind.config.js postcss.config.js
 COPY client/tailwind.config.js* ./
 COPY client/postcss.config.js* ./
 
-# Build for production with optimizations
-ENV NODE_ENV=production
-ENV VITE_API_BASE=/api
-RUN npm run build && npm cache clean --force
+# Build frontend with pnpm
+RUN pnpm run build
 
 # Production Python runtime stage
 FROM python:${PYTHON_VERSION}-slim AS production
