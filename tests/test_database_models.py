@@ -33,8 +33,6 @@ from sqlalchemy.orm import Session, sessionmaker
 os.environ["DATABASE_URL"] = "sqlite:///./test_models.db"
 
 # Import models to test
-from app.database import Base
-from app.models import User, UserProfile
 from app.models_enhanced import (
     AuditLog,
     DeveloperEarning,
@@ -43,6 +41,9 @@ from app.models_enhanced import (
     UserRole,
     UserV2,
 )
+
+from app.database import Base
+from app.models import User, UserProfile
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_models.db"

@@ -76,19 +76,18 @@ Guarantee a deterministic, automated testing framework for backend and frontend 
 ## 6) Runbook / Commands
 
 ```bash
-# Run all tests
+## Run all tests
 make test
 
-# Run only backend tests
+## Run only backend tests
 pytest backend/tests -v
 
-# Regenerate fixtures deterministically
+## Regenerate fixtures deterministically
 python3 scripts/regenerate_fixtures.py
 
-# Run smoke tests
+## Run smoke tests
 pytest -k "smoke" -v
-```
-
+```text
 ---
 
 ## 7) Risks & Mitigations
@@ -115,6 +114,6 @@ pytest -k "smoke" -v
 ## ✅ Next Actions
 
 1. Finalize deterministic fixture setup (M1).
-2. Implement frontend smoke tests (M2).
-3. Add coverage + smoke gates to GitHub Actions (M3–M4).
-4. Deliver QA summary before MVP Launch (M5).
+1. Implement frontend smoke tests (M2).
+1. Add coverage + smoke gates to GitHub Actions (M3–M4).
+1. Deliver QA summary before MVP Launch (M5).

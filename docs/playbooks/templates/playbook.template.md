@@ -34,7 +34,7 @@
 ## 6) Runbook / Commands
 
 ```bash
-# example
+## example
 make test
 make deploy-heroku
-```
+```text

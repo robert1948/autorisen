@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict, deque
-from typing import Deque, Dict, DefaultDict, Tuple
+from typing import DefaultDict, Deque, Dict, Tuple
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request

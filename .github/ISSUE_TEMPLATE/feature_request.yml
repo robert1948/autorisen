@@ -1,0 +1,88 @@
+name: Feature Request
+description: Suggest an idea for AutoLocal/CapeControl
+title: "[Feature]: "
+labels: ["enhancement", "feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature for AutoLocal/CapeControl!
+        
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component would this feature affect?
+      options:
+        - Frontend (React/UI)
+        - Backend (API/FastAPI)
+        - Authentication
+        - Agent Framework
+        - ChatKit Integration
+        - Payment System
+        - Database/Migrations
+        - Deployment/Infrastructure
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve user experience
+        - High - Important for business goals
+        - Critical - Blocking major functionality
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: Describe the problem or pain point this feature would address
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: What would you like to happen?
+      placeholder: Describe your proposed solution
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What alternative solutions have you considered?
+      placeholder: Describe any alternative solutions or features you've considered
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, mockups, or examples about the feature request here.
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation Considerations
+      description: Please check all that apply
+      options:
+        - label: This feature requires database changes
+          required: false
+        - label: This feature affects the authentication flow
+          required: false
+        - label: This feature requires new environment variables
+          required: false
+        - label: This feature affects the deployment process
+          required: false
+        - label: I am willing to help implement this feature
+          required: false

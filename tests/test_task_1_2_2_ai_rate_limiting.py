@@ -3,8 +3,9 @@ Task 1.2.2 AI-Specific Rate Limits Tests
 Comprehensive test suite for AI endpoint rate limiting functionality
 """
 
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 
@@ -14,7 +15,7 @@ class TestAISpecificRateLimiting:
 
     def test_ai_rate_limit_headers_present(self):
         """Test that AI-specific rate limit headers are included in responses"""
-        response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
             "/api/ai/prompt",
             json={
                 "message": "Hello, test message",
@@ -45,7 +46,7 @@ class TestAISpecificRateLimiting:
         # Make multiple rapid requests to AI endpoint
         ai_responses = []
         for i in range(5):
-            response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
                 "/api/ai/prompt",
                 json={
                     "message": f"Test message {i}",
@@ -97,7 +98,7 @@ class TestAISpecificRateLimiting:
     def test_different_endpoint_types_independent_limits(self):
         """Test that different endpoint types have independent rate limits"""
         # Make request to AI endpoint
-        ai_response = client.post(
+        # # ai_response = client.post(  # noqa: F841  # noqa: F841
             "/api/ai/prompt",
             json={
                 "message": "AI test message",
@@ -148,7 +149,7 @@ class TestEndpointTypeDetection:
 
         for endpoint in ai_endpoints:
             if endpoint == "/api/ai/prompt":
-                response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
                     endpoint,
                     json={"message": "Test", "context": {}, "session_id": "test"},
                 )
@@ -183,7 +184,7 @@ class TestRateLimitConfiguration:
 
     def test_ai_rate_limits_configuration(self):
         """Test AI-specific rate limit values"""
-        response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
             "/api/ai/prompt",
             json={
                 "message": "Configuration test",
@@ -216,7 +217,7 @@ def test_task_1_2_2_ai_specific_rate_limiting():
     print("\\n🤖 Testing Task 1.2.2: AI-Specific Rate Limits")
 
     # Test AI endpoint rate limiting
-    ai_response = client.post(
+        # # ai_response = client.post(  # noqa: F841  # noqa: F841
         "/api/ai/prompt",
         json={
             "message": "Integration test for AI rate limiting",

@@ -18,9 +18,10 @@ from sqlalchemy.orm import sessionmaker
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.auth_enhanced import auth_service
-from app.database import Base, engine
 from app.models_enhanced import AuditLog, DeveloperEarning, UserRole
 from app.models_enhanced import UserV2 as NewUser
+
+from app.database import Base, engine
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

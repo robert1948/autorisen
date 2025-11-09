@@ -10,13 +10,14 @@
 ## 🔒 Security Configuration
 
 ### Environment Variables (Production)
+
 ```bash
 ENV=prod
 DEBUG=false
 DISABLE_RECAPTCHA=false
-```
-
+```text
 ### Security Features Enabled
+
 - ✅ CSRF Protection with token validation
 - ✅ JWT Authentication with secure tokens
 - ✅ reCAPTCHA protection against bots
@@ -27,25 +28,27 @@ DISABLE_RECAPTCHA=false
 ## 🐳 Container Deployment
 
 ### Heroku Container Registry
+
 The application uses Heroku's Container Registry for optimized deployment:
 
 ```bash
-# Set Heroku stack to container
+## Set Heroku stack to container
 heroku stack:set container -a autorisen
 
-# Deploy using container registry
+## Deploy using container registry
 heroku container:push web -a autorisen
 heroku container:release web -a autorisen
-```
-
+```text
 ### Multi-Stage Build Process
+
 1. **Frontend Build**: Node.js Alpine with Vite production build
-2. **Backend Runtime**: Python 3.12 slim with security optimizations
-3. **Production Optimization**: Non-root user, health checks, cache cleanup
+1. **Backend Runtime**: Python 3.12 slim with security optimizations
+1. **Production Optimization**: Non-root user, health checks, cache cleanup
 
 ## 📋 Deployment Checklist
 
 ### Pre-Deployment
+
 - [x] Security hardening complete
 - [x] Authentication system validated
 - [x] CSRF protection enabled
@@ -54,6 +57,7 @@ heroku container:release web -a autorisen
 - [x] Health checks configured
 
 ### Post-Deployment Validation
+
 - [x] Health endpoint: `/api/health`
 - [x] CSRF endpoint: `/api/auth/csrf`
 - [x] Authentication flow: Registration/Login
@@ -63,16 +67,18 @@ heroku container:release web -a autorisen
 ## 🔧 Configuration Management
 
 ### Production Environment Variables
+
 ```bash
 heroku config:set ENV=prod DEBUG=false DISABLE_RECAPTCHA=false -a autorisen
-```
-
+```text
 ### Database Configuration
+
 - PostgreSQL on Heroku with connection pooling
 - Automatic migrations on deployment
 - Backup and recovery procedures in place
 
 ### Monitoring and Logging
+
 - Health checks every 30 seconds
 - Error logging configured
 - Performance monitoring enabled
@@ -82,19 +88,19 @@ heroku config:set ENV=prod DEBUG=false DISABLE_RECAPTCHA=false -a autorisen
 If issues arise during deployment:
 
 ```bash
-# Check logs
+## Check logs
 heroku logs --tail -a autorisen
 
-# Rollback to previous release
+## Rollback to previous release
 heroku releases:rollback -a autorisen
 
-# Emergency environment reset
+## Emergency environment reset
 heroku config:set DEBUG=true ENV=dev -a autorisen
-```
-
+```text
 ## 📊 Performance Metrics
 
 ### Production Validation Results
+
 - **CSRF Protection**: ✅ Working
 - **User Authentication**: ✅ Working  
 - **JWT Tokens**: ✅ Working

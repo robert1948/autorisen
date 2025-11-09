@@ -32,6 +32,5 @@ aws iam attach-role-policy --role-name github-actions-autorisen-live-audit \
  --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
 
 aws iam get-role --role-name github-actions-autorisen-live-audit --query 'Role.Arn' --output text
-```
-
+```text
 1. Place the returned Role ARN into the repository secret `AWS_OIDC_ROLE` so workflows can assume it.

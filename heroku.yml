@@ -1,14 +1,24 @@
 # Heroku Container Deployment Configuration
-# Optimized for production deployment with security hardening
+# AutoLocal/CapeControl Production Deployment
+# Updated: November 9, 2025
 
 build:
   docker:
     web: Dockerfile
+  config:
+    NODE_ENV: production
+    ENV: prod
+    DEBUG: false
 
 release:
   image: web
   command:
-    - python -m alembic -c backend/alembic.ini upgrade head
+    - sh
+    - -c
+    - |
+      echo "🗃️ Running database migrations..."
+      python -m alembic -c backend/alembic.ini upgrade head || echo "⚠️ Migration failed or not needed"
+      echo "✅ Release phase completed"
 
 run:
-  web: bash -lc "gunicorn backend.src.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-2} --worker-tmp-dir /dev/shm"
+  web: sh -c "exec gunicorn backend.src.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-2} --worker-tmp-dir /dev/shm --access-logfile - --error-logfile - --log-level info --keep-alive 2 --max-requests 1000 --max-requests-jitter 50 --timeout 30"

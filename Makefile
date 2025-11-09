@@ -160,43 +160,66 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 	docker push $(REGISTRY)/$(IMAGE)
 
 # ----------------------------------------------------------------------------- 
-# Heroku container deploy
+# Heroku container deploy (Enhanced)
 # -----------------------------------------------------------------------------
-deploy-heroku: docker-build ## Build/push/release to Heroku (retries on transient failures)
+deploy-heroku: docker-build ## Build/push/release to Heroku with enhanced logging (retries on failures)
 	@if [ -z "$(HEROKU_APP_NAME)" ]; then \
-		echo "Set HEROKU_APP_NAME environment variable to your Heroku app name"; exit 1; \
+		echo "❌ Set HEROKU_APP_NAME environment variable to your Heroku app name"; exit 1; \
 	fi
-	@echo "Tagging image for Heroku registry..."
+	@echo "🏷️  Tagging image for Heroku registry..."
 	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_NAME)/web
-	@echo "Logging in to Heroku Container Registry..."
+	@echo "🔐 Logging in to Heroku Container Registry..."
 	@for i in 1 2 3; do \
-		if heroku container:login >/dev/null 2>&1; then echo "Login OK"; break; fi; \
-		echo "Login failed (attempt $$i). Retrying in 5s..."; sleep 5; \
+		if heroku container:login >/dev/null 2>&1; then echo "✅ Login successful"; break; fi; \
+		echo "⚠️  Login failed (attempt $$i/3). Retrying in 5s..."; sleep 5; \
 	done
-	@echo "Pushing image to Heroku registry..."
+	@echo "📤 Pushing image to Heroku registry..."
 	@for i in 1 2 3; do \
-		if docker push registry.heroku.com/$(HEROKU_APP_NAME)/web; then echo "Push OK"; break; fi; \
-		echo "Push failed (attempt $$i). Retrying in 5s..."; sleep 5; \
-		[ $$i -eq 3 ] && { echo "Push failed after retries"; exit 1; } || true; \
+		if docker push registry.heroku.com/$(HEROKU_APP_NAME)/web; then echo "✅ Push successful"; break; fi; \
+		echo "⚠️  Push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Push failed after retries"; exit 1; } || true; \
 	done
-	@echo "Releasing on Heroku..."
+	@echo "🚀 Releasing container to production..."
 	@for i in 1 2 3; do \
-		if heroku container:release web --app $(HEROKU_APP_NAME); then echo "Release OK"; break; fi; \
-		echo "Release failed (attempt $$i). Retrying in 5s..."; sleep 5; \
-		[ $$i -eq 3 ] && { echo "Release failed after retries"; exit 1; } || true; \
+		if heroku container:release web --app $(HEROKU_APP_NAME); then echo "✅ Release successful"; break; fi; \
+		echo "⚠️  Release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Release failed after retries"; exit 1; } || true; \
 	done
+	@echo "🎉 Deployment completed! App URL: https://$(HEROKU_APP_NAME).herokuapp.com"
 
 heroku-deploy-stg: ## Quick push/release to $(HEROKU_APP)
+	@echo "🚀 Quick staging deployment to $(HEROKU_APP)..."
 	heroku container:login
 	heroku container:push web -a $(HEROKU_APP)
 	heroku container:release web -a $(HEROKU_APP)
+	@echo "✅ Staging deployment complete"
 	heroku open -a $(HEROKU_APP)
 
-heroku-logs: ## Tail Heroku dyno logs
-	heroku logs -t -a $(HEROKU_APP)
+heroku-logs: ## Tail Heroku logs for $(HEROKU_APP_NAME)
+	@echo "📋 Tailing logs for $(HEROKU_APP_NAME)..."
+	heroku logs --tail --app $(HEROKU_APP_NAME)
 
-heroku-run-migrate: ## Run Alembic upgrade inside a one-off Heroku dyno
-	heroku run -a $(HEROKU_APP) "ENV=prod PYTHONWARNINGS=default alembic -c backend/alembic.ini upgrade head"
+heroku-shell: ## Open bash shell in Heroku container
+	@echo "🐚 Opening shell in $(HEROKU_APP_NAME)..."
+	heroku run bash --app $(HEROKU_APP_NAME)
+
+heroku-run-migrate: ## Run database migrations on Heroku
+	@echo "🗃️  Running migrations on $(HEROKU_APP_NAME)..."
+	heroku run python -m alembic -c backend/alembic.ini upgrade head --app $(HEROKU_APP_NAME)
+
+heroku-config-push: ## Push local .env to Heroku config (be careful!)
+	@if [ ! -f .env ]; then echo "❌ .env file not found"; exit 1; fi
+	@echo "⚠️  Pushing .env to Heroku config for $(HEROKU_APP_NAME)..."
+	@read -p "Are you sure? This will overwrite Heroku config vars [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
+	heroku config:push --app $(HEROKU_APP_NAME)
+
+heroku-status: ## Check Heroku app status and health
+	@echo "🔍 Checking status of $(HEROKU_APP_NAME)..."
+	heroku ps --app $(HEROKU_APP_NAME)
+	@echo "🔍 Health check..."
+	@curl -f -s https://$(HEROKU_APP_NAME).herokuapp.com/api/health || echo "❌ Health check failed"
+	@echo ""
+	@curl -f -s https://$(HEROKU_APP_NAME).herokuapp.com/api/version || echo "⚠️  Version endpoint not available"
 
 # ----------------------------------------------------------------------------- 
 # Git helpers
@@ -685,6 +708,10 @@ playbooks-overview: ## Rebuild docs/PLAYBOOKS_OVERVIEW.md
 
 playbook-overview: ## Alias for playbooks-overview
 	@$(MAKE) playbooks-overview
+
+project-overview: ## Generate docs/PROJECT_OVERVIEW.md from enhanced CSV plan
+	@$(PY) scripts/project_overview_generator.py
+	@echo "Updated docs/PROJECT_OVERVIEW.md"
 
 playbook-open: ## Open docs/PLAYBOOKS_OVERVIEW.md in VS Code if available
 	@which code >/dev/null 2>&1 && code docs/PLAYBOOKS_OVERVIEW.md || echo "Open docs/PLAYBOOKS_OVERVIEW.md in your editor"

@@ -54,7 +54,7 @@ def test_record_ai_request_success():
     metric = monitor.metrics_history[0]
     assert metric.provider == AIProvider.OPENAI
     assert metric.model == "gpt-4"
-    assert metric.success == True
+    assert metric.success
     assert metric.total_tokens == 250
     assert metric.estimated_cost > 0
 
@@ -87,7 +87,7 @@ def test_record_ai_request_failure():
     assert len(monitor.metrics_history) == 1
 
     metric = monitor.metrics_history[0]
-    assert metric.success == False
+    assert not metric.success
     assert metric.error_type == "TimeoutError"
     assert metric.error_message == "Request timed out"
 

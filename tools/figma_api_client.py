@@ -13,12 +13,10 @@ import argparse
 import json
 import os
 import sys
-import time
-import urllib.request
 import urllib.parse
+import urllib.request
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 API_BASE = "https://api.figma.com/v1"
 

@@ -1,6 +1,5 @@
 # backend/src/modules/auth/router.py
 from __future__ import annotations
-from fastapi.responses import JSONResponse
 
 import asyncio
 import base64
@@ -27,15 +26,15 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import (
     BaseModel,
+    ConfigDict,
     EmailStr,
     Field,
     StringConstraints,
     field_validator,
     model_validator,
-    ConfigDict,
 )
 from sqlalchemy.orm import Session
 
@@ -58,8 +57,7 @@ from backend.src.services.emailer import (
 )
 from backend.src.services.security import decode_jwt
 
-from .csrf import issue_csrf_token, require_csrf_token, csrf_router
-
+from .csrf import csrf_router, issue_csrf_token, require_csrf_token
 from .deps import (
     _bearer_from_header,
     _load_user_from_claims,
@@ -666,7 +664,7 @@ async def _google_exchange_code(code: str, redirect_uri: str) -> Dict[str, Any]:
     }
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(_GOOGLE_TOKEN_ENDPOINT, data=payload)
+        # # response = await client.post(_GOOGLE_TOKEN_ENDPOINT, data=payload)  # noqa: F841  # noqa: F841
     except httpx.HTTPError as exc:  # pragma: no cover - network errors
         log.warning("google_token_exchange_http_error err=%s", exc)
         raise HTTPException(
@@ -765,7 +763,7 @@ async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:
     }
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(_LINKEDIN_TOKEN_ENDPOINT, data=payload)
+        # # response = await client.post(_LINKEDIN_TOKEN_ENDPOINT, data=payload)  # noqa: F841  # noqa: F841
     except httpx.HTTPError as exc:  # pragma: no cover
         log.warning("linkedin_token_exchange_http_error err=%s", exc)
         raise HTTPException(

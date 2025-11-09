@@ -1,0 +1,89 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report for AutoLocal/CapeControl!
+        
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of the application are you running?
+      placeholder: ex. v0.2.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Frontend (React/UI)
+        - Backend (API/FastAPI)
+        - Authentication
+        - Agent Framework
+        - Database/Migrations
+        - Deployment/Infrastructure
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: What environment did this occur in?
+      options:
+        - Production (https://autorisen-dac8e65796e7.herokuapp.com)
+        - Development (Local)
+        - Staging
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-submission Checklist
+      description: By submitting this issue, you confirm that
+      options:
+        - label: I have searched existing issues for duplicates
+          required: true
+        - label: I have provided clear steps to reproduce
+          required: true
+        - label: I have included relevant logs/screenshots
+          required: false

@@ -1,5 +1,5 @@
-from typing import Any
 from fastapi import FastAPI
+
 from ._shim_utils import _first_ok
 
 try:

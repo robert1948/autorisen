@@ -13,17 +13,16 @@ A production-ready FastAPI backend with React frontend, featuring comprehensive 
 ## 🐳 Quick Start
 
 ```bash
-# Pull and run the latest image
+## Pull and run the latest image
 docker run -d -p 8000:8000 stinkie/autorisen:latest
 
-# Run with environment variables
+## Run with environment variables
 docker run -d -p 8000:8000 \
   -e ENV=prod \
   -e DEBUG=false \
   -e DATABASE_URL=your_db_url \
   stinkie/autorisen:production-ready
-```
-
+```text
 ## 🔒 Security Features
 
 - **CSRF Protection**: Token-based validation on all state-changing operations
@@ -62,13 +61,12 @@ docker run -d -p 8000:8000 \
 The container includes built-in health checks:
 
 ```bash
-# Check container health
+## Check container health
 docker ps
 
-# Manual health check
+## Manual health check
 curl http://localhost:8000/api/health
-```
-
+```text
 ## 📚 API Documentation
 
 Once running, access the interactive API documentation:
@@ -96,8 +94,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-```
-
+```text
 ### Kubernetes
 
 ```yaml
@@ -129,8 +126,7 @@ spec:
           httpGet:
             path: /api/health
             port: 8000
-```
-
+```text
 ## 📖 Documentation
 
 - **GitHub Repository**: https://github.com/robert1948/autorisen

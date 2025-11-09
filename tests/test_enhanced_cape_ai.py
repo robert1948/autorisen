@@ -15,8 +15,9 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from app.routes.cape_ai import AIPromptRequest, AIResponse, CapeAIService
 from app.services.multi_provider_ai_service import AIProviderResponse, ModelProvider
+
+from app.routes.cape_ai import AIPromptRequest, AIResponse, CapeAIService
 
 
 class TestEnhancedCapeAIService:

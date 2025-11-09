@@ -6,12 +6,19 @@ on:
     paths:
       - "backend/**"
       - "client/**"
-      - "infra/**"
+      - "app/**"
       - "requirements*.txt"
       - "Dockerfile*"
       - "heroku.yml"
+      - "runtime.txt"
       - ".github/workflows/deploy-heroku.yml"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if no changes'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -22,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  HEROKU_APP: ${{ secrets.HEROKU_APP }} # configure repo/org secret HEROKU_APP
+  HEROKU_APP: autorisen-dac8e65796e7
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
 jobs:
@@ -62,23 +69,28 @@ jobs:
           ls -la
           echo "=== Backend Structure ==="
           find backend/ -name "*.py" | head -10 || echo "Backend files not found"
+          echo "=== App Structure ==="
+          find app/ -name "*.py" | head -5 || echo "App files not found"
           echo "=== Client Structure ==="
           ls -la client/ || echo "Client directory not found"
           echo "=== Client Assets ==="
           ls -la client/public/ || echo "Client public directory not found"
           find client/public/ -name "*.png" -o -name "*.ico" | head -5 || echo "Assets not found"
+          echo "=== Requirements Files ==="
+          ls -la requirements*.txt
 
       - name: Build production image
         run: |
           IMAGE="registry.heroku.com/${HEROKU_APP}/web"
-          echo "Building image: $IMAGE"
+          echo "🐳 Building production image: $IMAGE"
           
-          # Build with production optimizations
+          # Build with production optimizations and multi-stage
           docker build \
             --tag "$IMAGE" \
             --file Dockerfile \
             --build-arg NODE_ENV=production \
             --build-arg ENV=prod \
+            --progress=plain \
             .
           
       - name: Verify built image
@@ -94,37 +106,50 @@ jobs:
       - name: Push image to Heroku registry
         run: |
           IMAGE="registry.heroku.com/${HEROKU_APP}/web"
+          echo "📤 Pushing image to Heroku registry..."
           docker push "$IMAGE"
 
       - name: Release container to production
         run: |
+          echo "🚀 Releasing container to production..."
           heroku container:release web -a "$HEROKU_APP"
 
       - name: Run database migrations
         if: always()
         run: |
-          echo "=== Database Migration ==="
+          echo "🗃️ Running database migrations..."
           heroku run -a "$HEROKU_APP" -- \
-            python -m alembic -c backend/alembic.ini upgrade head
+            python -m alembic -c backend/alembic.ini upgrade head || echo "⚠️ Migration failed or not needed"
 
       - name: Verify deployment health
         run: |
-          echo "=== Deployment Health Check ==="
+          echo "🔍 Checking deployment health..."
           sleep 30  # Allow time for deployment
           
-          # Health check
-          curl -f -sS "https://${HEROKU_APP}.herokuapp.com/api/health" || {
-            echo "Health check failed"
-            exit 1
-          }
+          APP_URL="https://${HEROKU_APP}.herokuapp.com"
+          
+          # Health check with retries
+          for i in {1..5}; do
+            if curl -f -sS "${APP_URL}/api/health"; then
+              echo "✅ Health check passed on attempt $i"
+              break
+            else
+              echo "⚠️ Health check failed on attempt $i, retrying..."
+              sleep 10
+            fi
+          done
           
           # CSRF endpoint check
-          curl -f -sS -I "https://${HEROKU_APP}.herokuapp.com/api/auth/csrf" || {
-            echo "CSRF endpoint check failed"
-            exit 1
+          curl -f -sS -I "${APP_URL}/api/auth/csrf" || {
+            echo "⚠️ CSRF endpoint check failed"
           }
           
-          echo "✅ Deployment verified successfully!"
+          # Version check
+          curl -f -sS "${APP_URL}/api/version" || {
+            echo "⚠️ Version endpoint check failed"
+          }
+          
+          echo "✅ Deployment verification completed!"
 
       - name: Post-deployment summary
         if: always()

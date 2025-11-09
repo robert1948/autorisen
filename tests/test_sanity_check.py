@@ -330,8 +330,9 @@ class TestMiddlewareIntegration:
         try:
             from unittest.mock import AsyncMock
 
-            from app.middleware.ddos_protection import DDoSProtectionMiddleware
             from fastapi import Request, Response
+
+            from app.middleware.ddos_protection import DDoSProtectionMiddleware
 
             app_mock = Mock()
             middleware = DDoSProtectionMiddleware(app_mock)
@@ -347,8 +348,9 @@ class TestMiddlewareIntegration:
         try:
             from unittest.mock import AsyncMock, Mock
 
-            from app.middleware.ddos_protection import DDoSProtectionMiddleware
             from fastapi import Request
+
+            from app.middleware.ddos_protection import DDoSProtectionMiddleware
 
             app_mock = Mock()
             middleware = DDoSProtectionMiddleware(app_mock, max_requests=5, window=60)
@@ -818,8 +820,9 @@ class TestIntegrationScenarios:
     def test_database_model_integration(self):
         """Test database model integration"""
         try:
-            from app.models import User, UserProfile
             from sqlalchemy import inspect
+
+            from app.models import User, UserProfile
 
             user_mapper = inspect(User)
             column_names = [col.name for col in user_mapper.columns]

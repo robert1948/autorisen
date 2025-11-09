@@ -4,8 +4,8 @@ Thin re-export layer so tests can import ORM models via `app.models`.
 
 from __future__ import annotations
 
-from backend.src.db.base import Base  # type: ignore
 from backend.src.db import models as _models  # type: ignore
+from backend.src.db.base import Base  # type: ignore
 
 # Re-export commonly used models
 User = _models.User

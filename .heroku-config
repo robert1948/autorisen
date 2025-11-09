@@ -1,0 +1,52 @@
+# Heroku Container Configuration
+# AutoLocal/CapeControl Production Settings
+# 
+# This file contains Heroku-specific configuration for container deployment
+# Use these as reference for setting Heroku config vars:
+# heroku config:set ENV=prod DEBUG=false --app your-app-name
+
+# Core Application Settings
+# ENV=prod
+# DEBUG=false
+# PYTHONPATH=/app
+
+# Performance Settings  
+# WEB_CONCURRENCY=2
+# PYTHON_HASH_SEED=random
+
+# Database Settings (configure with your production database)
+# DATABASE_URL=postgres://username:password@host:port/dbname
+
+# Security Settings (configure with your production values)
+# SECRET_KEY=your-secret-key-here
+# JWT_SECRET_KEY=your-jwt-secret-here
+# DISABLE_RECAPTCHA=false
+# RECAPTCHA_SITE_KEY=your-recaptcha-site-key
+# RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
+
+# Rate Limiting
+# RATE_LIMIT_BACKEND=redis
+# REDIS_URL=redis://username:password@host:port
+
+# Logging
+# LOG_LEVEL=info
+# PYTHONUNBUFFERED=1
+
+# Static Files and Assets
+# STATIC_URL=/static/
+# MEDIA_URL=/media/
+
+# CORS Settings for production
+# CORS_ALLOWED_ORIGINS=https://autorisen-dac8e65796e7.herokuapp.com
+
+# Email Settings (if using email features)
+# SMTP_HOST=smtp.your-provider.com
+# SMTP_PORT=587
+# SMTP_USER=your-smtp-user
+# SMTP_PASSWORD=your-smtp-password
+
+# Optional: Sentry for error tracking
+# SENTRY_DSN=your-sentry-dsn-here
+
+# Optional: Analytics
+# GOOGLE_ANALYTICS_ID=your-analytics-id

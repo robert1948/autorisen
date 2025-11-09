@@ -24,8 +24,7 @@ REDIS_URL=redis://localhost:6379/0
 RECAPTCHA_SECRET=<required in production>
 DISABLE_RECAPTCHA=true # convenient for local development
 RATE_LIMIT_PER_MIN=10
-```
-
+```text
 Create and activate a virtualenv, install dependencies, and run migrations from the repository root:
 
 ```bash
@@ -33,14 +32,12 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r backend/requirements.txt
 python -m alembic -c backend/alembic.ini upgrade head
-```
-
+```text
 Start the API:
 
 ```bash
 python -m uvicorn backend.src.app:app --reload --host 0.0.0.0 --port 8000
-```
-
+```text
 ## Frontend
 
 - React + Vite wizard with React Hook Form + Zod validation mirrors backend constraints.
@@ -53,16 +50,14 @@ python -m uvicorn backend.src.app:app --reload --host 0.0.0.0 --port 8000
 ```bash
 VITE_API_BASE=http://localhost:8000/api
 VITE_RECAPTCHA_SITE_KEY=<site key>
-```
-
+```text
 Install dependencies and launch the dev server:
 
 ```bash
 cd client
 npm install
 npm run dev
-```
-
+```text
 ## Manual test checklist
 
 1. Load `/register`, choose a role, fill out step 1 (verify password hints + reCAPTCHA).

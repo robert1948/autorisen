@@ -12,30 +12,30 @@ Audit our current platform posture, freeze unnecessary cloud work, prevent scope
    * Verify whether **Heroku** (app: `autorisen`) is the active runtime.
    * Note last deploy, current dynos, add-ons, config vars, and health endpoints.
 
-2. **AWS status — put on hold**
+1. **AWS status — put on hold**
 
    * Assess the state of our AWS footprint (ECS/ALB/RDS/SSM/etc.).
    * Recommend steps to **pause/hold** AWS safely (retain IaC, stop spend, keep minimal artifacts).
 
-3. **Scope guardrails**
+1. **Scope guardrails**
 
    * Call out scope creep risk (ECS + ALB + RDS can balloon).
    * For a first pass, propose a **minimal ECS footprint: “cluster + single task only,” no ALB/RDS**.
    * Define explicit “not now” items.
 
-4. **Secrets: single source of truth**
+1. **Secrets: single source of truth**
 
    * Identify **secret drift** between **Heroku config vars** and **AWS SSM Parameters**.
    * Propose and document **one SSOT** and a one-way sync policy (mapping + rotation).
 
-5. **Cost controls**
+1. **Cost controls**
 
    * Highlight risk of **idle ECS costs**.
    * Recommend **Fargate Spot** for dev and **scale-to-0** patterns when not testing.
 
 [...existing code...]
 
-# Senior DevOps — autorisen
+## Senior DevOps — autorisen
 
 Snapshot: 2025-09-26
 
@@ -70,15 +70,15 @@ Key files (what to look at)
 How to validate OIDC (short)
 
 1. Merge PR #7 (adds the `test-oidc-assume-role.yml` workflow to `main`).
-2. On `main`, go to Actions → run `Test OIDC Assume Role` (workflow_dispatch).
-3. Inspect logs: the job should run `aws sts get-caller-identity` after `assume-role` and show an ARN for the role/session. Successful output indicates OIDC assume-role is working.
+1. On `main`, go to Actions → run `Test OIDC Assume Role` (workflow_dispatch).
+1. Inspect logs: the job should run `aws sts get-caller-identity` after `assume-role` and show an ARN for the role/session. Successful output indicates OIDC assume-role is working.
 
 How to run the secrets sync (recommended safe flow)
 
 1. Create a workflow `ci/sync-github-to-heroku.yml` that runs `infra/scripts/sync_github_to_heroku.sh` in dry-run mode (default).
-2. Dispatch the dry-run workflow, review output/artifacts for mapping and missing keys.
-3. If the dry-run is good, re-run the workflow with an approval step and an environment variable/flag to pass `--apply` to the script (explicit, auditable run).
-4. Audit the Heroku app’s config-vars after the apply (`heroku config --app $HEROKU_APP_NAME`).
+1. Dispatch the dry-run workflow, review output/artifacts for mapping and missing keys.
+1. If the dry-run is good, re-run the workflow with an approval step and an environment variable/flag to pass `--apply` to the script (explicit, auditable run).
+1. Audit the Heroku app’s config-vars after the apply (`heroku config --app $HEROKU_APP_NAME`).
 
 Local developer hints (don’t use for writes unless you know what you’re doing)
 * Dry-run locally:

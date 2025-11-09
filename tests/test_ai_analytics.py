@@ -481,8 +481,9 @@ class TestAIAnalyticsAPI:
     @pytest.mark.asyncio
     async def test_analytics_dashboard_endpoint(self, mock_user):
         """Test analytics dashboard API endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch("app.routes.ai_analytics.get_current_user", return_value=mock_user):
             with patch("app.routes.ai_analytics.get_analytics_service") as mock_service:
@@ -518,8 +519,9 @@ class TestAIAnalyticsAPI:
     @pytest.mark.asyncio
     async def test_user_feedback_endpoint(self, mock_user):
         """Test user feedback recording endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch("app.routes.ai_analytics.get_current_user", return_value=mock_user):
             with patch("app.routes.ai_analytics.get_analytics_service") as mock_service:
@@ -528,7 +530,7 @@ class TestAIAnalyticsAPI:
                 mock_service.return_value = mock_analytics_service
 
                 client = TestClient(app)
-                response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
                     "/api/analytics/feedback",
                     json={
                         "response_id": "resp_123",
@@ -545,8 +547,9 @@ class TestAIAnalyticsAPI:
     @pytest.mark.asyncio
     async def test_quality_analysis_endpoint(self, mock_user):
         """Test quality analysis endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch("app.routes.ai_analytics.get_current_user", return_value=mock_user):
             with patch("app.routes.ai_analytics.get_analytics_service") as mock_service:
@@ -564,7 +567,7 @@ class TestAIAnalyticsAPI:
                 mock_service.return_value = mock_analytics_service
 
                 client = TestClient(app)
-                response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
                     "/api/analytics/quality/analyze",
                     json={
                         "response_content": "This is a test response",
@@ -580,8 +583,9 @@ class TestAIAnalyticsAPI:
     @pytest.mark.asyncio
     async def test_analytics_health_endpoint(self):
         """Test analytics health check endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch("app.routes.ai_analytics.get_analytics_service") as mock_service:
             mock_analytics_service = AsyncMock()

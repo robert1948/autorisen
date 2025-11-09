@@ -19,10 +19,11 @@ import pytest
 # Add the backend directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from fastapi.testclient import TestClient
+
 from app.database import SessionLocal, engine
 from app.main import app
 from app.models import Base, User, UserProfile
-from fastapi.testclient import TestClient
 
 # Test configuration
 TEST_API_PREFIX = "/api"
@@ -98,7 +99,7 @@ class TestIntegrationWorkflows:
         if user_data is None:
             user_data = self.create_test_user_data()
 
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
 
@@ -113,7 +114,7 @@ class TestIntegrationWorkflows:
 
     def login_user(self, email: str, password: str) -> dict[str, Any]:
         """Login test user and return tokens"""
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": email, "password": password},
         )
@@ -161,7 +162,7 @@ class TestIntegrationWorkflows:
         print("\n🔐 Testing Auth V2 password validation workflow...")
 
         # Test weak password
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/validate-password", json={"password": "weak"}
         )
 
@@ -171,7 +172,7 @@ class TestIntegrationWorkflows:
         print(f"✅ Weak password rejected: score={data['score']}")
 
         # Test strong password
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/validate-password",
             json={"password": "StrongPassword123!@#"},
         )
@@ -188,7 +189,7 @@ class TestIntegrationWorkflows:
 
         # Register user
         user_data = self.create_test_user_data()
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
 
@@ -200,7 +201,7 @@ class TestIntegrationWorkflows:
         print(f"✅ Registration successful: {user_data['email']}")
 
         # Login user
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": user_data["email"], "password": user_data["password"]},
         )
@@ -229,7 +230,7 @@ class TestIntegrationWorkflows:
             "conversation_id": conversation_id,
         }
 
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/ai/prompt", json=ai_request, headers=headers
         )
 
@@ -280,7 +281,7 @@ class TestIntegrationWorkflows:
 
         # Step 2: Password validation
         password = "SecureTestPassword123!"
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/validate-password", json={"password": password}
         )
         assert response.status_code == 200
@@ -292,7 +293,7 @@ class TestIntegrationWorkflows:
         user_data["email"] = email
         user_data["password"] = password
 
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
         assert response.status_code in [200, 201]
@@ -301,7 +302,7 @@ class TestIntegrationWorkflows:
         print("✅ Step 3: User registration")
 
         # Step 4: User login
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": email, "password": password},
         )
@@ -319,7 +320,7 @@ class TestIntegrationWorkflows:
             "conversation_id": conversation_id,
         }
 
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/ai/prompt", json=ai_request, headers=headers
         )
         assert response.status_code == 200
@@ -373,7 +374,7 @@ class TestIntegrationWorkflows:
 
         # Test invalid token
         invalid_headers = {"Authorization": "Bearer invalid_token_12345"}
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/ai/prompt",
             json={"message": "test", "conversation_id": str(uuid.uuid4())},
             headers=invalid_headers,
@@ -382,14 +383,14 @@ class TestIntegrationWorkflows:
         print("✅ Invalid token rejected")
 
         # Test malformed registration
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/register", json={"invalid": "data"}
         )
         assert response.status_code in [400, 422]
         print("✅ Malformed request rejected")
 
         # Test missing login fields
-        response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": "test@example.com"},  # Missing password
         )

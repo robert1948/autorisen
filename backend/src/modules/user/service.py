@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
-
-from sqlalchemy import select, update, func
-from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from backend.src.db import models
+from sqlalchemy import func, select, update
+from sqlalchemy.orm import Session
 
 from . import schemas
 
@@ -17,11 +15,12 @@ def get_user_profile(db: Session, user_id: str) -> schemas.UserProfileResponse:
     """Get user profile with calculated fields."""
     user = db.scalar(select(models.User).where(models.User.id == user_id))
     if not user:
-        raise ValueError("User not found")
+        msg = "User not found"
+        raise ValueError(msg)
 
     # Get or create user profile
     profile = db.scalar(
-        select(models.UserProfile).where(models.UserProfile.user_id == user_id)
+        select(models.UserProfile).where(models.UserProfile.user_id == user_id),
     )
 
     # Default values if profile doesn't exist
@@ -51,7 +50,9 @@ def get_user_profile(db: Session, user_id: str) -> schemas.UserProfileResponse:
 
 
 def update_user_profile(
-    db: Session, user_id: str, payload: schemas.UserProfileUpdate
+    db: Session,
+    user_id: str,
+    payload: schemas.UserProfileUpdate,
 ) -> schemas.UserProfileResponse:
     """Update user profile information."""
 
@@ -65,12 +66,12 @@ def update_user_profile(
             company_name=payload.company or "",
             role=payload.role,
             updated_at=func.now(),
-        )
+        ),
     )
 
     # Get or create user profile
     profile = db.scalar(
-        select(models.UserProfile).where(models.UserProfile.user_id == user_id)
+        select(models.UserProfile).where(models.UserProfile.user_id == user_id),
     )
 
     profile_data = {
@@ -101,15 +102,16 @@ def update_user_profile(
 
 
 def get_onboarding_checklist(
-    db: Session, user_id: str
+    db: Session,
+    user_id: str,
 ) -> schemas.OnboardingChecklistResponse:
     """Get user's onboarding checklist state."""
 
     # Get user's checklist state
     checklist = db.scalar(
         select(models.OnboardingChecklist).where(
-            models.OnboardingChecklist.user_id == user_id
-        )
+            models.OnboardingChecklist.user_id == user_id,
+        ),
     )
 
     # Default checklist items
@@ -163,33 +165,41 @@ def get_onboarding_checklist(
     if checklist and checklist.state:
         completed_items = checklist.state.get("completed_items", [])
 
-    # Build response items
+    # Build response items and calculate stats in single pass
     items = []
+    required_completed = 0
+    optional_completed = 0
+    required_total = 0
+    optional_total = 0
+
     for item_data in default_items:
-        items.append(
-            schemas.OnboardingChecklistItem(
-                **item_data,
-                completed=item_data["id"] in completed_items,
-            )
+        completed = item_data["id"] in completed_items
+        item = schemas.OnboardingChecklistItem(
+            **item_data,
+            completed=completed,
         )
+        items.append(item)
 
-    # Calculate completion stats
-    required_items = [item for item in items if item.required]
-    optional_items = [item for item in items if not item.required]
+        # Update counters
+        if item.required:
+            required_total += 1
+            if completed:
+                required_completed += 1
+        else:
+            optional_total += 1
+            if completed:
+                optional_completed += 1
 
-    required_completed = sum(1 for item in required_items if item.completed)
-    optional_completed = sum(1 for item in optional_items if item.completed)
     total_completed = required_completed + optional_completed
-
     completion_percentage = int((total_completed / len(items)) * 100) if items else 0
 
     return schemas.OnboardingChecklistResponse(
         items=items,
         completion_percentage=completion_percentage,
         required_completed=required_completed,
-        required_total=len(required_items),
+        required_total=required_total,
         optional_completed=optional_completed,
-        optional_total=len(optional_items),
+        optional_total=optional_total,
     )
 
 
@@ -199,8 +209,8 @@ def complete_onboarding_item(db: Session, user_id: str, item_id: str) -> None:
     # Get or create checklist
     checklist = db.scalar(
         select(models.OnboardingChecklist).where(
-            models.OnboardingChecklist.user_id == user_id
-        )
+            models.OnboardingChecklist.user_id == user_id,
+        ),
     )
 
     if checklist:
@@ -210,7 +220,7 @@ def complete_onboarding_item(db: Session, user_id: str, item_id: str) -> None:
         checklist.state = {
             **checklist.state,
             "completed_items": list(completed_items),
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
     else:
         # Create new checklist
@@ -218,7 +228,7 @@ def complete_onboarding_item(db: Session, user_id: str, item_id: str) -> None:
             user_id=user_id,
             state={
                 "completed_items": [item_id],
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": datetime.now(timezone.utc).isoformat(),
             },
         )
         db.add(checklist)
@@ -232,7 +242,7 @@ def get_dashboard_stats(db: Session, user_id: str) -> schemas.DashboardStatsResp
     # Count user's agents
     agent_count = (
         db.scalar(
-            select(func.count(models.Agent.id)).where(models.Agent.owner_id == user_id)
+            select(func.count(models.Agent.id)).where(models.Agent.owner_id == user_id),
         )
         or 0
     )
@@ -241,8 +251,8 @@ def get_dashboard_stats(db: Session, user_id: str) -> schemas.DashboardStatsResp
     flow_run_count = (
         db.scalar(
             select(func.count(models.FlowRun.id)).where(
-                models.FlowRun.user_id == user_id
-            )
+                models.FlowRun.user_id == user_id,
+            ),
         )
         or 0
     )
@@ -264,35 +274,36 @@ def get_dashboard_stats(db: Session, user_id: str) -> schemas.DashboardStatsResp
 
 
 def get_recent_activity(
-    db: Session, user_id: str, limit: int = 10
+    db: Session,
+    user_id: str,
+    limit: int = 10,
 ) -> list[schemas.ActivityItem]:
     """Get recent activity for user."""
 
-    # Get recent flow runs
+    # Get recent flow runs and convert to activity items
     recent_runs = db.scalars(
         select(models.FlowRun)
         .where(models.FlowRun.user_id == user_id)
         .order_by(models.FlowRun.created_at.desc())
-        .limit(limit)
+        .limit(limit),
     ).all()
 
-    activity_items = []
-
-    for run in recent_runs:
-        activity_items.append(
-            schemas.ActivityItem(
-                id=run.id,
-                type="flow_run",
-                title="Agent Execution",
-                description=f"Agent run on {run.placement}",
-                timestamp=run.created_at,
-                status="success",
-                metadata={
-                    "placement": run.placement,
-                    "thread_id": run.thread_id,
-                },
-            )
+    # Convert flow runs to activity items using list comprehension
+    activity_items = [
+        schemas.ActivityItem(
+            id=run.id,
+            type="flow_run",
+            title="Agent Execution",
+            description=f"Agent run on {run.placement}",
+            timestamp=run.created_at,
+            status="success",
+            metadata={
+                "placement": run.placement,
+                "thread_id": run.thread_id,
+            },
         )
+        for run in recent_runs
+    ]
 
     # Add user login activity (simplified)
     user = db.scalar(select(models.User).where(models.User.id == user_id))
@@ -306,7 +317,7 @@ def get_recent_activity(
                 timestamp=user.last_login_at,
                 status="success",
                 metadata={"ip_address": "masked"},
-            )
+            ),
         )
 
     # Sort by timestamp descending

@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
@@ -68,6 +68,8 @@ if TYPE_CHECKING:  # pragma: no cover
 try:
     from backend.src.agents.mcp_host import (  # type: ignore
         MCPConfigError as MCPConfigError_,
+    )
+    from backend.src.agents.mcp_host import (
         mcp_host as _imported_mcp_host,
     )
 except Exception:  # pragma: no cover
@@ -82,7 +84,7 @@ log = logging.getLogger("uvicorn.error")
 # ------------------------------------------------------------------------------
 # Router safe-loader
 # ------------------------------------------------------------------------------
-def _safe_import(description: str, dotted_path: str, attr: str):
+def _safe_import(description: str, dotted_path: str, attr: str) -> Optional[APIRouter]:
     try:
         module = __import__(dotted_path, fromlist=[attr])
         router = getattr(module, attr, None)
@@ -104,6 +106,7 @@ marketplace_router = _safe_import(
     "marketplace", "backend.src.modules.marketplace.router", "router"
 )
 ops_router = _safe_import("ops", "backend.src.modules.ops.router", "router")
+user_router = _safe_import("user", "backend.src.modules.user.router", "router")
 
 # ------------------------------------------------------------------------------
 # Constants / paths
@@ -197,7 +200,7 @@ def _is_test_mode() -> bool:
     ).lower()
     settings_env = str(getattr(settings, "env", "")).lower()
     flag = os.getenv("AUTH_TEST_MODE", "0").lower() in {"1", "true", "yes"}
-    settings_flag = bool(getattr(settings, "auth_test_mode", False))
+    settings_flag = getattr(settings, "auth_test_mode", False)
     pytest_active = "pytest" in sys.modules
     return (
         env == "test"
@@ -403,9 +406,11 @@ def create_app() -> FastAPI:
             "env": env_name,
             "database_connected": db_ok,
             "input_sanitization": "enabled (Task 1.2.4)",
-            "rate_limiting": "active"
-            if getattr(app.state, "rate_limit_configured", False)
-            else "inactive",
+            "rate_limiting": (
+                "active"
+                if getattr(app.state, "rate_limit_configured", False)
+                else "inactive"
+            ),
         }
 
     @app.get("/api/health/alive", include_in_schema=False)
@@ -429,7 +434,9 @@ def create_app() -> FastAPI:
     def api_security_stats():
         now = datetime.utcnow().replace(tzinfo=None).isoformat() + "Z"
         rate_limit_state = (
-            "active" if getattr(app.state, "rate_limit_configured", False) else "inactive"
+            "active"
+            if getattr(app.state, "rate_limit_configured", False)
+            else "inactive"
         )
         return {
             "security_systems": {
@@ -457,6 +464,8 @@ def create_app() -> FastAPI:
         api.include_router(marketplace_router)
     if ops_router:
         api.include_router(ops_router)
+    if user_router:
+        api.include_router(user_router)
 
     # Mount all versioned routes under /api
     app.include_router(api, prefix="/api")
@@ -468,7 +477,7 @@ def create_app() -> FastAPI:
         return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
     # ----------------------------- Startup hooks --------------------------
-    enable_migrations = bool(getattr(settings, "run_db_migrations_on_startup", False))
+    enable_migrations = getattr(settings, "run_db_migrations_on_startup", False)
     if enable_migrations and callable(run_migrations_on_startup):
 
         @app.on_event("startup")

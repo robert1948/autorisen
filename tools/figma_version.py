@@ -6,7 +6,10 @@ Usage:
   figma_version.py set   --version v0.2 --file docs/figma/version.json
   figma_version.py check --expect v0.2  --file docs/figma/version.json
 """
-import argparse, json, os, sys
+import argparse
+import json
+import os
+import sys
 
 
 def cmd_set(path, version):

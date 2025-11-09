@@ -18,10 +18,11 @@ import time
 sys.path.append(os.path.dirname(__file__))
 
 try:
-    from app.database import engine, get_db
-    from app.models import User
     from app.services.audit_service import get_audit_logger
     from sqlalchemy.orm import sessionmaker
+
+    from app.database import engine, get_db
+    from app.models import User
 
     print("✅ Successfully imported registration modules")
 except ImportError as e:

@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from .._shim_utils import _first_ok
 
 try:

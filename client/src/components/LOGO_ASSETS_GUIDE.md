@@ -5,17 +5,20 @@ This document explains how to use the various logo sizes and favicon assets crea
 ## Available Assets
 
 ### Favicon Files
+
 - `favicon.ico` - Multi-size ICO file for legacy browsers (16x16, 32x32, 48x48)
 - `icons/favicon-16x16.png` - Standard browser tab icon
 - `icons/favicon-32x32.png` - High-DPI browser tab icon
 - `icons/favicon-48x48.png` - Larger favicon for some contexts
 
 ### App Icons
+
 - `icons/apple-touch-icon.png` - 180x180 for iOS home screen
 - `icons/android-chrome-192x192.png` - Android Chrome icon
 - `icons/android-chrome-512x512.png` - Large Android Chrome icon for PWA
 
 ### Logo Variants
+
 - `LogoW.png` - Original 1024x1024 logo (use for default/high-quality contexts)
 - `icons/logo-64x64.png` - Small UI components, navigation bars
 - `icons/logo-128x128.png` - Medium UI components, card headers
@@ -43,8 +46,7 @@ import Logo from '../components/Logo';
 
 // Custom styling
 <Logo size="medium" className="my-custom-class" />
-```
-
+```text
 ## Favicon Implementation
 
 The following HTML meta tags are included in `index.html`:
@@ -65,8 +67,7 @@ The following HTML meta tags are included in `index.html`:
 
 <!-- Web App Manifest -->
 <link rel="manifest" href="/site.webmanifest">
-```
-
+```text
 ## PWA Manifest
 
 The `site.webmanifest` file provides metadata for Progressive Web App installation:
@@ -79,8 +80,7 @@ The `site.webmanifest` file provides metadata for Progressive Web App installati
   "theme_color": "#007BFF",
   "background_color": "#0f1720"
 }
-```
-
+```text
 ## Best Practices
 
 ### When to Use Each Size
@@ -107,11 +107,10 @@ Additional CSS classes are available for custom styling:
 .cc-logo--small   /* 48x48px */
 .cc-logo--medium  /* 64x64px */
 .cc-logo--large   /* 128x128px */
-```
-
+```text
 ## File Structure
 
-```
+```text
 public/
 ├── favicon.ico
 ├── LogoW.png (original)
@@ -127,4 +126,4 @@ public/
     ├── logo-128x128.png
     ├── logo-256x256.png
     └── logo-512x512.png
-```
+```text

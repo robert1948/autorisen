@@ -12,6 +12,5 @@ Run:
 
 ```bash
 python3 scripts/plan_md_to_csv.py docs/Master_ProjectPlan.md > docs/tasks_export.csv
-```
-
+```text
 This extracts the first markdown table found in `docs/Master_ProjectPlan.md` and writes it to `docs/tasks_export.csv`.

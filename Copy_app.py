@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
@@ -25,11 +25,6 @@ from starlette.responses import (
 from backend.src.core.config import settings
 from backend.src.modules.auth.csrf import csrf_middleware
 from backend.src.modules.auth.router import router as auth_router
-from backend.src.modules.health.router import (
-    router as health_router,
-)  # create this if missing
-from backend.src.modules.auth.csrf import csrf_middleware  # your middleware
-
 
 load_dotenv()
 
@@ -58,6 +53,8 @@ if TYPE_CHECKING:  # pragma: no cover
 try:
     from backend.src.agents.mcp_host import (  # type: ignore
         MCPConfigError as MCPConfigError_,
+    )
+    from backend.src.agents.mcp_host import (
         mcp_host as _imported_mcp_host,
     )
 except Exception:  # pragma: no cover

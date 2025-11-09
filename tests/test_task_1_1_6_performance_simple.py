@@ -34,8 +34,9 @@ os.environ["REDIS_HOST"] = "localhost"
 os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "False"
 
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 # Initialize test client
 client = TestClient(app)
@@ -61,7 +62,7 @@ class SimplePerformanceHelper:
             if method == "GET":
                 response = self.client.get(endpoint, headers=headers)
             elif method == "POST":
-                response = self.client.post(endpoint, json=data, headers=headers)
+        # # response = self.client.post(endpoint, json=data, headers=headers)  # noqa: F841  # noqa: F841
 
             end_time = time.time()
             response_time = end_time - start_time

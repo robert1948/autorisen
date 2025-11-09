@@ -17,8 +17,9 @@ def test_ddos_protection_basic_functionality():
 
     try:
         # Test middleware configuration
-        from app.middleware.ddos_protection import DDoSProtectionMiddleware
         from fastapi import FastAPI
+
+        from app.middleware.ddos_protection import DDoSProtectionMiddleware
 
         # Create test app and middleware
         test_app = FastAPI()
@@ -75,8 +76,9 @@ def test_rate_limiting_integration():
     print("\n🔄 Testing Rate Limiting Integration")
 
     try:
-        from app.middleware.ddos_protection import DDoSProtectionMiddleware
         from fastapi import FastAPI
+
+        from app.middleware.ddos_protection import DDoSProtectionMiddleware
 
         test_app = FastAPI()
         ddos_middleware = DDoSProtectionMiddleware(test_app)
@@ -117,8 +119,9 @@ def test_ddos_specific_features():
     print("\n🚨 Testing DDoS-Specific Features")
 
     try:
-        from app.middleware.ddos_protection import DDoSProtectionMiddleware
         from fastapi import FastAPI
+
+        from app.middleware.ddos_protection import DDoSProtectionMiddleware
 
         test_app = FastAPI()
         ddos_middleware = DDoSProtectionMiddleware(test_app)

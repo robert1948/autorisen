@@ -226,8 +226,7 @@
 ```bash
 aws iam create-role --role-name gh-oidc-autorisen-ecr \
   --assume-role-policy-document file://infra/aws-ecs-skel/trust-policy.json
-```
-
+```text
 ## Maintainers
 
 - <ops@example.com>

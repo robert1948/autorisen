@@ -3,9 +3,10 @@
 ## 🔍 Configuration Analysis
 
 ### ✅ Variables Present in BOTH Apps
+
 - ADMIN_EMAIL ✅
 - AWS_ACCESS_KEY_ID ✅ (different values)
-- AWS_S3_REGION_NAME ✅ 
+- AWS_S3_REGION_NAME ✅
 - AWS_SECRET_ACCESS_KEY ✅ (different values)
 - AWS_STORAGE_BUCKET_NAME ✅ (different values)
 - CLIENT_URL ✅ (different values - expected)
@@ -38,6 +39,7 @@
 - SMTP_USERNAME ✅ (different usernames)
 
 ### ❌ Variables MISSING from Production (capecraft)
+
 - ALEMBIC_DATABASE_URL
 - ALLOWED_HOSTS (different format)
 - AUTH_HARDEN_LOGIN
@@ -71,6 +73,7 @@
 - WEB_CONCURRENCY
 
 ### ⚠️ Variables ONLY in Production (capecraft)
+
 - SENDGRID_API_KEY
 - SMTP_TLS
 
@@ -80,7 +83,7 @@
    - Dev: `autorisen-dac8e65796e7.herokuapp.com,dev.cape-control.com`
    - Prod: `*` (too permissive for production)
 
-2. **Missing Critical Variables in Production**:
+1. **Missing Critical Variables in Production**:
    - ALEMBIC_DATABASE_URL (needed for migrations)
    - CORS configuration (CORS_ALLOWED_ORIGINS, CORS_ORIGINS)
    - PYTHONPATH (needed for Python imports)
@@ -88,11 +91,11 @@
    - Stripe configuration (if payments are needed)
    - Performance monitoring (ENABLE_PERF_SAMPLER, PERF_SAMPLE_SECONDS)
 
-3. **PayFast Configuration Issues**:
+1. **PayFast Configuration Issues**:
    - Prod has incorrect PAYFAST_CANCEL_URL pointing to ITN endpoint
    - Missing PAYFAST_MERCHANT_KEY, PAYFAST_MODE, etc.
 
-4. **Security Concerns**:
+1. **Security Concerns**:
    - Production SECRET_KEY appears to be a Django default (should be unique)
    - Different AWS credentials (might be intentional)
    - Different OpenAI API keys (might be intentional)
@@ -100,7 +103,7 @@
 ## 🛠️ Recommendations
 
 1. **Sync Critical Missing Variables**
-2. **Fix ALLOWED_HOSTS for production security**
-3. **Correct PayFast configuration**
-4. **Ensure proper CORS settings**
-5. **Verify AWS and API key intentional differences**
+1. **Fix ALLOWED_HOSTS for production security**
+1. **Correct PayFast configuration**
+1. **Ensure proper CORS settings**
+1. **Verify AWS and API key intentional differences**

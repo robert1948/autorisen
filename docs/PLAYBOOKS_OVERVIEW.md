@@ -61,6 +61,7 @@ Source: `docs/project-plan.csv`
 | MAINT-005 | Security updates | 🔁 Recurring | Critical security patch management |
 
 ## ✅ Next Steps
+
 1. Keep this index synced as playbook statuses change.
-2. Ensure every new commit touching playbooks updates this table.
-3. Add Phase 3 playbooks (Marketplace, Payments) once MVP stabilization is complete.
+1. Ensure every new commit touching playbooks updates this table.
+1. Add Phase 3 playbooks (Marketplace, Payments) once MVP stabilization is complete.

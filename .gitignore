@@ -1,3 +1,7 @@
+# AutoLocal/CapeControl .gitignore
+# Production-ready FastAPI + React SaaS platform
+# Updated: November 9, 2025
+
 # Python
 __pycache__/
 *.py[cod]
@@ -24,10 +28,18 @@ pip-wheel-metadata/
 .venv_*/
 venv/
 env/
+ENV/
+
+# Environment files - be specific about what we allow
 .env
 .env.*
+!.env.example
+!client/.env.example
 .env.local
 .env.dev
+.env.test
+.env.sandbox
+.env.figma
 
 # Production secrets (never commit)
 .env.production
@@ -51,14 +63,23 @@ build/
 
 # Node / frontend
 node_modules/
+*/node_modules/
 client/node_modules/
 client/dist/
 client/.cache/
 client/.turbo/
 client/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# React/Vite specific
+.vite/
+dist/
+*.tsbuildinfo
 
 # Backup and temporary files
 *.backup
@@ -74,9 +95,15 @@ pnpm-lock.yaml
 # Local test artifacts
 coverage.xml
 htmlcov/
+*.db
 dev.db
 test.db
+test_*.db
+tmp_*.db
 .coverage.*
+
+# Alembic migration artifacts
+backend/migrations/versions/temp_*.py
 
 # Generated/backup artifacts
 docs/PLAYBOOK_OVERVIEW.md
@@ -86,15 +113,15 @@ figma_analysis/
 figma_analysis_page/
 client/src/components/generated/
 client/src/App.tsx.backup
+tools/generated/
+scripts/temp/
+docs/checklists/temp/
+docs/playbooks/design/temp/
 
 # Figma integration cache
 docs/CapeWire_Tokens_Typography_Board.json
 docs/Typography_Reference_Frame_Simple.json
 docs/figma/capecraft_design_spec.json
-
-# Development scripts and tools (development artifacts)
-tools/generated/
-scripts/temp/
 
 # Generated documentation (development artifacts)
 docs/FIGMA_API_QUICKSTART.md
@@ -102,24 +129,22 @@ docs/FIGMA_INTEGRATION_COMPLETE.md
 docs/GITHUB_UPDATE_COMPLETE_251107.md
 docs/PRODUCTION_READINESS_CHECKLIST.md
 docs/pages_overview.md
-docs/checklists/temp/
 docs/playbooks/design/06-target-frame.md
 
 # Generated/demo pages (development only)
-client/src/pages/AboutPage.tsx
-client/src/pages/CapeLoginPage.tsx
-client/src/pages/CapeRegisterPage.tsx
-client/src/pages/Demo1Demo.tsx
-client/src/pages/FigmaDemo.tsx
-client/src/pages/HomePage.tsx
-client/src/pages/HomePagePage.tsx
-client/src/pages/MainPageDemo.tsx
-client/src/pages/SubscribePage.tsx
-client/src/pages/SubscribePagePage.tsx
-client/src/pages/TestPage.tsx
+# Note: Remove these entries if pages become permanent
+client/src/pages/Demo*.tsx
+client/src/pages/Test*.tsx
+client/src/pages/*Demo.tsx
 
 # Logo files in root (should be in proper assets directory)
 LogoW.png
+
+# Keep optimized logo assets in client/public for deployment
+!client/public/LogoW.png
+!client/public/*.png
+!client/public/*.ico
+!client/public/*.svg
 
 # Production logs and monitoring
 logs/
@@ -143,10 +168,64 @@ playwright-report/
 # Agent framework development
 agents/temp/
 config/temp/
+backend/src/modules/*/temp/
 
 # ChatKit development
 chatkit-cache/
 
+# AI/ML artifacts
+*.model
+*.pkl
+*.joblib
+models/temp/
+
+# Development and temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.backup
+*~
+*.swp
+*.swo
+
 # OS junk
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Windows
+desktop.ini
+
+# Linux
+*~
+.nfs*
+
+# Media files (large files that shouldn't be in git)
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+
+# Large assets (use Git LFS if needed)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Development reports and logs
+voice_demo_report_*.json
+audit_reports/
+performance_reports/
+
+# Pip install artifacts (weird filenames from redirected output)
+=*
+
+# Temporary migration files
+*_migration_backup.sql

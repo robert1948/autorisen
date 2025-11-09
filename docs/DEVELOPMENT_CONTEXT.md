@@ -19,16 +19,14 @@ make plan-validate  # lint plan CSV headers/status values
 make agents-test     # pytest coverage for local agent adapters
 make agents-validate  # schema check for agent registry entries
 make agents-run name=<slug> task="..."  # adapter readiness; use --env=stg for staging configs
-```
-
+```text
 ### Running the stack (Docker Compose)
 
 ```bash
 make docker-build         # build backend image (autorisen:local)
 make docker-run           # run backend image exposing port 8000
 make heroku-deploy-stg    # push/release image to autorisen Heroku app
-```
-
+```text
 ## Smoke Checks
 
 - Local: `./scripts/smoke_check.sh http://localhost:8000`

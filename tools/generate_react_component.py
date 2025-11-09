@@ -7,10 +7,9 @@ with proper props, styling, and structure based on Figma node hierarchy.
 """
 import argparse
 import json
-import re
 import os
-from pathlib import Path
-from typing import Dict, List, Any
+import re
+from typing import Dict
 
 COMPONENT_TEMPLATE = """import React from 'react';
 
@@ -175,7 +174,7 @@ class ReactComponentGenerator:
         if not jsx_lines:
             jsx_lines = [
                 '      <div className="figma-component">',
-                f"        <h2>Generated from Figma</h2>",
+                "        <h2>Generated from Figma</h2>",
                 "        <p>Component structure will be generated based on Figma analysis.</p>",
                 "      </div>",
             ]
@@ -340,10 +339,10 @@ def main():
     with open(css_file, "w") as f:
         f.write(css_code)
 
-    print(f"✅ Generated React component:")
+    print("✅ Generated React component:")
     print(f"  • Component: {component_file}")
     print(f"  • Styles: {css_file}")
-    print(f"\n📋 Component Analysis Summary:")
+    print("\n📋 Component Analysis Summary:")
     print(
         f"  • Interactive elements: {len(analysis_data.get('interactive_elements', []))}"
     )

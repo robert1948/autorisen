@@ -14,10 +14,10 @@ Security requirements:
 
 1. **Signed ITN enforcement** – verify the PayFast signature for every Instant
    Transaction Notification before persisting events or triggering workflows.
-2. **Server-to-server validation** – perform a server-side validation call back to
+1. **Server-to-server validation** – perform a server-side validation call back to
    PayFast for each ITN payload and reject mismatches.
-3. **No PAN storage** – only handle payment references and tokens that PayFast
+1. **No PAN storage** – only handle payment references and tokens that PayFast
    returns; never store raw card data in CapeControl systems.
-4. **Least-privilege webhooks** – expose the ITN endpoint under
+1. **Least-privilege webhooks** – expose the ITN endpoint under
    `/api/payments/payfast/itn` with minimal middleware and strict IP filtering when
    possible.

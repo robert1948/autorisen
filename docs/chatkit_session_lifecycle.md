@@ -47,8 +47,7 @@ Authorization: Bearer <access_token>
   "agent_id": "agent_123",
   "context": { "from": "dashboard" }
 }
-```
-
+```text
 Response includes the new `session_id`, initial status, and optional metadata.
 
 - If an active session already exists (same placement + agent), backend may
@@ -59,8 +58,7 @@ Response includes the new `session_id`, initial status, and optional metadata.
 ```text
 GET /api/codex/chatkit/token?session_id=<session_id>
 Authorization: Bearer <access_token>
-```
-
+```text
 Returns `{ "token": "<chatkit-jwt>", "expires_at": "..." }`. The frontend
 hands this token to the ChatKit Web SDK.
 
@@ -86,8 +84,7 @@ When the user ends a run, the client can call
 User → Frontend SPA → POST /api/codex/sessions → Backend → DB
 User → Frontend SPA → GET  /api/codex/chatkit/token → Backend → ChatKit JWT
 Frontend → ChatKit SDK (Browser) → connect using token
-```
-
+```text
 ## 4. Error Handling Guidelines
 
 | Scenario | Expected behaviour |

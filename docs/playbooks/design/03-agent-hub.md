@@ -42,8 +42,7 @@
 ```bash
 make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=agent-hub
-```
-
+```text
 ## 6) Decisions Log
 
 - 2025-10-30: Keep agent create/edit in a single panel to minimize focus management churn.

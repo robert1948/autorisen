@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-import argparse, re, sys, datetime, pathlib
+import argparse
+import datetime
+import pathlib
+import re
+import sys
 
 BADGE = {
     "ok": "success",

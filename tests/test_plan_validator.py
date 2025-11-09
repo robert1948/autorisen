@@ -1,30 +1,50 @@
-import csv
-import pathlib
 import re
+import sys
+from pathlib import Path
 
-P = pathlib.Path("docs/autorisen_project_plan.csv")
-RE_STATUS = {"todo", "busy", "done"}
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.plan_utils import (
+    PLAN_CSV,
+    PLAN_HEADER,
+    VALID_PHASES,
+    VALID_STATUSES,
+    load_plan_rows,
+)
+
 RE_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-REQUIRED = [
-    "module",
-    "task_id",
-    "task_title",
-    "owner",
-    "priority",
-    "estimate",
-    "status",
-]
+RE_PRIORITY = re.compile(r"^P\d$")
 
 
 def test_csv_valid():
-    assert P.exists(), f"missing {P}"
-    rows = list(csv.DictReader(P.open(encoding="utf-8")))
+    assert PLAN_CSV.exists(), f"missing {PLAN_CSV}"
+    header, rows = load_plan_rows(PLAN_CSV)
+    assert header == PLAN_HEADER
     assert rows, "CSV empty?"
-    for r in rows:
-        for k in REQUIRED:
-            assert (r.get(k) or "").strip(), f"missing required: {k}"
-        assert r["status"] in RE_STATUS, f"bad status: {r['status']}"
-        for c in ("started_at", "updated_at", "done_at"):
-            v = (r.get(c) or "").strip()
-            if v:
-                assert RE_DATE.match(v), f"{c} not ISO date: {v}"
+
+    seen_ids = set()
+    for row in rows:
+        assert row["id"], "missing required: id"
+        assert row["phase"] in VALID_PHASES, f"unexpected phase: {row['phase']}"
+        assert row["task"], "missing required: task"
+        assert row["owner"], "missing required: owner"
+        assert row["status"] in VALID_STATUSES, f"bad status: {row['status']}"
+        assert row["priority"], "missing required: priority"
+        assert RE_PRIORITY.match(row["priority"]), f"bad priority: {row['priority']}"
+
+        completion = row.get("completion_date", "")
+        if completion:
+            assert RE_DATE.match(completion), f"bad completion_date: {completion}"
+
+        hours = row.get("estimated_hours", "")
+        if hours:
+            assert hours.isdigit(), f"estimated_hours not numeric: {row['id']}"
+
+        deps = row.get("dependencies", "")
+        # allow empty dependencies but ensure we don't store whitespace-only garbage
+        assert deps == deps.strip(), "dependencies has leading/trailing whitespace"
+
+        assert row["id"] not in seen_ids, f"duplicate id detected: {row['id']}"
+        seen_ids.add(row["id"])

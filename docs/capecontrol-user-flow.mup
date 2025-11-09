@@ -1,0 +1,264 @@
+{
+  "formatVersion": 3,
+  "id": "root",
+  "ideas": {
+    "1": {
+      "id": "1",
+      "title": "🏠 CapeControl User Flow",
+      "attr": {
+        "style": {
+          "background": "#4FC3F7"
+        }
+      },
+      "ideas": {
+        "1": {
+          "id": "2",
+          "title": "🔵 Public Access",
+          "attr": {
+            "style": {
+              "background": "#E1F5FE"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "3",
+              "title": "🏠 Landing Page '/'"
+            },
+            "2": {
+              "id": "4",
+              "title": "ℹ️ About '/about'"
+            },
+            "3": {
+              "id": "5",
+              "title": "💰 Subscribe '/subscribe'"
+            }
+          }
+        },
+        "2": {
+          "id": "6",
+          "title": "🟣 Authentication",
+          "attr": {
+            "style": {
+              "background": "#F3E5F5"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "7",
+              "title": "📝 Register '/register'",
+              "ideas": {
+                "1": {
+                  "id": "8",
+                  "title": "📧 Email Verification"
+                },
+                "2": {
+                  "id": "9",
+                  "title": "🎉 Welcome '/welcome'"
+                }
+              }
+            },
+            "2": {
+              "id": "10",
+              "title": "🔑 Login '/login'",
+              "ideas": {
+                "1": {
+                  "id": "11",
+                  "title": "🔐 MFA Challenge '/auth/mfa'"
+                },
+                "2": {
+                  "id": "12",
+                  "title": "📱 MFA Enroll '/account/mfa-enroll'"
+                }
+              }
+            },
+            "3": {
+              "id": "13",
+              "title": "🔄 Password Reset",
+              "ideas": {
+                "1": {
+                  "id": "14",
+                  "title": "🔄 Forgot Password '/forgot-password'"
+                },
+                "2": {
+                  "id": "15",
+                  "title": "🔑 Reset Password '/reset-password'"
+                }
+              }
+            },
+            "4": {
+              "id": "16",
+              "title": "🔗 Social Authentication",
+              "ideas": {
+                "1": {
+                  "id": "17",
+                  "title": "🔄 OAuth Callback '/auth/callback'"
+                }
+              }
+            }
+          }
+        },
+        "3": {
+          "id": "18",
+          "title": "🟢 Onboarding Flow",
+          "attr": {
+            "style": {
+              "background": "#E8F5E8"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "19",
+              "title": "🧭 Onboarding Guide '/onboarding/guide'",
+              "ideas": {
+                "1": {
+                  "id": "20",
+                  "title": "👤 Customer Path '/onboarding/customer'"
+                },
+                "2": {
+                  "id": "21",
+                  "title": "⚡ Developer Path '/onboarding/developer'"
+                }
+              }
+            },
+            "2": {
+              "id": "22",
+              "title": "📋 Profile Setup '/onboarding/profile'",
+              "ideas": {
+                "1": {
+                  "id": "23",
+                  "title": "Basic Information"
+                },
+                "2": {
+                  "id": "24",
+                  "title": "Experience Level"
+                },
+                "3": {
+                  "id": "25",
+                  "title": "Areas of Interest"
+                },
+                "4": {
+                  "id": "26",
+                  "title": "Notification Preferences"
+                }
+              }
+            },
+            "3": {
+              "id": "27",
+              "title": "✅ Onboarding Checklist '/onboarding/checklist'",
+              "ideas": {
+                "1": {
+                  "id": "28",
+                  "title": "Required Items",
+                  "ideas": {
+                    "1": {
+                      "id": "29",
+                      "title": "Complete Profile"
+                    },
+                    "2": {
+                      "id": "30",
+                      "title": "Verify Email"
+                    }
+                  }
+                },
+                "2": {
+                  "id": "31",
+                  "title": "Optional Items",
+                  "ideas": {
+                    "1": {
+                      "id": "32",
+                      "title": "Watch Welcome Guide"
+                    },
+                    "2": {
+                      "id": "33",
+                      "title": "Try First Agent"
+                    },
+                    "3": {
+                      "id": "34",
+                      "title": "Explore Marketplace"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "4": {
+          "id": "35",
+          "title": "🟠 Main Application",
+          "attr": {
+            "style": {
+              "background": "#FFF3E0"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "36",
+              "title": "📊 Dashboard '/dashboard'",
+              "ideas": {
+                "1": {
+                  "id": "37",
+                  "title": "📈 Stats Overview",
+                  "ideas": {
+                    "1": {
+                      "id": "38",
+                      "title": "Active Agents"
+                    },
+                    "2": {
+                      "id": "39",
+                      "title": "Tasks Complete"
+                    },
+                    "3": {
+                      "id": "40",
+                      "title": "System Status"
+                    }
+                  }
+                },
+                "2": {
+                  "id": "41",
+                  "title": "🔄 Recent Activity"
+                },
+                "3": {
+                  "id": "42",
+                  "title": "⚡ Quick Actions",
+                  "ideas": {
+                    "1": {
+                      "id": "43",
+                      "title": "Deploy New Agent"
+                    },
+                    "2": {
+                      "id": "44",
+                      "title": "Browse Marketplace"
+                    },
+                    "3": {
+                      "id": "45",
+                      "title": "System Settings"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "id": "46",
+              "title": "🤖 Agents Management"
+            },
+            "3": {
+              "id": "47",
+              "title": "🛒 Marketplace"
+            },
+            "4": {
+              "id": "48",
+              "title": "👤 User Profile"
+            },
+            "5": {
+              "id": "49",
+              "title": "⚙️ Settings"
+            }
+          }
+        }
+      }
+    }
+  },
+  "links": [],
+  "attr": {},
+  "title": "CapeControl User Flow Architecture"
+}

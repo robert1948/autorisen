@@ -6,8 +6,8 @@
 
 **Commands (in order):**
 
-1) `make codex-docs-fix`
-2) `make codex-docs-lint`
+1. `make codex-docs-fix`
+1. `make codex-docs-lint`
 
 **Allowed edits:** `**/*.md` only.
 

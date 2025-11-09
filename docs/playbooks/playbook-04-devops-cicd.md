@@ -79,22 +79,21 @@ Deliver a reliable, reproducible DevOps pipeline that automates build, test, and
 ## 6) Runbook / Commands
 
 ```bash
-# Local build
+## Local build
 make docker-build
 
-# Push to DockerHub
+## Push to DockerHub
 make docker-push
 
-# Deploy staging
+## Deploy staging
 make heroku-deploy-stg
 
-# Deploy production
+## Deploy production
 make deploy-heroku
 
-# Trigger GitHub Action manually
+## Trigger GitHub Action manually
 gh workflow run deploy-heroku.yml
-```
-
+```text
 ---
 
 ## 7) Risks & Mitigations
@@ -120,6 +119,6 @@ gh workflow run deploy-heroku.yml
 ## ✅ Next Actions
 
 1. Finalize DockerHub tagging automation (M4).
-2. Run full staging → production smoke tests (M5).
-3. Validate sitemap + crawl checks in pipeline.
-4. Confirm successful Heroku promotion and close playbook.
+1. Run full staging → production smoke tests (M5).
+1. Validate sitemap + crawl checks in pipeline.
+1. Confirm successful Heroku promotion and close playbook.

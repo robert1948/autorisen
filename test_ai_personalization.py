@@ -493,7 +493,7 @@ class TestPersonalizationIntegration:
             use_personalization=True,
         )
 
-        assert personalized_response["personalization_applied"] == True
+        assert personalized_response["personalization_applied"]
         assert personalized_response["personality_confidence"] > 0
         assert "Personalized" in personalized_response["content"]
 
@@ -503,7 +503,7 @@ class TestPersonalizationIntegration:
             use_personalization=False,
         )
 
-        assert standard_response["personalization_applied"] == False
+        assert not standard_response["personalization_applied"]
         assert standard_response["personality_confidence"] == 0
 
         print("✅ Multi-provider AI personalization integration test passed")

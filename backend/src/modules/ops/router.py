@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from fastapi import APIRouter
+
 from backend.src.agents.mcp_host import mcp_host
 
 router = APIRouter(prefix="/ops", tags=["ops"])

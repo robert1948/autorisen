@@ -40,11 +40,11 @@ class AuthTestSuite:
             "experience": "intermediate",
         }
 
-        response = await self.client.post("/api/auth/register", json=customer_data)
+        # # response = await self.client.post("/api/auth/register", json=customer_data)  # noqa: F841  # noqa: F841
         assert response.status_code == 201, f"Registration failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
         assert "tokens" in data["data"]
         assert "user" in data["data"]
 
@@ -65,7 +65,7 @@ class AuthTestSuite:
             "experience": "expert",
         }
 
-        response = await self.client.post("/api/auth/register", json=developer_data)
+        # # response = await self.client.post("/api/auth/register", json=developer_data)  # noqa: F841  # noqa: F841
         assert (
             response.status_code == 201
         ), f"Developer registration failed: {response.text}"
@@ -77,7 +77,7 @@ class AuthTestSuite:
         logger.info("✅ Developer registration successful")
 
         # Test duplicate email (should fail)
-        response = await self.client.post("/api/auth/register", json=customer_data)
+        # # response = await self.client.post("/api/auth/register", json=customer_data)  # noqa: F841  # noqa: F841
         assert response.status_code == 409, "Duplicate email should be rejected"
 
         logger.info("✅ Duplicate email properly rejected")
@@ -92,11 +92,11 @@ class AuthTestSuite:
             "password": "TestPassword123!",
         }
 
-        response = await self.client.post("/api/auth/login", json=login_data)
+        # # response = await self.client.post("/api/auth/login", json=login_data)  # noqa: F841  # noqa: F841
         assert response.status_code == 200, f"Login failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
         assert "tokens" in data["data"]
 
         # Update tokens
@@ -110,7 +110,7 @@ class AuthTestSuite:
             "password": "WrongPassword",
         }
 
-        response = await self.client.post("/api/auth/login", json=invalid_login)
+        # # response = await self.client.post("/api/auth/login", json=invalid_login)  # noqa: F841  # noqa: F841
         assert response.status_code == 401, "Invalid login should be rejected"
 
         logger.info("✅ Invalid login properly rejected")
@@ -131,7 +131,7 @@ class AuthTestSuite:
         ), f"Authenticated access failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
         assert data["data"]["email"] == "test_customer@example.com"
 
         logger.info("✅ JWT authentication working correctly")
@@ -142,11 +142,11 @@ class AuthTestSuite:
 
         refresh_data = {"refresh_token": self.tokens["customer"]["refresh_token"]}
 
-        response = await self.client.post("/api/auth/refresh", json=refresh_data)
+        # # response = await self.client.post("/api/auth/refresh", json=refresh_data)  # noqa: F841  # noqa: F841
         assert response.status_code == 200, f"Token refresh failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
         assert "access_token" in data["data"]
 
         # Update access token
@@ -172,7 +172,7 @@ class AuthTestSuite:
         assert response.status_code == 200, f"Profile update failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
         assert data["data"]["first_name"] == "Updated"
         assert data["data"]["phone"] == "+1-555-0123"
 
@@ -188,13 +188,13 @@ class AuthTestSuite:
         }
 
         headers = {"Authorization": f"Bearer {self.tokens['customer']['access_token']}"}
-        response = await self.client.post(
+        # # response = await self.client.post(  # noqa: F841  # noqa: F841
             "/api/auth/change-password", json=change_data, headers=headers
         )
         assert response.status_code == 200, f"Password change failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
 
         # Test login with new password
         login_data = {
@@ -202,7 +202,7 @@ class AuthTestSuite:
             "password": "NewTestPassword456!",
         }
 
-        response = await self.client.post("/api/auth/login", json=login_data)
+        # # response = await self.client.post("/api/auth/login", json=login_data)  # noqa: F841  # noqa: F841
         assert response.status_code == 200, "Login with new password failed"
 
         logger.info("✅ Password change successful")
@@ -232,7 +232,7 @@ class AuthTestSuite:
         ), f"Developer earnings access failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
         assert "summary" in data["data"]
         assert "earnings" in data["data"]
 
@@ -245,7 +245,7 @@ class AuthTestSuite:
         # Request password reset
         reset_request = {"email": "test_customer@example.com"}
 
-        response = await self.client.post(
+        # # response = await self.client.post(  # noqa: F841  # noqa: F841
             "/api/auth/reset-password", json=reset_request
         )
         assert (
@@ -253,7 +253,7 @@ class AuthTestSuite:
         ), f"Password reset request failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
 
         logger.info("✅ Password reset request successful")
         # Note: In a real test, you'd verify the email was sent and get the token
@@ -263,11 +263,11 @@ class AuthTestSuite:
         logger.info("🧪 Testing logout...")
 
         headers = {"Authorization": f"Bearer {self.tokens['customer']['access_token']}"}
-        response = await self.client.post("/api/auth/logout", headers=headers)
+        # # response = await self.client.post("/api/auth/logout", headers=headers)  # noqa: F841  # noqa: F841
         assert response.status_code == 200, f"Logout failed: {response.text}"
 
         data = response.json()
-        assert data["success"] == True
+        assert data["success"]
 
         # Test that token is invalidated
         response = await self.client.get("/api/auth/me", headers=headers)

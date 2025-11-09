@@ -46,8 +46,7 @@
 ```bash
 make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=home-landing
-```
-
+```text
 ## 6) Decisions Log
 
 - 2025-10-30: Reuse in-app components for chat CTAs to avoid diverging behavior.

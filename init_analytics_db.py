@@ -3,10 +3,9 @@ Initialize Analytics Tables for Performance Dashboard
 This script creates the analytics tables in the database.
 """
 
+import logging
 import os
 import sys
-import logging
-
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 BACKEND_ROOT = os.path.join(PROJECT_ROOT, "backend")
@@ -15,8 +14,8 @@ if BACKEND_ROOT not in sys.path:
     sys.path.insert(0, BACKEND_ROOT)
 
 try:
-    from backend.src.db.session import engine
     from backend.src.db.base import Base
+    from backend.src.db.session import engine
 except ImportError as exc:  # pragma: no cover - defensive guard
     raise RuntimeError(
         "Unable to import database session; is backend installed?"

@@ -144,8 +144,9 @@ def test_alert_api():
         print("\n🌐 Testing Alert API Endpoints")
         print("=" * 50)
 
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         client = TestClient(app)
         print("✅ Test client created")

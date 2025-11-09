@@ -46,8 +46,7 @@
 ```bash
 make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=dashboard-layout
-```
-
+```text
 ## 6) Decisions Log
 
 - 2025-10-30: Keep dashboard under `<Home />` until dedicated route lands to avoid breaking deep links.

@@ -79,16 +79,15 @@ Deliver an intuitive, responsive frontend experience that connects authenticatio
 ## 6) Runbook / Commands
 
 ```bash
-# Local dev server
+## Local dev server
 npm run dev
 
-# Build and preview staging
+## Build and preview staging
 npm run build && npm run preview
 
-# Lint and test
+## Lint and test
 npm run lint && npm test
-```
-
+```text
 ---
 
 ## 7) Risks & Mitigations
@@ -114,6 +113,6 @@ npm run lint && npm test
 ## ✅ Next Actions
 
 1. Complete login + register integration (M1).
-2. Implement onboarding flow UI with backend persistence (M2–M3).
-3. Build dashboard shell and run staging smoke (M4–M5).
-4. Link runbook results back to Playbook #1 – MVP Launch for signoff.
+1. Implement onboarding flow UI with backend persistence (M2–M3).
+1. Build dashboard shell and run staging smoke (M4–M5).
+1. Link runbook results back to Playbook #1 – MVP Launch for signoff.

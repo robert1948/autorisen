@@ -45,36 +45,36 @@ This playbook applies to:
 ### **Phase A — Scoping & Planning**
 
 1. Define MVP objectives in `docs/MVP_SCOPE.md`.
-2. Update `Checklist_MVP.md` with per-phase deliverables.
-3. Confirm environment variables and `.env.example`.
-4. Assign agents to roles (Codex prompt → `make codex-assign`).
+1. Update `Checklist_MVP.md` with per-phase deliverables.
+1. Confirm environment variables and `.env.example`.
+1. Assign agents to roles (Codex prompt → `make codex-assign`).
 
 ---
 
 ### **Phase B — Build & Test**
 
 1. Initialize local dev container (`make up`).
-2. Run lint and format checks (`make lint`, `make format`).
-3. Execute unit and integration tests (`make test`).
-4. Validate Makefile and CI/CD consistency (`make codex-check`).
+1. Run lint and format checks (`make lint`, `make format`).
+1. Execute unit and integration tests (`make test`).
+1. Validate Makefile and CI/CD consistency (`make codex-check`).
 
 ---
 
 ### **Phase C — Staging Deployment**
 
 1. Build and push image (`make docker-build && make heroku-deploy-stg`).
-2. Run smoke tests (`make smoke`).
-3. Verify `/api/health` and `/api/auth/csrf` endpoints.
-4. QA sign-off from `TestGuardian`.
+1. Run smoke tests (`make smoke`).
+1. Verify `/api/health` and `/api/auth/csrf` endpoints.
+1. QA sign-off from `TestGuardian`.
 
 ---
 
 ### **Phase D — Production Promotion**
 
 1. Tag release (`git tag -a vX.Y.Z -m "MVP release" && git push origin --tags`).
-2. Promote staging → production (`make heroku-promote-prod`).
-3. Verify runtime logs (`heroku logs -a capecraft`).
-4. Announce live status via `CapeAI` broadcast.
+1. Promote staging → production (`make heroku-promote-prod`).
+1. Verify runtime logs (`heroku logs -a capecraft`).
+1. Announce live status via `CapeAI` broadcast.
 
 ---
 

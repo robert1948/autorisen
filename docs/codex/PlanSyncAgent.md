@@ -4,8 +4,8 @@
 
 **Commands:**
 
-1) `make codex-plan-diff`
-2) If drift detected, `make codex-plan-apply`
+1. `make codex-plan-diff`
+1. If drift detected, `make codex-plan-apply`
 
 **Allowed edits:**
 

@@ -11,7 +11,6 @@ from sqlalchemy import text
 # Add the backend directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import DATABASE_URL, Base, engine
 from app.models.payment import (
     AnalyticsEvent,
     Credits,
@@ -21,6 +20,8 @@ from app.models.payment import (
     Subscription,
     SupportTicket,
 )
+
+from app.database import DATABASE_URL, Base, engine
 
 
 def run_payment_migration():

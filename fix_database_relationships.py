@@ -18,9 +18,10 @@ from sqlalchemy import inspect, text
 sys.path.append(os.path.dirname(__file__))
 
 try:
+    from app.models.audit_log import AuditLog
+
     from app.database import DATABASE_URL, engine
     from app.models import Conversation, ConversationMessage, User, UserProfile
-    from app.models.audit_log import AuditLog
 
     print("✅ Successfully imported models")
 except ImportError as e:

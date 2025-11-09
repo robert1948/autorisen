@@ -16,8 +16,8 @@ from backend.src.core import mailer as mailer_core
 from backend.src.core.rate_limit import limiter  # single place for limiter
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
-from backend.src.services.security import create_jwt
 from backend.src.modules.auth.csrf import CSRF_COOKIE_NAME
+from backend.src.services.security import create_jwt
 
 CSRF_HEADER = "X-CSRF-Token"
 
@@ -127,7 +127,7 @@ def _csrf_headers(client, extra: Optional[Dict[str, str]] = None) -> Dict[str, s
 
 
 def _login(client, email: str, password: str, ip: str = "127.0.0.1"):
-    response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
         "/api/auth/login",
         json={"email": email, "password": password},
         headers=_csrf_headers(client, _headers_for_ip(ip)),
@@ -545,7 +545,7 @@ def test_password_reset_flow(client, monkeypatch):
     assert token_list, "reset token not provided"
     token = token_list[0]
 
-    reset_response = client.post(
+        # # reset_response = client.post(  # noqa: F841  # noqa: F841
         "/api/auth/password/reset",
         json={
             "token": token,

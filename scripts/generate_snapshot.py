@@ -1,40 +1,43 @@
 #!/usr/bin/env python3
-"""Generate a concise Markdown snapshot from docs/autorisen_project_plan.csv
-Writes output to docs/Master_ProjectPlan.generated.md (non-destructive).
-"""
-import csv
+"""Generate a concise Markdown snapshot from docs/autorisen_project_plan.csv."""
+
+from __future__ import annotations
+
+import sys
 from collections import Counter
 from datetime import date
+from pathlib import Path
 
-CSV = "docs/autorisen_project_plan.csv"
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.plan_utils import PLAN_CSV, load_plan_rows
+
 OUT = "docs/Master_ProjectPlan.generated.md"
 
-with open(CSV, newline="") as f:
-    reader = csv.DictReader(f)
-    rows = list(reader)
-
+header, rows = load_plan_rows(PLAN_CSV)
 status_counts = Counter(r["status"] for r in rows)
 total = len(rows)
-
-p1_tasks = [r for r in rows if r["priority"].strip().upper() == "P1"][:12]
-
+p1_tasks = [r for r in rows if r["priority"].upper() == "P1"][:12]
 today = date.today().isoformat()
 
-with open(OUT, "w") as o:
-    o.write("# Master Project Plan (generated snapshot) — autorisen\n\n")
-    o.write("Snapshot: " + today + "\n\n")
-    o.write("- Total tasks: " + str(total) + "\n")
-    o.write(
+with open(OUT, "w", encoding="utf-8") as handle:
+    handle.write("# Master Project Plan (generated snapshot) — autorisen\n\n")
+    handle.write(f"Snapshot: {today}\n\n")
+    handle.write(f"- Total tasks: {total}\n")
+    handle.write(
         "- Status counts: "
-        + ", ".join(f"{k}: {v}" for k, v in status_counts.items())
+        + ", ".join(f"{key}: {value}" for key, value in status_counts.items())
         + "\n\n"
     )
-    o.write("## Top priority (P1) tasks — quick view\n\n")
-    o.write("| Task ID | Title | Owner | Estimate | Depends On |\n")
-    o.write("|---|---|---:|---:|---:|\n")
-    for r in p1_tasks:
-        o.write(
-            f"| {r['task_id']} | {r['task_title']} | {r['owner']} | {r['estimate']} | {r['depends_on']} |\n"
+    handle.write("## Top priority (P1) tasks — quick view\n\n")
+    handle.write("| Task ID | Task | Owner | Estimate (hrs) | Dependencies |\n")
+    handle.write("|---|---|---|---:|---|\n")
+    for row in p1_tasks:
+        handle.write(
+            f"| {row['id']} | {row['task']} | {row['owner']} | "
+            f"{row['estimated_hours']} | {row['dependencies']} |\n"
         )
 
 print("Wrote", OUT)

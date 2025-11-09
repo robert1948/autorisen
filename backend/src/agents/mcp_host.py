@@ -6,7 +6,7 @@ import inspect
 import logging
 import os
 import pathlib
-from typing import Any, Dict, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 log = logging.getLogger("mcp-host")
 

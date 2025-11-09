@@ -1,3 +1,7 @@
+# AutoLocal/CapeControl .dockerignore
+# Production-ready FastAPI + React SaaS platform
+# Updated: November 9, 2025
+
 # Git and IDE
 .git
 .gitignore
@@ -21,9 +25,13 @@ Thumbs.db
 # Environment and secrets (security)
 .env
 .env.*
+!.env.example
 .env.local
 .env.production
 .env.prod
+.env.sandbox
+.env.figma
+.env.test
 *.pem
 *.key
 secrets/
@@ -56,25 +64,46 @@ client/dist/
 client/.cache/
 client/.turbo/
 client/coverage/
+node_modules/
+*/node_modules/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Test and development files
 tests/
+tests_disabled/
+tests_enabled/
 docs/
 .github/
+*.db
 dev.db
 test.db
+test_*.db
+tmp_*.db
 .testcache/
 test-results/
 playwright-report/
+voice_demo_report_*.json
+demo_*.py
+test_*.py
+*_demo.py
+integration_test.py
 
 # Development artifacts and analysis
 figma_analysis/
 figma_analysis_page/
 client/src/components/generated/
 client/src/App.tsx.backup
+tools/generated/
+scripts/temp/
+scripts/__pycache__/
+infra/
+config/temp/
+CapeControl_React_Starter_Dark/
 
 # Figma integration cache
 docs/CapeWire_Tokens_Typography_Board.json
@@ -94,18 +123,10 @@ docs/pages_overview.md
 docs/checklists/temp/
 docs/playbooks/design/06-target-frame.md
 
-# Generated/demo pages (development only)
-client/src/pages/AboutPage.tsx
-client/src/pages/CapeLoginPage.tsx
-client/src/pages/CapeRegisterPage.tsx
-client/src/pages/Demo1Demo.tsx
-client/src/pages/FigmaDemo.tsx
-client/src/pages/HomePage.tsx
-client/src/pages/HomePagePage.tsx
-client/src/pages/MainPageDemo.tsx
-client/src/pages/SubscribePage.tsx
-client/src/pages/SubscribePagePage.tsx
-client/src/pages/TestPage.tsx
+# Generated/demo pages (development only) - use patterns for flexibility
+client/src/pages/Demo*.tsx
+client/src/pages/Test*.tsx
+client/src/pages/*Demo.tsx
 
 # Build artifacts
 build/
@@ -115,6 +136,13 @@ docker-data/
 
 # Logo files in root (should be in proper assets directory)
 LogoW.png
+=0.110
+
+# Keep optimized logo assets in client/public for deployment
+!client/public/LogoW.png
+!client/public/*.png
+!client/public/*.ico
+!client/public/*.svg
 
 # Production logs and monitoring
 logs/
@@ -129,18 +157,41 @@ metrics/temp/
 # Agent framework development artifacts  
 agents/temp/
 config/temp/
+backend/src/modules/*/temp/
 
 # ChatKit development
 chatkit-cache/
 
+# AI/ML development artifacts
+*.model
+*.pkl
+*.joblib
+models/temp/
+
+# Migration and database development files
+backend/migrations/versions/temp_*.py
+migrate_*.py
+fix_*.py
+init_*.py
+emergency_*.py
+*_migration_backup.sql
+
+# Development and maintenance scripts
+debug_*.py
+validate_*.py
+quick_*.py
+auth_api_standalone.py
+codex.*.md
+config_comparison.md
+Copy_app.py
+Makefile.bak
+merged-requirements.txt
+
+# Deployment scripts
+scripts/deploy-heroku.sh
+
 # Include essential client source and assets for Docker build
-!client/src/components/
-!client/src/lib/
-!client/src/types/
-!client/src/context/
-!client/src/App.tsx
-!client/src/main.tsx
-!client/src/index.css
+!client/src/
 !client/public/
 !client/package*.json
 !client/tsconfig*.json
@@ -149,10 +200,20 @@ chatkit-cache/
 !client/tailwind.config.js
 !client/postcss.config.js
 
-# Include backend source
+# Include backend source and essential configs
 !backend/
+!app/
 !requirements*.txt
 !Dockerfile*
 !Procfile
 !runtime.txt
 !heroku.yml
+!docker-compose.yml
+!alembic.ini
+!pytest.ini
+!ruff.toml
+
+# Exclude specific client files we don't want
+client/src/pages/Demo*.tsx
+client/src/pages/Test*.tsx
+client/src/pages/*Demo.tsx

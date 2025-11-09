@@ -72,9 +72,9 @@ Top priority (P1) tasks — quick view
 How to use and update
 
 - Edit `docs/autorisen_project_plan.csv` for day-to-day task changes (status, owner, estimates). Follow the CSV schema:
-  - Required header: module,area,task_id,task_title,description,owner,priority,estimate,depends_on,status,started_at,updated_at,done_at,notes
-  - `status` must be one of: todo, busy, done
-  - Dates use ISO 8601 (YYYY-MM-DD)
+  - Required header: id,phase,task,owner,status,priority,dependencies,estimated_hours,completion_date,artifacts,verification,notes,codex_hints
+  - `status` must be one of: todo, in-progress, completed, blocked, deferred
+  - `completion_date` values (when present) use ISO 8601 (YYYY-MM-DD)
 - Commit message convention: `docs(plan): <short description>` (e.g., `docs(plan): mark AUTH-002 in-progress`)
 - When milestones or high-level narrative shift, update this Markdown to record rationale and dates; include links to PRs or Action runs in the CSV `notes` column.
 
@@ -140,9 +140,9 @@ Secrets & Infra change checklist
 Appendix — Helpful commands
 
 ```bash
-# Validate role exists
+## Validate role exists
 aws iam get-role --role-name gh-oidc-autorisen-ecr --query 'Role.Arn' --output text
-# Master Project Plan — autorisen
+## Master Project Plan — autorisen
 
 Snapshot: 2025-09-26
 

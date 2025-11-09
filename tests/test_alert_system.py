@@ -15,7 +15,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from app.main import app
 from app.services.alert_service import (
     AlertChannel,
     AlertRule,
@@ -26,6 +25,8 @@ from app.services.alert_service import (
     get_alert_system,
 )
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 
 class TestAlertSystem:
@@ -189,11 +190,11 @@ class TestAlertSystem:
 
         # Test condition that should trigger
         data_trigger = {"error_rate": 15.0}
-        assert self.alert_system._evaluate_condition(rule, data_trigger) == True
+        assert self.alert_system._evaluate_condition(rule, data_trigger)
 
         # Test condition that should not trigger
         data_no_trigger = {"error_rate": 5.0}
-        assert self.alert_system._evaluate_condition(rule, data_no_trigger) == False
+        assert not self.alert_system._evaluate_condition(rule, data_no_trigger)
 
     def test_get_active_alerts_filtering(self):
         """Test active alerts filtering"""
@@ -255,7 +256,7 @@ class TestAlertNotifications:
         )
 
         success = self.alert_system._send_log_notification(test_alert)
-        assert success == True
+        assert success
 
     @pytest.mark.asyncio
     async def test_email_notification_no_config(self):
@@ -283,7 +284,7 @@ class TestAlertNotifications:
         success = await self.alert_system._send_email_notification(
             test_alert, email_channel
         )
-        assert success == False
+        assert not success
 
         # Restore original config
         email_channel.config = original_config
@@ -313,7 +314,7 @@ class TestAlertNotifications:
         success = await self.alert_system._send_webhook_notification(
             test_alert, webhook_channel
         )
-        assert success == False
+        assert not success
 
         # Restore original config
         webhook_channel.config = original_config
@@ -380,7 +381,7 @@ class TestAlertAPI:
         }
 
         with patch("app.core.auth.get_current_user", return_value={"username": "test"}):
-            response = self.client.post(
+        # # response = self.client.post(  # noqa: F841  # noqa: F841
                 "/api/v1/alerts/rules", json=new_rule, headers=self.headers
             )
 

@@ -8,9 +8,9 @@ Build a Markdown gallery from exported Figma frames.
 
 No third-party deps.
 """
-from pathlib import Path
 import argparse
 import shutil
+from pathlib import Path
 
 
 def rel(p: Path, base: Path) -> str:

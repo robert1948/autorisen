@@ -1,33 +1,77 @@
-# Codex PR Template
+# AutoLocal/CapeControl PR Template
 
-<!-- Optimized for agent-run changes. Keep sections concise and machine-readable. -->
+<!-- Production-ready FastAPI + React SaaS platform -->
+<!-- Updated: November 9, 2025 -->
 
 ## 📌 Summary
 
-- **Playbook:** <!-- e.g., doc-clean | plan-sync | ci-tune | test-guardian -->
-- **Scope labels:** <!-- ensure includes `codex` + specific playbook label -->
-- **Branch:** <!-- expected: codex/<playbook>/<date>-<shortid> -->
+**Type:** <!-- feat | fix | chore | docs | refactor | perf | test | ci -->
+**Component:** <!-- backend | frontend | infra | docs | workflows -->
+**Impact:** <!-- breaking | feature | patch | internal -->
 
-## 🧪 Commands Executed (in order)
+**Description:**
+<!-- Brief description of changes made -->
 
-<!-- Paste exact commands Codex ran, one per line, no prose -->
-## 📁 Changes
+## 🔄 Changes Made
 
-- **Files changed (count):** <!-- number -->
-- **Generated/Updated paths:** <!-- short list or globs -->
-- **Skipped paths (if any):** <!-- list -->
+### Backend Changes
+- [ ] Core API modifications
+- [ ] Database schema changes
+- [ ] Agent/module updates
+- [ ] Security/auth changes
+- [ ] Performance improvements
 
-## 🔍 Results & Output
+### Frontend Changes
+- [ ] UI/UX improvements
+- [ ] Component updates
+- [ ] Style/layout changes
+- [ ] Asset updates
+- [ ] Build configuration
 
-- **Pre-commit status:** <!-- pass | warnings (count) -->
-- **Pytest status (smoke):** <!-- pass | warnings | N fails -->
-- **Notable warnings:** <!-- bullets or 'None' -->
+### Infrastructure Changes
+- [ ] Docker/deployment updates
+- [ ] CI/CD workflow changes
+- [ ] Environment configuration
+- [ ] Dependencies updates
 
-## 🧭 Plan Sync Drift (if applicable)
+## 🧪 Testing & Validation
 
-<!-- Machine-readable diff block from scripts/plan_sync.py --check-only -->
-```diff
-# + ID AUTH-010
-# - ID FE-001
+**Pre-submission Checklist:**
+- [ ] Local tests pass (`make codex-test`)
+- [ ] Docker build successful (`make docker-build`)
+- [ ] Frontend builds without errors
+- [ ] Linting passes (Python & TypeScript)
+- [ ] No security vulnerabilities introduced
 
-sample
+**Manual Testing:**
+- [ ] Authentication flow tested
+- [ ] Core features functional
+- [ ] UI responsive on mobile/desktop
+- [ ] Error handling verified
+
+## 📁 Files Modified
+
+**Count:** <!-- number of files changed -->
+
+**Key Files:**
+<!-- List important files or use patterns like backend/src/modules/*/router.py -->
+
+## 🔍 Deployment Considerations
+
+**Database Changes:**
+- [ ] Migrations included
+- [ ] Backward compatibility maintained
+- [ ] Migration tested locally
+
+**Environment Variables:**
+- [ ] New variables documented
+- [ ] Heroku config updated (if needed)
+- [ ] Sensitive data properly handled
+
+**Breaking Changes:**
+- [ ] No breaking changes
+- [ ] Breaking changes documented below
+
+## 📋 Additional Notes
+
+<!-- Any additional context, concerns, or follow-up items -->

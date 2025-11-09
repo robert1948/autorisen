@@ -13,7 +13,6 @@ Comprehensive testing for content moderation system including:
 from unittest.mock import Mock, patch
 
 import pytest
-from app.main import app
 from app.middleware.content_moderation import ContentModerationMiddleware
 from app.utils.content_moderation import (
     ContentCategory,
@@ -25,6 +24,8 @@ from app.utils.content_moderation import (
     moderate_user_content,
 )
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 
 # Test fixtures
@@ -55,7 +56,7 @@ class TestContentModerator:
 
         result = content_moderator.moderate_content(safe_content)
 
-        assert result.is_safe == True
+        assert result.is_safe
         assert result.category == ContentCategory.SAFE
         assert len(result.violations) == 0
         assert result.suggested_action == "allow"
@@ -69,7 +70,7 @@ class TestContentModerator:
             hate_content, moderation_level=ModerationLevel.STANDARD
         )
 
-        assert result.is_safe == False
+        assert not result.is_safe
         assert result.category == ContentCategory.BLOCKED
         assert ViolationType.HATE_SPEECH in result.violations
         assert result.suggested_action == "block"
@@ -85,7 +86,7 @@ class TestContentModerator:
             violent_content, moderation_level=ModerationLevel.STANDARD
         )
 
-        assert result.is_safe == False
+        assert not result.is_safe
         assert result.category == ContentCategory.BLOCKED
         assert ViolationType.VIOLENCE in result.violations
         assert result.suggested_action == "block"
@@ -101,7 +102,7 @@ class TestContentModerator:
             adult_content, moderation_level=ModerationLevel.STANDARD
         )
 
-        assert result.is_safe == False
+        assert not result.is_safe
         assert result.category == ContentCategory.BLOCKED
         assert ViolationType.ADULT_CONTENT in result.violations
         assert result.suggested_action == "block"
@@ -137,7 +138,7 @@ class TestContentModerator:
             malicious_content, moderation_level=ModerationLevel.STANDARD
         )
 
-        assert result.is_safe == False
+        assert not result.is_safe
         assert ViolationType.MALICIOUS_CODE in result.violations
         assert result.suggested_action == "block"
 
@@ -181,7 +182,7 @@ class TestContentModerator:
         ]
 
         for result in empty_results:
-            assert result.is_safe == True
+            assert result.is_safe
             assert result.category == ContentCategory.SAFE
             assert len(result.violations) == 0
 
@@ -207,7 +208,7 @@ class TestContentModerator:
         result = content_moderator.moderate_content(profane_content)
 
         # Content should be filtered but not blocked entirely
-        assert result.is_safe == True
+        assert result.is_safe
         assert "***" in result.moderated_content
 
 
@@ -220,7 +221,7 @@ class TestAIResponseModeration:
 
         result = content_moderator.moderate_ai_response(medical_response)
 
-        assert result.is_safe == True
+        assert result.is_safe
         assert "Disclaimer" in result.moderated_content
         assert "not medical advice" in result.moderated_content.lower()
 
@@ -285,7 +286,7 @@ class TestContentModerationIntegration:
         medical_content = "You should take this medication for your illness without consulting a doctor."
         result = moderator.moderate_ai_response(medical_content)
 
-        assert result.is_safe == True
+        assert result.is_safe
         assert "not medical advice" in result.moderated_content.lower()
         assert "healthcare professional" in result.moderated_content.lower()
 
@@ -293,7 +294,7 @@ class TestContentModerationIntegration:
         harmful_content = "Here's how to make illegal drugs and sell them for profit"
         result = moderator.moderate_content(harmful_content)
 
-        assert result.is_safe == False
+        assert not result.is_safe
         assert len(result.violations) > 0
 
     @patch("app.routes.cape_ai.cape_ai_service.generate_contextual_response")
@@ -321,7 +322,7 @@ class TestContentModerationIntegration:
 
         prompt_data = {"message": "How can I make money quickly?", "context": {}}
 
-        response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
             "/api/ai/prompt",
             json=prompt_data,
             headers={"Authorization": "Bearer mock_token"},
@@ -332,7 +333,7 @@ class TestContentModerationIntegration:
 
         # Should get fallback response
         assert "cannot provide that response" in data["response"].lower()
-        assert data.get("moderation_applied", False) == True
+        assert data.get("moderation_applied", False)
 
 
 class TestContentModerationPerformance:
@@ -349,7 +350,7 @@ class TestContentModerationPerformance:
         # Process 100 messages
         for _ in range(100):
             result = content_moderator.moderate_content(test_content)
-            assert result.is_safe == True
+            assert result.is_safe
 
         end_time = time.time()
         processing_time = end_time - start_time
@@ -382,7 +383,7 @@ class TestContentModerationPerformance:
 
         # Complex content should still process quickly (under 50ms)
         assert processing_time < 0.05
-        assert result.is_safe == True
+        assert result.is_safe
 
 
 class TestContentModerationMiddleware:
@@ -395,7 +396,7 @@ class TestContentModerationMiddleware:
         middleware = ContentModerationMiddleware(app)
 
         assert middleware.moderator is not None
-        assert middleware.enabled == True
+        assert middleware.enabled
         assert len(middleware.endpoint_configs) > 0
 
     def test_endpoint_configuration(self):
@@ -408,8 +409,8 @@ class TestContentModerationMiddleware:
         ai_config = middleware._get_endpoint_config("/api/ai/prompt")
         assert ai_config is not None
         assert ai_config["moderation_level"] == ModerationLevel.STANDARD
-        assert ai_config["moderate_input"] == True
-        assert ai_config["moderate_output"] == True
+        assert ai_config["moderate_input"]
+        assert ai_config["moderate_output"]
 
     def test_middleware_stats_collection(self):
         """Test that middleware collects statistics"""
@@ -433,7 +434,7 @@ class TestConvenienceFunctions:
 
         result = moderate_ai_response(response)
 
-        assert result.is_safe == True
+        assert result.is_safe
         assert result.category == ContentCategory.SAFE
 
     def test_moderate_user_content_function(self):
@@ -442,7 +443,7 @@ class TestConvenienceFunctions:
 
         result = moderate_user_content(content)
 
-        assert result.is_safe == True
+        assert result.is_safe
         assert result.category == ContentCategory.SAFE
 
     def test_is_content_safe_function(self):
@@ -450,8 +451,8 @@ class TestConvenienceFunctions:
         safe_content = "Hello, how are you today?"
         unsafe_content = "I hate everyone and want to cause violence"
 
-        assert is_content_safe(safe_content) == True
-        assert is_content_safe(unsafe_content) == False
+        assert is_content_safe(safe_content)
+        assert not is_content_safe(unsafe_content)
 
 
 if __name__ == "__main__":

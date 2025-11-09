@@ -1,26 +1,17 @@
 #!/usr/bin/env python3
-"""
-PlanSyncAgent helper.
+"""PlanSyncAgent helper for docs/autorisen_project_plan.csv."""
 
-- Treats docs/autorisen_project_plan.csv as source of truth for a task table.
-- Reads/writes a fenced section in docs/Master_ProjectPlan.md between:
-    <!-- PLAN:BEGIN -->
-    <!-- PLAN:END -->
-- --check-only exits non-zero if drift is detected (IDs/title/status mismatch).
-- --apply regenerates the fenced table from CSV.
-
-CSV requirements:
-- Must include at least the columns: id, title
-- Optional columns (if present) are included: status, owner, priority
-
-This script is deliberately simple and deterministic.
-"""
-import csv
 import re
 import sys
 from pathlib import Path
 
-CSV_PATH = Path("docs/autorisen_project_plan.csv")
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.plan_utils import PLAN_CSV, load_plan_rows
+
+CSV_PATH = PLAN_CSV
 MD_PATH = Path("docs/Master_ProjectPlan.md")
 BEGIN = "<!-- PLAN:BEGIN -->"
 END = "<!-- PLAN:END -->"
@@ -30,17 +21,12 @@ def load_csv_rows():
     if not CSV_PATH.exists():
         print(f"[PlanSync] Missing {CSV_PATH}", file=sys.stderr)
         return []
-    with CSV_PATH.open(newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-    # Minimal validation
-    for required in ("id", "title"):
-        if required not in reader.fieldnames:
-            print(
-                f"[PlanSync] CSV missing required column: {required}", file=sys.stderr
-            )
-            sys.exit(2)
-    return rows, reader.fieldnames
+    try:
+        header, rows = load_plan_rows(CSV_PATH)
+    except ValueError as exc:  # pragma: no cover - surfaced via tests
+        print(f"[PlanSync] {exc}", file=sys.stderr)
+        sys.exit(2)
+    return rows, header
 
 
 def extract_fenced(md_text: str):
@@ -56,9 +42,8 @@ def extract_fenced(md_text: str):
 
 def render_table(rows, fieldnames):
     # choose columns to output
-    base_cols = ["id", "title"]
-    optional = [c for c in ("status", "owner", "priority") if c in fieldnames]
-    cols = base_cols + optional
+    cols = ["id", "phase", "task", "owner", "status", "priority", "estimated_hours"]
+    cols = [c for c in cols if c in fieldnames]
 
     # header
     header = "| " + " | ".join(c.capitalize() for c in cols) + " |\n"
@@ -89,12 +74,12 @@ def main():
     check_only = "--check-only" in sys.argv
     apply = "--apply" in sys.argv
 
-    rows_fieldnames = load_csv_rows()
-    if not rows_fieldnames:
+    csv_payload = load_csv_rows()
+    if not csv_payload:
         # If CSV missing, consider no drift but warn
         print("[PlanSync] No CSV present; nothing to sync.")
         sys.exit(0)
-    rows, fieldnames = rows_fieldnames
+    rows, fieldnames = csv_payload
 
     if not MD_PATH.exists():
         # Create a stub MD with fenced section
@@ -116,9 +101,6 @@ def main():
     # Re-render block from CSV for content drift detection
     regenerated = render_table(rows, fieldnames)
     content_drift = False
-    if fenced and regenerated.strip() != regenerated.strip():
-        # (Always false; we want to compare fenced vs regenerated)
-        pass
     if fenced and fenced.strip() != regenerated.strip():
         content_drift = True
 

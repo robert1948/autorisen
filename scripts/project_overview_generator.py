@@ -5,7 +5,7 @@ import csv
 import pathlib
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CSV_PATH = ROOT / "docs" / "project-plan.csv"

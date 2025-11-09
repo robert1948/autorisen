@@ -21,8 +21,9 @@ from datetime import datetime
 # Add the parent directory to the path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import Base, engine
 from sqlalchemy import inspect
+
+from app.database import Base, engine
 
 
 def create_all_tables():

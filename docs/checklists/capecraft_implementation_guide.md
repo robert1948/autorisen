@@ -24,8 +24,7 @@ HomePage -> Central landing with clear CTAs
 ├── AboutPage -> Company information  
 ├── RegisterPage -> User onboarding
 └── LoginPage -> Authentication
-```
-
+```text
 #### **2. User Flow Optimization**
 
 - **Priority 1**: Registration/Login flows (critical path)
@@ -45,27 +44,25 @@ The JSON spec includes:
 ### **Phase 1: Figma Design Creation**
 
 ```bash
-# Use our existing Figma workflow
+## Use our existing Figma workflow
 make design-helper
 
-# Generate components from your Figma designs
+## Generate components from your Figma designs
 make design-generate NODE_ID=<frame-id> COMPONENT=HomePage
 make design-generate NODE_ID=<frame-id> COMPONENT=SubscribePage
-# ... etc for each page
-```
-
+## ... etc for each page
+```text
 ### **Phase 2: React Component Development**
 
 ```bash
-# Components will be auto-generated in:
+## Components will be auto-generated in:
 client/src/components/generated/
 ├── HomePage.tsx
 ├── SubscribePage.tsx
 ├── AboutPage.tsx
 ├── RegisterPage.tsx
 └── LoginPage.tsx
-```
-
+```text
 ### **Phase 3: Route Integration**
 
 The routes will match your MindMup structure:

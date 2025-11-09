@@ -6,8 +6,8 @@
 
 **Commands:**
 
-1) `make codex-test-dry`
-2) If specific fixture regeneration is appropriate:
+1. `make codex-test-dry`
+1. If specific fixture regeneration is appropriate:
    - `make codex-test-heal`
 
 **Allowed edits:** `tests/**`, `scripts/regenerate_fixtures.py`, fixture files

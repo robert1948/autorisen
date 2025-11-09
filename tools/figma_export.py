@@ -15,7 +15,14 @@ Requires:
   --file-id <FIGMA_FILE_ID>
   --csv docs/figma/frames.csv
 """
-import argparse, csv, json, os, sys, time, urllib.request, urllib.parse
+import argparse
+import csv
+import json
+import os
+import sys
+import time
+import urllib.parse
+import urllib.request
 
 API_BASE = "https://api.figma.com/v1"
 

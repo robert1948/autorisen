@@ -80,16 +80,15 @@ Ensure the CapeControl backend provides secure, reliable authentication for both
 ## 6) Runbook / Commands
 
 ```bash
-# Run tests locally
+## Run tests locally
 make test
 
-# Run CSRF and rate-limit tests only
+## Run CSRF and rate-limit tests only
 pytest -k "csrf or rate_limit" -v
 
-# Validate environment security vars
+## Validate environment security vars
 printenv | grep -E 'SECRET|TOKEN|CSRF'
-```
-
+```text
 ---
 
 ## 7) Risks & Mitigations
@@ -115,5 +114,5 @@ printenv | grep -E 'SECRET|TOKEN|CSRF'
 ## ✅ Next Actions
 
 1. Add password reset + hashing test coverage (M3).
-2. Backfill automated tests around new sanitization & DDoS middleware.
-3. Finalize auth schema docs once security middleware validated (M5).
+1. Backfill automated tests around new sanitization & DDoS middleware.
+1. Finalize auth schema docs once security middleware validated (M5).

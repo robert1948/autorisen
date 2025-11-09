@@ -22,7 +22,6 @@ from fastapi.testclient import TestClient
 # Add the backend directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from app.main import app
 from app.services.health_service import (
     EndpointHealthCheck,
     HealthCheckResult,
@@ -30,6 +29,8 @@ from app.services.health_service import (
     HealthStatus,
     ServiceType,
 )
+
+from app.main import app
 
 client = TestClient(app)
 
@@ -345,7 +346,7 @@ class TestHealthAPIEndpoints:
 
     def test_trigger_health_check_endpoint(self):
         """Test health check trigger endpoint"""
-        response = client.post("/api/health/check")
+        # # response = client.post("/api/health/check")  # noqa: F841  # noqa: F841
         assert response.status_code == 200
         data = response.json()
         assert "message" in data

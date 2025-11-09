@@ -1,5 +1,6 @@
-# Production-Ready Docker Image for CapeControl
-# Multi-stage optimized build for autorisen Heroku deployment
+# Production-Ready Docker Image for AutoLocal/CapeControl
+# Multi-stage optimized build for Heroku deployment
+# Updated: November 9, 2025
 
 ARG NODE_VERSION=20
 ARG PYTHON_VERSION=3.12
@@ -10,62 +11,85 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY client/package*.json ./
-# Need devDependencies for Vite/TypeScript build tooling
-RUN npm ci
+# Install dependencies including devDependencies for build tools
+RUN npm ci --only=production=false
 
-# Copy frontend source files
+# Copy frontend source files and configuration
 COPY client/src ./src
 COPY client/public ./public
 COPY client/index.html ./
 COPY client/vite.config.ts ./
 COPY client/tsconfig*.json ./
 
-# Build for production with proper API base
+# Copy optional configuration files (if they exist)
+RUN touch tailwind.config.js postcss.config.js
+COPY client/tailwind.config.js* ./
+COPY client/postcss.config.js* ./
+
+# Build for production with optimizations
 ENV NODE_ENV=production
 ENV VITE_API_BASE=/api
-RUN npm run build
+RUN npm run build && npm cache clean --force
 
 # Production Python runtime stage
 FROM python:${PYTHON_VERSION}-slim AS production
+
+# Environment configuration
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     ENV=prod \
     DEBUG=false \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
-# Install system dependencies (minimal set)
+# Install system dependencies (minimal security-focused set)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq5 \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Install Python dependencies (using merged requirements for production)
+# Install Python dependencies (production requirements only)
 COPY requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip check
 
-# Create non-root user for security
-RUN useradd -m -u 1000 app
+# Create non-root user for enhanced security
+RUN useradd -m -u 1000 -s /bin/bash app \
+    && mkdir -p /app/logs /app/tmp \
+    && chown -R app:app /app
 
-# Copy application code with proper permissions
+# Copy application code with proper ownership
 COPY --chown=app:app backend/ ./backend/
 COPY --chown=app:app app/ ./app/
 COPY --chown=app:app --from=frontend-build /app/dist ./client/dist
 
-# Copy essential configuration
+# Copy essential configuration files
 COPY --chown=app:app runtime.txt ./
+COPY --chown=app:app backend/alembic.ini ./backend/
+COPY --chown=app:app heroku.yml ./
 
-# Switch to non-root user
+# Verify critical files exist
+RUN test -f ./backend/src/app.py || (echo "❌ Backend app not found" && exit 1) && \
+    test -d ./client/dist || (echo "❌ Frontend dist not found" && exit 1) && \
+    ls -la ./client/dist/ && \
+    echo "✅ Application structure verified"
+
+# Switch to non-root user before runtime
 USER app
 
-# Health check for container orchestration
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+# Enhanced health check for Heroku platform
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
 
-EXPOSE 8000
+# Expose port (Heroku assigns $PORT dynamically)
+EXPOSE ${PORT:-8000}
 
-# Production startup command (Gunicorn with Uvicorn workers)
-CMD ["sh", "-c", "gunicorn backend.src.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --worker-tmp-dir /dev/shm"]
+# Production startup with optimized Gunicorn configuration
+CMD ["sh", "-c", "exec gunicorn backend.src.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --worker-tmp-dir /dev/shm --access-logfile - --error-logfile - --log-level info --keep-alive 2 --max-requests 1000 --max-requests-jitter 50 --timeout 30"]

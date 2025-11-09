@@ -9,16 +9,14 @@ cd /workspaces/localstorm/backend
 source ../.venv/bin/activate
 pip install pytest pytest-asyncio
 python -m pytest tests/ -v
-```
-
+```text
 ### Frontend Tests (Future)
 
 ```bash
 cd /workspaces/localstorm/client
 npm install --save-dev @testing-library/react @testing-library/jest-dom vitest jsdom
 npm run test
-```
-
+```text
 ## Test Structure
 
 ### Backend (`/backend/tests/`)

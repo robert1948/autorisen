@@ -106,7 +106,7 @@ async def register_v2_optimized(user_data, db):
             )
             db.add(audit_log)
             db.commit()
-        except:
+        except Exception:
             pass  # Don't fail registration for audit issues
         
         return {"id": str(db_user.id), "email": db_user.email}

@@ -410,8 +410,9 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_list_templates_endpoint(self, mock_user):
         """Test the list templates API endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch(
             "app.routes.advanced_prompting.get_current_user", return_value=mock_user
@@ -457,8 +458,9 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_generate_prompt_endpoint(self, mock_user):
         """Test the generate prompt API endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch(
             "app.routes.advanced_prompting.get_current_user", return_value=mock_user
@@ -481,7 +483,7 @@ class TestAdvancedPromptingAPI:
                 mock_service.return_value = mock_prompting_service
 
                 client = TestClient(app)
-                response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
                     "/api/prompting/generate",
                     json={
                         "template_id": "test_template",
@@ -499,8 +501,9 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_create_custom_template_endpoint(self, mock_user):
         """Test the create custom template API endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch(
             "app.routes.advanced_prompting.get_current_user", return_value=mock_user
@@ -535,7 +538,7 @@ class TestAdvancedPromptingAPI:
                 mock_service.return_value = mock_prompting_service
 
                 client = TestClient(app)
-                response = client.post(
+        # # response = client.post(  # noqa: F841  # noqa: F841
                     "/api/prompting/templates",
                     json={
                         "name": "Custom Template",
@@ -558,8 +561,9 @@ class TestAdvancedPromptingAPI:
     @pytest.mark.asyncio
     async def test_template_analytics_endpoint(self, mock_user):
         """Test the template analytics API endpoint"""
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         with patch(
             "app.routes.advanced_prompting.get_current_user", return_value=mock_user

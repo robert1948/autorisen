@@ -78,16 +78,15 @@ Prepare the CapeControl platform for public release and early customer adoption.
 ## 6) Runbook / Commands
 
 ```bash
-# Check domain mail records
+## Check domain mail records
 nslookup -type=MX cape-control.com
 
-# Run analytics verification (example for Plausible)
+## Run analytics verification (example for Plausible)
 curl -I https://plausible.io/api/event
 
-# Build docs locally
+## Build docs locally
 mkdocs serve
-```
-
+```text
 ---
 
 ## 7) Risks & Mitigations
@@ -113,6 +112,6 @@ mkdocs serve
 ## ✅ Next Actions
 
 1. Align landing visuals and messaging (M1).
-2. Set up support mailbox and test responses (M2).
-3. Implement feedback + analytics systems (M3).
-4. Prepare documentation and launch announcement (M4–M5).
+1. Set up support mailbox and test responses (M2).
+1. Implement feedback + analytics systems (M3).
+1. Prepare documentation and launch announcement (M4–M5).

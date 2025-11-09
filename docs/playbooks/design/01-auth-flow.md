@@ -38,8 +38,7 @@ Login → Register → Email Verification (optional) → Onboarding → Dashboar
 ```bash
 make design-sync FIGMA_BOARD=https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/Untitled?node-id=0-1
 make design-validate PLAYBOOK=auth-flow
-```
-
+```text
 ## 6) Decisions Log
 
 - 2025-10-30: Adopt CSRF fetch on boot via `GET /api/auth/csrf` and store in `AuthContext`.

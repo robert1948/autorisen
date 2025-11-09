@@ -1,73 +1,86 @@
 #!/usr/bin/env python3
-"""Lightweight validator for docs/autorisen_project_plan.csv
+"""Lightweight validator for docs/autorisen_project_plan.csv."""
 
-Checks:
- - header columns present and in-order
- - each task_id is unique
- - status is one of {todo,busy,done}
- - dates (started_at, updated_at, done_at) are either empty or YYYY-MM-DD
- - priority values look like P1/P2/etc.
+from __future__ import annotations
 
-Exit code 0 on success, non-zero on failure.
-"""
 import re
 import sys
-from collections import Counter
-from csv import DictReader
+from pathlib import Path
 
-PATH = "docs/autorisen_project_plan.csv"
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.plan_utils import (
+    PLAN_CSV,
+    PLAN_HEADER,
+    VALID_STATUSES,
+    load_plan_rows,
+)
+
 RE_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+RE_PRIORITY = re.compile(r"^P\d$")
 
-EXPECTED_HEADER = [
-    "module",
-    "area",
-    "task_id",
-    "task_title",
-    "description",
-    "owner",
-    "priority",
-    "estimate",
-    "depends_on",
-    "status",
-    "started_at",
-    "updated_at",
-    "done_at",
-    "notes",
-]
 
-ok = True
-with open(PATH, newline="") as f:
-    reader = DictReader(f)
-    header = reader.fieldnames
-    if header != EXPECTED_HEADER:
-        print("ERROR: header mismatch")
-        print("Expected:", EXPECTED_HEADER)
-        print("Found:   ", header)
-        ok = False
+def main() -> int:
+    try:
+        header, rows = load_plan_rows(PLAN_CSV)
+    except FileNotFoundError:
+        print(f"ERROR: missing {PLAN_CSV}", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
 
-    rows = list(reader)
+    if header != PLAN_HEADER:
+        print("ERROR: unexpected header layout", file=sys.stderr)
+        return 2
+    if not rows:
+        print("ERROR: plan CSV contains no active rows", file=sys.stderr)
+        return 2
 
-ids = [r["task_id"] for r in rows]
-dups = [tid for tid, c in Counter(ids).items() if c > 1]
-if dups:
-    print("ERROR: duplicate task_id(s):", dups)
-    ok = False
-
-for i, r in enumerate(rows, start=1):
-    status = r["status"].strip()
-    if status not in ("todo", "busy", "done"):
-        print(f"ERROR row {i} ({r['task_id']}): invalid status '{status}'")
-        ok = False
-    for col in ("started_at", "updated_at", "done_at"):
-        v = r[col].strip()
-        if v and not RE_DATE.match(v):
-            print(f"ERROR row {i} ({r['task_id']}): malformed date in {col}: '{v}'")
+    ok = True
+    seen_ids: set[str] = set()
+    for row in rows:
+        task_id = row["id"]
+        if not task_id:
+            print("ERROR: row missing id", file=sys.stderr)
             ok = False
-    pr = r["priority"].strip()
-    if pr and not re.match(r"^P\d+$", pr):
-        print(f"ERROR row {i} ({r['task_id']}): malformed priority '{pr}'")
-        ok = False
+            continue
+        if task_id in seen_ids:
+            print(f"ERROR: duplicate id detected: {task_id}", file=sys.stderr)
+            ok = False
+        seen_ids.add(task_id)
 
-if not ok:
-    sys.exit(2)
-print("OK: validation passed")
+        status = row["status"]
+        if status not in VALID_STATUSES:
+            print(f"ERROR {task_id}: invalid status '{status}'", file=sys.stderr)
+            ok = False
+
+        completion = row.get("completion_date", "")
+        if completion and not RE_DATE.match(completion):
+            print(
+                f"ERROR {task_id}: completion_date not ISO ({completion})",
+                file=sys.stderr,
+            )
+            ok = False
+
+        priority = row.get("priority", "")
+        if priority and not RE_PRIORITY.match(priority):
+            print(f"ERROR {task_id}: malformed priority '{priority}'", file=sys.stderr)
+            ok = False
+
+        hours = row.get("estimated_hours", "")
+        if hours and not hours.isdigit():
+            print(f"ERROR {task_id}: estimated_hours not numeric '{hours}'", file=sys.stderr)
+            ok = False
+
+    if not ok:
+        return 2
+
+    print("OK: validation passed")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

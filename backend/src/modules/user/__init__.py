@@ -1,6 +1,6 @@
 """User module init."""
 
-from .router import router
 from . import schemas, service
+from .router import router
 
 __all__ = ["router", "schemas", "service"]

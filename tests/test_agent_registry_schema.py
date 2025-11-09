@@ -21,8 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.src.db.base import Base  # noqa: E402
 from backend.src.db import models  # noqa: E402
+from backend.src.db.base import Base  # noqa: E402
 
 # In-memory database dedicated to this suite.
 engine = create_engine("sqlite+pysqlite:///:memory:", future=True)

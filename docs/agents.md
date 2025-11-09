@@ -67,7 +67,7 @@ printf "\n▶ Listing agent files...\n"
 ls -1 backend/src/modules/agents | sort || true
 
 printf "\n▶ Flagging missing expected agent files...\n"
-# Update this list if you rename files
+## Update this list if you rename files
 EXPECT=(
   auth_agent.py onboard_agent.py audit_agent.py monitoring_agent.py security_agent.py router.py
   capeai_guide.py dev_agent.py customer_agent.py chatkit_runtime.py finance_agent.py energy_agent.py
