@@ -6,7 +6,8 @@ import ChatInput from "./ChatInput";
 import MessageList from "./MessageList";
 import { chatApi } from "../../services/chatApi";
 import type { ChatThread as ThreadModel, ClientMessage } from "../../types/chat";
-import { useChatWebSocket } from "../../hooks/useWebSocket";
+import { useEnhancedWebSocket } from "../../hooks/useEnhancedWebSocket";
+import type { ConnectionHealth, ErrorState } from "../../types/websocket";
 
 type Props = {
   placement: string;
@@ -26,6 +27,83 @@ const createClientMessage = (content: string, threadId: string): ClientMessage =
   createdAt: new Date().toISOString(),
   status: "sending",
 });
+
+const ConnectionIndicator = ({ health }: { health: ConnectionHealth }) => {
+  const getStatusColor = () => {
+    switch (health.status) {
+      case 'open': return 'bg-green-500';
+      case 'connecting': return 'bg-yellow-500';
+      case 'error': return 'bg-red-500';
+      case 'closed': return 'bg-gray-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getQualityIndicator = () => {
+    switch (health.connectionQuality) {
+      case 'excellent': return '🟢';
+      case 'good': return '🟡';
+      case 'poor': return '🟠';
+      case 'critical': return '🔴';
+      default: return '⚪';
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <div className={`w-3 h-3 rounded-full ${getStatusColor()}`} />
+      <span className="capitalize">{health.status}</span>
+      {health.status === 'open' && (
+        <>
+          <span>{getQualityIndicator()}</span>
+          <span className="text-xs text-gray-500">
+            {health.latency}ms
+          </span>
+        </>
+      )}
+      {health.reconnectAttempts > 0 && (
+        <span className="text-xs text-orange-600">
+          Retry {health.reconnectAttempts}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const ErrorBanner = ({ errors, onClearErrors }: { 
+  errors: ErrorState[]; 
+  onClearErrors: () => void; 
+}) => {
+  const latestError = errors[errors.length - 1];
+  
+  if (!latestError) return null;
+
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-red-800 capitalize">
+            {latestError.type} Error
+          </h4>
+          <p className="text-sm text-red-700 mt-1">
+            {latestError.message}
+          </p>
+          {latestError.recoverable && (
+            <p className="text-xs text-red-600 mt-1">
+              This error is recoverable. The system will retry automatically.
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onClearErrors}
+          className="text-red-600 hover:text-red-800 text-xs"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ChatThread = ({ placement, token, onThreadChange }: Props) => {
   const queryClient = useQueryClient();
@@ -78,7 +156,8 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
     return [...merged, ...optimisticMessages];
   }, [eventsQuery.data, liveMessages, optimisticMessages]);
 
-  const { status: socketStatus } = useChatWebSocket({
+  // Enhanced WebSocket with comprehensive monitoring
+  const websocketResult = useEnhancedWebSocket({
     threadId: selectedThreadId,
     token: token.token,
     enabled: Boolean(selectedThreadId),
@@ -106,7 +185,25 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
         return next;
       });
     },
+    onError: (error) => {
+      console.error('WebSocket error:', error);
+      // Errors are automatically tracked in the hook
+    },
   });
+
+  const {
+    connectionHealth,
+    loadingState,
+    errors,
+    metrics,
+    send: sendWebSocket,
+    reconnect,
+    clearErrors,
+    isConnected,
+    isConnecting,
+    isReconnecting,
+    queueLength
+  } = websocketResult;
 
   const handleCreateThread = useCallback(async () => {
     setThreadActionError(null);
@@ -193,6 +290,14 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
     [handleSend],
   );
 
+  const handleReconnect = useCallback(async () => {
+    try {
+      await reconnect();
+    } catch (error) {
+      console.error('Manual reconnection failed:', error);
+    }
+  }, [reconnect]);
+
   return (
     <div className="chat-shell">
       <aside className="chat-sidebar">
@@ -249,15 +354,50 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
             <strong>{selectedThreadId}</strong>
           </div>
           <div className="chat-main__status">
-            <span className={`chat-main__badge chat-main__badge--${socketStatus}`}>
-              {socketStatus === "open" && "Live"}
-              {socketStatus === "connecting" && "Connecting"}
-              {socketStatus === "error" && "Offline"}
-              {socketStatus === "closed" && "Paused"}
-              {socketStatus === "idle" && "Idle"}
-            </span>
+            <ConnectionIndicator health={connectionHealth} />
+            {(loadingState.connecting || loadingState.reconnecting) && (
+              <div className="flex items-center gap-1 text-xs text-blue-600">
+                <span className="animate-spin">⚡</span>
+                {loadingState.connecting && "Connecting..."}
+                {loadingState.reconnecting && "Reconnecting..."}
+              </div>
+            )}
+            {queueLength > 0 && (
+              <div className="text-xs text-orange-600">
+                Queue: {queueLength}
+              </div>
+            )}
+            {!isConnected && connectionHealth.status !== 'connecting' && (
+              <button
+                onClick={handleReconnect}
+                className="text-xs text-blue-600 hover:text-blue-800"
+                disabled={isReconnecting}
+              >
+                {isReconnecting ? 'Reconnecting...' : 'Reconnect'}
+              </button>
+            )}
           </div>
         </header>
+
+        {/* Error handling */}
+        <ErrorBanner errors={errors} onClearErrors={clearErrors} />
+
+        {/* Connection metrics for debugging (dev mode only) */}
+        {process.env.NODE_ENV === 'development' && metrics.totalConnections > 0 && (
+          <details className="mb-4">
+            <summary className="text-xs text-gray-500 cursor-pointer">
+              Connection Debug Info
+            </summary>
+            <div className="text-xs text-gray-600 mt-2 bg-gray-50 p-2 rounded">
+              <div>Connections: {metrics.totalConnections}</div>
+              <div>Messages Sent: {metrics.totalMessagesSent}</div>
+              <div>Messages Received: {metrics.totalMessagesReceived}</div>
+              <div>Average Latency: {metrics.averageLatency.toFixed(0)}ms</div>
+              <div>Total Errors: {metrics.totalErrors}</div>
+              <div>Uptime: {Math.round(metrics.uptime / 1000)}s</div>
+            </div>
+          </details>
+        )}
 
         {activeThread?.context && (
           <pre className="chat-context">{JSON.stringify(activeThread.context, null, 2)}</pre>
@@ -266,15 +406,17 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
         <MessageList
           messages={mergedMessages}
           isLoading={eventsQuery.isLoading}
-          socketStatus={socketStatus}
+          socketStatus={connectionHealth.status}
           onRetryMessage={handleRetry}
         />
 
         <ChatInput
           placeholder="Ask CapeAI anything about this placement…"
           onSend={handleSend}
-          isSending={optimisticMessages.some((msg) => msg.status === "sending")}
-          disabled={!selectedThreadId || threadSwitching !== null}
+          isSending={optimisticMessages.some((msg) => msg.status === "sending") || loadingState.sendingMessage}
+          disabled={!selectedThreadId || threadSwitching !== null || (!isConnected && queueLength >= 10)}
+          connectionHealth={connectionHealth}
+          queueLength={queueLength}
         />
       </section>
     </div>
