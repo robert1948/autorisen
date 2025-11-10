@@ -27,7 +27,9 @@ mcp-host:
 		"$$UVICORN_BIN" backend.src.app:app --host $(MCP_BIND_HOST) --port $(MCP_PORT)
 
 # =============================================================================
-# Makefile — Autolocal / CapeControl
+# Makefile — AutoLocal/CapeControl v0.2.1
+# Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
+# Updated: November 10, 2025
 # =============================================================================
 
 SHELL := /bin/bash
@@ -77,7 +79,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 # ----------------------------------------------------------------------------- 
 # PHONY index (single, authoritative)
 # -----------------------------------------------------------------------------
-.PHONY: help venv install format lint test docker-build docker-run docker-push \
+.PHONY: help project-info venv install format lint test docker-build docker-run docker-push \
 	deploy-heroku heroku-deploy-stg heroku-deploy-prod heroku-logs heroku-run-migrate \
 	github-update clean plan-validate plan-open \
 	migrate-up migrate-revision \
@@ -87,7 +89,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 	codex-check codex-open codex-docs-lint codex-docs-fix codex-ci-validate \
 	codex-plan-diff codex-plan-apply codex-test-heal codex-test codex-test-cov codex-test-dry codex-run \
 	smoke-staging smoke-local csrf-probe-staging csrf-probe-local codex-smoke smoke-prod \
-	payments-checkout \
+	payments-checkout websocket-test payment-test chatkit-dev \
 	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push dockerhub-build-push \
 	dockerhub-release dockerhub-update-description dockerhub-clean \
 	playbooks-overview playbook-overview playbook-open playbook-badge playbook-new playbooks-check \
@@ -98,6 +100,30 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 # -----------------------------------------------------------------------------
 help: ## List Make targets (auto-docs)
 	@awk 'BEGIN {FS=":.*##"; printf "\n\033[1mMake targets\033[0m\n"} /^[a-zA-Z0-9_.-]+:.*##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+project-info: ## Show current project version and status information
+	@echo ""
+	@echo "🚀 \033[1mAutoLocal/CapeControl Project Information\033[0m"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "📊 Version: v0.2.1 (November 10, 2025)"
+	@echo "🎯 Status: 87% Complete (7/8 major milestones)"
+	@echo ""
+	@echo "✅ \033[32mCompleted Phases:\033[0m"
+	@echo "   • ChatKit Frontend Enhancement - Enterprise WebSocket implementation"
+	@echo "   • Payment System Configuration - PayFast primary, Stripe preserved"
+	@echo "   • Infrastructure & DevOps - GitHub security, container deployment"
+	@echo ""
+	@echo "🔄 \033[33mActive Development:\033[0m"
+	@echo "   • Payment Frontend Implementation (3-4 day effort)"
+	@echo "   • Target completion: November 13-14, 2025"
+	@echo ""
+	@echo "🔗 \033[34mDeployment URLs:\033[0m"
+	@echo "   • Staging: https://dev.cape-control.com"
+	@echo "   • Production: https://autorisen-dac8e65796e7.herokuapp.com"
+	@echo "   • Docker Hub: stinkie/autorisen:v0.2.1"
+	@echo ""
+	@git log --oneline -5 2>/dev/null || echo "📝 Git history: Not available"
+	@echo ""
 
 # ----------------------------------------------------------------------------- 
 # Python env / dev tasks
@@ -137,6 +163,44 @@ test: ## Run tests (pytest)
 
 payments-checkout: ## Generate a sample PayFast checkout payload
 	@$(VENV)/bin/python scripts/payfast_checkout.py
+
+# ----------------------------------------------------------------------------- 
+# Enhanced WebSocket & Payment Development (v0.2.1)
+# -----------------------------------------------------------------------------
+websocket-test: ## Test WebSocket functionality with health monitoring
+	@echo "Testing WebSocket service..."
+	@$(VENV)/bin/python -c "\
+import asyncio; \
+import websockets; \
+import json; \
+from datetime import datetime; \
+async def test_websocket(): \
+    uri = 'ws://localhost:8000/ws/chat/test-user'; \
+    try: \
+        async with websockets.connect(uri) as websocket: \
+            await websocket.send(json.dumps({'type': 'ping', 'timestamp': datetime.now().isoformat()})); \
+            response = await websocket.recv(); \
+            print('✅ WebSocket health check passed:', response); \
+            await websocket.send(json.dumps({'type': 'message', 'content': 'Test message from Makefile'})); \
+            response = await websocket.recv(); \
+            print('✅ Message sending test passed:', response); \
+    except Exception as e: \
+        print('❌ WebSocket test failed:', str(e)); \
+asyncio.run(test_websocket())"
+
+payment-test: ## Test PayFast integration endpoints
+	@echo "Testing PayFast payment endpoints..."
+	@curl -s -X POST http://localhost:8000/api/payments/payfast/checkout \
+		-H "Content-Type: application/json" \
+		-d '{"amount": 100.00, "item_name": "Test Product", "return_url": "http://localhost:3000/success"}' \
+		|| echo "❌ PayFast checkout test failed"
+	@echo ""
+	@curl -s http://localhost:8000/api/payments/methods || echo "❌ Payment methods test failed"
+
+chatkit-dev: ## Start development mode with WebSocket debugging
+	@echo "Starting ChatKit development mode with enhanced WebSocket debugging..."
+	@ENV=dev DEBUG=true WEBSOCKET_DEBUG=true $(VENV)/bin/uvicorn backend.src.app:app \
+		--host 0.0.0.0 --port 8000 --reload --log-level debug
 
 # ----------------------------------------------------------------------------- 
 # Docker (local) 
