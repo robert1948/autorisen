@@ -6,6 +6,7 @@ import {
   type WebSocketClient,
   type WebSocketClientOptions,
 } from "../services/websocket";
+import { useEnhancedWebSocket } from "./useEnhancedWebSocket";
 
 export type UseChatWebSocketOptions = Omit<
   WebSocketClientOptions,
@@ -16,6 +17,7 @@ export type UseChatWebSocketOptions = Omit<
   enabled?: boolean;
   onEvent?: (event: ChatMessage) => void;
   onThreadUpdate?: (thread: ChatThread) => void;
+  useEnhanced?: boolean; // New option to enable enhanced features
 };
 
 export const useChatWebSocket = ({
@@ -27,7 +29,38 @@ export const useChatWebSocket = ({
   reconnect,
   maxRetries,
   urlOverride,
+  useEnhanced = true, // Default to enhanced version
 }: UseChatWebSocketOptions) => {
+  // Use enhanced WebSocket if enabled
+  if (useEnhanced) {
+    const enhancedResult = useEnhancedWebSocket({
+      threadId,
+      token,
+      enabled,
+      onEvent,
+      onThreadUpdate,
+      autoReconnect: reconnect !== false,
+      maxReconnectAttempts: maxRetries || 3,
+    });
+
+    return {
+      status: enhancedResult.connectionHealth.status,
+      send: enhancedResult.send,
+      disconnect: async () => {
+        // Enhanced client handles disconnect via destroy
+      },
+      isConnected: enhancedResult.isConnected,
+      // Additional enhanced features
+      connectionHealth: enhancedResult.connectionHealth,
+      loadingState: enhancedResult.loadingState,
+      errors: enhancedResult.errors,
+      metrics: enhancedResult.metrics,
+      reconnect: enhancedResult.reconnect,
+      clearErrors: enhancedResult.clearErrors,
+    };
+  }
+
+  // Legacy WebSocket implementation (fallback)
   const [status, setStatus] = useState<SocketStatus>("idle");
   const clientRef = useRef<WebSocketClient | null>(null);
   const eventHandlerRef = useRef<typeof onEvent>();
