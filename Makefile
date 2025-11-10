@@ -957,132 +957,12 @@ codex-focus:
 auth-tests:
 	@$(PY) -m pytest -v tests_enabled/test_auth.py || true
 
-# --- Figma integration ---------------------------------------------------------
-FIGMA_TOKEN        ?= $(FIGMA_API_TOKEN)   # allow either name
-FIGMA_FILE_ID      ?= $(FIGMA_FILE)        # e.g. abCDefGhIJKLMnoPQrsTuv
-FIGMA_EXPORT_CSV   ?= docs/figma/frames.csv
-FIGMA_OUT_DOCS     ?= docs/figma/_export
-FIGMA_OUT_CLIENT   ?= client/src/assets/figma
-FIGMA_VERSION_FILE ?= docs/figma/version.json
-CI_EXPECT_FIGMA_VERSION ?=
-FIGMA_BOARD_URL    ?= https://www.figma.com/file/EXAMPLE_AUTH_FLOW
+# --- Design documentation (Figma integration removed) -------------------------
 DESIGN_PLAYBOOKS_DIR ?= docs/playbooks/design
-DESIGN_COMPONENT_INVENTORY ?= docs/figma/component_inventory.json
 
-.PHONY: figma-export figma-sync figma-version-set figma-version-check design-sync design-validate
+# Design playbooks reference Figma URLs for documentation but no API integration
 
-## figma-export: Export frames from Figma to docs and client assets
-figma-export:
-	@test -n "$(FIGMA_TOKEN)" || (echo "ERR: Set FIGMA_TOKEN or FIGMA_API_TOKEN"; exit 1)
-	@test -n "$(FIGMA_FILE_ID)" || (echo "ERR: Set FIGMA_FILE_ID or FIGMA_FILE"; exit 1)
-	@mkdir -p $(FIGMA_OUT_DOCS) $(FIGMA_OUT_CLIENT)
-	@$(PY) tools/figma_export.py \
-		--token "$(FIGMA_TOKEN)" \
-		--file-id "$(FIGMA_FILE_ID)" \
-		--csv "$(FIGMA_EXPORT_CSV)" \
-		--out-docs "$(FIGMA_OUT_DOCS)" \
-		--out-client "$(FIGMA_OUT_CLIENT)"
-	@echo "✓ Figma export complete → $(FIGMA_OUT_DOCS), $(FIGMA_OUT_CLIENT)"
-
-## figma-sync: Mirror exported images into docs/img for embedding
-figma-sync: figma-export
-	@mkdir -p docs/img/figma
-	@cp -r $(FIGMA_OUT_DOCS)/* docs/img/figma/ 2>/dev/null || true
-	@echo "✓ Synced to docs/img/figma"
-
-## figma-version-set: Write/update docs/figma/version.json to VERSION (default v0.1)
-figma-version-set:
-	@VERSION=$${VERSION:-v0.1}; \
-	$(PY) tools/figma_version.py set --version $$VERSION --file "$(FIGMA_VERSION_FILE)"; \
-	echo "✓ Set design version → $$(cat $(FIGMA_VERSION_FILE))"
-
-## figma-version-check: Fail CI if docs/figma/version.json != CI_EXPECT_FIGMA_VERSION
-figma-version-check:
-	@$(PY) tools/figma_version.py check \
-		--expect "$(CI_EXPECT_FIGMA_VERSION)" \
-		--file "$(FIGMA_VERSION_FILE)"
-	@echo "✓ Figma version OK: $(CI_EXPECT_FIGMA_VERSION)"
-
-design-sync: ## Aggregate design playbooks into JSON inventory
-	@$(PY) tools/sync_figma_components.py \
-		--board "$(FIGMA_BOARD_URL)" \
-		--playbooks-dir "$(DESIGN_PLAYBOOKS_DIR)" \
-		--output "$(DESIGN_COMPONENT_INVENTORY)"
-
-design-validate: ## Validate design playbooks (use PLAYBOOK=slug to scope)
-	@PLAYBOOK_FLAG=$(if $(PLAYBOOK),--playbook "$(PLAYBOOK)",); \
-	$(PY) tools/validate_design_links.py \
-		--playbooks-dir "$(DESIGN_PLAYBOOKS_DIR)" $$PLAYBOOK_FLAG
-
-.PHONY: figma-gallery
-## figma-gallery: Build Markdown gallery from exported frames
-figma-gallery:
-	@$(PY) tools/figma_gallery.py \
-		--export-dir "docs/figma/_export" \
-		--gallery-md "docs/figma/GALLERY.md" \
-		--mirror-docs "docs/img/figma"
-	@echo "✓ Gallery updated → docs/figma/GALLERY.md"
-
-.PHONY: docs-index
-## docs-index: Rebuild docs/INDEX.md (includes design_version + gallery link)
-docs-index:
-	@$(PY) tools/build_docs_index.py
-	@echo "✓ Updated docs/INDEX.md"
-
-# ---- Enhanced Figma API Integration (Zeonita) -------------------------------
-FIGMA_OUTPUT_DIR ?= ./figma_analysis
-FIGMA_NODE_ID    ?= 2:9
-FIGMA_COMPONENT_NAME ?= TargetFrame
-FIGMA_CLIENT_OUTPUT_DIR ?= client/src/components/generated
-
-.PHONY: figma-analyze figma-generate-component figma-workflow figma-inspect
-
-## figma-analyze: Deep analysis of Figma node with Zeonita API
-figma-analyze:
-	@test -n "$(FIGMA_TOKEN)" || (echo "ERR: Set FIGMA_TOKEN or FIGMA_API_TOKEN"; exit 1)
-	@test -n "$(FIGMA_FILE_ID)" || (echo "ERR: Set FIGMA_FILE_ID or FIGMA_FILE"; exit 1)
-	@$(PY) tools/figma_api_client.py \
-		--token "$(FIGMA_TOKEN)" \
-		--file-id "$(FIGMA_FILE_ID)" \
-		--node-id "$(FIGMA_NODE_ID)" \
-		--action all \
-		--output-dir "$(FIGMA_OUTPUT_DIR)"
-	@echo "✓ Figma analysis complete → $(FIGMA_OUTPUT_DIR)"
-
-## figma-generate-component: Generate React component from Figma analysis
-figma-generate-component: figma-analyze
-	@mkdir -p "$(FIGMA_CLIENT_OUTPUT_DIR)"
-	@$(PY) tools/generate_react_component.py \
-		--analysis-file "$(FIGMA_OUTPUT_DIR)/component_analysis.json" \
-		--tokens-file "$(FIGMA_OUTPUT_DIR)/design_tokens.json" \
-		--component-name "$(FIGMA_COMPONENT_NAME)" \
-		--output-dir "$(FIGMA_CLIENT_OUTPUT_DIR)"
-	@echo "✓ React component generated → $(FIGMA_CLIENT_OUTPUT_DIR)/$(FIGMA_COMPONENT_NAME).tsx"
-
-## figma-workflow: Complete Figma to React workflow
-figma-workflow: figma-generate-component
-	@echo "==> Updating frames.csv with new component..."
-	@echo "==> Updating component inventory..."
-	@$(MAKE) design-sync
-	@echo "==> Updating gallery..."
-	@$(MAKE) figma-gallery
-	@echo "✅ Complete Figma workflow finished!"
-	@echo "📁 Generated files:"
-	@echo "   • Component: $(FIGMA_CLIENT_OUTPUT_DIR)/$(FIGMA_COMPONENT_NAME).tsx"
-	@echo "   • Styles: $(FIGMA_CLIENT_OUTPUT_DIR)/$(FIGMA_COMPONENT_NAME).css"
-	@echo "   • Analysis: $(FIGMA_OUTPUT_DIR)/"
-
-## figma-inspect: Quick inspection of Figma file structure
-figma-inspect:
-	@test -n "$(FIGMA_TOKEN)" || (echo "ERR: Set FIGMA_TOKEN or FIGMA_API_TOKEN"; exit 1)
-	@test -n "$(FIGMA_FILE_ID)" || (echo "ERR: Set FIGMA_FILE_ID or FIGMA_FILE"; exit 1)
-	@$(PY) tools/figma_api_client.py \
-		--token "$(FIGMA_TOKEN)" \
-		--file-id "$(FIGMA_FILE_ID)" \
-		--node-id "$(FIGMA_NODE_ID)" \
 		--action metadata \
-		--output-dir "$(FIGMA_OUTPUT_DIR)"
-	@echo "✓ File inspection complete → $(FIGMA_OUTPUT_DIR)/file_metadata.json"
 # ---- Dashboard Auto-Refresh ---------------------------------------------------
 DASHBOARD_SUMMARY ?= docs/CONTROL_DASHBOARD_SUMMARY.md
 DASHBOARD_STAGING_URL ?= https://dev.cape-control.com
@@ -1125,7 +1005,6 @@ codex-docs:
 	@echo "[codex-docs] No-op fallback (replace with your real docs sync if needed)"
 
 # --- Figma Design System Workflow ------------------------------------------------
-.PHONY: design-helper design-status design-list design-generate design-watch figma-setup
 
 design-helper:
 	@echo "🎨 Starting CapeWire Design System Helper..."
@@ -1133,11 +1012,9 @@ design-helper:
 
 design-status:
 	@echo "📊 Design System Status..."
-	cd $(CURDIR) && ./scripts/figma_sync.sh scan
 
 design-list:
 	@echo "📋 Listing available Figma frames..."
-	cd $(CURDIR) && ./scripts/figma_sync.sh list
 
 design-generate:
 	@if [ -z "$(NODE_ID)" ] || [ -z "$(COMPONENT)" ]; then \
@@ -1145,13 +1022,10 @@ design-generate:
 		exit 1; \
 	fi
 	@echo "⚛️  Generating $(COMPONENT) from node $(NODE_ID)..."
-	cd $(CURDIR) && ./scripts/figma_sync.sh generate $(NODE_ID) $(COMPONENT)
 
 design-watch:
 	@echo "👀 Starting Figma change watcher..."
-	cd $(CURDIR) && ./scripts/figma_sync.sh watch
 
-figma-setup:
 	@echo "🚀 Figma Design System Setup Complete!"
 	@echo ""
 	@echo "Available commands:"
@@ -1164,9 +1038,7 @@ figma-setup:
 	@echo ""
 	@echo "🌐 Demo pages available at:"
 	@echo "  http://localhost:3000/mainpage-demo - MainPage component demo"
-	@echo "  http://localhost:3000/figma-demo    - Frame1 component demo"
 	@echo ""
-	@echo "🔧 Figma API Token: $${FIGMA_API_TOKEN:0:12}..."
 	@echo "📁 File ID: gRtWgiHmLTrIZGvkhF2aUC"
 
 # --- CapeCraft Implementation Workflow ------------------------------------------------
@@ -1178,10 +1050,7 @@ capecraft:
 
 capecraft-spec:
 	@echo "📋 CapeCraft Design Specification:"
-	@echo "  Spec file: docs/figma/capecraft_design_spec.json"
 	@echo "  Guide: docs/checklists/capecraft_implementation_guide.md"
-	@echo "  Figma URL: https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/CapeCraft"
-	@if [ -f "docs/figma/capecraft_design_spec.json" ]; then \
 		echo "✅ Specification file exists"; \
 	else \
 		echo "❌ Specification file missing"; \
@@ -1199,5 +1068,4 @@ capecraft-help:
 	@echo "MindMup → Figma → React workflow:"
 	@echo "1. Design specification created from MindMup"
 	@echo "2. Import spec into Figma for visual design"
-	@echo "3. Use figma_sync.sh to generate React components"
 	@echo "4. Integrate components into page routing"

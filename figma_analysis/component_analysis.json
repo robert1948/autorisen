@@ -1,0 +1,28 @@
+{
+  "hierarchy": [
+    {
+      "level": 0,
+      "name": "Frame 3",
+      "type": "FRAME",
+      "id": "19:2"
+    },
+    {
+      "level": 1,
+      "name": "Header",
+      "type": "TEXT",
+      "id": "19:3"
+    }
+  ],
+  "interactive_elements": [],
+  "text_elements": [
+    {
+      "name": "Header",
+      "content": "Header",
+      "suggested_prop": "header_text"
+    }
+  ],
+  "images": [],
+  "suggested_props": [
+    "header_text"
+  ]
+}

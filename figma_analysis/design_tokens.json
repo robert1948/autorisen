@@ -1,0 +1,29 @@
+{
+  "colors": {
+    "Frame 3/Header": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    }
+  },
+  "typography": {
+    "Frame 3/Header": {
+      "fontFamily": "Roboto",
+      "fontSize": 15.0,
+      "fontWeight": 400,
+      "lineHeight": 17.578125
+    }
+  },
+  "spacing": {
+    "Frame 3": {
+      "horizontal": "LEFT",
+      "vertical": "TOP"
+    },
+    "Frame 3/Header": {
+      "horizontal": "CENTER",
+      "vertical": "CENTER"
+    }
+  },
+  "effects": {}
+}

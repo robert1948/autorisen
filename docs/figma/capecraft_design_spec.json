@@ -1,0 +1,325 @@
+{
+  "project": {
+    "name": "CapeCraft",
+    "description": "CapeControl website structure and user flow design specification",
+    "figma_url": "https://www.figma.com/design/gRtWgiHmLTrIZGvkhF2aUC/CapeCraft?node-id=2-9&t=NSWXqSnjzTcHZpJ5-0",
+    "version": "1.0",
+    "created": "2025-11-07"
+  },
+  "site_structure": {
+    "root": {
+      "url": "https://cape-control.com/",
+      "component_name": "HomePage",
+      "description": "Main landing page - central hub",
+      "status": "highlighted",
+      "children": [
+        {
+          "url": "https://cape-control.com/subscribe",
+          "component_name": "SubscribePage",
+          "description": "Newsletter subscription page",
+          "user_type": "User",
+          "flow_priority": "high"
+        },
+        {
+          "url": "https://cape-control.com/about",
+          "component_name": "AboutPage", 
+          "description": "Company information and mission",
+          "user_type": "User",
+          "flow_priority": "medium"
+        },
+        {
+          "url": "https://cape-control.com/register",
+          "component_name": "RegisterPage",
+          "description": "User registration form",
+          "user_type": "Developer",
+          "flow_priority": "high",
+          "form_fields": [
+            "email",
+            "password",
+            "confirm_password",
+            "user_type_selection",
+            "terms_acceptance"
+          ]
+        },
+        {
+          "url": "https://cape-control.com/login",
+          "component_name": "LoginPage",
+          "description": "User authentication",
+          "user_type": ["User", "Developer"],
+          "flow_priority": "critical",
+          "form_fields": [
+            "email",
+            "password",
+            "remember_me",
+            "forgot_password_link"
+          ]
+        }
+      ]
+    }
+  },
+  "user_types": {
+    "User": {
+      "description": "General users interested in CapeControl services",
+      "primary_flows": [
+        "landing -> subscribe",
+        "landing -> about",
+        "landing -> register",
+        "landing -> login"
+      ],
+      "permissions": "basic"
+    },
+    "Developer": {
+      "description": "Technical users who will use the platform",
+      "primary_flows": [
+        "landing -> register -> onboarding",
+        "landing -> login -> dashboard"
+      ],
+      "permissions": "extended"
+    }
+  },
+  "design_components": {
+    "pages": [
+      {
+        "component": "HomePage",
+        "figma_frame_name": "01_HomePage",
+        "elements": [
+          {
+            "type": "hero_section",
+            "content": "CapeControl branding and value proposition"
+          },
+          {
+            "type": "navigation",
+            "links": ["About", "Subscribe", "Login", "Register"]
+          },
+          {
+            "type": "cta_section",
+            "primary_action": "Get Started (Register)",
+            "secondary_action": "Learn More (About)"
+          }
+        ]
+      },
+      {
+        "component": "SubscribePage",
+        "figma_frame_name": "02_SubscribePage",
+        "elements": [
+          {
+            "type": "form",
+            "fields": ["email"],
+            "submit_text": "Subscribe to Updates"
+          },
+          {
+            "type": "benefits_list",
+            "content": "Newsletter value proposition"
+          }
+        ]
+      },
+      {
+        "component": "AboutPage", 
+        "figma_frame_name": "03_AboutPage",
+        "elements": [
+          {
+            "type": "company_story",
+            "content": "Mission, vision, team"
+          },
+          {
+            "type": "product_overview",
+            "content": "CapeControl platform features"
+          }
+        ]
+      },
+      {
+        "component": "RegisterPage",
+        "figma_frame_name": "04_RegisterPage", 
+        "elements": [
+          {
+            "type": "registration_form",
+            "fields": [
+              "email",
+              "password", 
+              "confirm_password",
+              "user_type_radio",
+              "terms_checkbox"
+            ]
+          },
+          {
+            "type": "social_registration",
+            "providers": ["Google", "GitHub"]
+          },
+          {
+            "type": "login_redirect",
+            "text": "Already have an account? Login"
+          }
+        ]
+      },
+      {
+        "component": "LoginPage",
+        "figma_frame_name": "05_LoginPage",
+        "elements": [
+          {
+            "type": "login_form",
+            "fields": [
+              "email",
+              "password",
+              "remember_me_checkbox"
+            ]
+          },
+          {
+            "type": "social_login",
+            "providers": ["Google", "GitHub"]
+          },
+          {
+            "type": "utility_links",
+            "links": [
+              "Forgot Password",
+              "Create Account"
+            ]
+          }
+        ]
+      }
+    ],
+    "shared_components": [
+      {
+        "component": "Header",
+        "figma_frame_name": "Component_Header",
+        "variants": [
+          "logged_out",
+          "logged_in_user", 
+          "logged_in_developer"
+        ]
+      },
+      {
+        "component": "Footer",
+        "figma_frame_name": "Component_Footer",
+        "elements": [
+          "company_links",
+          "legal_links",
+          "social_links"
+        ]
+      },
+      {
+        "component": "CTAButton",
+        "figma_frame_name": "Component_CTAButton",
+        "variants": [
+          "primary",
+          "secondary",
+          "tertiary"
+        ]
+      }
+    ]
+  },
+  "user_flows": [
+    {
+      "flow_name": "User Registration Flow",
+      "steps": [
+        {
+          "step": 1,
+          "page": "HomePage",
+          "action": "Click 'Get Started' or 'Register'"
+        },
+        {
+          "step": 2,
+          "page": "RegisterPage", 
+          "action": "Fill registration form"
+        },
+        {
+          "step": 3,
+          "page": "EmailVerification",
+          "action": "Verify email address"
+        },
+        {
+          "step": 4,
+          "page": "OnboardingFlow",
+          "action": "Complete user onboarding"
+        }
+      ]
+    },
+    {
+      "flow_name": "User Login Flow",
+      "steps": [
+        {
+          "step": 1,
+          "page": "HomePage",
+          "action": "Click 'Login'"
+        },
+        {
+          "step": 2,
+          "page": "LoginPage",
+          "action": "Enter credentials"
+        },
+        {
+          "step": 3,
+          "page": "Dashboard",
+          "action": "Access user dashboard"
+        }
+      ]
+    },
+    {
+      "flow_name": "Information Gathering Flow",
+      "steps": [
+        {
+          "step": 1,
+          "page": "HomePage",
+          "action": "Browse landing page"
+        },
+        {
+          "step": 2,
+          "page": "AboutPage",
+          "action": "Learn about CapeControl"
+        },
+        {
+          "step": 3,
+          "page": "SubscribePage",
+          "action": "Subscribe for updates"
+        }
+      ]
+    }
+  ],
+  "figma_import_instructions": {
+    "frames_to_create": [
+      "01_HomePage",
+      "02_SubscribePage", 
+      "03_AboutPage",
+      "04_RegisterPage",
+      "05_LoginPage",
+      "Component_Header",
+      "Component_Footer",
+      "Component_CTAButton"
+    ],
+    "design_system": {
+      "colors": {
+        "primary": "#007ACC",
+        "secondary": "#34495E",
+        "accent": "#E74C3C",
+        "background": "#F8F9FA",
+        "text": "#2C3E50"
+      },
+      "typography": {
+        "headings": "Inter Bold",
+        "body": "Inter Regular",
+        "buttons": "Inter Medium"
+      },
+      "spacing": {
+        "base": "8px",
+        "multipliers": [0.5, 1, 1.5, 2, 3, 4, 6, 8]
+      }
+    },
+    "responsive_breakpoints": {
+      "mobile": "375px",
+      "tablet": "768px", 
+      "desktop": "1200px"
+    }
+  },
+  "integration_notes": {
+    "existing_codebase": {
+      "auth_system": "FastAPI backend with JWT tokens",
+      "frontend": "React with TypeScript",
+      "routing": "React Router DOM",
+      "styling": "CSS modules + Tailwind CSS"
+    },
+    "figma_workflow": {
+      "design_tokens": "Extract using existing Figma API client",
+      "component_generation": "Use figma_sync.sh script",
+      "demo_pages": "Auto-generate with design_helper.py"
+    }
+  }
+}

@@ -39,7 +39,6 @@ ENV/
 .env.dev
 .env.test
 .env.sandbox
-.env.figma
 
 # Production secrets (never commit)
 .env.production
@@ -109,8 +108,6 @@ backend/migrations/versions/temp_*.py
 docs/PLAYBOOK_OVERVIEW.md
 
 # Development artifacts and analysis
-figma_analysis/
-figma_analysis_page/
 client/src/components/generated/
 client/src/App.tsx.backup
 tools/generated/
@@ -121,11 +118,8 @@ docs/playbooks/design/temp/
 # Figma integration cache
 docs/CapeWire_Tokens_Typography_Board.json
 docs/Typography_Reference_Frame_Simple.json
-docs/figma/capecraft_design_spec.json
 
 # Generated documentation (development artifacts)
-docs/FIGMA_API_QUICKSTART.md
-docs/FIGMA_INTEGRATION_COMPLETE.md
 docs/GITHUB_UPDATE_COMPLETE_251107.md
 docs/PRODUCTION_READINESS_CHECKLIST.md
 docs/pages_overview.md
