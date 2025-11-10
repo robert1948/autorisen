@@ -962,7 +962,6 @@ DESIGN_PLAYBOOKS_DIR ?= docs/playbooks/design
 
 # Design playbooks reference Figma URLs for documentation but no API integration
 
-		--action metadata \
 # ---- Dashboard Auto-Refresh ---------------------------------------------------
 DASHBOARD_SUMMARY ?= docs/CONTROL_DASHBOARD_SUMMARY.md
 DASHBOARD_STAGING_URL ?= https://dev.cape-control.com

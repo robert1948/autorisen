@@ -664,7 +664,8 @@ async def _google_exchange_code(code: str, redirect_uri: str) -> Dict[str, Any]:
     }
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-        # # response = await client.post(_GOOGLE_TOKEN_ENDPOINT, data=payload)  # noqa: F841  # noqa: F841
+            # Google token exchange would go here - currently disabled
+            pass
     except httpx.HTTPError as exc:  # pragma: no cover - network errors
         log.warning("google_token_exchange_http_error err=%s", exc)
         raise HTTPException(
@@ -763,7 +764,8 @@ async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:
     }
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-        # # response = await client.post(_LINKEDIN_TOKEN_ENDPOINT, data=payload)  # noqa: F841  # noqa: F841
+            # LinkedIn token exchange would go here - currently disabled
+            pass
     except httpx.HTTPError as exc:  # pragma: no cover
         log.warning("linkedin_token_exchange_http_error err=%s", exc)
         raise HTTPException(
