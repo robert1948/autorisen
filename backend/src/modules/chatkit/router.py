@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
@@ -20,14 +22,11 @@ def _allowed_tools(placement: str) -> list[str]:
     return tools.tools_for_placement(placement)
 
 
-@router.post("/token", response_model=schemas.ChatTokenResponse)
-def issue_token(
+def _issue_token_response(
     payload: schemas.ChatTokenRequest,
     user: models.User = Depends(get_verified_user),
     db: Session = Depends(get_session),
 ) -> schemas.ChatTokenResponse:
-    """Mint a signed ChatKit client token for the authenticated user."""
-
     try:
         bundle = service.issue_client_token(
             db,
@@ -49,6 +48,30 @@ def issue_token(
         placement=payload.placement,
         allowed_tools=_allowed_tools(payload.placement),
     )
+
+
+@router.post("/token", response_model=schemas.ChatTokenResponse)
+def issue_token(
+    payload: schemas.ChatTokenRequest,
+    user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ChatTokenResponse:
+    """Mint a ChatKit client token (JSON payload)."""
+
+    return _issue_token_response(payload, user=user, db=db)
+
+
+@router.get("/token", response_model=schemas.ChatTokenResponse)
+def issue_token_get(
+    placement: str = Query(..., min_length=2, max_length=64),
+    thread_id: Optional[str] = Query(None),
+    user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ChatTokenResponse:
+    """Mint a ChatKit client token using query parameters (curl-friendly)."""
+
+    payload = schemas.ChatTokenRequest(placement=placement, thread_id=thread_id)
+    return _issue_token_response(payload, user=user, db=db)
 
 
 @router.post("/tools/{tool_name}", response_model=schemas.ToolInvokeResponse)

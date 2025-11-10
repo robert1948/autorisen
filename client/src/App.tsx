@@ -19,6 +19,10 @@ import OnboardingChecklist from "./pages/onboarding/OnboardingChecklist";
 import OnboardingProfile from "./pages/onboarding/OnboardingProfile";
 import About from "./pages/About";
 import Subscribe from "./pages/Subscribe";
+import Marketplace from "./pages/Marketplace";
+import Agents from "./pages/Agents";
+import Settings from "./pages/Settings";
+import ChatConsole from "./pages/ChatConsole";
 
 // CapeControl Auth Components (Production)
 import LoginPage from "./components/Auth/LoginPage";
@@ -45,6 +49,11 @@ const App = () => (
       
       {/* New pages based on sitemap */}
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/agents" element={<Agents />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/chat" element={<ChatConsole />} />
+      <Route path="/chat/:threadId" element={<ChatConsole />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/onboarding/guide" element={<OnboardingGuide />} />
       <Route path="/onboarding/checklist" element={<OnboardingChecklist />} />

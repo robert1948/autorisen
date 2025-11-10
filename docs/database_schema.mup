@@ -1,0 +1,615 @@
+{
+  "id": "root",
+  "title": "AutoRisen Database Schema",
+  "attr": {
+    "style": {
+      "background": "#2C3E50"
+    }
+  },
+  "ideas": {
+    "1": {
+      "title": "Core Tables",
+      "attr": {
+        "style": {
+          "background": "#3498DB"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "users",
+          "attr": {
+            "style": {
+              "background": "#E74C3C"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "email - String(320) UNIQUE"
+            },
+            "3": {
+              "title": "full_name - String(100)"
+            },
+            "4": {
+              "title": "first_name - String(50)"
+            },
+            "5": {
+              "title": "last_name - String(50)"
+            },
+            "6": {
+              "title": "hashed_password - String(255)"
+            },
+            "7": {
+              "title": "role - String(32) DEFAULT 'Customer'"
+            },
+            "8": {
+              "title": "company_name - String(100)"
+            },
+            "9": {
+              "title": "is_email_verified - Boolean"
+            },
+            "10": {
+              "title": "created_at - DateTime(TZ)"
+            }
+          }
+        },
+        "2": {
+          "title": "user_profiles",
+          "attr": {
+            "style": {
+              "background": "#E67E22"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "user_id (PK/FK) - String(36)"
+            },
+            "2": {
+              "title": "profile - JSONB"
+            },
+            "3": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "4": {
+              "title": "updated_at - DateTime(TZ)"
+            },
+            "5": {
+              "title": "FK: users.id → CASCADE DELETE"
+            }
+          }
+        },
+        "3": {
+          "title": "login_audits",
+          "attr": {
+            "style": {
+              "background": "#9B59B6"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "email - String(320)"
+            },
+            "3": {
+              "title": "success - Boolean"
+            },
+            "4": {
+              "title": "ip_address - String(45)"
+            },
+            "5": {
+              "title": "user_agent - String(255)"
+            },
+            "6": {
+              "title": "details - Text"
+            },
+            "7": {
+              "title": "created_at - DateTime(TZ)"
+            }
+          }
+        }
+      }
+    },
+    "2": {
+      "title": "Chat System",
+      "attr": {
+        "style": {
+          "background": "#1ABC9C"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "app_chat_threads",
+          "attr": {
+            "style": {
+              "background": "#16A085"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "user_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "placement - String(64)"
+            },
+            "4": {
+              "title": "context - JSON"
+            },
+            "5": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "6": {
+              "title": "updated_at - DateTime(TZ)"
+            },
+            "7": {
+              "title": "FK: users.id → CASCADE DELETE"
+            },
+            "8": {
+              "title": "IDX: user_id, placement"
+            }
+          }
+        },
+        "2": {
+          "title": "app_chat_events",
+          "attr": {
+            "style": {
+              "background": "#27AE60"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "thread_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "role - String(32)"
+            },
+            "4": {
+              "title": "content - Text"
+            },
+            "5": {
+              "title": "tool_name - String(64)"
+            },
+            "6": {
+              "title": "metadata - JSON"
+            },
+            "7": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "8": {
+              "title": "FK: app_chat_threads.id → CASCADE DELETE"
+            }
+          }
+        }
+      }
+    },
+    "3": {
+      "title": "Agent System",
+      "attr": {
+        "style": {
+          "background": "#F39C12"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "agents",
+          "attr": {
+            "style": {
+              "background": "#D35400"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "owner_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "slug - String(100) UNIQUE"
+            },
+            "4": {
+              "title": "name - String(160)"
+            },
+            "5": {
+              "title": "description - Text"
+            },
+            "6": {
+              "title": "visibility - String(32) DEFAULT 'private'"
+            },
+            "7": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "8": {
+              "title": "updated_at - DateTime(TZ)"
+            },
+            "9": {
+              "title": "FK: users.id → SET NULL"
+            }
+          }
+        },
+        "2": {
+          "title": "agent_versions",
+          "attr": {
+            "style": {
+              "background": "#E67E22"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "agent_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "version - String(20)"
+            },
+            "4": {
+              "title": "manifest - JSON"
+            },
+            "5": {
+              "title": "changelog - Text"
+            },
+            "6": {
+              "title": "status - String(32) DEFAULT 'draft'"
+            },
+            "7": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "8": {
+              "title": "published_at - DateTime(TZ)"
+            },
+            "9": {
+              "title": "FK: agents.id → CASCADE DELETE"
+            },
+            "10": {
+              "title": "UNIQUE: agent_id + version"
+            }
+          }
+        },
+        "3": {
+          "title": "flow_runs",
+          "attr": {
+            "style": {
+              "background": "#F1C40F"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "user_id - String(36)"
+            },
+            "3": {
+              "title": "agent_id - String(36)"
+            },
+            "4": {
+              "title": "agent_version_id - String(36)"
+            },
+            "5": {
+              "title": "placement - String(64)"
+            },
+            "6": {
+              "title": "thread_id - String(36)"
+            },
+            "7": {
+              "title": "steps - JSON"
+            },
+            "8": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "9": {
+              "title": "IDX: user_id, agent_id, agent_version_id, thread_id"
+            }
+          }
+        }
+      }
+    },
+    "4": {
+      "title": "Payment System",
+      "attr": {
+        "style": {
+          "background": "#8E44AD"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "invoices",
+          "attr": {
+            "style": {
+              "background": "#9B59B6"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "user_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "amount - Numeric(10,2)"
+            },
+            "4": {
+              "title": "currency - String(3)"
+            },
+            "5": {
+              "title": "status - String(32) CHECK(pending|paid|cancelled|failed|refunded)"
+            },
+            "6": {
+              "title": "item_name - String(255)"
+            },
+            "7": {
+              "title": "item_description - Text"
+            },
+            "8": {
+              "title": "customer_email - String(255)"
+            },
+            "9": {
+              "title": "customer_first_name - String(64)"
+            },
+            "10": {
+              "title": "customer_last_name - String(64)"
+            },
+            "11": {
+              "title": "payment_provider - String(32)"
+            },
+            "12": {
+              "title": "external_reference - String(255) UNIQUE"
+            },
+            "13": {
+              "title": "metadata_json - JSON"
+            },
+            "14": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "15": {
+              "title": "updated_at - DateTime(TZ)"
+            },
+            "16": {
+              "title": "FK: users.id"
+            },
+            "17": {
+              "title": "CHECK: amount > 0"
+            },
+            "18": {
+              "title": "IDX: user_id, status, external_reference"
+            }
+          }
+        },
+        "2": {
+          "title": "transactions",
+          "attr": {
+            "style": {
+              "background": "#8E44AD"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "invoice_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "amount - Numeric(10,2)"
+            },
+            "4": {
+              "title": "currency - String(3)"
+            },
+            "5": {
+              "title": "status - String(32) CHECK(pending|completed|failed|cancelled|refunded)"
+            },
+            "6": {
+              "title": "transaction_type - String(32) CHECK(payment|refund|chargeback)"
+            },
+            "7": {
+              "title": "payment_provider - String(32)"
+            },
+            "8": {
+              "title": "provider_transaction_id - String(255) UNIQUE"
+            },
+            "9": {
+              "title": "provider_reference - String(255)"
+            },
+            "10": {
+              "title": "itn_data - JSON"
+            },
+            "11": {
+              "title": "processed_at - DateTime(TZ)"
+            },
+            "12": {
+              "title": "metadata_json - JSON"
+            },
+            "13": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "14": {
+              "title": "updated_at - DateTime(TZ)"
+            },
+            "15": {
+              "title": "FK: invoices.id"
+            },
+            "16": {
+              "title": "CHECK: amount > 0"
+            },
+            "17": {
+              "title": "IDX: invoice_id, status, provider_transaction_id, provider_reference"
+            }
+          }
+        },
+        "3": {
+          "title": "payment_methods",
+          "attr": {
+            "style": {
+              "background": "#663399"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "user_id (FK) - String(36)"
+            },
+            "3": {
+              "title": "provider - String(32)"
+            },
+            "4": {
+              "title": "method_type - String(32) CHECK(card|eft|instant_eft|bank_transfer)"
+            },
+            "5": {
+              "title": "is_default - Boolean"
+            },
+            "6": {
+              "title": "is_active - Boolean"
+            },
+            "7": {
+              "title": "provider_token - String(255)"
+            },
+            "8": {
+              "title": "last_four - String(4)"
+            },
+            "9": {
+              "title": "card_brand - String(32)"
+            },
+            "10": {
+              "title": "expiry_month - Integer"
+            },
+            "11": {
+              "title": "expiry_year - Integer"
+            },
+            "12": {
+              "title": "metadata_json - JSON"
+            },
+            "13": {
+              "title": "created_at - DateTime(TZ)"
+            },
+            "14": {
+              "title": "updated_at - DateTime(TZ)"
+            },
+            "15": {
+              "title": "FK: users.id"
+            },
+            "16": {
+              "title": "UNIQUE: user_id + provider_token"
+            },
+            "17": {
+              "title": "IDX: user_id"
+            }
+          }
+        }
+      }
+    },
+    "5": {
+      "title": "Analytics & Audit",
+      "attr": {
+        "style": {
+          "background": "#34495E"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "analytics_events",
+          "attr": {
+            "style": {
+              "background": "#2C3E50"
+            }
+          },
+          "ideas": {
+            "1": {
+              "title": "id (PK) - String(36)"
+            },
+            "2": {
+              "title": "event_type - String(64)"
+            },
+            "3": {
+              "title": "step - String(32)"
+            },
+            "4": {
+              "title": "role - String(32)"
+            },
+            "5": {
+              "title": "details - JSON"
+            },
+            "6": {
+              "title": "created_at - DateTime(TZ)"
+            }
+          }
+        }
+      }
+    },
+    "-1": {
+      "title": "Database Info",
+      "attr": {
+        "style": {
+          "background": "#95A5A6"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "Production: PostgreSQL (Heroku)"
+        },
+        "2": {
+          "title": "Development: PostgreSQL 15 (Docker)"
+        },
+        "3": {
+          "title": "Testing: SQLite"
+        },
+        "4": {
+          "title": "Port: 5433 (local), 5432 (container)"
+        },
+        "5": {
+          "title": "Database: devdb (local)"
+        },
+        "6": {
+          "title": "Migration Tool: Alembic"
+        }
+      }
+    },
+    "-2": {
+      "title": "Key Relationships",
+      "attr": {
+        "style": {
+          "background": "#E74C3C"
+        }
+      },
+      "ideas": {
+        "1": {
+          "title": "users → user_profiles (1:1)"
+        },
+        "2": {
+          "title": "users → app_chat_threads (1:N)"
+        },
+        "3": {
+          "title": "app_chat_threads → app_chat_events (1:N)"
+        },
+        "4": {
+          "title": "users → agents (1:N)"
+        },
+        "5": {
+          "title": "agents → agent_versions (1:N)"
+        },
+        "6": {
+          "title": "users → invoices (1:N)"
+        },
+        "7": {
+          "title": "invoices → transactions (1:N)"
+        },
+        "8": {
+          "title": "users → payment_methods (1:N)"
+        }
+      }
+    }
+  }
+}

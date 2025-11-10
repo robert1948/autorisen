@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.modules.flows.constants import DEFAULT_ONBOARDING_TASKS
+from backend.src.modules.payments.config import get_payfast_settings
+from backend.src.modules.payments import service as payments_service
 
 ToolPayload = Dict[str, Any]
 ToolResult = Dict[str, Any]
@@ -154,6 +156,40 @@ def _onboarding_checklist(
     }
 
 
+def _payments_checkout(
+    db: Session,  # noqa: ARG001 - not used yet
+    user: models.User,
+    thread: models.ChatThread,  # noqa: ARG001 - reserved for future linking
+    payload: ToolPayload,
+) -> ToolResult:
+    settings = get_payfast_settings()
+    amount = payload.get("amount")
+    item_name = payload.get("item_name") or "CapeControl Subscription"
+    if amount is None:
+        raise ValueError("amount is required")
+
+    customer_email = payload.get("customer_email") or user.email
+    metadata = payload.get("metadata")
+    if metadata and not isinstance(metadata, dict):
+        raise ValueError("metadata must be an object")
+
+    session = payments_service.create_checkout_session(
+        settings=settings,
+        amount=amount,
+        item_name=item_name,
+        item_description=payload.get("item_description"),
+        customer_email=customer_email,
+        customer_first_name=payload.get("customer_first_name") or user.first_name,
+        customer_last_name=payload.get("customer_last_name") or user.last_name,
+        metadata=metadata,
+    )
+
+    return {
+        "checkout": session,
+        "note": "Submit these fields via POST to the PayFast process URL.",
+    }
+
+
 TOOLS: Dict[str, ToolSpec] = {
     "onboarding.plan": ToolSpec(
         name="onboarding.plan",
@@ -184,6 +220,23 @@ TOOLS: Dict[str, ToolSpec] = {
         placement="money",
         description="Summarize financial transactions for a given period.",
         handler=_money_summary,
+    ),
+    "payments.payfast.checkout": ToolSpec(
+        name="payments.payfast.checkout",
+        placement="money",
+        description="Generate a signed PayFast checkout payload for a customer.",
+        handler=_payments_checkout,
+        schema={
+            "type": "object",
+            "properties": {
+                "amount": {"type": "number", "minimum": 1},
+                "item_name": {"type": "string"},
+                "item_description": {"type": "string"},
+                "customer_email": {"type": "string"},
+                "metadata": {"type": "object"},
+            },
+            "required": ["amount"],
+        },
     ),
 }
 

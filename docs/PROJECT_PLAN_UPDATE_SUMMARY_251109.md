@@ -8,10 +8,11 @@ Comprehensive update of all project documentation and planning files to reflect 
 
 ### ✅ Core Project Plans
 
-1. **`docs/project-plan-updated-nov9.csv`** - Main task tracking spreadsheet
+1. **`docs/project-plan.csv`** - Main task tracking spreadsheet (canonical location)
    - Added 6 new completed tasks for November 9 work
    - Updated priorities and completion dates
    - Enhanced maintenance task descriptions
+   - **Note**: This is the consolidated central reference file
 
 1. **`docs/Master_ProjectPlan_Updated.md`** - Strategic overview document
    - Complete rewrite with current status
@@ -101,7 +102,7 @@ Comprehensive update of all project documentation and planning files to reflect 
 
 ### Daily Updates
 
-- Edit `docs/project-plan-updated-nov9.csv` for task status changes
+- Edit `docs/project-plan.csv` for task status changes (canonical reference)
 - Run `python scripts/fix_markdown_lint.py` after documentation updates
 - Verify build success with updated versions
 

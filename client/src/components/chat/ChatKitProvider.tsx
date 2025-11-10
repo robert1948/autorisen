@@ -8,14 +8,17 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 /** Token shape returned by the backend token endpoint */
 export type ChatToken = {
-  client_secret: string;
-  placement?: string;
+  token: string;
+  placement: string;
+  threadId: string;
+  expiresAt: string;
+  allowedTools: string[];
 };
 
 /** Context contract used by Chat UI pieces */
 type ChatKitContextValue = {
-  /** Requests a short-lived client_secret from the backend */
-  requestToken: (placement?: string) => Promise<ChatToken>;
+  /** Requests a short-lived ChatKit token bundle from the backend */
+  requestToken: (placement: string, threadId?: string | null) => Promise<ChatToken>;
 };
 
 const ChatKitContext = createContext<ChatKitContextValue | undefined>(
@@ -31,15 +34,18 @@ type Props = { children: React.ReactNode };
 export const ChatKitProvider = ({ children }: Props) => {
   // Disabled → return a stubbed provider (no network calls)
   if (!CHATKIT_ENABLED) {
-    const value = useMemo<ChatKitContextValue>(
-      () => ({
-        requestToken: async () => {
-          // Return an empty token so any optional callers don't explode.
-          return { client_secret: "", placement: "disabled" };
-        },
-      }),
-      []
-    );
+    const value = useMemo<ChatKitContextValue>(() => {
+      return {
+        requestToken: async () =>
+          ({
+            token: "",
+            placement: "disabled",
+            threadId: "",
+            expiresAt: new Date().toISOString(),
+            allowedTools: [],
+          }) as ChatToken,
+      };
+    }, []);
     return (
       <ChatKitContext.Provider value={value}>
         {children}
@@ -49,32 +55,53 @@ export const ChatKitProvider = ({ children }: Props) => {
 
   // Enabled → real implementation
   const value = useMemo<ChatKitContextValue>(
-    () => ({
-      requestToken: async (placement?: string) => {
-        // If your app requires auth before getting a token, you can check for it here.
-        const res = await fetch(`${API_BASE}/chatkit/token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ placement }),
-          credentials: "include",
-        });
+    () => {
+      const buildUrl = (placement: string, threadId?: string | null) => {
+        if (!placement) {
+          throw new Error("ChatKit placement is required.");
+        }
+        const params = new URLSearchParams({ placement });
+        if (threadId) {
+          params.set("thread_id", threadId);
+        }
+        return `${API_BASE}/chatkit/token?${params.toString()}`;
+      };
 
-        if (!res.ok) {
-          // Surface a concise error to the UI/console but don't crash the whole app.
-          const detail = await res.text().catch(() => "");
-          throw new Error(
-            `Failed to fetch ChatKit token (HTTP ${res.status})${
-              detail ? `: ${detail}` : ""
-            }`
-          );
-        }
-        const data = (await res.json()) as ChatToken;
-        if (!data?.client_secret) {
-          throw new Error("ChatKit token response missing client_secret.");
-        }
-        return data;
-      },
-    }),
+      return {
+        requestToken: async (placement: string, threadId?: string | null) => {
+          const res = await fetch(buildUrl(placement, threadId), {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (!res.ok) {
+            const detail = await res.text().catch(() => "");
+            throw new Error(
+              `Failed to fetch ChatKit token (HTTP ${res.status})${
+                detail ? `: ${detail}` : ""
+              }`
+            );
+          }
+          const data = (await res.json()) as {
+            token: string;
+            placement: string;
+            thread_id: string;
+            expires_at: string;
+            allowed_tools?: string[];
+          };
+          if (!data?.token || !data.thread_id) {
+            throw new Error("ChatKit token response missing fields.");
+          }
+          return {
+            token: data.token,
+            placement: data.placement,
+            threadId: data.thread_id,
+            expiresAt: data.expires_at,
+            allowedTools: data.allowed_tools ?? [],
+          };
+        },
+      };
+    },
     []
   );
 
@@ -94,7 +121,13 @@ export const useChatKit = () => {
   if (!ctx) {
     return {
       requestToken: async () =>
-        ({ client_secret: "", placement: "no-provider" } as ChatToken),
+        ({
+          token: "",
+          placement: "no-provider",
+          threadId: "",
+          expiresAt: new Date().toISOString(),
+          allowedTools: [],
+        }) as ChatToken,
     } as ChatKitContextValue;
   }
   return ctx;

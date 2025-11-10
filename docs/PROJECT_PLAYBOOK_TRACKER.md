@@ -4,15 +4,16 @@ Source of truth: `docs/PROJECT_PLAYBOOK_TRACKER.csv`
 
 ## Status Summary
 
-- ✅ Completed: **22**
-- 🚧 In Progress: **2**
-- 🕐 Todo / Planned: **26**
+- ✅ Completed: **26**
+- 🚧 In Progress: **1**
+- 🕐 Todo / Planned: **23**
 - 🔁 Recurring: **5**
 
 ## ✅ Completed
 
 | ID | Task | Owner | Priority | Status | Updated |
 |---|---|---|---|---|---|
+| CHAT-004 | ChatKit frontend components | frontend | P0 | 🚧 In Progress | ChatLauncher + modal enhancements |
 | AUTH-001 | Core authentication infrastructure | backend | P0 | ✅ Completed | 2025-11-07 |
 | AUTH-002 | Login/Register UI components | frontend | P0 | ✅ Completed | 2025-11-07 |
 | AUTH-003 | CSRF protection implementation | backend | P0 | ✅ Completed | 2025-11-07 |
@@ -35,13 +36,15 @@ Source of truth: `docs/PROJECT_PLAYBOOK_TRACKER.csv`
 | FE-006 | Authentication flow testing | frontend | P0 | ✅ Completed | 2025-11-07 |
 | UI-001 | Logo component with size variants | frontend | P2 | ✅ Completed | 2025-11-07 |
 | UI-002 | Responsive logo design system | frontend | P2 | ✅ Completed | 2025-11-07 |
+| CHAT-001 | ChatKit backend integration | backend | P0 | ✅ Completed | 2025-11-10 |
+| CHAT-003 | Flow orchestration API | backend | P0 | ✅ Completed | 2025-11-10 |
+| PAY-001 | PaymentsAgent service (PayFast) | backend | P0 | ✅ Completed | 2025-11-10 |
+| PAY-002 | Checkout API + ChatKit tool | backend | P0 | ✅ Completed | 2025-11-10 |
 
 ## 🚧 In Progress
 
 | ID | Task | Owner | Priority | Status | Updated |
 |---|---|---|---|---|---|
-| CHAT-001 | ChatKit backend integration | backend | P0 | 🚧 In Progress | Implement ChatKit token service and tool adapters |
-| PAY-001 | PaymentsAgent service (PayFast) | backend | P0 | 🚧 In Progress | PayFast adapter + ITN |
 
 ## 🕐 Todo / Planned
 
@@ -55,8 +58,6 @@ Source of truth: `docs/PROJECT_PLAYBOOK_TRACKER.csv`
 | BIZ-006 | Mobile responsiveness audit | frontend | P2 | 🕐 Todo | Comprehensive mobile UX optimization |
 | BIZ-007 | Accessibility compliance | frontend | P2 | 🕐 Todo | WCAG 2.1 AA compliance implementation |
 | BIZ-008 | Internationalization | frontend | P3 | 🕐 Todo | Multi-language support infrastructure |
-| CHAT-003 | Flow orchestration API | backend | P0 | 🕐 Todo | API endpoints for flow execution and run tracking |
-| CHAT-004 | ChatKit frontend components | frontend | P0 | 🕐 Todo | CHAT-001 |
 | CHAT-005 | Agent marketplace UI | frontend | P1 | 🕐 Todo | CHAT-002 |
 | CHAT-006 | Developer agent builder | frontend | P1 | 🕐 Todo | CHAT-002 |
 | CHAT-007 | Onboarding flow integration | frontend | P1 | 🕐 Todo | CHAT-003 |
@@ -68,7 +69,6 @@ Source of truth: `docs/PROJECT_PLAYBOOK_TRACKER.csv`
 | OPT-006 | Security audit | security | P0 | 🕐 Todo | Third-party security assessment and fixes |
 | OPT-007 | Backup and disaster recovery | devops | P1 | 🕐 Todo | Automated database backups and restore procedures |
 | OPT-008 | Load testing | devops | P2 | 🕐 Todo | Performance testing under load |
-| PAY-002 | Checkout API + ChatKit tool | backend | P0 | 🕐 Todo | PAY-001 |
 | PAY-003 | ITN ingestion + audit log | backend | P0 | 🕐 Todo | PAY-001 |
 | PAY-004 | Payments DB schema | backend | P0 | 🕐 Todo | PAY-001 |
 | PAY-006 | Payments UI entry points | frontend | P1 | 🕐 Todo | PAY-002 |

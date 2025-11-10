@@ -5,6 +5,7 @@ import "./index.css";
 
 // ChatKit provider (becomes a no-op when disabled per your updated provider file)
 import { ChatKitProvider } from "./components/chat/ChatKitProvider";
+import ChatLauncher from "./components/chat/ChatLauncher";
 import { AuthProvider } from "./features/auth/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -17,6 +18,7 @@ const RootApp = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <App />
+      {CHATKIT_ENABLED && <ChatLauncher />}
     </AuthProvider>
   </QueryClientProvider>
 );

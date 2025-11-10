@@ -1,10 +1,10 @@
 import React from 'react';
-import SubscribePage from '../components/generated/SubscribePage';
+import Subscribepage from '../components/generated/Subscribepage';
 
 const SubscribePagePage: React.FC = () => {
   return (
     <div className="page-container">
-      <SubscribePage />
+      <Subscribepage />
     </div>
   );
 };

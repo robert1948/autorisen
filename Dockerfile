@@ -11,9 +11,8 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY client/package*.json ./
-COPY client/pnpm-lock.yaml* ./
-# Install pnpm and dependencies
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+# Install dependencies including devDependencies for build tools
+RUN npm install
 
 # Copy frontend source files and configuration
 COPY client/src ./src
@@ -27,8 +26,8 @@ RUN touch tailwind.config.js postcss.config.js
 COPY client/tailwind.config.js* ./
 COPY client/postcss.config.js* ./
 
-# Build frontend with pnpm
-RUN pnpm run build
+# Build frontend with npm
+RUN npm run build
 
 # Production Python runtime stage
 FROM python:${PYTHON_VERSION}-slim AS production

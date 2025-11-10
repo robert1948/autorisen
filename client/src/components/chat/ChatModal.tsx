@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { ChatToken, useChatKit } from "./ChatKitProvider";
-import ChatKitWidget from "./ChatKitWidget";
+import ChatThread from "./ChatThread";
 import {
   fetchOnboardingChecklist,
   updateOnboardingChecklist,
   type ChecklistSummary,
 } from "../../lib/api";
+import { useChatSession } from "../../hooks/useChatSession";
 
 export type ChatPlacement =
   | "support"
@@ -24,10 +24,6 @@ type Props = {
   description?: string;
 };
 
-type TokenState =
-  | { loading: true; error?: string; token?: undefined }
-  | { loading: false; error?: string; token?: ChatToken };
-
 const PLACEMENT_LABELS: Record<ChatPlacement, string> = {
   support: "Support",
   onboarding: "CapeAI Onboarding",
@@ -38,48 +34,40 @@ const PLACEMENT_LABELS: Record<ChatPlacement, string> = {
 };
 
 const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
-  const { requestToken } = useChatKit();
-  const [state, setState] = useState<TokenState>({ loading: false });
   const [threadMap, setThreadMap] = useState<Record<string, string>>({});
   const activeThreadId = threadMap[placement];
   const [checklist, setChecklist] = useState<ChecklistSummary | null>(null);
   const [checklistError, setChecklistError] = useState<string | null>(null);
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+  const {
+    token,
+    loading,
+    refreshing,
+    error,
+    expiryCountdown,
+    startSession,
+  } = useChatSession({
+    placement,
+    threadId: activeThreadId,
+    enabled: open,
+  });
 
   useEffect(() => {
-    if (!open) {
-      setState({ loading: false, token: undefined, error: undefined });
+    if (!token) {
       return;
     }
-
-    let cancelled = false;
-    setState({ loading: true });
-    requestToken(placement, activeThreadId)
-      .then((token) => {
-        if (!cancelled) {
-          setThreadMap((prev) => ({ ...prev, [placement]: token.threadId }));
-          setState({ loading: false, token, error: undefined });
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          const message =
-            err instanceof Error ? err.message : "Failed to load chat session.";
-          setState({ loading: false, error: message });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, placement, requestToken, activeThreadId]);
+    setThreadMap((prev) => {
+      if (prev[placement] === token.threadId) {
+        return prev;
+      }
+      return { ...prev, [placement]: token.threadId };
+    });
+  }, [token, placement]);
 
   if (!open) {
     return null;
   }
 
-  const { loading, error } = state;
-  const token = !loading ? state.token : undefined;
   const placementLabel = useMemo(
     () => PLACEMENT_LABELS[placement] ?? "Chat",
     [placement],
@@ -139,7 +127,45 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
         )}
 
         {token && !loading && !error && (
-          <ChatKitWidget token={token} placement={placement} />
+          <ChatThread
+            placement={placement}
+            token={token}
+            onThreadChange={(threadId) =>
+              startSession({ threadId, mode: "initial" })
+            }
+          />
+        )}
+        {token && !loading && !error && (
+          <section className="chat-modal__session-meta">
+            <div className="chat-modal__session-meta-header">
+              <div>
+                <p className="chat-modal__session-label">Thread</p>
+                <strong>{token.threadId}</strong>
+              </div>
+              <button
+                type="button"
+                className="btn btn--tiny"
+                onClick={() => startSession({ mode: "refresh" })}
+                disabled={refreshing}
+              >
+                {refreshing ? "Refreshing…" : "Refresh session"}
+              </button>
+            </div>
+            <p className="chat-modal__session-expiry">
+              Expires in {expiryCountdown ?? "—"}s · Placement {token.placement}
+            </p>
+            <div className="chat-modal__tool-list">
+              {token.allowedTools.length > 0 ? (
+                token.allowedTools.map((tool) => (
+                  <span key={tool} className="chat-modal__tool-badge">
+                    {tool}
+                  </span>
+                ))
+              ) : (
+                <span className="chat-modal__tool-empty">No tools provisioned yet.</span>
+              )}
+            </div>
+          </section>
         )}
 
         {placement === "onboarding" && checklist && (

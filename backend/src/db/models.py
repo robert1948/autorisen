@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -76,6 +77,12 @@ class User(Base):
     )
     password_reset_tokens = relationship(
         "PasswordResetToken", back_populates="user", cascade="all, delete-orphan"
+    )
+    invoices = relationship(
+        "Invoice", back_populates="user", cascade="all, delete-orphan"
+    )
+    payment_methods = relationship(
+        "PaymentMethod", back_populates="user", cascade="all, delete-orphan"
     )
 
 
@@ -434,3 +441,161 @@ class AnalyticsEvent(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class Invoice(Base):
+    """Payment invoices/orders tracking billing requests."""
+
+    __tablename__ = "invoices"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+
+    # Invoice details
+    amount = Column(Numeric(10, 2), nullable=False)  # Precise decimal for money
+    currency = Column(String(3), nullable=False, default="ZAR")
+    status = Column(String(32), nullable=False, default="pending", index=True)
+
+    # Item details
+    item_name = Column(String(255), nullable=False)
+    item_description = Column(Text, nullable=True)
+
+    # Customer details
+    customer_email = Column(String(255), nullable=False)
+    customer_first_name = Column(String(64), nullable=True)
+    customer_last_name = Column(String(64), nullable=True)
+
+    # PayFast integration
+    payment_provider = Column(String(32), nullable=False, default="payfast")
+    external_reference = Column(String(255), nullable=True, unique=True, index=True)
+
+    # Metadata and audit
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Constraints
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'paid', 'cancelled', 'failed', 'refunded')",
+            name="invoice_status_check",
+        ),
+        CheckConstraint("amount > 0", name="invoice_amount_positive"),
+    )
+
+    # Relationships
+    user = relationship("User", back_populates="invoices")
+    transactions = relationship(
+        "Transaction", back_populates="invoice", cascade="all, delete-orphan"
+    )
+
+
+class Transaction(Base):
+    """Individual payment transactions linked to invoices."""
+
+    __tablename__ = "transactions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    invoice_id = Column(
+        String(36), ForeignKey("invoices.id"), nullable=False, index=True
+    )
+
+    # Transaction details
+    amount = Column(Numeric(10, 2), nullable=False)  # Precise decimal for money
+    currency = Column(String(3), nullable=False, default="ZAR")
+    status = Column(String(32), nullable=False, default="pending", index=True)
+    transaction_type = Column(String(32), nullable=False, default="payment")
+
+    # PayFast integration
+    payment_provider = Column(String(32), nullable=False, default="payfast")
+    provider_transaction_id = Column(
+        String(255), nullable=True, unique=True, index=True
+    )
+    provider_reference = Column(String(255), nullable=True, index=True)
+
+    # ITN data
+    itn_data = Column(JSON, nullable=True)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Metadata and audit
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Constraints
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'completed', 'failed', 'cancelled', 'refunded')",
+            name="transaction_status_check",
+        ),
+        CheckConstraint(
+            "transaction_type IN ('payment', 'refund', 'chargeback')",
+            name="transaction_type_check",
+        ),
+        CheckConstraint("amount > 0", name="transaction_amount_positive"),
+    )
+
+    # Relationships
+    invoice = relationship("Invoice", back_populates="transactions")
+
+
+class PaymentMethod(Base):
+    """Stored payment method information for users."""
+
+    __tablename__ = "payment_methods"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+
+    # Payment method details
+    provider = Column(String(32), nullable=False, default="payfast")
+    method_type = Column(String(32), nullable=False)  # 'card', 'eft', 'instant_eft'
+    is_default = Column(Boolean, nullable=False, default=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+
+    # Encrypted/tokenized details (never store actual card details)
+    provider_token = Column(String(255), nullable=True)
+    last_four = Column(String(4), nullable=True)  # Last 4 digits for display
+    card_brand = Column(String(32), nullable=True)  # 'visa', 'mastercard', etc.
+    expiry_month = Column(Integer, nullable=True)
+    expiry_year = Column(Integer, nullable=True)
+
+    # Metadata and audit
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Constraints
+    __table_args__ = (
+        CheckConstraint(
+            "method_type IN ('card', 'eft', 'instant_eft', 'bank_transfer')",
+            name="payment_method_type_check",
+        ),
+        UniqueConstraint(
+            "user_id", "provider_token", name="unique_user_provider_token"
+        ),
+    )
+
+    # Relationships
+    user = relationship("User", back_populates="payment_methods")

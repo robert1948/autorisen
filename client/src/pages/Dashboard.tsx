@@ -233,8 +233,8 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Deploy New Agent</p>
-                    <p className="text-xs text-gray-500">Create and deploy automation</p>
+                    <p className="text-sm font-medium text-gray-900">Manage Agents</p>
+                    <p className="text-xs text-gray-500">Create, test, and deploy agents</p>
                   </div>
                 </div>
               </Link>

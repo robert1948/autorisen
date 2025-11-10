@@ -4,7 +4,7 @@
 
 **Project Status: Production Live with Enhanced Performance & Code Quality**
 
-See also: `docs/PROJECT_UPDATE_251109.md` and `project-plan-updated-nov9.csv`
+See also: `docs/PROJECT_UPDATE_251109.md` and `docs/project-plan.csv`
 
 ## 📊 Current Status Overview
 
@@ -108,7 +108,7 @@ See also: `docs/PROJECT_UPDATE_251109.md` and `project-plan-updated-nov9.csv`
 
 ## 📋 Authoritative Task Tracking
 
-**Primary Source**: `docs/project-plan-updated-nov9.csv`
+**Primary Source**: `docs/project-plan.csv`
 
 **Status Distribution**:
 
@@ -128,7 +128,7 @@ See also: `docs/PROJECT_UPDATE_251109.md` and `project-plan-updated-nov9.csv`
 
 ## 🔄 Update Process
 
-**Daily Updates**: Edit `project-plan-updated-nov9.csv` for task status changes
+**Daily Updates**: Edit `docs/project-plan.csv` for task status changes
 **Weekly Reviews**: Update Master Plan with major milestone progress
 **Documentation**: Run automated linting after changes (`python scripts/fix_markdown_lint.py`)
 **Version Control**: Follow semantic versioning (current: v0.2.1)

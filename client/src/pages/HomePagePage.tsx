@@ -1,10 +1,10 @@
 import React from 'react';
-import HomePage from '../components/generated/HomePage';
+import Homepage from '../components/generated/Homepage';
 
 const HomePagePage: React.FC = () => {
   return (
     <div className="page-container">
-      <HomePage />
+      <Homepage />
     </div>
   );
 };

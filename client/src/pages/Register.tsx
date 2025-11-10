@@ -143,6 +143,12 @@ const Register = () => {
 
   const step2Role = step2Form.watch("role");
 
+  // Helper function to safely access error messages for discriminated union fields
+  const getErrorMessage = (fieldName: string): string | undefined => {
+    const errors = step2Form.formState.errors;
+    return (errors as any)[fieldName]?.message;
+  };
+
   useEffect(() => {
     sendAnalytics({ event_type: "step_view", step: "step1", role: step1Role });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -383,7 +389,7 @@ const Register = () => {
 
             {step2Role === "Customer" ? (
               <>
-                <FormInput label="Industry" error={step2Form.formState.errors.industry?.message}>
+                <FormInput label="Industry" error={getErrorMessage("industry")}>
                   <select {...step2Form.register("industry")}>
                     <option value="">Select industry</option>
                     {INDUSTRY_OPTIONS.map((option) => (
@@ -394,7 +400,7 @@ const Register = () => {
                   </select>
                 </FormInput>
 
-                <FormInput label="Company size" error={step2Form.formState.errors.company_size?.message}>
+                <FormInput label="Company size" error={getErrorMessage("company_size")}>
                   <select {...step2Form.register("company_size")}>
                     <option value="">Select size</option>
                     {COMPANY_SIZES.map((option) => (
@@ -409,7 +415,7 @@ const Register = () => {
                   control={step2Form.control}
                   name="use_cases"
                   render={({ field }) => (
-                    <FormInput label="Primary use cases" error={step2Form.formState.errors.use_cases?.message}>
+                    <FormInput label="Primary use cases" error={getErrorMessage("use_cases")}>
                       <div className="checkbox-grid">
                         {CUSTOMER_USE_CASES.map((option) => {
                           const checked = field.value?.includes(option) ?? false;
@@ -435,7 +441,7 @@ const Register = () => {
                   )}
                 />
 
-                <FormInput label="Budget range" error={step2Form.formState.errors.budget_range?.message}>
+                <FormInput label="Budget range" error={getErrorMessage("budget_range")}>
                   <select {...step2Form.register("budget_range")}>
                     <option value="">Select budget</option>
                     {BUDGET_RANGES.map((option) => (
@@ -452,13 +458,13 @@ const Register = () => {
                   control={step2Form.control}
                   name="skills"
                   render={({ field }) => (
-                    <FormInput label="Key skills" error={step2Form.formState.errors.skills?.message}>
+                    <FormInput label="Key skills" error={getErrorMessage("skills")}>
                       <SkillMultiSelect value={field.value ?? []} onChange={field.onChange} />
                     </FormInput>
                   )}
                 />
 
-                <FormInput label="Experience level" error={step2Form.formState.errors.experience_level?.message}>
+                <FormInput label="Experience level" error={getErrorMessage("experience_level")}>
                   <select {...step2Form.register("experience_level")}>
                     <option value="">Select level</option>
                     {EXPERIENCE_LEVELS.map((option) => (
@@ -469,12 +475,12 @@ const Register = () => {
                   </select>
                 </FormInput>
 
-                <FormInput label="Portfolio link (optional)" error={step2Form.formState.errors.portfolio_link?.message ?? undefined}>
+                <FormInput label="Portfolio link (optional)" error={getErrorMessage("portfolio_link")}>
                   <input type="url" {...step2Form.register("portfolio_link")}
                     placeholder="https://" />
                 </FormInput>
 
-                <FormInput label="Availability" error={step2Form.formState.errors.availability?.message}>
+                <FormInput label="Availability" error={getErrorMessage("availability")}>
                   <select {...step2Form.register("availability")}>
                     <option value="">Select availability</option>
                     {AVAILABILITY_OPTIONS.map((option) => (

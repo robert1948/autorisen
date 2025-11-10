@@ -26,6 +26,13 @@ if str(ROOT) not in sys.path:
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_chatkit_api.db")
 os.environ.setdefault("CHATKIT_APP_ID", "chatkit-test-app")
 os.environ.setdefault("CHATKIT_SIGNING_KEY", "chatkit-test-signing-key")
+os.environ.setdefault("PAYFAST_MERCHANT_ID", "10000100")
+os.environ.setdefault("PAYFAST_MERCHANT_KEY", "abc123")
+os.environ.setdefault("PAYFAST_RETURN_URL", "https://example.com/return")
+os.environ.setdefault("PAYFAST_CANCEL_URL", "https://example.com/cancel")
+os.environ.setdefault("PAYFAST_NOTIFY_URL", "https://example.com/itn")
+os.environ.setdefault("PAYFAST_MODE", "sandbox")
+os.environ.setdefault("PAYFAST_PASSPHRASE", "secret")
 
 from backend.src.db import models  # noqa: E402
 from backend.src.db.base import Base  # noqa: E402
@@ -123,6 +130,27 @@ def test_issue_token_persists_thread_and_returns_allowed_tools():
     assert threads[0].id == data["thread_id"]
 
 
+def test_issue_token_via_get_is_supported():
+    user = _create_user()
+    app = _build_app(user)
+
+    with TestClient(app) as client:
+        resp = client.get(
+            "/api/chatkit/token",
+            params={"placement": "support"},
+        )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["placement"] == "support"
+    assert data["token"]
+    assert "support.ticket" in data["allowed_tools"]
+
+    threads = _query_all(models.ChatThread)
+    assert len(threads) == 1
+    assert threads[0].id == data["thread_id"]
+
+
 def test_invoke_tool_records_event_and_returns_payload():
     user = _create_user()
     app = _build_app(user)
@@ -166,3 +194,30 @@ def test_invoke_tool_rejects_invalid_tool_for_placement():
 
     assert resp.status_code == 400
     assert "tool not available" in resp.json()["detail"]
+
+
+def test_payfast_checkout_tool_returns_signed_payload():
+    user = _create_user()
+    app = _build_app(user)
+
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/chatkit/tools/payments.payfast.checkout",
+            json={
+                "placement": "money",
+                "payload": {
+                    "amount": 49.99,
+                    "item_name": "CapeControl Pilot",
+                    "customer_email": "customer@example.com",
+                    "metadata": {"order": "ORD-1"},
+                },
+            },
+        )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["tool_name"] == "payments.payfast.checkout"
+    assert data["result"]["checkout"]["process_url"].startswith(
+        "https://sandbox.payfast"
+    )
+    assert "signature" in data["result"]["checkout"]["fields"]

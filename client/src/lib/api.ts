@@ -303,3 +303,5 @@ export async function fetchMarketplaceAgentDetail(
 ): Promise<MarketplaceAgentDetail> {
   return request<MarketplaceAgentDetail>(`/marketplace/agents/${slug}`, { auth: false });
 }
+
+export { request as apiRequest };

@@ -40,13 +40,14 @@ def upgrade() -> None:
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.func.now(),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.func.now(),
+            server_onupdate=sa.func.now(),
             nullable=False,
         ),
         sa.CheckConstraint(
@@ -61,10 +62,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("external_reference"),
     )
-    op.create_index(op.f("ix_invoices_user_id"), "invoices", ["user_id"], unique=False)
-    op.create_index(op.f("ix_invoices_status"), "invoices", ["status"], unique=False)
+    op.create_index("ix_invoices_user_id", "invoices", ["user_id"], unique=False)
+    op.create_index("ix_invoices_status", "invoices", ["status"], unique=False)
     op.create_index(
-        op.f("ix_invoices_external_reference"),
+        "ix_invoices_external_reference",
         "invoices",
         ["external_reference"],
         unique=False,
@@ -88,13 +89,14 @@ def upgrade() -> None:
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.func.now(),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.func.now(),
+            server_onupdate=sa.func.now(),
             nullable=False,
         ),
         sa.CheckConstraint(
@@ -114,19 +116,17 @@ def upgrade() -> None:
         sa.UniqueConstraint("provider_transaction_id"),
     )
     op.create_index(
-        op.f("ix_transactions_invoice_id"), "transactions", ["invoice_id"], unique=False
+        "ix_transactions_invoice_id", "transactions", ["invoice_id"], unique=False
     )
+    op.create_index("ix_transactions_status", "transactions", ["status"], unique=False)
     op.create_index(
-        op.f("ix_transactions_status"), "transactions", ["status"], unique=False
-    )
-    op.create_index(
-        op.f("ix_transactions_provider_transaction_id"),
+        "ix_transactions_provider_transaction_id",
         "transactions",
         ["provider_transaction_id"],
         unique=False,
     )
     op.create_index(
-        op.f("ix_transactions_provider_reference"),
+        "ix_transactions_provider_reference",
         "transactions",
         ["provider_reference"],
         unique=False,
@@ -150,13 +150,14 @@ def upgrade() -> None:
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.func.now(),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.func.now(),
+            server_onupdate=sa.func.now(),
             nullable=False,
         ),
         sa.CheckConstraint(
@@ -173,12 +174,22 @@ def upgrade() -> None:
         ),
     )
     op.create_index(
-        op.f("ix_payment_methods_user_id"), "payment_methods", ["user_id"], unique=False
+        "ix_payment_methods_user_id", "payment_methods", ["user_id"], unique=False
     )
 
 
 def downgrade() -> None:
     # Drop payment tables in reverse order
+    op.drop_index("ix_payment_methods_user_id", table_name="payment_methods")
     op.drop_table("payment_methods")
+
+    op.drop_index("ix_transactions_provider_reference", table_name="transactions")
+    op.drop_index("ix_transactions_provider_transaction_id", table_name="transactions")
+    op.drop_index("ix_transactions_status", table_name="transactions")
+    op.drop_index("ix_transactions_invoice_id", table_name="transactions")
     op.drop_table("transactions")
+
+    op.drop_index("ix_invoices_external_reference", table_name="invoices")
+    op.drop_index("ix_invoices_status", table_name="invoices")
+    op.drop_index("ix_invoices_user_id", table_name="invoices")
     op.drop_table("invoices")
