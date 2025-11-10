@@ -1,6 +1,6 @@
 # AutoLocal/CapeControl .dockerignore
-# Production-ready FastAPI + React SaaS platform
-# Updated: November 9, 2025
+# Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
+# Updated: November 10, 2025
 
 # Git and IDE
 .git
@@ -35,6 +35,12 @@ Thumbs.db
 *.key
 secrets/
 config/secrets/
+
+# Payment provider secrets and keys
+payfast_*.key
+stripe_*.key
+payment_secrets/
+webhooks/secrets/
 
 # Python cache and artifacts
 *.pyc
@@ -77,12 +83,16 @@ tests/
 tests_disabled/
 tests_enabled/
 docs/
+!docs/Master_ProjectPlan_Updated_Nov2025.md
+!docs/project_plan_nov2025.csv
+!docs/PROJECT_STATUS_SUMMARY_NOV2025.md
 .github/
 *.db
 dev.db
 test.db
 test_*.db
 tmp_*.db
+autolocal_test.db
 .testcache/
 test-results/
 playwright-report/
@@ -91,6 +101,11 @@ demo_*.py
 test_*.py
 *_demo.py
 integration_test.py
+
+# TypeScript build outputs (but keep source maps for debugging)
+client/src/**/*.js.map
+client/src/**/*.d.ts.map
+*.tsbuildinfo
 
 # Development artifacts and analysis
 client/src/components/generated/
@@ -101,8 +116,32 @@ scripts/__pycache__/
 infra/
 config/temp/
 CapeControl_React_Starter_Dark/
+figma_analysis/
+figma_analysis_page/
 
-# Figma integration cache
+# WebSocket development and testing artifacts
+websocket-test-logs/
+client/src/services/websocket-debug.log
+client/src/hooks/websocket-test-*.ts
+websocket_performance_*.json
+
+# Payment system development artifacts
+client/src/components/payments/test-*.tsx
+client/src/components/payments/*Demo.tsx
+payment-test-data/
+payfast-sandbox-logs/
+payment_validation_*.json
+payment-integration-logs/
+payfast-webhook-logs/
+stripe-webhook-logs/
+invoice-generation-temp/
+
+# Figma integration artifacts (completely removed from project)
+docs/figma/
+figma_*/
+*.figma
+figma-cache/
+design-tokens/figma/
 docs/CapeWire_Tokens_Typography_Board.json
 docs/Typography_Reference_Frame_Simple.json
 
@@ -110,17 +149,22 @@ docs/Typography_Reference_Frame_Simple.json
 tools/generated/
 scripts/temp/
 
-# Generated documentation (exclude from Docker build)
+# Generated documentation (exclude from Docker build - but preserve key project files)
 docs/GITHUB_UPDATE_COMPLETE_251107.md
 docs/PRODUCTION_READINESS_CHECKLIST.md
 docs/pages_overview.md
 docs/checklists/temp/
 docs/playbooks/design/06-target-frame.md
+docs/PLAYBOOK_OVERVIEW.md
+docs/Master_ProjectPlan.md
+docs/autorisen_project_plan.csv
 
 # Generated/demo pages (development only) - use patterns for flexibility
 client/src/pages/Demo*.tsx
 client/src/pages/Test*.tsx
 client/src/pages/*Demo.tsx
+client/src/pages/payments/Demo*.tsx
+client/src/pages/chat/Demo*.tsx
 
 # Build artifacts
 build/
@@ -144,6 +188,28 @@ logs/
 *.error.log
 monitoring/temp/
 metrics/temp/
+websocket-metrics/
+payment-logs/
+chat-session-logs/
+websocket-connection-logs/
+
+# Performance and load testing
+load-test-results/
+performance-benchmarks/
+stress-test-logs/
+websocket_performance_reports/
+payment_integration_reports/
+
+# Security scanning and analysis artifacts
+security-scan-results/
+vulnerability-reports/
+penetration-test-logs/
+
+# Development database backups
+database_backups/
+db_snapshots/
+*.dump
+*.sql.backup
 
 # Heroku specific
 .heroku/
@@ -153,8 +219,11 @@ agents/temp/
 config/temp/
 backend/src/modules/*/temp/
 
-# ChatKit development
+# ChatKit development and WebSocket artifacts
 chatkit-cache/
+chat-session-logs/
+websocket-connection-logs/
+client/src/services/websocket-debug/
 
 # AI/ML development artifacts
 *.model
@@ -164,11 +233,13 @@ models/temp/
 
 # Migration and database development files
 backend/migrations/versions/temp_*.py
+backend/migrations/versions/*_temp.py
 migrate_*.py
 fix_*.py
 init_*.py
 emergency_*.py
 *_migration_backup.sql
+payment_migration_backup_*.sql
 
 # Development and maintenance scripts
 debug_*.py
@@ -180,6 +251,26 @@ config_comparison.md
 Copy_app.py
 Makefile.bak
 merged-requirements.txt
+heroku_production_fix.py
+fix_database_relationships.py
+fix_enum_constraint.py
+fix_registration_performance.py
+emergency_production_patch.py
+migrate_auth.py
+migrate_payment.py
+migrate_phase2_profile.py
+migrate_stripe_fields.py
+
+# Development reports and analysis
+audit_reports/
+performance_reports/
+
+# Temporary project plan files (keep current versions only)
+docs/project-plan-backup-*.csv
+docs/project-plan-old.csv
+docs/project-plan.csv.backup
+docs/Master_Projectplan.md
+docs/Master_ProjectPlan_Updated.md
 
 # Deployment scripts
 scripts/deploy-heroku.sh
@@ -207,7 +298,27 @@ scripts/deploy-heroku.sh
 !pytest.ini
 !ruff.toml
 
-# Exclude specific client files we don't want
+# Exclude specific client files we don't want in Docker
 client/src/pages/Demo*.tsx
 client/src/pages/Test*.tsx
 client/src/pages/*Demo.tsx
+client/src/components/payments/test-*.tsx
+client/src/components/payments/*Demo.tsx
+client/src/services/websocket-debug.log
+client/src/hooks/websocket-test-*.ts
+
+# Node.js tools and artifacts
+.npm/
+.eslintcache
+.stylelintcache
+
+# Storybook build outputs
+storybook-static/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Bundle analyzer reports
+bundle-analyzer-report.html
+webpack-bundle-analyzer.json

@@ -1,6 +1,6 @@
 # AutoLocal/CapeControl .gitignore
-# Production-ready FastAPI + React SaaS platform
-# Updated: November 9, 2025
+# Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
+# Updated: November 10, 2025
 
 # Python
 __pycache__/
@@ -48,6 +48,12 @@ ENV/
 secrets/
 config/secrets/
 
+# Payment provider secrets and keys
+payfast_*.key
+stripe_*.key
+payment_secrets/
+webhooks/secrets/
+
 # IDE
 .vscode/
 .idea/
@@ -80,6 +86,23 @@ pnpm-lock.yaml
 dist/
 *.tsbuildinfo
 
+# TypeScript build outputs
+client/src/**/*.js.map
+client/src/**/*.d.ts.map
+
+# WebSocket development and testing artifacts
+websocket-test-logs/
+client/src/services/websocket-debug.log
+client/src/hooks/websocket-test-*.ts
+websocket_performance_*.json
+
+# Payment system development artifacts
+client/src/components/payments/test-*.tsx
+client/src/components/payments/*Demo.tsx
+payment-test-data/
+payfast-sandbox-logs/
+payment_validation_*.json
+
 # Backup and temporary files
 *.backup
 *.tmp
@@ -100,12 +123,21 @@ test.db
 test_*.db
 tmp_*.db
 .coverage.*
+autolocal_test.db
 
 # Alembic migration artifacts
 backend/migrations/versions/temp_*.py
+backend/migrations/versions/*_temp.py
 
-# Generated/backup artifacts
+# Generated/backup artifacts - Updated for November 2025 structure
 docs/PLAYBOOK_OVERVIEW.md
+docs/Master_ProjectPlan.md
+docs/autorisen_project_plan.csv
+
+# Keep current project plan files (November 2025)
+!docs/Master_ProjectPlan_Updated_Nov2025.md
+!docs/project_plan_nov2025.csv
+!docs/PROJECT_STATUS_SUMMARY_NOV2025.md
 
 # Development artifacts and analysis
 client/src/components/generated/
@@ -115,7 +147,12 @@ scripts/temp/
 docs/checklists/temp/
 docs/playbooks/design/temp/
 
-# Figma integration cache
+# Figma integration artifacts (completely removed from project)
+docs/figma/
+figma_*/
+*.figma
+figma-cache/
+design-tokens/figma/
 docs/CapeWire_Tokens_Typography_Board.json
 docs/Typography_Reference_Frame_Simple.json
 
@@ -126,10 +163,11 @@ docs/pages_overview.md
 docs/playbooks/design/06-target-frame.md
 
 # Generated/demo pages (development only)
-# Note: Remove these entries if pages become permanent
 client/src/pages/Demo*.tsx
 client/src/pages/Test*.tsx
 client/src/pages/*Demo.tsx
+client/src/pages/payments/Demo*.tsx
+client/src/pages/chat/Demo*.tsx
 
 # Logo files in root (should be in proper assets directory)
 LogoW.png
@@ -146,6 +184,8 @@ logs/
 *.error.log
 monitoring/temp/
 metrics/temp/
+websocket-metrics/
+payment-logs/
 
 # Heroku specific
 .heroku/
@@ -153,19 +193,31 @@ metrics/temp/
 # Docker
 docker-data/
 .docker/
+docker-compose.override.yml
 
 # Testing artifacts
 .testcache/
 test-results/
 playwright-report/
+e2e-test-results/
+integration-test-logs/
 
 # Agent framework development
 agents/temp/
 config/temp/
 backend/src/modules/*/temp/
 
-# ChatKit development
+# ChatKit development and WebSocket artifacts
 chatkit-cache/
+chat-session-logs/
+websocket-connection-logs/
+client/src/services/websocket-debug/
+
+# Payment system development
+payment-integration-logs/
+payfast-webhook-logs/
+stripe-webhook-logs/
+invoice-generation-temp/
 
 # AI/ML artifacts
 *.model
@@ -217,9 +269,51 @@ desktop.ini
 voice_demo_report_*.json
 audit_reports/
 performance_reports/
+websocket_performance_reports/
+payment_integration_reports/
 
-# Pip install artifacts (weird filenames from redirected output)
+# Pip install artifacts
 =*
 
 # Temporary migration files
 *_migration_backup.sql
+payment_migration_backup_*.sql
+
+# Security scanning and analysis artifacts
+security-scan-results/
+vulnerability-reports/
+penetration-test-logs/
+
+# Performance and load testing
+load-test-results/
+performance-benchmarks/
+stress-test-logs/
+
+# Development database backups
+database_backups/
+db_snapshots/
+*.dump
+*.sql.backup
+
+# Temporary project plan files (keep current versions only)
+docs/project-plan-backup-*.csv
+docs/project-plan-old.csv
+docs/project-plan.csv.backup
+docs/Master_Projectplan.md
+docs/Master_ProjectPlan_Updated.md
+
+# Node.js tools and artifacts
+.npm/
+.eslintcache
+.stylelintcache
+
+# Storybook build outputs
+storybook-static/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Bundle analyzer reports
+bundle-analyzer-report.html
+webpack-bundle-analyzer.json
