@@ -1,41 +1,3 @@
-/* ------------------------------------------------------------------
-   CapeControl • index.css
-   - Mobile + Desktop tuned
-   - Scalable base typography
-   - Touch-friendly & accessible
-   - Respects prefers-reduced-motion
-------------------------------------------------------------------- */
-
-/* Global scalable defaults */
-html {
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
-}
-
-@media (min-width: 1440px) {
-  html { font-size: 18px; }
-}
-@media (max-width: 992px) {
-  html { font-size: 15px; }
-}
-@media (max-width: 768px) {
-  html { font-size: 14px; }
-}
-@media (max-width: 480px) {
-  html { font-size: 13px; }
-}
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
 :root {
   color-scheme: light dark;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -51,25 +13,6 @@ body {
   margin: 0;
   min-height: 100vh;
   background: transparent;
-  background-color: #0f172a; /* fallback for radial gradient */
-  color: #f8fafc;
-  overflow-x: hidden; /* prevent accidental horizontal scroll on mobile */
-}
-
-/* Touch-friendly tap behavior + accessible focus */
-a, button {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-:where(a, button, input, select, textarea) {
-  outline: none;
-}
-
-:where(a, button, input, select, textarea):focus-visible {
-  outline: 2px solid #60a5fa;
-  outline-offset: 2px;
-  border-radius: 6px;
 }
 
 a {
@@ -240,7 +183,6 @@ a {
   border: none;
   cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  min-height: 44px; /* WCAG touch target */
 }
 
 .btn:hover {
@@ -572,7 +514,6 @@ a {
   font-weight: 700;
   box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
   transition: all 0.2s ease;
-  min-height: 40px;
 }
 
 .btn--mini:hover {
@@ -1844,7 +1785,6 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 44px;
 }
 
 .chat-launcher__button-content {
@@ -2116,14 +2056,12 @@ a {
   padding: 6px 12px;
   font-size: 0.85rem;
   border-radius: 10px;
-  min-height: 36px;
 }
 
 .btn--tiny {
   padding: 4px 10px;
   font-size: 0.75rem;
   border-radius: 8px;
-  min-height: 32px;
 }
 
 .auth-page {
@@ -2254,7 +2192,6 @@ a {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-  min-height: 44px;
 }
 
 .auth-social__button:hover:enabled {
@@ -2299,7 +2236,6 @@ a {
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease;
-  min-height: 44px;
 }
 
 .auth-pending__button:disabled {
@@ -2402,7 +2338,6 @@ a {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
-  min-height: 44px;
 }
 
 .verify-email-card__resend button:disabled {
@@ -2526,7 +2461,6 @@ a {
   font-size: 1rem;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-height: 44px;
 }
 
 .auth-submit:hover {
@@ -3033,7 +2967,6 @@ a {
   justify-content: flex-end;
   gap: 12px;
 }
-
 .manifest-editor {
   display: flex;
   flex-direction: column;
