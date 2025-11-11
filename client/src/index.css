@@ -1,7 +1,7 @@
 :root {
   color-scheme: light dark;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top left, #183061, #071428 55%);
+  background: radial-gradient(circle at top left, #1e3a8a, #0f172a 60%);
   color: #f8fafc;
 }
 
@@ -33,25 +33,27 @@ a {
 
 .landing__main {
   width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 96px;
-  padding: 48px 24px 120px;
+  gap: 120px;
+  padding: 60px 32px 140px;
 }
 
 .top-nav {
-  width: calc(100% - 48px);
-  margin: 32px 24px 0 24px;
+  width: calc(100% - 64px);
+  max-width: 1400px;
+  margin: 32px auto 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(8, 21, 43, 0.85);
-  border: 1px solid rgba(96, 165, 250, 0.25);
-  border-radius: 18px;
-  padding: 18px 28px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 24px;
+  padding: 20px 32px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 45px rgba(2, 6, 23, 0.5);
 }
 
 .top-nav__brand {
@@ -475,9 +477,15 @@ a {
 }
 
 .btn--primary {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
   color: #f8fafc;
-  box-shadow: 0 12px 20px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 14px 25px rgba(79, 70, 229, 0.35);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+}
+
+.btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.45);
 }
 
 .btn--ghost {
@@ -528,38 +536,43 @@ a {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
-  gap: 64px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+  gap: 80px;
   align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .hero__content h1 {
-  font-size: clamp(2.4rem, 5vw, 3.6rem);
-  margin: 16px 0;
-  line-height: 1.1;
+  font-size: clamp(2.8rem, 6vw, 4.2rem);
+  margin: 20px 0;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .hero__content p {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  max-width: 520px;
-  color: rgba(226, 232, 240, 0.85);
+  font-size: 1.2rem;
+  line-height: 1.65;
+  max-width: 580px;
+  color: rgba(226, 232, 240, 0.9);
+  margin: 24px 0;
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin: 28px 0;
+  gap: 18px;
+  margin: 36px 0;
 }
 
 .hero__status {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  color: rgba(203, 213, 225, 0.85);
-  font-size: 0.95rem;
+  gap: 14px;
+  margin-top: 16px;
+  color: rgba(203, 213, 225, 0.9);
+  font-size: 0.98rem;
 }
 
 .status {
@@ -595,14 +608,15 @@ a {
 }
 
 .hero__pane {
-  background: linear-gradient(160deg, rgba(11, 30, 60, 0.95), rgba(30, 64, 175, 0.75));
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  border-radius: 24px;
-  padding: 28px;
-  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.55);
+  background: linear-gradient(160deg, rgba(15, 32, 70, 0.95), rgba(37, 99, 235, 0.8));
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 25px 65px rgba(15, 23, 42, 0.65);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
+  backdrop-filter: blur(20px);
 }
 
 .hero__pane header {
@@ -612,24 +626,27 @@ a {
 }
 
 .hero__pane h3 {
-  margin: 4px 0 0;
-  font-size: 1.3rem;
+  margin: 6px 0 0;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .hero__pane-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 0.7rem;
-  opacity: 0.6;
+  opacity: 0.7;
+  font-weight: 600;
 }
 
 .hero__badge {
-  background: rgba(94, 234, 212, 0.2);
-  color: #5eead4;
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
   border-radius: 999px;
-  padding: 4px 12px;
+  padding: 6px 14px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .hero__pane ul {
@@ -638,15 +655,16 @@ a {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  color: rgba(226, 232, 240, 0.9);
+  gap: 16px;
+  color: rgba(226, 232, 240, 0.95);
 }
 
 .hero__pane li {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   font-weight: 500;
+  font-size: 1rem;
 }
 
 .hero__pane li span {
@@ -665,34 +683,44 @@ a {
 .hero__pane footer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  color: rgba(226, 232, 240, 0.75);
-  font-size: 0.9rem;
+  gap: 12px;
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.95rem;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .section h2 {
-  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-size: clamp(2.2rem, 5vw, 3rem);
   margin: 0;
+  font-weight: 700;
+  text-align: center;
 }
 
 .highlights__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
 }
 
 .highlights__grid article {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(8, 11, 23, 0.35);
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 25px 50px rgba(8, 11, 23, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.highlights__grid article:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 35px 70px rgba(8, 11, 23, 0.5);
 }
 
 .showcase {
@@ -1015,6 +1043,40 @@ a {
   .landing,
   .footer__content {
     width: 100%;
+  }
+  
+  .landing__main {
+    padding: 40px 20px 100px;
+    gap: 80px;
+  }
+  
+  .top-nav {
+    width: calc(100% - 32px);
+    margin: 24px auto 0 auto;
+    padding: 16px 24px;
+  }
+  
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    text-align: center;
+  }
+  
+  .hero__content h1 {
+    font-size: clamp(2.2rem, 8vw, 3.2rem);
+  }
+  
+  .hero__pane {
+    padding: 24px;
+  }
+  
+  .section {
+    gap: 32px;
+  }
+  
+  .highlights__grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 }
 
