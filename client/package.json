@@ -1,6 +1,6 @@
 {
   "name": "autorisen-client",
-  "version": "0.2.1",
+  "version": "0.2.2-sync-check",
   "private": true,
   "description": "CapeControl authentication system with full-width layout, dynamic versioning, and optimized performance",
   "type": "module",
