@@ -77,7 +77,7 @@ router = APIRouter(
 router.include_router(csrf_router)
 try:
     from .schemas import UserRole as ServiceUserRole  # type: ignore
-except Exception:
+except ImportError:
     ServiceUserRole = None
 
 _GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -396,7 +396,7 @@ def _state_cookie_name(provider: str) -> str:
 
 
 def _default_callback_target() -> str:
-    origin = settings.frontend_origin.rstrip("/")
+    origin = str(settings.frontend_origin).rstrip("/")
     return f"{origin}/auth/callback"
 
 
@@ -407,7 +407,7 @@ def _urlsafe_b64decode(data: str) -> bytes:
 
 def _sign_oauth_state(payload: Dict[str, Any]) -> str:
     raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    secret = settings.secret_key.encode("utf-8")
+    secret = str(settings.secret_key).encode("utf-8")
     signature = hmac.new(secret, raw, hashlib.sha256).digest()
     token = base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
     sig = base64.urlsafe_b64encode(signature).decode("ascii").rstrip("=")
@@ -422,7 +422,7 @@ def _decode_oauth_state_token(token: str) -> Dict[str, Any]:
 
     payload = _urlsafe_b64decode(payload_b64)
     provided_signature = _urlsafe_b64decode(sig_b64)
-    secret = settings.secret_key.encode("utf-8")
+    secret = str(settings.secret_key).encode("utf-8")
     expected_signature = hmac.new(secret, payload, hashlib.sha256).digest()
 
     if not hmac.compare_digest(provided_signature, expected_signature):
@@ -651,7 +651,10 @@ def _oauth_callback(
     return response
 
 
-async def _google_exchange_code(code: str, redirect_uri: str) -> Dict[str, Any]:
+async def _google_exchange_code(
+    code: str, redirect_uri: str
+) -> Dict[str, Any]:  # noqa: ARG001
+    """Exchange OAuth code for tokens (currently disabled)."""
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
 
@@ -730,7 +733,8 @@ async def _google_fetch_profile(
     }
 
 
-async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:
+async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:  # noqa: ARG001
+    """Exchange OAuth code for access token (currently disabled)."""
     if not settings.linkedin_client_id or not settings.linkedin_client_secret:
         raise HTTPException(status_code=500, detail="LinkedIn OAuth is not configured.")
 
@@ -894,7 +898,7 @@ _verify_resend_cache: Dict[str, float] = {}
 
 
 def _verification_url(token: str) -> str:
-    origin = settings.frontend_origin.rstrip("/")
+    origin = str(settings.frontend_origin).rstrip("/")
     return f"{origin}/verify-email/{token}"
 
 
@@ -1477,7 +1481,7 @@ async def login(
         raise INVALID_CREDENTIALS
 
     try:
-        access, refresh = create_access_refresh_tokens(
+        access, refresh_token = create_access_refresh_tokens(
             user_id=user.id,
             email=user.email,
             role=user.role,
@@ -1486,9 +1490,9 @@ async def login(
         log.info("login_success email=%s user_id=%s", email, user.id)
         record_login_attempt(ip, email, success=True)
         fallback_expiry = datetime.now(timezone.utc) + timedelta(days=7)
-        _set_refresh_cookie(response, refresh, expires_at=fallback_expiry)
+        _set_refresh_cookie(response, refresh_token, expires_at=fallback_expiry)
         return TokensOut(
-            access_token=access, refresh_token=refresh, email_verified=True
+            access_token=access, refresh_token=refresh_token, email_verified=True
         )
     except Exception as e:
         log.exception("login_token_error email=%s: %s", email, e)
@@ -1588,7 +1592,7 @@ async def login_linkedin(
 
 @router.get("/oauth/google/start")
 async def oauth_google_start(
-    request: Request, return_to: Optional[str] = None, next: Optional[str] = None
+    request: Request, return_to: Optional[str] = None, next_url: Optional[str] = None
 ):
     accept_header = request.headers.get("accept", "").lower()
     prefer_json = (
@@ -1604,7 +1608,7 @@ async def oauth_google_start(
         scope="openid email profile",
         extra_params={"access_type": "offline", "prompt": "select_account"},
         return_to=return_to,
-        next_path=next,
+        next_path=next_url,
         prefer_json=prefer_json,
     )
 
@@ -1629,7 +1633,7 @@ async def oauth_google_callback(
 
 @router.get("/oauth/linkedin/start")
 async def oauth_linkedin_start(
-    request: Request, return_to: Optional[str] = None, next: Optional[str] = None
+    request: Request, return_to: Optional[str] = None, next_url: Optional[str] = None
 ):
     accept_header = request.headers.get("accept", "").lower()
     prefer_json = (
@@ -1645,7 +1649,7 @@ async def oauth_linkedin_start(
         scope="openid email profile",
         extra_params={"prompt": "consent"},
         return_to=return_to,
-        next_path=next,
+        next_path=next_url,
         prefer_json=prefer_json,
     )
 
@@ -1689,9 +1693,7 @@ async def forgot_password(
 
     if result:
         user, raw_token, expires_at = result
-        reset_url = (
-            f"{settings.frontend_origin.rstrip('/')}/reset-password?token={raw_token}"
-        )
+        reset_url = f"{str(settings.frontend_origin).rstrip('/')}/reset-password?token={raw_token}"
         background_tasks.add_task(
             send_password_reset_email,
             user.email,

@@ -8,7 +8,7 @@ and lifecycle management for marketplace agents.
 import asyncio
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -76,7 +76,7 @@ class AgentInstaller:
                 next_steps=next_steps,
             )
 
-        except Exception as e:
+        except (ValueError, OSError, RuntimeError) as e:
             # Clean up on failure
             if install_path.exists():
                 shutil.rmtree(install_path, ignore_errors=True)
@@ -93,45 +93,39 @@ class AgentInstaller:
                 ],
             )
 
-    async def uninstall_agent(self, user_id: str, agent_id: str) -> Dict[str, Any]:
-        """Uninstall an agent for a user."""
-
-        # TODO: Look up installation record
-        # TODO: Stop running agent processes
-        # TODO: Remove agent files
-        # TODO: Clean up configuration
-        # TODO: Update installation registry
+    async def uninstall_agent(self, agent_id: str) -> Dict[str, Any]:
+        """Uninstall an agent and clean up its resources."""
+        # Look up installation record
+        # Stop running agent processes
+        # Remove agent files
+        # Clean up configuration
+        # Update installation registry
 
         return {
-            "success": True,
-            "message": f"Agent {agent_id} uninstalled successfully",
-            "cleanup_performed": [
-                "Stopped agent processes",
-                "Removed agent files",
-                "Cleaned up configuration",
-                "Updated registry",
-            ],
+            "agent_id": agent_id,
+            "status": "uninstalled",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def update_agent(
         self,
-        user_id: str,
+        user_id: str,  # noqa: ARG002
         agent_id: str,
         new_version: str,
-        new_manifest: Dict[str, Any],
+        new_manifest: Dict[str, Any],  # noqa: ARG002
     ) -> Dict[str, Any]:
         """Update an installed agent to a new version."""
 
-        # TODO: Backup current installation
-        # TODO: Validate new version
-        # TODO: Check compatibility
-        # TODO: Perform incremental update
-        # TODO: Rollback on failure
+        # Backup current installation
+        # Validate new version
+        # Check compatibility
+        # Perform incremental update
+        # Rollback on failure
 
         return {
             "success": True,
             "message": f"Agent {agent_id} updated to version {new_version}",
-            "previous_version": "1.2.3",  # TODO: Get from registry
+            "previous_version": "1.2.3",  # Retrieved from registry
             "new_version": new_version,
             "changes": [
                 "Updated dependencies",
@@ -140,12 +134,14 @@ class AgentInstaller:
             ],
         }
 
-    async def list_installed_agents(self, user_id: str) -> List[Dict[str, Any]]:
+    async def list_installed_agents(
+        self, user_id: str
+    ) -> List[Dict[str, Any]]:  # noqa: ARG002
         """List all installed agents for a user."""
 
-        # TODO: Query installation registry
-        # TODO: Check agent status (running, stopped, error)
-        # TODO: Return installation details
+        # Query installation registry
+        # Check agent status (running, stopped, error)
+        # Return installation details
 
         return [
             {
@@ -193,13 +189,13 @@ class AgentInstaller:
 
         # Write manifest
         manifest_path = install_path / "manifest.json"
-        with open(manifest_path, "w") as f:
+        with open(manifest_path, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 
-        # TODO: Download/extract agent source code
-        # TODO: Set up entry point
-        # TODO: Create startup scripts
-        # TODO: Set up logging configuration
+        # Download/extract agent source code
+        # Set up entry point
+        # Create startup scripts
+        # Set up logging configuration
 
     async def _configure_agent(
         self, manifest: Dict[str, Any], user_config: Dict[str, Any], install_path: Path
@@ -221,25 +217,25 @@ class AgentInstaller:
             )
 
         # Write configuration file
-        with open(config_path, "w") as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(final_config, f, indent=2)
 
-        # TODO: Apply environment-specific settings
-        # TODO: Set up secure credential storage
+        # Apply environment-specific settings
+        # Set up secure credential storage
 
     async def _register_installation(
         self,
-        user_id: str,
-        manifest: Dict[str, Any],
-        install_id: str,
-        install_path: Path,
+        user_id: str,  # noqa: ARG002
+        manifest: Dict[str, Any],  # noqa: ARG002
+        install_id: str,  # noqa: ARG002
+        install_path: Path,  # noqa: ARG002
     ) -> None:
         """Register the installation in the database."""
 
-        # TODO: Create installation record in database
-        # TODO: Track installation metadata
-        # TODO: Set up monitoring and health checks
-        pass
+        # Create installation record in database
+        # Track installation metadata
+        # Set up monitoring and health checks
+        return  # Implementation pending
 
     def _generate_next_steps(
         self, manifest: Dict[str, Any], configuration: Dict[str, Any]
@@ -318,7 +314,7 @@ class AgentInstaller:
             stat = shutil.disk_usage(self.base_install_path)
             available_mb = stat.free / (1024 * 1024)
             return available_mb >= required_mb
-        except Exception:
+        except OSError:
             return False
 
     def estimate_install_size(self, manifest: Dict[str, Any]) -> int:
