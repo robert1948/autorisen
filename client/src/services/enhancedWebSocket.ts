@@ -12,10 +12,9 @@ import type {
   ConnectionMetrics,
   EnhancedWebSocketClient,
   WebSocketClientEvents,
-  MessageSendOptions,
-  CONNECTION_QUALITY_THRESHOLDS
+  MessageSendOptions
 } from '../types/websocket';
-import { DEFAULT_WEBSOCKET_CONFIG } from '../types/websocket';
+import { DEFAULT_WEBSOCKET_CONFIG, CONNECTION_QUALITY_THRESHOLDS } from '../types/websocket';
 import type { ChatSocketEnvelope, SocketStatus } from '../types/chat';
 
 export class EnhancedWebSocketService implements EnhancedWebSocketClient {
@@ -308,7 +307,7 @@ export class EnhancedWebSocketService implements EnhancedWebSocketClient {
         timestamp: Date.now(),
         recoverable: true,
         retryable: false,
-        details: { error: error.message, data: event.data }
+        details: { error: error instanceof Error ? error.message : String(error), data: event.data }
       });
     }
   }

@@ -101,6 +101,47 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 help: ## List Make targets (auto-docs)
 	@awk 'BEGIN {FS=":.*##"; printf "\n\033[1mMake targets\033[0m\n"} /^[a-zA-Z0-9_.-]+:.*##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
+# =============================================================================
+# 📖 DOCUMENTATION MANAGEMENT
+# =============================================================================
+
+docs: ## Open documentation hub and quick reference
+	@echo "📚 Opening CapeControl Documentation Hub..."
+	@if command -v code > /dev/null 2>&1; then \
+		code docs/README.md; \
+		code docs/quick-reference.md; \
+	else \
+		echo "📄 Documentation available at:"; \
+		echo "  • docs/README.md (main hub)"; \
+		echo "  • docs/quick-reference.md (commands)"; \
+		echo "  • docs/deployment-environments.md (environments)"; \
+		echo "  • docs/developer-setup-checklist.md (onboarding)"; \
+	fi
+
+docs-update: ## Update documentation after changes
+	@echo "📝 Documentation update checklist:"
+	@echo "  1. ✅ Update relevant .md files"
+	@echo "  2. ✅ Test any command changes"
+	@echo "  3. ✅ Commit with descriptive message"
+	@echo "  4. ✅ Notify team via Slack/email"
+	@echo ""
+	@echo "📋 Quick update workflow:"
+	@echo "  make docs           # Open documentation"
+	@echo "  # Edit files..."
+	@echo "  git add docs/"
+	@echo "  git commit -m \"docs: update [specific change]\""
+	@echo "  git push"
+
+docs-workspace: ## Open VS Code workspace with documentation tasks
+	@if [ -f .vscode/capecontrol.code-workspace ]; then \
+		code .vscode/capecontrol.code-workspace; \
+		echo "🚀 VS Code workspace opened with pre-configured tasks"; \
+	else \
+		echo "❌ VS Code workspace not found. Creating..."; \
+		make docs; \
+		echo "💡 Use 'code .vscode/capecontrol.code-workspace' after setup"; \
+	fi
+
 project-info: ## Show current project version and status information
 	@echo ""
 	@echo "🚀 \033[1mAutoLocal/CapeControl Project Information\033[0m"
@@ -457,7 +498,8 @@ CODEX_DOCS ?= \
   docs/MVP_SCOPE.md \
   docs/Checklist_MVP.md \
   docs/agents.md \
-  docs/Heroku_Pipeline_Workflow.md
+  docs/Heroku_Pipeline_Workflow.md \
+  docs/codex/AgentDeveloperCodex.md
 
 codex-check: ## Verify Codex context files & VS Code settings
 	@echo "== Codex context files =="
@@ -512,6 +554,23 @@ codex-plan-diff: ## Check plan sync
 codex-plan-apply: ## Apply plan sync
 	$(PY) scripts/plan_sync.py --apply
 
+codex-agent-dev: ## Run AgentDeveloper Codex workflow (Phase 2 implementation)
+	@echo "== AgentDeveloper Codex: Phase 2 Implementation =="
+	@echo "Starting Task Execution System completion..."
+	@set -e; \
+	docker compose up -d db; \
+	sleep 3; \
+	cd backend; \
+	ALEMBIC_DATABASE_URL="postgresql://devuser:devpass@localhost:5433/devdb" \
+	DB_SSLMODE_REQUIRE=0 \
+	python -m alembic revision --autogenerate -m "add_task_execution_system" || true; \
+	ALEMBIC_DATABASE_URL="postgresql://devuser:devpass@localhost:5433/devdb" \
+	DB_SSLMODE_REQUIRE=0 \
+	python -m alembic upgrade head; \
+	cd ..; \
+	make codex-test; \
+	echo "✅ AgentDeveloper Phase 2 setup complete"
+
 codex-test-heal: ## Regenerate fixtures (best-effort) then pytest
 	$(PY) scripts/regenerate_fixtures.py || true
 	pytest -q || true
@@ -559,6 +618,28 @@ codex-run: ## Full Codex pass (docs lint, pre-commit, pytest)
 	@$(MAKE) codex-docs-lint || true
 	@$(MAKE) codex-ci-validate
 	@$(MAKE) codex-test
+
+# Codex-powered agent development
+codex-generate-tests: ## Generate comprehensive test framework using Codex
+	@echo "🤖 Codex Test Generator"
+	@echo "Generating comprehensive test framework for agent system..."
+	$(PY) scripts/codex_test_generator.py
+
+codex-generate-agent: ## Generate new agent using Codex templates  
+	@echo "🤖 Codex Agent Generator"
+	@read -p "Agent name: " agent_name; \
+	read -p "Agent description: " agent_desc; \
+	echo "Generating agent: $$agent_name"
+	@echo "Use GitHub Copilot to generate agent based on CapeAI Guide template"
+
+codex-agent-marketplace: ## Generate marketplace infrastructure using Codex
+	@echo "🏪 Codex Marketplace Generator"
+	@echo "Use GitHub Copilot with MarketplaceCodex.md to generate marketplace"
+
+test-agents: ## Run agent-specific tests
+	@echo "🧪 Running Agent Tests"
+	$(TEST_ENV_EXPORT) \
+	pytest tests_enabled/agents/ -v || true
 
 # ----------------------------------------------------------------------------- 
 # Smoke & CSRF probes
@@ -1063,9 +1144,9 @@ dashboard-open:
 	@${PY} -c 'import webbrowser, os; p=os.path.abspath("$(DASHBOARD_SUMMARY)"); print("Opening", p); webbrowser.open("file://" + p)'
 
 # --- Fallback docs sync (no-op if real target not present) --------------------
-.PHONY: codex-docs
-codex-docs:
-	@echo "[codex-docs] No-op fallback (replace with your real docs sync if needed)"
+# .PHONY: codex-docs
+# codex-docs:
+# 	@echo "[codex-docs] No-op fallback (replace with your real docs sync if needed)"
 
 # --- Figma Design System Workflow ------------------------------------------------
 

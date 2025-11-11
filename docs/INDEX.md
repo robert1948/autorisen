@@ -1,5 +1,14 @@
 # Docs Index
 
+## Core Documentation
+
+- docs/VISION_STATEMENT.md - **CapeControl Vision: Empowering Everyone with AI**
+- docs/PROJECT_OVERVIEW.md - Project status and progress tracking
+- docs/DEVELOPMENT_CONTEXT.md - Development environment and context
+- docs/MVP_SCOPE.md - MVP scope and requirements
+
+## Planning & Management
+
 - docs/250927.md
 - docs/Agent_Scope_Boundaries.md
 - docs/agents.md

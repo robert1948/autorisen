@@ -9,7 +9,8 @@
 Production-ready FastAPI + React SaaS platform with agent-based architecture, enhanced real-time communication via advanced WebSocket integration, and payment processing through PayFast. Deployed on Heroku with comprehensive container deployment pipeline.
 
 🚀 **Live Application**: https://autorisen-dac8e65796e7.herokuapp.com  
-📊 **Development Status**: ChatKit Enhancement Complete, Payment Frontend Development Active
+📊 **Development Status**: ChatKit Enhancement Complete, Payment Frontend Development Active  
+🎯 **Vision Statement**: [Empowering Everyone with AI](./docs/VISION_STATEMENT.md) - Our comprehensive vision and core pillars
 
 ## 🎯 Latest Major Updates (November 10, 2025)
 
@@ -246,6 +247,40 @@ curl -X POST https://dev.cape-control.com/api/auth/verify/resend \
   config swaps).
 - GitHub Actions checks `.github/workflows/agents-validate.yml` on PRs touching specs, tool configs, or
   helper scripts.
+
+## 🚀 Deployment Environments
+
+CapeControl uses a **dual-environment deployment strategy**:
+
+- **🧪 Staging**: `autorisen` → https://autorisen-dac8e65796e7.herokuapp.com
+- **🌟 Production**: `capecraft` → https://capecraft.herokuapp.com
+
+### Quick Deploy
+```bash
+make deploy-heroku  # Deploys to BOTH environments
+```
+
+### Environment Details
+
+- **Separate PostgreSQL databases** for data isolation
+- **Different OpenAI API keys** for usage tracking
+- **Independent scaling** and configuration
+- **Safe testing** in staging before production
+
+📖 **Full Documentation**: [Deployment Environments Guide](./docs/deployment-environments.md)
+
+### Health Check Commands
+
+```bash
+# Staging health
+curl https://autorisen-dac8e65796e7.herokuapp.com/api/health
+
+# Production health  
+curl https://capecraft.herokuapp.com/api/health
+
+# Agent endpoints (staging)
+curl https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-guide/health
+```
 
 ## ChatKit Integration (scaffold)
 

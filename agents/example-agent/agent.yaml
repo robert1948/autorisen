@@ -1,0 +1,6 @@
+name: example-agent
+role: <fill>
+model: { provider: openai, name: gpt-4.1-mini, temperature: 0.2 }
+policies: { allow_tools: [] }
+context: { system_prompt: |
+  You are example-agent. }

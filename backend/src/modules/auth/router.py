@@ -655,32 +655,11 @@ async def _google_exchange_code(code: str, redirect_uri: str) -> Dict[str, Any]:
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
 
-    payload = {
-        "code": code,
-        "client_id": settings.google_client_id,
-        "client_secret": settings.google_client_secret,
-        "redirect_uri": redirect_uri,
-        "grant_type": "authorization_code",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            # Google token exchange would go here - currently disabled
-            pass
-    except httpx.HTTPError as exc:  # pragma: no cover - network errors
-        log.warning("google_token_exchange_http_error err=%s", exc)
-        raise HTTPException(
-            status_code=400, detail="Unable to authorize with Google."
-        ) from exc
-
-    if response.status_code != 200:
-        log.warning(
-            "google_token_exchange_failed status=%s body=%s",
-            response.status_code,
-            response.text[:256],
-        )
-        raise HTTPException(status_code=400, detail="Unable to authorize with Google.")
-
-    return response.json()
+    # Google OAuth integration is currently disabled
+    # This is a placeholder for future implementation
+    raise HTTPException(
+        status_code=501, detail="Google OAuth integration is not yet implemented."
+    )
 
 
 async def _google_fetch_profile(
@@ -755,38 +734,11 @@ async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:
     if not settings.linkedin_client_id or not settings.linkedin_client_secret:
         raise HTTPException(status_code=500, detail="LinkedIn OAuth is not configured.")
 
-    payload = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": redirect_uri,
-        "client_id": settings.linkedin_client_id,
-        "client_secret": settings.linkedin_client_secret,
-    }
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            # LinkedIn token exchange would go here - currently disabled
-            pass
-    except httpx.HTTPError as exc:  # pragma: no cover
-        log.warning("linkedin_token_exchange_http_error err=%s", exc)
-        raise HTTPException(
-            status_code=400, detail="Unable to authorize with LinkedIn."
-        ) from exc
-
-    if response.status_code != 200:
-        log.warning(
-            "linkedin_token_exchange_failed status=%s body=%s",
-            response.status_code,
-            response.text[:256],
-        )
-        raise HTTPException(
-            status_code=400, detail="Unable to authorize with LinkedIn."
-        )
-
-    data = response.json()
-    access_token = data.get("access_token")
-    if not access_token:
-        raise HTTPException(status_code=400, detail="LinkedIn access token missing.")
-    return access_token
+    # LinkedIn OAuth integration is currently disabled
+    # This is a placeholder for future implementation
+    raise HTTPException(
+        status_code=501, detail="LinkedIn OAuth integration is not yet implemented."
+    )
 
 
 async def _linkedin_fetch_profile(access_token: str) -> Dict[str, Any]:

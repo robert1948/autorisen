@@ -175,6 +175,7 @@ Frontend:
 - `docs/api/index.html` (static docs hosting)
 
 **OpenAPI Configuration:**
+
 ```python
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -208,6 +209,7 @@ app.openapi = custom_openapi
 ```
 
 **Endpoint Documentation Pattern:**
+
 ```python
 @router.post(
     "/chat/threads",
@@ -249,4 +251,3 @@ async def create_thread(
 - Optimize Swagger UI loading
 - Use CDN for documentation assets
 - Implement progressive loading for large schemas
-

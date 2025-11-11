@@ -13,7 +13,8 @@ It clearly communicates *AI accessibility, contextual intelligence, adaptability
 simplicity,* and *trust* through concise copy, compliant structure, and focused
 CTAs.  
 The design and tone are consistent with the CapeControl brand vision:  
-> “Where Intelligence Meets Impact — AI Accessible to Everyone.”
+> **"CapeControl Vision: Empowering Everyone with AI"** - [Full Vision Statement](./VISION_STATEMENT.md)  
+> *"Where Intelligence Meets Impact — AI Accessible to Everyone."*
 
 ---
 

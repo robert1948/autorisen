@@ -13,7 +13,7 @@
 | 10 | API Documentation System | Codex | Todo | P2 | `docs/playbooks/playbook-10-api-documentation-system.md` |
 
 ## ✅ Next Steps
+
 1. Keep this index synced as playbook statuses change.
 2. Ensure every new commit touching playbooks updates this table.
 3. Add Phase 3 playbooks (Marketplace, Payments) once MVP stabilization is complete.
-

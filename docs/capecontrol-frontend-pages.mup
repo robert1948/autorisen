@@ -1,0 +1,1094 @@
+{
+  "formatVersion": 3,
+  "id": "root",
+  "ideas": {
+    "1": {
+      "id": "1",
+      "title": "🌐 CapeControl Frontend Pages Architecture",
+      "attr": {
+        "style": {
+          "background": "#2196F3",
+          "color": "white"
+        }
+      },
+      "ideas": {
+        "1": {
+          "id": "2",
+          "title": "🏠 Public Landing Pages",
+          "attr": {
+            "style": {
+              "background": "#E3F2FD"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "3",
+              "title": "🏠 Home Page '/'",
+              "ideas": {
+                "1": {
+                  "id": "4",
+                  "title": "📱 Hero Section"
+                },
+                "2": {
+                  "id": "5",
+                  "title": "🎯 Value Propositions"
+                },
+                "3": {
+                  "id": "6",
+                  "title": "🚀 CTA Buttons"
+                },
+                "4": {
+                  "id": "7",
+                  "title": "✨ Live Demo Preview"
+                }
+              }
+            },
+            "2": {
+              "id": "8",
+              "title": "ℹ️ About Page '/about'",
+              "ideas": {
+                "1": {
+                  "id": "9",
+                  "title": "🎯 Vision & Mission"
+                },
+                "2": {
+                  "id": "10",
+                  "title": "👥 Team Showcase"
+                },
+                "3": {
+                  "id": "11",
+                  "title": "🏆 Company Values"
+                },
+                "4": {
+                  "id": "12",
+                  "title": "📈 Success Stories"
+                }
+              ]
+            },
+            "3": {
+              "id": "13",
+              "title": "💰 Subscribe/Pricing '/subscribe'",
+              "ideas": {
+                "1": {
+                  "id": "14",
+                  "title": "💳 Pricing Tiers"
+                },
+                "2": {
+                  "id": "15",
+                  "title": "📊 Feature Comparison"
+                },
+                "3": {
+                  "id": "16",
+                  "title": "❓ FAQ Section"
+                },
+                "4": {
+                  "id": "17",
+                  "title": "🎯 Subscription CTA"
+                }
+              ]
+            }
+          }
+        },
+        "2": {
+          "id": "18",
+          "title": "🔐 Authentication Flow",
+          "attr": {
+            "style": {
+              "background": "#F3E5F5"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "19",
+              "title": "🔑 Login Pages",
+              "ideas": {
+                "1": {
+                  "id": "20",
+                  "title": "🚪 Main Login '/login'",
+                  "ideas": {
+                    "1": {
+                      "id": "21",
+                      "title": "📧 Email/Password Form"
+                    },
+                    "2": {
+                      "id": "22",
+                      "title": "🔗 OAuth Buttons (Google/LinkedIn)"
+                    },
+                    "3": {
+                      "id": "23",
+                      "title": "🛡️ reCAPTCHA Integration"
+                    },
+                    "4": {
+                      "id": "24",
+                      "title": "🔗 Forgot Password Link"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "25",
+                  "title": "🏢 CapeControl Login '/auth/login'",
+                  "ideas": {
+                    "1": {
+                      "id": "26",
+                      "title": "🎨 Branded Interface"
+                    },
+                    "2": {
+                      "id": "27",
+                      "title": "🔒 Enhanced Security"
+                    },
+                    "3": {
+                      "id": "28",
+                      "title": "📱 Mobile Optimized"
+                    }
+                  ]
+                }
+              ]
+            },
+            "2": {
+              "id": "29",
+              "title": "📝 Registration '/register'",
+              "ideas": {
+                "1": {
+                  "id": "30",
+                  "title": "👤 User Information Form"
+                },
+                "2": {
+                  "id": "31",
+                  "title": "🔒 Password Strength Meter"
+                },
+                "3": {
+                  "id": "32",
+                  "title": "📧 Email Verification Flow"
+                },
+                "4": {
+                  "id": "33",
+                  "title": "🛡️ Terms & Privacy"
+                }
+              ]
+            },
+            "3": {
+              "id": "34",
+              "title": "🔐 Multi-Factor Authentication",
+              "ideas": {
+                "1": {
+                  "id": "35",
+                  "title": "📱 MFA Setup '/account/mfa-enroll'",
+                  "ideas": {
+                    "1": {
+                      "id": "36",
+                      "title": "📱 TOTP Setup"
+                    },
+                    "2": {
+                      "id": "37",
+                      "title": "📊 QR Code Display"
+                    },
+                    "3": {
+                      "id": "38",
+                      "title": "🔢 Backup Codes"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "39",
+                  "title": "🔐 MFA Challenge '/auth/mfa'",
+                  "ideas": {
+                    "1": {
+                      "id": "40",
+                      "title": "🔢 Code Input Field"
+                    },
+                    "2": {
+                      "id": "41",
+                      "title": "🔄 Resend Options"
+                    },
+                    "3": {
+                      "id": "42",
+                      "title": "🚫 Backup Access"
+                    }
+                  ]
+                }
+              ]
+            },
+            "4": {
+              "id": "43",
+              "title": "🔄 Password Recovery",
+              "ideas": {
+                "1": {
+                  "id": "44",
+                  "title": "❓ Forgot Password '/forgot-password'",
+                  "ideas": {
+                    "1": {
+                      "id": "45",
+                      "title": "📧 Email Input"
+                    },
+                    "2": {
+                      "id": "46",
+                      "title": "✅ Confirmation Message"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "47",
+                  "title": "🔑 Reset Password '/reset-password'",
+                  "ideas": {
+                    "1": {
+                      "id": "48",
+                      "title": "🔒 New Password Form"
+                    },
+                    "2": {
+                      "id": "49",
+                      "title": "🔒 Confirm Password"
+                    },
+                    "3": {
+                      "id": "50",
+                      "title": "💪 Strength Validation"
+                    }
+                  ]
+                }
+              ]
+            },
+            "5": {
+              "id": "51",
+              "title": "✅ Verification & Welcome",
+              "ideas": {
+                "1": {
+                  "id": "52",
+                  "title": "📧 Email Verification '/verify-email/:token'",
+                  "ideas": {
+                    "1": {
+                      "id": "53",
+                      "title": "✅ Success Confirmation"
+                    },
+                    "2": {
+                      "id": "54",
+                      "title": "❌ Error Handling"
+                    },
+                    "3": {
+                      "id": "55",
+                      "title": "🔄 Resend Option"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "56",
+                  "title": "🎉 Welcome Page '/welcome'",
+                  "ideas": {
+                    "1": {
+                      "id": "57",
+                      "title": "🎯 Getting Started Guide"
+                    },
+                    "2": {
+                      "id": "58",
+                      "title": "🚀 Quick Actions"
+                    },
+                    "3": {
+                      "id": "59",
+                      "title": "📝 Next Steps"
+                    }
+                  ]
+                },
+                "3": {
+                  "id": "60",
+                  "title": "🔗 OAuth Callback '/auth/callback'",
+                  "ideas": {
+                    "1": {
+                      "id": "61",
+                      "title": "⏳ Processing State"
+                    },
+                    "2": {
+                      "id": "62",
+                      "title": "✅ Success Redirect"
+                    },
+                    "3": {
+                      "id": "63",
+                      "title": "❌ Error Handling"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "3": {
+          "id": "64",
+          "title": "🎯 Onboarding Experience",
+          "attr": {
+            "style": {
+              "background": "#E8F5E8"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "65",
+              "title": "🧭 Onboarding Guide '/onboarding/guide'",
+              "ideas": {
+                "1": {
+                  "id": "66",
+                  "title": "👤 User Type Selection"
+                },
+                "2": {
+                  "id": "67",
+                  "title": "🎯 Goal Setting"
+                },
+                "3": {
+                  "id": "68",
+                  "title": "📊 Progress Tracking"
+                }
+              ]
+            },
+            "2": {
+              "id": "69",
+              "title": "👤 Customer Path '/onboarding/customer'",
+              "ideas": {
+                "1": {
+                  "id": "70",
+                  "title": "🏢 Business Information"
+                },
+                "2": {
+                  "id": "71",
+                  "title": "🎯 Use Case Discovery"
+                },
+                "3": {
+                  "id": "72",
+                  "title": "🚀 First Agent Setup"
+                }
+              ]
+            },
+            "3": {
+              "id": "73",
+              "title": "🔧 Developer Path '/onboarding/developer'",
+              "ideas": {
+                "1": {
+                  "id": "74",
+                  "title": "💻 Technical Skills"
+                },
+                "2": {
+                  "id": "75",
+                  "title": "🛠️ Integration Preferences"
+                },
+                "3": {
+                  "id": "76",
+                  "title": "📚 API Documentation"
+                }
+              ]
+            },
+            "4": {
+              "id": "77",
+              "title": "📋 Profile Setup '/onboarding/profile'",
+              "ideas": {
+                "1": {
+                  "id": "78",
+                  "title": "👤 Personal Information"
+                },
+                "2": {
+                  "id": "79",
+                  "title": "🎨 Preferences & Settings"
+                },
+                "3": {
+                  "id": "80",
+                  "title": "🔔 Notification Preferences"
+                }
+              ]
+            },
+            "5": {
+              "id": "81",
+              "title": "✅ Onboarding Checklist '/onboarding/checklist'",
+              "ideas": {
+                "1": {
+                  "id": "82",
+                  "title": "📋 Task List"
+                },
+                "2": {
+                  "id": "83",
+                  "title": "📊 Progress Indicator"
+                },
+                "3": {
+                  "id": "84",
+                  "title": "🎁 Completion Rewards"
+                }
+              ]
+            }
+          ]
+        },
+        "4": {
+          "id": "85",
+          "title": "📊 Core Application Pages",
+          "attr": {
+            "style": {
+              "background": "#FFF8E1"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "86",
+              "title": "📊 Dashboard '/dashboard'",
+              "ideas": {
+                "1": {
+                  "id": "87",
+                  "title": "📈 Analytics Overview",
+                  "ideas": {
+                    "1": {
+                      "id": "88",
+                      "title": "🤖 Active Agents Count"
+                    },
+                    "2": {
+                      "id": "89",
+                      "title": "📊 Usage Statistics"
+                    },
+                    "3": {
+                      "id": "90",
+                      "title": "💰 Cost Overview"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "91",
+                  "title": "🔄 Recent Activity",
+                  "ideas": {
+                    "1": {
+                      "id": "92",
+                      "title": "📝 Activity Feed"
+                    },
+                    "2": {
+                      "id": "93",
+                      "title": "🕒 Timestamp Display"
+                    },
+                    "3": {
+                      "id": "94",
+                      "title": "🔗 Quick Actions"
+                    }
+                  ]
+                },
+                "3": {
+                  "id": "95",
+                  "title": "⚡ Quick Actions Panel",
+                  "ideas": {
+                    "1": {
+                      "id": "96",
+                      "title": "🚀 Deploy New Agent"
+                    },
+                    "2": {
+                      "id": "97",
+                      "title": "🏪 Browse Marketplace"
+                    },
+                    "3": {
+                      "id": "98",
+                      "title": "⚙️ System Settings"
+                    }
+                  ]
+                }
+              ]
+            },
+            "2": {
+              "id": "99",
+              "title": "🤖 Agents Management '/agents'",
+              "ideas": {
+                "1": {
+                  "id": "100",
+                  "title": "📋 Agent List View"
+                },
+                "2": {
+                  "id": "101",
+                  "title": "🔧 Agent Configuration"
+                },
+                "3": {
+                  "id": "102",
+                  "title": "📊 Performance Metrics"
+                },
+                "4": {
+                  "id": "103",
+                  "title": "🎨 Agent Creation Wizard"
+                }
+              ]
+            },
+            "3": {
+              "id": "104",
+              "title": "🏪 Marketplace '/marketplace'",
+              "ideas": {
+                "1": {
+                  "id": "105",
+                  "title": "🔍 Agent Discovery"
+                },
+                "2": {
+                  "id": "106",
+                  "title": "🏷️ Category Filters"
+                },
+                "3": {
+                  "id": "107",
+                  "title": "⭐ Ratings & Reviews"
+                },
+                "4": {
+                  "id": "108",
+                  "title": "💳 Install/Purchase Flow"
+                }
+              ]
+            },
+            "5": {
+              "id": "109",
+              "title": "⚙️ Settings '/settings'",
+              "ideas": {
+                "1": {
+                  "id": "110",
+                  "title": "👤 Profile Settings"
+                },
+                "2": {
+                  "id": "111",
+                  "title": "🔐 Security Settings"
+                },
+                "3": {
+                  "id": "112",
+                  "title": "🔔 Notification Settings"
+                },
+                "4": {
+                  "id": "113",
+                  "title": "🎨 UI Preferences"
+                }
+              ]
+            }
+          ]
+        },
+        "5": {
+          "id": "114",
+          "title": "💬 Chat & Communication",
+          "attr": {
+            "style": {
+              "background": "#E1F5FE"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "115",
+              "title": "💬 Chat Console '/chat'",
+              "ideas": {
+                "1": {
+                  "id": "116",
+                  "title": "💬 Chat Interface",
+                  "ideas": {
+                    "1": {
+                      "id": "117",
+                      "title": "📝 Message Input"
+                    },
+                    "2": {
+                      "id": "118",
+                      "title": "💬 Message List"
+                    },
+                    "3": {
+                      "id": "119",
+                      "title": "🔄 Real-time Updates"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "120",
+                  "title": "🌐 Connection Status",
+                  "ideas": {
+                    "1": {
+                      "id": "121",
+                      "title": "🟢 Online Indicator"
+                    },
+                    "2": {
+                      "id": "122",
+                      "title": "📊 Connection Quality"
+                    },
+                    "3": {
+                      "id": "123",
+                      "title": "🔄 Reconnection Logic"
+                    }
+                  ]
+                }
+              ]
+            },
+            "2": {
+              "id": "124",
+              "title": "📞 Chat Thread '/chat/:threadId'",
+              "ideas": {
+                "1": {
+                  "id": "125",
+                  "title": "📜 Message History"
+                },
+                "2": {
+                  "id": "126",
+                  "title": "🔄 Thread Management"
+                },
+                "3": {
+                  "id": "127",
+                  "title": "📎 File Attachments"
+                },
+                "4": {
+                  "id": "128",
+                  "title": "🏷️ Thread Metadata"
+                }
+              ]
+            },
+            "3": {
+              "id": "129",
+              "title": "🛠️ Chat Components",
+              "ideas": {
+                "1": {
+                  "id": "130",
+                  "title": "💬 ChatModal Component"
+                },
+                "2": {
+                  "id": "131",
+                  "title": "🚀 ChatLauncher Component"
+                },
+                "3": {
+                  "id": "132",
+                  "title": "🎯 ChatKitProvider Context"
+                },
+                "4": {
+                  "id": "133",
+                  "title": "🎛️ ChatKitWidget Integration"
+                }
+              ]
+            }
+          ]
+        },
+        "6": {
+          "id": "134",
+          "title": "💳 Payment & Billing",
+          "attr": {
+            "style": {
+              "background": "#FFF3E0"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "135",
+              "title": "💳 Billing Management '/billing'",
+              "ideas": {
+                "1": {
+                  "id": "136",
+                  "title": "📊 Billing Overview",
+                  "ideas": {
+                    "1": {
+                      "id": "137",
+                      "title": "💰 Current Plan"
+                    },
+                    "2": {
+                      "id": "138",
+                      "title": "📈 Usage Statistics"
+                    },
+                    "3": {
+                      "id": "139",
+                      "title": "💳 Next Billing Date"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "140",
+                  "title": "💳 Payment Methods",
+                  "ideas": {
+                    "1": {
+                      "id": "141",
+                      "title": "💳 Saved Cards"
+                    },
+                    "2": {
+                      "id": "142",
+                      "title": "➕ Add New Method"
+                    },
+                    "3": {
+                      "id": "143",
+                      "title": "✏️ Edit/Remove Methods"
+                    }
+                  ]
+                },
+                "3": {
+                  "id": "144",
+                  "title": "📊 Invoice History",
+                  "ideas": {
+                    "1": {
+                      "id": "145",
+                      "title": "📋 Invoice List"
+                    },
+                    "2": {
+                      "id": "146",
+                      "title": "💾 Download PDF"
+                    },
+                    "3": {
+                      "id": "147",
+                      "title": "🔍 Search & Filter"
+                    }
+                  ]
+                }
+              ]
+            },
+            "2": {
+              "id": "148",
+              "title": "🛒 Checkout '/checkout'",
+              "ideas": {
+                "1": {
+                  "id": "149",
+                  "title": "🛒 Order Summary"
+                },
+                "2": {
+                  "id": "150",
+                  "title": "💳 Payment Form"
+                },
+                "3": {
+                  "id": "151",
+                  "title": "🔒 Security Validation"
+                },
+                "4": {
+                  "id": "152",
+                  "title": "✅ Confirmation Page"
+                }
+              ]
+            },
+            "3": {
+              "id": "153",
+              "title": "💳 Payment Components",
+              "ideas": {
+                "1": {
+                  "id": "154",
+                  "title": "💳 PayFastCheckout Component"
+                },
+                "2": {
+                  "id": "155",
+                  "title": "💼 PaymentMethodManager Component"
+                },
+                "3": {
+                  "id": "156",
+                  "title": "📊 InvoiceHistory Component"
+                },
+                "4": {
+                  "id": "157",
+                  "title": "🔄 PaymentStateContext"
+                }
+              ]
+            }
+          ]
+        },
+        "7": {
+          "id": "158",
+          "title": "🛠️ Utility & Test Pages",
+          "attr": {
+            "style": {
+              "background": "#F3E5F5"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "159",
+              "title": "🎨 Logo Test '/test/logo'",
+              "ideas": {
+                "1": {
+                  "id": "160",
+                  "title": "🎨 Logo Variants Display"
+                },
+                "2": {
+                  "id": "161",
+                  "title": "📱 Responsive Testing"
+                },
+                "3": {
+                  "id": "162",
+                  "title": "🌗 Dark/Light Mode"
+                }
+              ]
+            },
+            "2": {
+              "id": "163",
+              "title": "🧪 Demo Pages",
+              "ideas": {
+                "1": {
+                  "id": "164",
+                  "title": "🎯 Demo1Demo Component"
+                },
+                "2": {
+                  "id": "165",
+                  "title": "📊 TestPage Component"
+                },
+                "3": {
+                  "id": "166",
+                  "title": "🎮 Interactive Demos"
+                }
+              ]
+            }
+          ]
+        },
+        "8": {
+          "id": "167",
+          "title": "🧩 Shared Components",
+          "attr": {
+            "style": {
+              "background": "#E8F5E8"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "168",
+              "title": "🔒 Authentication Components",
+              "ideas": {
+                "1": {
+                  "id": "169",
+                  "title": "🔑 LoginPage Component"
+                },
+                "2": {
+                  "id": "170",
+                  "title": "🔐 MFAChallenge Component"
+                },
+                "3": {
+                  "id": "171",
+                  "title": "📱 MFAEnroll Component"
+                }
+              ]
+            },
+            "2": {
+              "id": "172",
+              "title": "🎨 UI Components",
+              "ideas": {
+                "1": {
+                  "id": "173",
+                  "title": "📝 FormInput Component"
+                },
+                "2": {
+                  "id": "174",
+                  "title": "🔒 PasswordMeter Component"
+                },
+                "3": {
+                  "id": "175",
+                  "title": "🛡️ Recaptcha Component"
+                },
+                "4": {
+                  "id": "176",
+                  "title": "🎨 Logo Component"
+                }
+              ]
+            },
+            "3": {
+              "id": "177",
+              "title": "🧭 Navigation Components",
+              "ideas": {
+                "1": {
+                  "id": "178",
+                  "title": "📍 TopNav Component"
+                },
+                "2": {
+                  "id": "179",
+                  "title": "🔗 Route Protection"
+                },
+                "3": {
+                  "id": "180",
+                  "title": "🎯 Breadcrumbs"
+                }
+              ]
+            },
+            "4": {
+              "id": "181",
+              "title": "🎯 Specialized Components",
+              "ideas": {
+                "1": {
+                  "id": "182",
+                  "title": "👤 RoleCard Component"
+                },
+                "2": {
+                  "id": "183",
+                  "title": "🏷️ SkillMultiSelect Component"
+                },
+                "3": {
+                  "id": "184",
+                  "title": "💬 Message Component"
+                }
+              ]
+            }
+          ]
+        },
+        "9": {
+          "id": "185",
+          "title": "🔗 Page Flow & Navigation",
+          "attr": {
+            "style": {
+              "background": "#FFF8E1"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "186",
+              "title": "🚀 User Journey Flows",
+              "ideas": {
+                "1": {
+                  "id": "187",
+                  "title": "👤 New User Flow",
+                  "ideas": {
+                    "1": {
+                      "id": "188",
+                      "title": "🏠 Landing → 📝 Register → 📧 Verify → 🎉 Welcome"
+                    },
+                    "2": {
+                      "id": "189",
+                      "title": "🎯 Onboarding → 📊 Dashboard"
+                    }
+                  ]
+                },
+                "2": {
+                  "id": "190",
+                  "title": "👥 Returning User Flow",
+                  "ideas": {
+                    "1": {
+                      "id": "191",
+                      "title": "🔑 Login → 🔐 MFA → 📊 Dashboard"
+                    },
+                    "2": {
+                      "id": "192",
+                      "title": "🏠 Landing → 🔑 Login (Direct)"
+                    }
+                  ]
+                }
+              ]
+            },
+            "2": {
+              "id": "193",
+              "title": "💳 Payment Flow",
+              "ideas": {
+                "1": {
+                  "id": "194",
+                  "title": "💰 Subscribe → 🛒 Checkout → ✅ Confirmation"
+                },
+                "2": {
+                  "id": "195",
+                  "title": "📊 Billing → 💳 Payment Methods → ✏️ Edit"
+                }
+              ]
+            },
+            "3": {
+              "id": "196",
+              "title": "🤖 Agent Interaction Flow",
+              "ideas": {
+                "1": {
+                  "id": "197",
+                  "title": "🏪 Marketplace → 🎯 Agent Detail → 💳 Install"
+                },
+                "2": {
+                  "id": "198",
+                  "title": "🤖 Agents → 💬 Chat → 📊 Analytics"
+                }
+              ]
+            }
+          ]
+        },
+        "10": {
+          "id": "199",
+          "title": "📱 Responsive Design & Mobile",
+          "attr": {
+            "style": {
+              "background": "#E1F5FE"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "200",
+              "title": "📱 Mobile Optimization",
+              "ideas": {
+                "1": {
+                  "id": "201",
+                  "title": "📊 Dashboard Mobile View"
+                },
+                "2": {
+                  "id": "202",
+                  "title": "💬 Chat Mobile Interface"
+                },
+                "3": {
+                  "id": "203",
+                  "title": "💳 Mobile Payment Flow"
+                }
+              ]
+            },
+            "2": {
+              "id": "204",
+              "title": "💻 Tablet & Desktop",
+              "ideas": {
+                "1": {
+                  "id": "205",
+                  "title": "🖥️ Desktop Full Layout"
+                },
+                "2": {
+                  "id": "206",
+                  "title": "📱 Tablet Grid System"
+                },
+                "3": {
+                  "id": "207",
+                  "title": "📏 Responsive Breakpoints"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "links": [
+    {
+      "ideaIdFrom": "3",
+      "ideaIdTo": "19",
+      "attr": {
+        "style": {
+          "color": "#4CAF50",
+          "lineStyle": "solid"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "29",
+      "ideaIdTo": "52",
+      "attr": {
+        "style": {
+          "color": "#FF9800",
+          "lineStyle": "solid"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "56",
+      "ideaIdTo": "65",
+      "attr": {
+        "style": {
+          "color": "#2196F3",
+          "lineStyle": "dashed"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "81",
+      "ideaIdTo": "86",
+      "attr": {
+        "style": {
+          "color": "#9C27B0",
+          "lineStyle": "solid"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "104",
+      "ideaIdTo": "99",
+      "attr": {
+        "style": {
+          "color": "#607D8B",
+          "lineStyle": "dashed"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "135",
+      "ideaIdTo": "148",
+      "attr": {
+        "style": {
+          "color": "#795548",
+          "lineStyle": "solid"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "115",
+      "ideaIdTo": "99",
+      "attr": {
+        "style": {
+          "color": "#009688",
+          "lineStyle": "dashed"
+        }
+      }
+    }
+  ],
+  "attr": {
+    "theme": "CapeControl-Frontend-Pages"
+  },
+  "title": "CapeControl Frontend Pages & Components Architecture"
+}

@@ -6,6 +6,7 @@ import uuid
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     CheckConstraint,
     Column,
@@ -84,6 +85,8 @@ class User(Base):
     payment_methods = relationship(
         "PaymentMethod", back_populates="user", cascade="all, delete-orphan"
     )
+    tasks = relationship("Task", back_populates="user")
+    audit_events = relationship("AuditEvent", back_populates="user")
 
 
 class Credential(Base):
@@ -330,6 +333,8 @@ class Agent(Base):
         cascade="all, delete-orphan",
         order_by="AgentVersion.created_at.desc()",
     )
+    tasks = relationship("Task", back_populates="agent")
+    audit_events = relationship("AuditEvent", back_populates="agent")
 
 
 class AgentVersion(Base):
@@ -358,6 +363,80 @@ class AgentVersion(Base):
     )
 
     agent = relationship("Agent", back_populates="versions")
+
+
+class Task(Base):
+    """Agent task execution tracking."""
+
+    __tablename__ = "tasks"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    agent_id = Column(String(36), ForeignKey("agents.id"), nullable=False, index=True)
+    goal = Column(Text, nullable=True)
+    input = Column(JSON, nullable=True)
+    status = Column(String(32), nullable=False, server_default="queued", index=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    error_message = Column(Text, nullable=True)
+    result = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+
+    user = relationship("User")
+    agent = relationship("Agent")
+
+
+class Run(Base):
+    """Step-by-step execution details for tasks."""
+
+    __tablename__ = "runs"
+    __table_args__ = (UniqueConstraint("task_id", "step", name="uq_runs_task_step"),)
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    task_id = Column(
+        String(36),
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    step = Column(Integer, nullable=False)
+    state = Column(JSON, nullable=True)
+    status = Column(String(32), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    error_details = Column(JSON, nullable=True)
+
+    task = relationship("Task")
+
+
+class AuditEvent(Base):
+    """Comprehensive audit trail for agent activities."""
+
+    __tablename__ = "audit_events"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    task_id = Column(
+        String(36), ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
+    )
+    agent_id = Column(
+        String(36), ForeignKey("agents.id", ondelete="SET NULL"), nullable=True
+    )
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    event_type = Column(String(64), nullable=False, index=True)
+    payload = Column(JSON, nullable=True)
+    ip_address = Column(String(45), nullable=True)  # IPv6 compatible
+    user_agent = Column(Text, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+
+    task = relationship("Task")
+    agent = relationship("Agent")
+    user = relationship("User")
 
 
 class FlowRun(Base):

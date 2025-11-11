@@ -419,44 +419,44 @@ marketplace_discovery_rate: counter
 ## 11. 🧭 Implementation Roadmap
 
 ### Phase 1: Foundation (Weeks 1-3)
-- **Agent Registry + Basic CRUD**
-  - PostgreSQL schema setup with migrations
-  - FastAPI agent router with CRUD endpoints
-  - Pydantic schemas and validation
-  - Basic manifest validator
-- **Deliverable**: Agent creation and listing functionality
+* **Agent Registry + Basic CRUD**
+  * PostgreSQL schema setup with migrations
+  * FastAPI agent router with CRUD endpoints
+  * Pydantic schemas and validation
+  * Basic manifest validator
+* **Deliverable**: Agent creation and listing functionality
 
 ### Phase 2: Core Execution (Weeks 4-6)  
-- **Orchestrator + Task Runner**
-  - Task execution engine with isolation
-  - Multi-step plan execution
-  - Basic error handling and retries
-  - WebSocket streaming for real-time updates
-- **Deliverable**: Agent execution with live progress tracking
+* **Orchestrator + Task Runner**
+  * Task execution engine with isolation
+  * Multi-step plan execution
+  * Basic error handling and retries
+  * WebSocket streaming for real-time updates
+* **Deliverable**: Agent execution with live progress tracking
 
 ### Phase 3: Marketplace & Discovery (Weeks 7-9)
-- **Discovery UI + Install Flow**
-  - React marketplace interface
-  - Agent detail pages with manifest preview
-  - One-click installation with permission configuration
-  - Version management and upgrade flows
-- **Deliverable**: End-to-end agent discovery and installation
+* **Discovery UI + Install Flow**
+  * React marketplace interface
+  * Agent detail pages with manifest preview
+  * One-click installation with permission configuration
+  * Version management and upgrade flows
+* **Deliverable**: End-to-end agent discovery and installation
 
 ### Phase 4: Security & Governance (Weeks 10-12)
-- **Middleware Integration + Policy Engine**
-  - Security agents (rate limiting, input sanitization)
-  - Audit logging with event tracking
-  - Policy scope validation and enforcement
-  - Content moderation and safety checks
-- **Deliverable**: Production-ready security and compliance
+* **Middleware Integration + Policy Engine**
+  * Security agents (rate limiting, input sanitization)
+  * Audit logging with event tracking
+  * Policy scope validation and enforcement
+  * Content moderation and safety checks
+* **Deliverable**: Production-ready security and compliance
 
 ### Phase 5: Scale & Optimize (Weeks 13-16)
-- **Performance Optimization + Analytics**
-  - Redis caching and queue management
-  - Database read replicas and connection pooling
-  - Monitoring dashboard with Grafana/Prometheus
-  - Load balancing and horizontal scaling
-- **Deliverable**: High-performance, scalable agent platform
+* **Performance Optimization + Analytics**
+  * Redis caching and queue management
+  * Database read replicas and connection pooling
+  * Monitoring dashboard with Grafana/Prometheus
+  * Load balancing and horizontal scaling
+* **Deliverable**: High-performance, scalable agent platform
 
 ### 11.1 Technical Dependencies
 
@@ -545,7 +545,7 @@ The architecture aligns directly with CapeControl's vision of **adaptive, access
 ---
 
 **Implementation Support Available:**
-- Ready-to-run code stubs for `registry.py`, `agent_router.py`, and example agents
-- Database migration scripts with proper indexing strategy  
-- Docker compose setup for local development environment
-- Monitoring dashboard configuration templates
+* Ready-to-run code stubs for `registry.py`, `agent_router.py`, and example agents
+* Database migration scripts with proper indexing strategy  
+* Docker compose setup for local development environment
+* Monitoring dashboard configuration templates

@@ -1,0 +1,1602 @@
+{
+  "formatVersion": 3,
+  "id": "root",
+  "ideas": {
+    "1": {
+      "title": "CapeControl Agents System v0.2.1",
+      "id": "1",
+      "ideas": {
+        "1": {
+          "title": "Agent Registry API",
+          "id": "10",
+          "ideas": {
+            "1": {
+              "title": "CRUD Operations",
+              "id": "101",
+              "ideas": {
+                "1": {
+                  "title": "List Agents",
+                  "id": "1011",
+                  "ideas": {
+                    "1": {
+                      "title": "GET /agents",
+                      "id": "10111"
+                    },
+                    "2": {
+                      "title": "Filter by owner",
+                      "id": "10112"
+                    },
+                    "3": {
+                      "title": "Paginated results",
+                      "id": "10113"
+                    },
+                    "4": {
+                      "title": "Auth required",
+                      "id": "10114"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Create Agent",
+                  "id": "1012",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents",
+                      "id": "10121"
+                    },
+                    "2": {
+                      "title": "Auto-generate slug",
+                      "id": "10122"
+                    },
+                    "3": {
+                      "title": "Set owner_id from token",
+                      "id": "10123"
+                    },
+                    "4": {
+                      "title": "Validate manifest",
+                      "id": "10124"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Update Agent",
+                  "id": "1013",
+                  "ideas": {
+                    "1": {
+                      "title": "PUT /agents/{agent_id}",
+                      "id": "10131"
+                    },
+                    "2": {
+                      "title": "Owner permission check",
+                      "id": "10132"
+                    },
+                    "3": {
+                      "title": "Partial updates allowed",
+                      "id": "10133"
+                    }
+                  }
+                },
+                "4": {
+                  "title": "Delete Agent",
+                  "id": "1014",
+                  "ideas": {
+                    "1": {
+                      "title": "DELETE /agents/{agent_id}",
+                      "id": "10141"
+                    },
+                    "2": {
+                      "title": "Owner permission check",
+                      "id": "10142"
+                    },
+                    "3": {
+                      "title": "Cascade delete versions",
+                      "id": "10143"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Version Management",
+              "id": "102",
+              "ideas": {
+                "1": {
+                  "title": "Create Version",
+                  "id": "1021",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents/{agent_id}/versions",
+                      "id": "10211"
+                    },
+                    "2": {
+                      "title": "Auto-increment version",
+                      "id": "10212"
+                    },
+                    "3": {
+                      "title": "Draft status by default",
+                      "id": "10213"
+                    },
+                    "4": {
+                      "title": "Validate manifest schema",
+                      "id": "10214"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Publish Version",
+                  "id": "1022",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents/{agent_id}/versions/{version_id}/publish",
+                      "id": "10221"
+                    },
+                    "2": {
+                      "title": "Set published_at timestamp",
+                      "id": "10222"
+                    },
+                    "3": {
+                      "title": "Make available in marketplace",
+                      "id": "10223"
+                    },
+                    "4": {
+                      "title": "Validate manifest completeness",
+                      "id": "10224"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Archive Version",
+                  "id": "1023",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents/{agent_id}/versions/{version_id}/archive",
+                      "id": "10231"
+                    },
+                    "2": {
+                      "title": "Remove from marketplace",
+                      "id": "10232"
+                    },
+                    "3": {
+                      "title": "Keep for historical reference",
+                      "id": "10233"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "Authentication Integration",
+              "id": "103",
+              "ideas": {
+                "1": {
+                  "title": "JWT Token Validation",
+                  "id": "1031"
+                },
+                "2": {
+                  "title": "get_current_user dependency",
+                  "id": "1032"
+                },
+                "3": {
+                  "title": "Owner-based permissions",
+                  "id": "1033"
+                },
+                "4": {
+                  "title": "Role-based access control",
+                  "id": "1034"
+                }
+              }
+            }
+          }
+        },
+        "2": {
+          "title": "Marketplace System",
+          "id": "20",
+          "ideas": {
+            "1": {
+              "title": "Public Discovery",
+              "id": "201",
+              "ideas": {
+                "1": {
+                  "title": "List Published Agents",
+                  "id": "2011",
+                  "ideas": {
+                    "1": {
+                      "title": "GET /marketplace/agents",
+                      "id": "20111"
+                    },
+                    "2": {
+                      "title": "Only published versions",
+                      "id": "20112"
+                    },
+                    "3": {
+                      "title": "Sorted by updated_at desc",
+                      "id": "20113"
+                    },
+                    "4": {
+                      "title": "Include manifest data",
+                      "id": "20114"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Agent Detail View",
+                  "id": "2012",
+                  "ideas": {
+                    "1": {
+                      "title": "GET /marketplace/agents/{slug}",
+                      "id": "20121"
+                    },
+                    "2": {
+                      "title": "Show all versions",
+                      "id": "20122"
+                    },
+                    "3": {
+                      "title": "Highlight published version",
+                      "id": "20123"
+                    },
+                    "4": {
+                      "title": "Version history with manifests",
+                      "id": "20124"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Agent Metadata",
+              "id": "202",
+              "ideas": {
+                "1": {
+                  "title": "Basic Info",
+                  "id": "2021",
+                  "ideas": {
+                    "1": {
+                      "title": "Name & description",
+                      "id": "20211"
+                    },
+                    "2": {
+                      "title": "Slug for URL routing",
+                      "id": "20212"
+                    },
+                    "3": {
+                      "title": "Owner information",
+                      "id": "20213"
+                    },
+                    "4": {
+                      "title": "Creation/update timestamps",
+                      "id": "20214"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Version Info",
+                  "id": "2022",
+                  "ideas": {
+                    "1": {
+                      "title": "Semantic version number",
+                      "id": "20221"
+                    },
+                    "2": {
+                      "title": "Status (draft/published/archived)",
+                      "id": "20222"
+                    },
+                    "3": {
+                      "title": "Publication timestamp",
+                      "id": "20223"
+                    },
+                    "4": {
+                      "title": "Complete manifest data",
+                      "id": "20224"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "3": {
+          "title": "Schema Validation",
+          "id": "30",
+          "ideas": {
+            "1": {
+              "title": "Agent Schemas",
+              "id": "301",
+              "ideas": {
+                "1": {
+                  "title": "AgentBase",
+                  "id": "3011",
+                  "ideas": {
+                    "1": {
+                      "title": "name: required string",
+                      "id": "30111"
+                    },
+                    "2": {
+                      "title": "description: required string",
+                      "id": "30112"
+                    },
+                    "3": {
+                      "title": "manifest: required dict",
+                      "id": "30113"
+                    },
+                    "4": {
+                      "title": "slug: auto-generated",
+                      "id": "30114"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "AgentCreate",
+                  "id": "3012",
+                  "ideas": {
+                    "1": {
+                      "title": "Inherits from AgentBase",
+                      "id": "30121"
+                    },
+                    "2": {
+                      "title": "Validates manifest structure",
+                      "id": "30122"
+                    },
+                    "3": {
+                      "title": "Generates slug from name",
+                      "id": "30123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "AgentUpdate",
+                  "id": "3013",
+                  "ideas": {
+                    "1": {
+                      "title": "All fields optional",
+                      "id": "30131"
+                    },
+                    "2": {
+                      "title": "Partial update support",
+                      "id": "30132"
+                    },
+                    "3": {
+                      "title": "Manifest validation if provided",
+                      "id": "30133"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Version Schemas",
+              "id": "302",
+              "ideas": {
+                "1": {
+                  "title": "AgentVersionBase",
+                  "id": "3021",
+                  "ideas": {
+                    "1": {
+                      "title": "manifest: required dict",
+                      "id": "30211"
+                    },
+                    "2": {
+                      "title": "version: auto-increment",
+                      "id": "30212"
+                    },
+                    "3": {
+                      "title": "status: enum validation",
+                      "id": "30213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "AgentVersionCreate",
+                  "id": "3022",
+                  "ideas": {
+                    "1": {
+                      "title": "Inherits from AgentVersionBase",
+                      "id": "30221"
+                    },
+                    "2": {
+                      "title": "Validates complete manifest",
+                      "id": "30222"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "Manifest Validation",
+              "id": "303",
+              "ideas": {
+                "1": {
+                  "title": "Required Fields",
+                  "id": "3031",
+                  "ideas": {
+                    "1": {
+                      "title": "name: Agent display name",
+                      "id": "30311"
+                    },
+                    "2": {
+                      "title": "description: Agent purpose",
+                      "id": "30312"
+                    },
+                    "3": {
+                      "title": "placement: UI placement hint",
+                      "id": "30313"
+                    },
+                    "4": {
+                      "title": "tools: Available tool list",
+                      "id": "30314"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Optional Fields",
+                  "id": "3032",
+                  "ideas": {
+                    "1": {
+                      "title": "category: Agent classification",
+                      "id": "30321"
+                    },
+                    "2": {
+                      "title": "config: Runtime configuration",
+                      "id": "30322"
+                    },
+                    "3": {
+                      "title": "permissions: Access requirements",
+                      "id": "30323"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "4": {
+          "title": "Agent Types & Categories",
+          "id": "40",
+          "ideas": {
+            "1": {
+              "title": "Core System Agents",
+              "id": "401",
+              "ideas": {
+                "1": {
+                  "title": "AuthAgent",
+                  "id": "4011",
+                  "ideas": {
+                    "1": {
+                      "title": "Registration & login",
+                      "id": "40111"
+                    },
+                    "2": {
+                      "title": "JWT token management",
+                      "id": "40112"
+                    },
+                    "3": {
+                      "title": "Role-based access",
+                      "id": "40113"
+                    },
+                    "4": {
+                      "title": "Profile management",
+                      "id": "40114"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "AuditAgent",
+                  "id": "4012",
+                  "ideas": {
+                    "1": {
+                      "title": "Request logging",
+                      "id": "40121"
+                    },
+                    "2": {
+                      "title": "Event tracking",
+                      "id": "40122"
+                    },
+                    "3": {
+                      "title": "Middleware cooperation",
+                      "id": "40123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "MonitoringAgent",
+                  "id": "4013",
+                  "ideas": {
+                    "1": {
+                      "title": "Health checks",
+                      "id": "40131"
+                    },
+                    "2": {
+                      "title": "System metrics",
+                      "id": "40132"
+                    },
+                    "3": {
+                      "title": "Performance monitoring",
+                      "id": "40133"
+                    }
+                  }
+                },
+                "4": {
+                  "title": "SecurityAgent",
+                  "id": "4014",
+                  "ideas": {
+                    "1": {
+                      "title": "Rate limiting",
+                      "id": "40141"
+                    },
+                    "2": {
+                      "title": "Input validation",
+                      "id": "40142"
+                    },
+                    "3": {
+                      "title": "Abuse prevention",
+                      "id": "40143"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "AI-Assisted Agents",
+              "id": "402",
+              "ideas": {
+                "1": {
+                  "title": "CapeAI Guide Agent",
+                  "id": "4021",
+                  "ideas": {
+                    "1": {
+                      "title": "In-app guidance",
+                      "id": "40211"
+                    },
+                    "2": {
+                      "title": "Onboarding assistance",
+                      "id": "40212"
+                    },
+                    "3": {
+                      "title": "Feature discovery",
+                      "id": "40213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "DevAgent",
+                  "id": "4022",
+                  "ideas": {
+                    "1": {
+                      "title": "Agent development assistance",
+                      "id": "40221"
+                    },
+                    "2": {
+                      "title": "Build & test automation",
+                      "id": "40222"
+                    },
+                    "3": {
+                      "title": "Publishing workflow",
+                      "id": "40223"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "CustomerAgent",
+                  "id": "4023",
+                  "ideas": {
+                    "1": {
+                      "title": "Goal interpretation",
+                      "id": "40231"
+                    },
+                    "2": {
+                      "title": "Workflow suggestions",
+                      "id": "40232"
+                    },
+                    "3": {
+                      "title": "Process optimization",
+                      "id": "40233"
+                    }
+                  }
+                },
+                "4": {
+                  "title": "ChatAgentKit Runtime",
+                  "id": "4024",
+                  "ideas": {
+                    "1": {
+                      "title": "Multi-step workflows",
+                      "id": "40241"
+                    },
+                    "2": {
+                      "title": "ChatKit integration",
+                      "id": "40242"
+                    },
+                    "3": {
+                      "title": "Conversational flows",
+                      "id": "40243"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "Domain-Specific Agents",
+              "id": "403",
+              "ideas": {
+                "1": {
+                  "title": "FinanceAgent",
+                  "id": "4031",
+                  "ideas": {
+                    "1": {
+                      "title": "Financial data integration",
+                      "id": "40311"
+                    },
+                    "2": {
+                      "title": "Budget tracking",
+                      "id": "40312"
+                    },
+                    "3": {
+                      "title": "Payment processing",
+                      "id": "40313"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "EnergyAgent",
+                  "id": "4032",
+                  "ideas": {
+                    "1": {
+                      "title": "Smart meter integration",
+                      "id": "40321"
+                    },
+                    "2": {
+                      "title": "Usage analytics",
+                      "id": "40322"
+                    },
+                    "3": {
+                      "title": "Energy optimization",
+                      "id": "40323"
+                    }
+                  }
+                }
+              }
+            },
+            "4": {
+              "title": "Middleware-Bound Agents",
+              "id": "404",
+              "ideas": {
+                "1": {
+                  "title": "Request Processing",
+                  "id": "4041",
+                  "ideas": {
+                    "1": {
+                      "title": "DDoS Protection",
+                      "id": "40411"
+                    },
+                    "2": {
+                      "title": "Input Sanitization",
+                      "id": "40412"
+                    },
+                    "3": {
+                      "title": "Content Moderation",
+                      "id": "40413"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Logging & Monitoring",
+                  "id": "4042",
+                  "ideas": {
+                    "1": {
+                      "title": "Audit Logging Middleware",
+                      "id": "40421"
+                    },
+                    "2": {
+                      "title": "Performance Monitoring",
+                      "id": "40422"
+                    },
+                    "3": {
+                      "title": "Error Tracking",
+                      "id": "40423"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "5": {
+          "title": "Database Models",
+          "id": "50",
+          "ideas": {
+            "1": {
+              "title": "Agent Model",
+              "id": "501",
+              "ideas": {
+                "1": {
+                  "title": "Core Fields",
+                  "id": "5011",
+                  "ideas": {
+                    "1": {
+                      "title": "id: Primary key",
+                      "id": "50111"
+                    },
+                    "2": {
+                      "title": "name: Display name",
+                      "id": "50112"
+                    },
+                    "3": {
+                      "title": "slug: URL-safe identifier",
+                      "id": "50113"
+                    },
+                    "4": {
+                      "title": "description: Agent purpose",
+                      "id": "50114"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Ownership & Timestamps",
+                  "id": "5012",
+                  "ideas": {
+                    "1": {
+                      "title": "owner_id: Foreign key to User",
+                      "id": "50121"
+                    },
+                    "2": {
+                      "title": "created_at: Creation timestamp",
+                      "id": "50122"
+                    },
+                    "3": {
+                      "title": "updated_at: Last modification",
+                      "id": "50123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Relationships",
+                  "id": "5013",
+                  "ideas": {
+                    "1": {
+                      "title": "versions: One-to-many AgentVersion",
+                      "id": "50131"
+                    },
+                    "2": {
+                      "title": "owner: Many-to-one User",
+                      "id": "50132"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "AgentVersion Model",
+              "id": "502",
+              "ideas": {
+                "1": {
+                  "title": "Version Fields",
+                  "id": "5021",
+                  "ideas": {
+                    "1": {
+                      "title": "id: Primary key",
+                      "id": "50211"
+                    },
+                    "2": {
+                      "title": "version: Semantic version",
+                      "id": "50212"
+                    },
+                    "3": {
+                      "title": "manifest: JSON configuration",
+                      "id": "50213"
+                    },
+                    "4": {
+                      "title": "status: Lifecycle state",
+                      "id": "50214"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Timestamps",
+                  "id": "5022",
+                  "ideas": {
+                    "1": {
+                      "title": "created_at: Version creation",
+                      "id": "50221"
+                    },
+                    "2": {
+                      "title": "published_at: Publication date",
+                      "id": "50222"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Relationships",
+                  "id": "5023",
+                  "ideas": {
+                    "1": {
+                      "title": "agent_id: Foreign key to Agent",
+                      "id": "50231"
+                    },
+                    "2": {
+                      "title": "agent: Many-to-one Agent",
+                      "id": "50232"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "Status Lifecycle",
+              "id": "503",
+              "ideas": {
+                "1": {
+                  "title": "Draft",
+                  "id": "5031",
+                  "ideas": {
+                    "1": {
+                      "title": "Initial state",
+                      "id": "50311"
+                    },
+                    "2": {
+                      "title": "Work in progress",
+                      "id": "50312"
+                    },
+                    "3": {
+                      "title": "Not publicly visible",
+                      "id": "50313"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Published",
+                  "id": "5032",
+                  "ideas": {
+                    "1": {
+                      "title": "Available in marketplace",
+                      "id": "50321"
+                    },
+                    "2": {
+                      "title": "Set published_at timestamp",
+                      "id": "50322"
+                    },
+                    "3": {
+                      "title": "Manifest must be complete",
+                      "id": "50323"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Archived",
+                  "id": "5033",
+                  "ideas": {
+                    "1": {
+                      "title": "Removed from marketplace",
+                      "id": "50331"
+                    },
+                    "2": {
+                      "title": "Historical reference",
+                      "id": "50332"
+                    },
+                    "3": {
+                      "title": "Cannot be restored",
+                      "id": "50333"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "6": {
+          "title": "Developer Workflow",
+          "id": "60",
+          "ideas": {
+            "1": {
+              "title": "Agent Creation Flow",
+              "id": "601",
+              "ideas": {
+                "1": {
+                  "title": "1. Design Agent",
+                  "id": "6011",
+                  "ideas": {
+                    "1": {
+                      "title": "Define purpose & scope",
+                      "id": "60111"
+                    },
+                    "2": {
+                      "title": "Identify required tools",
+                      "id": "60112"
+                    },
+                    "3": {
+                      "title": "Plan user interactions",
+                      "id": "60113"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "2. Create Agent Record",
+                  "id": "6012",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents with basic info",
+                      "id": "60121"
+                    },
+                    "2": {
+                      "title": "System generates slug",
+                      "id": "60122"
+                    },
+                    "3": {
+                      "title": "Agent in draft state",
+                      "id": "60123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "3. Develop & Test",
+                  "id": "6013",
+                  "ideas": {
+                    "1": {
+                      "title": "Implement agent logic",
+                      "id": "60131"
+                    },
+                    "2": {
+                      "title": "Create manifest configuration",
+                      "id": "60132"
+                    },
+                    "3": {
+                      "title": "Test in development environment",
+                      "id": "60133"
+                    }
+                  }
+                },
+                "4": {
+                  "title": "4. Create Version",
+                  "id": "6014",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents/{id}/versions",
+                      "id": "60141"
+                    },
+                    "2": {
+                      "title": "Upload complete manifest",
+                      "id": "60142"
+                    },
+                    "3": {
+                      "title": "Version starts as draft",
+                      "id": "60143"
+                    }
+                  }
+                },
+                "5": {
+                  "title": "5. Publish to Marketplace",
+                  "id": "6015",
+                  "ideas": {
+                    "1": {
+                      "title": "POST /agents/{id}/versions/{version_id}/publish",
+                      "id": "60151"
+                    },
+                    "2": {
+                      "title": "Validate manifest completeness",
+                      "id": "60152"
+                    },
+                    "3": {
+                      "title": "Make publicly discoverable",
+                      "id": "60153"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Version Management",
+              "id": "602",
+              "ideas": {
+                "1": {
+                  "title": "Semantic Versioning",
+                  "id": "6021",
+                  "ideas": {
+                    "1": {
+                      "title": "Auto-increment version numbers",
+                      "id": "60211"
+                    },
+                    "2": {
+                      "title": "Major.Minor.Patch format",
+                      "id": "60212"
+                    },
+                    "3": {
+                      "title": "Breaking change indicators",
+                      "id": "60213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Version States",
+                  "id": "6022",
+                  "ideas": {
+                    "1": {
+                      "title": "Draft: Under development",
+                      "id": "60221"
+                    },
+                    "2": {
+                      "title": "Published: Live in marketplace",
+                      "id": "60222"
+                    },
+                    "3": {
+                      "title": "Archived: Removed from marketplace",
+                      "id": "60223"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Publication Requirements",
+                  "id": "6023",
+                  "ideas": {
+                    "1": {
+                      "title": "Complete manifest validation",
+                      "id": "60231"
+                    },
+                    "2": {
+                      "title": "Required fields present",
+                      "id": "60232"
+                    },
+                    "3": {
+                      "title": "Tools list validated",
+                      "id": "60233"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "7": {
+          "title": "User Experience Flow",
+          "id": "70",
+          "ideas": {
+            "1": {
+              "title": "Marketplace Discovery",
+              "id": "701",
+              "ideas": {
+                "1": {
+                  "title": "Browse Published Agents",
+                  "id": "7011",
+                  "ideas": {
+                    "1": {
+                      "title": "List view with metadata",
+                      "id": "70111"
+                    },
+                    "2": {
+                      "title": "Search and filter options",
+                      "id": "70112"
+                    },
+                    "3": {
+                      "title": "Category-based organization",
+                      "id": "70113"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Agent Detail View",
+                  "id": "7012",
+                  "ideas": {
+                    "1": {
+                      "title": "Complete agent information",
+                      "id": "70121"
+                    },
+                    "2": {
+                      "title": "Version history display",
+                      "id": "70122"
+                    },
+                    "3": {
+                      "title": "Manifest details preview",
+                      "id": "70123"
+                    },
+                    "4": {
+                      "title": "Installation instructions",
+                      "id": "70124"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Agent Installation",
+              "id": "702",
+              "ideas": {
+                "1": {
+                  "title": "One-Click Install",
+                  "id": "7021",
+                  "ideas": {
+                    "1": {
+                      "title": "Download manifest",
+                      "id": "70211"
+                    },
+                    "2": {
+                      "title": "Validate compatibility",
+                      "id": "70212"
+                    },
+                    "3": {
+                      "title": "Configure permissions",
+                      "id": "70213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Configuration Setup",
+                  "id": "7022",
+                  "ideas": {
+                    "1": {
+                      "title": "Required parameter input",
+                      "id": "70221"
+                    },
+                    "2": {
+                      "title": "Optional customization",
+                      "id": "70222"
+                    },
+                    "3": {
+                      "title": "Permission grants",
+                      "id": "70223"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "Agent Usage",
+              "id": "703",
+              "ideas": {
+                "1": {
+                  "title": "Integration Points",
+                  "id": "7031",
+                  "ideas": {
+                    "1": {
+                      "title": "Chat interface integration",
+                      "id": "70311"
+                    },
+                    "2": {
+                      "title": "Dashboard widget placement",
+                      "id": "70312"
+                    },
+                    "3": {
+                      "title": "Workflow automation hooks",
+                      "id": "70313"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "User Interaction",
+                  "id": "7032",
+                  "ideas": {
+                    "1": {
+                      "title": "Natural language commands",
+                      "id": "70321"
+                    },
+                    "2": {
+                      "title": "Guided task completion",
+                      "id": "70322"
+                    },
+                    "3": {
+                      "title": "Proactive assistance",
+                      "id": "70323"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "8": {
+          "title": "Security & Permissions",
+          "id": "80",
+          "ideas": {
+            "1": {
+              "title": "Access Control",
+              "id": "801",
+              "ideas": {
+                "1": {
+                  "title": "Owner Permissions",
+                  "id": "8011",
+                  "ideas": {
+                    "1": {
+                      "title": "Create agents",
+                      "id": "80111"
+                    },
+                    "2": {
+                      "title": "Update own agents",
+                      "id": "80112"
+                    },
+                    "3": {
+                      "title": "Delete own agents",
+                      "id": "80113"
+                    },
+                    "4": {
+                      "title": "Manage versions",
+                      "id": "80114"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Public Permissions",
+                  "id": "8012",
+                  "ideas": {
+                    "1": {
+                      "title": "Browse marketplace",
+                      "id": "80121"
+                    },
+                    "2": {
+                      "title": "View published agents",
+                      "id": "80122"
+                    },
+                    "3": {
+                      "title": "Install agents",
+                      "id": "80123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Admin Permissions",
+                  "id": "8013",
+                  "ideas": {
+                    "1": {
+                      "title": "Moderate marketplace",
+                      "id": "80131"
+                    },
+                    "2": {
+                      "title": "Review agent submissions",
+                      "id": "80132"
+                    },
+                    "3": {
+                      "title": "Remove violating content",
+                      "id": "80133"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Manifest Validation",
+              "id": "802",
+              "ideas": {
+                "1": {
+                  "title": "Security Checks",
+                  "id": "8021",
+                  "ideas": {
+                    "1": {
+                      "title": "Tool permission validation",
+                      "id": "80211"
+                    },
+                    "2": {
+                      "title": "Resource access limits",
+                      "id": "80212"
+                    },
+                    "3": {
+                      "title": "Malicious code detection",
+                      "id": "80213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Content Moderation",
+                  "id": "8022",
+                  "ideas": {
+                    "1": {
+                      "title": "Inappropriate content filtering",
+                      "id": "80221"
+                    },
+                    "2": {
+                      "title": "Spam prevention",
+                      "id": "80222"
+                    },
+                    "3": {
+                      "title": "Quality standards enforcement",
+                      "id": "80223"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "9": {
+          "title": "Integration Architecture",
+          "id": "90",
+          "ideas": {
+            "1": {
+              "title": "Backend Integration",
+              "id": "901",
+              "ideas": {
+                "1": {
+                  "title": "FastAPI Router Module",
+                  "id": "9011",
+                  "ideas": {
+                    "1": {
+                      "title": "/backend/src/modules/agents/router.py",
+                      "id": "90111"
+                    },
+                    "2": {
+                      "title": "RESTful API endpoints",
+                      "id": "90112"
+                    },
+                    "3": {
+                      "title": "Pydantic schema validation",
+                      "id": "90113"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Database Layer",
+                  "id": "9012",
+                  "ideas": {
+                    "1": {
+                      "title": "SQLAlchemy models",
+                      "id": "90121"
+                    },
+                    "2": {
+                      "title": "Alembic migrations",
+                      "id": "90122"
+                    },
+                    "3": {
+                      "title": "Relationship management",
+                      "id": "90123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Authentication Layer",
+                  "id": "9013",
+                  "ideas": {
+                    "1": {
+                      "title": "JWT token validation",
+                      "id": "90131"
+                    },
+                    "2": {
+                      "title": "User context injection",
+                      "id": "90132"
+                    },
+                    "3": {
+                      "title": "Permission enforcement",
+                      "id": "90133"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Frontend Integration",
+              "id": "902",
+              "ideas": {
+                "1": {
+                  "title": "React Components",
+                  "id": "9021",
+                  "ideas": {
+                    "1": {
+                      "title": "Agent marketplace UI",
+                      "id": "90211"
+                    },
+                    "2": {
+                      "title": "Agent management dashboard",
+                      "id": "90212"
+                    },
+                    "3": {
+                      "title": "Version control interface",
+                      "id": "90213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "API Client",
+                  "id": "9022",
+                  "ideas": {
+                    "1": {
+                      "title": "TypeScript API definitions",
+                      "id": "90221"
+                    },
+                    "2": {
+                      "title": "HTTP client configuration",
+                      "id": "90222"
+                    },
+                    "3": {
+                      "title": "Error handling patterns",
+                      "id": "90223"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "External Integrations",
+              "id": "903",
+              "ideas": {
+                "1": {
+                  "title": "ChatKit Runtime",
+                  "id": "9031",
+                  "ideas": {
+                    "1": {
+                      "title": "Conversational workflow support",
+                      "id": "90311"
+                    },
+                    "2": {
+                      "title": "Multi-step agent execution",
+                      "id": "90312"
+                    },
+                    "3": {
+                      "title": "Context preservation",
+                      "id": "90313"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Tool Registry",
+                  "id": "9032",
+                  "ideas": {
+                    "1": {
+                      "title": "Available tool enumeration",
+                      "id": "90321"
+                    },
+                    "2": {
+                      "title": "Permission validation",
+                      "id": "90322"
+                    },
+                    "3": {
+                      "title": "Capability discovery",
+                      "id": "90323"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "10": {
+          "title": "Future Roadmap",
+          "id": "100",
+          "ideas": {
+            "1": {
+              "title": "Enhanced Marketplace",
+              "id": "1001",
+              "ideas": {
+                "1": {
+                  "title": "Rating & Review System",
+                  "id": "10011",
+                  "ideas": {
+                    "1": {
+                      "title": "User ratings and feedback",
+                      "id": "100111"
+                    },
+                    "2": {
+                      "title": "Quality metrics tracking",
+                      "id": "100112"
+                    },
+                    "3": {
+                      "title": "Popular agents highlighting",
+                      "id": "100113"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Monetization Support",
+                  "id": "10012",
+                  "ideas": {
+                    "1": {
+                      "title": "Paid agent marketplace",
+                      "id": "100121"
+                    },
+                    "2": {
+                      "title": "Usage-based pricing",
+                      "id": "100122"
+                    },
+                    "3": {
+                      "title": "Developer revenue sharing",
+                      "id": "100123"
+                    }
+                  }
+                },
+                "3": {
+                  "title": "Advanced Discovery",
+                  "id": "10013",
+                  "ideas": {
+                    "1": {
+                      "title": "AI-powered recommendations",
+                      "id": "100131"
+                    },
+                    "2": {
+                      "title": "Contextual agent suggestions",
+                      "id": "100132"
+                    },
+                    "3": {
+                      "title": "Workflow-based discovery",
+                      "id": "100133"
+                    }
+                  }
+                }
+              }
+            },
+            "2": {
+              "title": "Development Tools",
+              "id": "1002",
+              "ideas": {
+                "1": {
+                  "title": "Agent Builder IDE",
+                  "id": "10021",
+                  "ideas": {
+                    "1": {
+                      "title": "Visual agent design interface",
+                      "id": "100211"
+                    },
+                    "2": {
+                      "title": "Code generation assistance",
+                      "id": "100212"
+                    },
+                    "3": {
+                      "title": "Testing & debugging tools",
+                      "id": "100213"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Deployment Automation",
+                  "id": "10022",
+                  "ideas": {
+                    "1": {
+                      "title": "CI/CD pipeline integration",
+                      "id": "100221"
+                    },
+                    "2": {
+                      "title": "Automated testing frameworks",
+                      "id": "100222"
+                    },
+                    "3": {
+                      "title": "Performance monitoring",
+                      "id": "100223"
+                    }
+                  }
+                }
+              }
+            },
+            "3": {
+              "title": "Enterprise Features",
+              "id": "1003",
+              "ideas": {
+                "1": {
+                  "title": "Private Marketplaces",
+                  "id": "10031",
+                  "ideas": {
+                    "1": {
+                      "title": "Organization-specific agents",
+                      "id": "100311"
+                    },
+                    "2": {
+                      "title": "Private deployment options",
+                      "id": "100312"
+                    },
+                    "3": {
+                      "title": "Enterprise security compliance",
+                      "id": "100313"
+                    }
+                  }
+                },
+                "2": {
+                  "title": "Advanced Analytics",
+                  "id": "10032",
+                  "ideas": {
+                    "1": {
+                      "title": "Usage analytics dashboard",
+                      "id": "100321"
+                    },
+                    "2": {
+                      "title": "Performance metrics tracking",
+                      "id": "100322"
+                    },
+                    "3": {
+                      "title": "ROI measurement tools",
+                      "id": "100323"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "attr": {
+    "style": {
+      "background": "#2D3748"
+    }
+  },
+  "title": "CapeControl Agents System Architecture v0.2.1"
+}

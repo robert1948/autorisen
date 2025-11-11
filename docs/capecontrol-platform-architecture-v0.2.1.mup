@@ -1,0 +1,738 @@
+{
+  "formatVersion": 3,
+  "id": "root",
+  "ideas": {
+    "1": {
+      "id": "1",
+      "title": "🎯 CapeControl v0.2.1: Empowering Everyone with AI",
+      "attr": {
+        "style": {
+          "background": "#2196F3",
+          "color": "white"
+        }
+      },
+      "ideas": {
+        "1": {
+          "id": "2",
+          "title": "🌐 Public Access & Landing",
+          "attr": {
+            "style": {
+              "background": "#E3F2FD"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "3",
+              "title": "🏠 Landing Page '/'",
+              "ideas": {
+                "1": {
+                  "id": "4",
+                  "title": "Vision: AI Accessible to Everyone"
+                },
+                "2": {
+                  "id": "5",
+                  "title": "Live Demo Integration"
+                },
+                "3": {
+                  "id": "6",
+                  "title": "Trust Signals & Compliance"
+                }
+              }
+            },
+            "2": {
+              "id": "7",
+              "title": "ℹ️ About '/about'",
+              "ideas": {
+                "1": {
+                  "id": "8",
+                  "title": "Vision Statement"
+                },
+                "2": {
+                  "id": "9",
+                  "title": "Core Pillars"
+                },
+                "3": {
+                  "id": "10",
+                  "title": "Team & Values"
+                }
+              }
+            },
+            "3": {
+              "id": "11",
+              "title": "💰 Pricing '/pricing'",
+              "ideas": {
+                "1": {
+                  "id": "12",
+                  "title": "Free Starter Plan"
+                },
+                "2": {
+                  "id": "13",
+                  "title": "Professional Tier"
+                },
+                "3": {
+                  "id": "14",
+                  "title": "SuperGrok Premium"
+                }
+              }
+            }
+          }
+        },
+        "2": {
+          "id": "15",
+          "title": "🔐 Enhanced Authentication",
+          "attr": {
+            "style": {
+              "background": "#F3E5F5"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "16",
+              "title": "📝 Registration Flow",
+              "ideas": {
+                "1": {
+                  "id": "17",
+                  "title": "📧 Email Verification '/verify-email'"
+                },
+                "2": {
+                  "id": "18",
+                  "title": "🛡️ reCAPTCHA Protection"
+                },
+                "3": {
+                  "id": "19",
+                  "title": "🎉 Welcome Page '/welcome'"
+                }
+              }
+            },
+            "2": {
+              "id": "20",
+              "title": "🔑 Login '/login'",
+              "ideas": {
+                "1": {
+                  "id": "21",
+                  "title": "🔐 MFA Challenge '/auth/mfa'"
+                },
+                "2": {
+                  "id": "22",
+                  "title": "📱 MFA Setup '/account/mfa-enroll'"
+                },
+                "3": {
+                  "id": "23",
+                  "title": "🛡️ CSRF Protection"
+                }
+              }
+            },
+            "3": {
+              "id": "24",
+              "title": "🌐 OAuth Integration",
+              "ideas": {
+                "1": {
+                  "id": "25",
+                  "title": "🔗 Google OAuth"
+                },
+                "2": {
+                  "id": "26",
+                  "title": "💼 LinkedIn OAuth"
+                },
+                "3": {
+                  "id": "27",
+                  "title": "🔄 Unified Callback '/auth/callback'"
+                }
+              }
+            },
+            "4": {
+              "id": "28",
+              "title": "🔄 Password Management",
+              "ideas": {
+                "1": {
+                  "id": "29",
+                  "title": "🔄 Forgot Password '/forgot-password'"
+                },
+                "2": {
+                  "id": "30",
+                  "title": "🔑 Reset Password '/reset-password'"
+                }
+              }
+            }
+          }
+        },
+        "3": {
+          "id": "31",
+          "title": "🎯 Smart Onboarding Experience",
+          "attr": {
+            "style": {
+              "background": "#E8F5E8"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "32",
+              "title": "🧭 Adaptive Onboarding '/onboarding'",
+              "ideas": {
+                "1": {
+                  "id": "33",
+                  "title": "👤 Customer Journey Path"
+                },
+                "2": {
+                  "id": "34",
+                  "title": "🔧 Developer Experience Path"
+                },
+                "3": {
+                  "id": "35",
+                  "title": "🏢 Enterprise Setup Path"
+                }
+              }
+            },
+            "2": {
+              "id": "36",
+              "title": "📋 Intelligent Profile Setup",
+              "ideas": {
+                "1": {
+                  "id": "37",
+                  "title": "🧠 AI-Powered Recommendations"
+                },
+                "2": {
+                  "id": "38",
+                  "title": "🎯 Use Case Discovery"
+                },
+                "3": {
+                  "id": "39",
+                  "title": "🔔 Preference Learning"
+                }
+              }
+            },
+            "3": {
+              "id": "40",
+              "title": "✅ Interactive Checklist",
+              "ideas": {
+                "1": {
+                  "id": "41",
+                  "title": "🎯 Personalized Tasks"
+                },
+                "2": {
+                  "id": "42",
+                  "title": "🏆 Progress Gamification"
+                },
+                "3": {
+                  "id": "43",
+                  "title": "🚀 First Success Moment"
+                }
+              }
+            }
+          }
+        },
+        "4": {
+          "id": "44",
+          "title": "💬 Enterprise ChatKit System",
+          "attr": {
+            "style": {
+              "background": "#FFF8E1"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "45",
+              "title": "🌐 Real-time WebSocket Service",
+              "ideas": {
+                "1": {
+                  "id": "46",
+                  "title": "🔄 Auto-reconnection Logic"
+                },
+                "2": {
+                  "id": "47",
+                  "title": "📊 Connection Quality Monitoring"
+                },
+                "3": {
+                  "id": "48",
+                  "title": "📱 Message Queue Management"
+                }
+              }
+            },
+            "2": {
+              "id": "49",
+              "title": "💬 Enhanced Chat Interface",
+              "ideas": {
+                "1": {
+                  "id": "50",
+                  "title": "🎨 Rich Message Components"
+                },
+                "2": {
+                  "id": "51",
+                  "title": "🔄 Offline Message Handling"
+                },
+                "3": {
+                  "id": "52",
+                  "title": "📈 Real-time Status Indicators"
+                }
+              }
+            },
+            "3": {
+              "id": "53",
+              "title": "🔧 Developer Integration",
+              "ideas": {
+                "1": {
+                  "id": "54",
+                  "title": "🛠️ Debug Panel (Dev Mode)"
+                },
+                "2": {
+                  "id": "55",
+                  "title": "📝 Session Logging"
+                },
+                "3": {
+                  "id": "56",
+                  "title": "🔍 Performance Analytics"
+                }
+              }
+            }
+          }
+        },
+        "5": {
+          "id": "57",
+          "title": "🤖 AI Agent Ecosystem",
+          "attr": {
+            "style": {
+              "background": "#E8F5E8"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "58",
+              "title": "🏪 Agent Marketplace '/marketplace'",
+              "ideas": {
+                "1": {
+                  "id": "59",
+                  "title": "🔍 Intelligent Discovery"
+                },
+                "2": {
+                  "id": "60",
+                  "title": "🎯 Contextual Recommendations"
+                },
+                "3": {
+                  "id": "61",
+                  "title": "⭐ Community Ratings"
+                }
+              }
+            },
+            "2": {
+              "id": "62",
+              "title": "🔧 Agent Management '/agents'",
+              "ideas": {
+                "1": {
+                  "id": "63",
+                  "title": "📊 Performance Dashboard"
+                },
+                "2": {
+                  "id": "64",
+                  "title": "⚙️ Configuration Management"
+                },
+                "3": {
+                  "id": "65",
+                  "title": "📈 Usage Analytics"
+                }
+              }
+            },
+            "3": {
+              "id": "66",
+              "title": "🎨 Agent Creation Studio",
+              "ideas": {
+                "1": {
+                  "id": "67",
+                  "title": "📝 Visual Agent Designer"
+                },
+                "2": {
+                  "id": "68",
+                  "title": "🧪 Testing Sandbox"
+                },
+                "3": {
+                  "id": "69",
+                  "title": "📚 Template Library"
+                }
+              }
+            }
+          }
+        },
+        "6": {
+          "id": "70",
+          "title": "💳 Payment & Billing System",
+          "attr": {
+            "style": {
+              "background": "#FFF3E0"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "71",
+              "title": "💰 PayFast Integration",
+              "ideas": {
+                "1": {
+                  "id": "72",
+                  "title": "🛒 Secure Checkout Flow '/checkout'"
+                },
+                "2": {
+                  "id": "73",
+                  "title": "🔒 CSRF Protected Forms"
+                },
+                "3": {
+                  "id": "74",
+                  "title": "📱 Mobile Optimized"
+                }
+              }
+            },
+            "2": {
+              "id": "75",
+              "title": "💼 Billing Management '/billing'",
+              "ideas": {
+                "1": {
+                  "id": "76",
+                  "title": "💳 Payment Method Manager"
+                },
+                "2": {
+                  "id": "77",
+                  "title": "📊 Invoice History Dashboard"
+                },
+                "3": {
+                  "id": "78",
+                  "title": "📈 Usage Analytics"
+                }
+              }
+            },
+            "3": {
+              "id": "79",
+              "title": "🛡️ Security & Compliance",
+              "ideas": {
+                "1": {
+                  "id": "80",
+                  "title": "🔐 PCI Compliance Ready"
+                },
+                "2": {
+                  "id": "81",
+                  "title": "🛡️ Input Sanitization"
+                },
+                "3": {
+                  "id": "82",
+                  "title": "📝 Audit Trail Logging"
+                }
+              }
+            }
+          }
+        },
+        "7": {
+          "id": "83",
+          "title": "📊 Intelligent Dashboard",
+          "attr": {
+            "style": {
+              "background": "#E1F5FE"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "84",
+              "title": "📈 Real-time Analytics",
+              "ideas": {
+                "1": {
+                  "id": "85",
+                  "title": "🤖 Agent Performance Metrics"
+                },
+                "2": {
+                  "id": "86",
+                  "title": "💬 Chat Engagement Stats"
+                },
+                "3": {
+                  "id": "87",
+                  "title": "💰 Revenue & Usage Tracking"
+                }
+              }
+            },
+            "2": {
+              "id": "88",
+              "title": "🎯 Personalized Insights",
+              "ideas": {
+                "1": {
+                  "id": "89",
+                  "title": "🧠 AI-Powered Recommendations"
+                },
+                "2": {
+                  "id": "90",
+                  "title": "📊 Productivity Optimization"
+                },
+                "3": {
+                  "id": "91",
+                  "title": "🎯 Goal Tracking"
+                }
+              }
+            },
+            "3": {
+              "id": "92",
+              "title": "⚡ Quick Actions Hub",
+              "ideas": {
+                "1": {
+                  "id": "93",
+                  "title": "🚀 One-Click Deployments"
+                },
+                "2": {
+                  "id": "94",
+                  "title": "🔧 System Health Checks"
+                },
+                "3": {
+                  "id": "95",
+                  "title": "📱 Mobile-First Design"
+                }
+              }
+            }
+          }
+        },
+        "8": {
+          "id": "96",
+          "title": "⚙️ Advanced User Management",
+          "attr": {
+            "style": {
+              "background": "#F3E5F5"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "97",
+              "title": "👤 Profile Management '/profile'",
+              "ideas": {
+                "1": {
+                  "id": "98",
+                  "title": "🎨 Personalization Engine"
+                },
+                "2": {
+                  "id": "99",
+                  "title": "🔔 Intelligent Notifications"
+                },
+                "3": {
+                  "id": "100",
+                  "title": "🌐 Multi-language Support"
+                }
+              }
+            },
+            "2": {
+              "id": "101",
+              "title": "🔒 Security Settings",
+              "ideas": {
+                "1": {
+                  "id": "102",
+                  "title": "🔐 Advanced MFA Options"
+                },
+                "2": {
+                  "id": "103",
+                  "title": "🔑 API Key Management"
+                },
+                "3": {
+                  "id": "104",
+                  "title": "📱 Device Management"
+                }
+              }
+            },
+            "3": {
+              "id": "105",
+              "title": "🏢 Team & Organization",
+              "ideas": {
+                "1": {
+                  "id": "106",
+                  "title": "👥 Team Collaboration"
+                },
+                "2": {
+                  "id": "107",
+                  "title": "🎯 Role-Based Access"
+                },
+                "3": {
+                  "id": "108",
+                  "title": "📊 Organization Analytics"
+                }
+              }
+            }
+          }
+        },
+        "9": {
+          "id": "109",
+          "title": "🔗 API & Developer Experience",
+          "attr": {
+            "style": {
+              "background": "#FFF8E1"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "110",
+              "title": "📚 Developer Portal '/developers'",
+              "ideas": {
+                "1": {
+                  "id": "111",
+                  "title": "📖 Interactive Documentation"
+                },
+                "2": {
+                  "id": "112",
+                  "title": "🧪 API Testing Playground"
+                },
+                "3": {
+                  "id": "113",
+                  "title": "💼 SDK Downloads"
+                }
+              }
+            },
+            "2": {
+              "id": "114",
+              "title": "🔑 API Management",
+              "ideas": {
+                "1": {
+                  "id": "115",
+                  "title": "🛡️ Rate Limiting Dashboard"
+                },
+                "2": {
+                  "id": "116",
+                  "title": "📊 Usage Analytics"
+                },
+                "3": {
+                  "id": "117",
+                  "title": "🔄 Webhook Management"
+                }
+              }
+            },
+            "3": {
+              "id": "118",
+              "title": "🎯 Integration Hub",
+              "ideas": {
+                "1": {
+                  "id": "119",
+                  "title": "🔌 Third-party Connectors"
+                },
+                "2": {
+                  "id": "120",
+                  "title": "📱 Mobile SDK"
+                },
+                "3": {
+                  "id": "121",
+                  "title": "🌐 Zapier Integration"
+                }
+              }
+            }
+          }
+        },
+        "10": {
+          "id": "122",
+          "title": "📊 Analytics & Insights Platform",
+          "attr": {
+            "style": {
+              "background": "#E8F5E8"
+            }
+          },
+          "ideas": {
+            "1": {
+              "id": "123",
+              "title": "📈 Business Intelligence",
+              "ideas": {
+                "1": {
+                  "id": "124",
+                  "title": "🎯 ROI Tracking"
+                },
+                "2": {
+                  "id": "125",
+                  "title": "📊 Conversion Funnels"
+                },
+                "3": {
+                  "id": "126",
+                  "title": "🔮 Predictive Analytics"
+                }
+              }
+            },
+            "2": {
+              "id": "127",
+              "title": "🧠 AI-Powered Insights",
+              "ideas": {
+                "1": {
+                  "id": "128",
+                  "title": "🎯 Optimization Recommendations"
+                },
+                "2": {
+                  "id": "129",
+                  "title": "📈 Growth Opportunities"
+                },
+                "3": {
+                  "id": "130",
+                  "title": "⚠️ Anomaly Detection"
+                }
+              }
+            },
+            "3": {
+              "id": "131",
+              "title": "📊 Custom Reporting",
+              "ideas": {
+                "1": {
+                  "id": "132",
+                  "title": "🎨 Drag & Drop Builder"
+                },
+                "2": {
+                  "id": "133",
+                  "title": "📱 Mobile Reports"
+                },
+                "3": {
+                  "id": "134",
+                  "title": "📧 Automated Insights"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "links": [
+    {
+      "ideaIdFrom": "3",
+      "ideaIdTo": "16",
+      "attr": {
+        "style": {
+          "color": "#4CAF50",
+          "lineStyle": "dashed"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "19",
+      "ideaIdTo": "32",
+      "attr": {
+        "style": {
+          "color": "#FF9800",
+          "lineStyle": "dashed"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "20",
+      "ideaIdTo": "84",
+      "attr": {
+        "style": {
+          "color": "#2196F3",
+          "lineStyle": "solid"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "71",
+      "ideaIdTo": "84",
+      "attr": {
+        "style": {
+          "color": "#9C27B0",
+          "lineStyle": "solid"
+        }
+      }
+    },
+    {
+      "ideaIdFrom": "58",
+      "ideaIdTo": "110",
+      "attr": {
+        "style": {
+          "color": "#607D8B",
+          "lineStyle": "dashed"
+        }
+      }
+    }
+  ],
+  "attr": {
+    "theme": "CapeControl-v0.2.1"
+  },
+  "title": "CapeControl v0.2.1: Complete AI Platform Architecture"
+}

@@ -140,15 +140,14 @@ def get_onboarding_checklist(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ) -> dict:
+    # Find the user's most recent thread to determine context
     thread_stmt = (
         select(models.ChatThread)
-        .where(
-            models.ChatThread.user_id == user.id,
-            models.ChatThread.placement == "onboarding",
-        )
+        .where(models.ChatThread.user_id == user.id)
         .order_by(models.ChatThread.updated_at.desc())
     )
-    thread = db.scalar(thread_stmt)
+    # Get most recent thread for context (not directly used but influences checklist state)
+    db.scalar(thread_stmt)
     checklist = ensure_checklist(db, user_id=user.id)
     return serialize_checklist(checklist)
 

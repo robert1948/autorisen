@@ -256,6 +256,7 @@ curl -X POST http://localhost:8000/api/payments/payfast/checkout \
 ## 🔒 **Security Requirements**
 
 ### **Frontend Security:**
+
 - CSRF token validation for all payment forms
 - Input sanitization and validation
 - Secure storage of payment references (no card data)
@@ -263,6 +264,7 @@ curl -X POST http://localhost:8000/api/payments/payfast/checkout \
 - Rate limiting for payment attempts
 
 ### **Backend Integration:**
+
 - Validate PayFast signatures
 - Implement idempotency for payment operations
 - Audit logging for all payment events
@@ -271,6 +273,7 @@ curl -X POST http://localhost:8000/api/payments/payfast/checkout \
 ## 📊 **Success Criteria**
 
 ### **KPIs to Achieve:**
+
 - [ ] Payment form completion rate > 95%
 - [ ] Checkout flow abandonment < 10%
 - [ ] Payment processing latency < 5 seconds
@@ -278,6 +281,7 @@ curl -X POST http://localhost:8000/api/payments/payfast/checkout \
 - [ ] Zero security vulnerabilities in payment code
 
 ### **User Experience Goals:**
+
 - [ ] Intuitive payment flow
 - [ ] Clear payment status feedback
 - [ ] Responsive design on all devices
@@ -367,16 +371,19 @@ client/src/
 ## 🎯 **Delivery Milestones**
 
 ### **Week 1: Core Components**
+
 - [ ] Payment types and API client
 - [ ] Basic checkout flow
 - [ ] Payment form with validation
 
 ### **Week 2: Management Features**
+
 - [ ] Payment method manager
 - [ ] Invoice history display
 - [ ] Payment status tracking
 
 ### **Week 3: Integration & Testing**
+
 - [ ] Dashboard integration
 - [ ] Comprehensive testing
 - [ ] Security validation

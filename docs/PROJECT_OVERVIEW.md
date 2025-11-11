@@ -3,6 +3,11 @@
 *Generated: 2025-11-08 12:16:00*  
 *Source: `docs/project-plan.csv` (Codex-Optimized Structure)*
 
+## 🎯 Vision & Mission
+
+**CapeControl Vision: Empowering Everyone with AI**  
+See our comprehensive [Vision Statement](./VISION_STATEMENT.md) for our core pillars and approach to making AI universally accessible.
+
 ## 📊 Project Status
 
 - **Overall Progress**: 22/55 tasks (40%)
