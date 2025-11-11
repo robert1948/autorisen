@@ -34,6 +34,26 @@ export default defineConfig(({ mode }) => {
           }
         : undefined,
     },
+    build: {
+      // Ensure proper cache busting with content hashes
+      rollupOptions: {
+        output: {
+          // Add timestamp to asset names for better cache busting
+          assetFileNames: (assetInfo) => {
+            const info = assetInfo.name?.split('.') || [];
+            let extType = info[info.length - 1];
+            if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+              extType = 'img';
+            }
+            return `assets/${extType}/[name]-[hash][extname]`;
+          },
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          entryFileNames: 'assets/js/[name]-[hash].js',
+        },
+      },
+      // Generate manifest for additional cache control
+      manifest: true,
+    },
     // If you ever serve under a subpath in prod, set base here.
     // base: "/",
     preview: {
