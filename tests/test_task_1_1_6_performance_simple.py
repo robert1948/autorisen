@@ -34,9 +34,9 @@ os.environ["REDIS_HOST"] = "localhost"
 os.environ["REDIS_PORT"] = "6379"
 os.environ["DEBUG"] = "False"
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
-from app.main import app
+from app.main import app  # noqa: E402
 
 # Initialize test client
 client = TestClient(app)
@@ -52,8 +52,8 @@ class SimplePerformanceHelper:
         self,
         endpoint: str,
         method: str = "GET",
-        data: dict = None,
-        headers: dict = None,
+        data: dict | None = None,
+        headers: dict | None = None,
     ) -> tuple:
         """Measure response time for a single request"""
         start_time = time.time()
@@ -62,7 +62,9 @@ class SimplePerformanceHelper:
             if method == "GET":
                 response = self.client.get(endpoint, headers=headers)
             elif method == "POST":
-        # # response = self.client.post(endpoint, json=data, headers=headers)  # noqa: F841  # noqa: F841
+                response = self.client.post(endpoint, json=data, headers=headers)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
 
             end_time = time.time()
             response_time = end_time - start_time
@@ -73,7 +75,11 @@ class SimplePerformanceHelper:
             return end_time - start_time, 500
 
     def concurrent_requests(
-        self, endpoint: str, num_requests: int, method: str = "GET", data: dict = None
+        self,
+        endpoint: str,
+        num_requests: int,
+        method: str = "GET",
+        data: dict | None = None,
     ) -> list[dict]:
         """Execute concurrent requests and measure performance"""
         results = []

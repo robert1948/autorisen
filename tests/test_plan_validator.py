@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.plan_utils import (
+from scripts.plan_utils import (  # noqa: E402
     PLAN_CSV,
     PLAN_HEADER,
     VALID_PHASES,

@@ -33,7 +33,7 @@ CODE-003,Backend performance optimizations,backend,completed,P1,2025-11-09,O(n²
 CHAT-001,ChatKit backend integration,backend,completed,P0,2025-11-10,POST+GET token endpoints with persisted threads + tool registry,"backend/src/modules/chatkit/*; tests/test_chatkit_api.py",pytest tests/test_chatkit_api.py
 CHAT-002,Agent registry database schema,backend,completed,P0,2025-11-08,Agent + AgentVersion schema validated with unique constraints and cascade tests,"backend/migrations/versions/dc4ac5c9c3d5_add_agents_registry_tables.py; tests/test_agent_registry_schema.py",pytest tests/test_agent_registry_schema.py
 CHAT-003,Flow orchestration API,backend,completed,P0,2025-11-10,Run orchestration + history endpoints with onboarding checklist sync,"backend/src/modules/flows/*; tests/test_flows_api.py",pytest tests/test_flows_api.py
-CHAT-004,ChatKit frontend components,frontend,in-progress,P0,CHAT-001,ChatLauncher + modal telemetry with auto-refresh token UX,"client/src/components/chat/*; client/src/index.css",npm run type-check
+CHAT-004,ChatKit frontend components,frontend,completed,P0,2025-11-13,"Chat launcher + modal wired to telemetry indicator, auto token refresh, and ChatKit status copy","client/src/components/chat/*; client/src/index.css",npm run type-check && npm run build
 CHAT-005,Agent marketplace UI,frontend,todo,P1,CHAT-002,Browse and preview agent capabilities,client/src/pages/Marketplace.tsx,Navigate to /marketplace
 CHAT-006,Developer agent builder,frontend,todo,P1,CHAT-002,Agent creation and manifest editor,client/src/pages/Developer.tsx,Create test agent via UI
 CHAT-007,Onboarding flow integration,frontend,todo,P1,CHAT-003,Progress tracking and checklist UI,client/src/components/onboarding/*,Complete onboarding flow test

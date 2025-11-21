@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import json
+import sys
 from decimal import Decimal
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.src.modules.payments.config import get_payfast_settings
-from backend.src.modules.payments import service
+from backend.src.modules.payments import service  # noqa: E402
+from backend.src.modules.payments.config import get_payfast_settings  # noqa: E402
 
 
 def main() -> None:

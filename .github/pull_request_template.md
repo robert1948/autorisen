@@ -1,7 +1,7 @@
 # AutoLocal/CapeControl PR Template
 
 <!-- Production-ready FastAPI + React SaaS platform -->
-<!-- Updated: November 9, 2025 -->
+<!-- Updated: November 14, 2025 -->
 
 ## 📌 Summary
 
@@ -42,6 +42,7 @@
 - [ ] Frontend builds without errors
 - [ ] Linting passes (Python & TypeScript)
 - [ ] No security vulnerabilities introduced
+- [ ] Project plan synced if tasks changed (`scripts/plan_sync.py --apply` + `make project-info`)
 
 **Manual Testing:**
 - [ ] Authentication flow tested

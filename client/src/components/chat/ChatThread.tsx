@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChatToken } from "./ChatKitProvider";
 import ChatInput from "./ChatInput";
 import MessageList from "./MessageList";
+import ConnectionIndicator from "./ConnectionIndicator";
 import { chatApi } from "../../services/chatApi";
 import type { ChatThread as ThreadModel, ClientMessage } from "../../types/chat";
 import { useEnhancedWebSocket } from "../../hooks/useEnhancedWebSocket";
@@ -13,6 +14,7 @@ type Props = {
   placement: string;
   token: ChatToken;
   onThreadChange: (threadId: string) => Promise<void> | void;
+  onConnectionHealthChange?: (health: ConnectionHealth) => void;
 };
 
 const createClientMessage = (content: string, threadId: string): ClientMessage => ({
@@ -28,84 +30,41 @@ const createClientMessage = (content: string, threadId: string): ClientMessage =
   status: "sending",
 });
 
-const ConnectionIndicator = ({ health }: { health: ConnectionHealth }) => {
-  const getStatusColor = () => {
-    switch (health.status) {
-      case 'open': return 'bg-green-500';
-      case 'connecting': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      case 'closed': return 'bg-gray-500';
-      default: return 'bg-gray-400';
-    }
-  };
-
-  const getQualityIndicator = () => {
-    switch (health.connectionQuality) {
-      case 'excellent': return '🟢';
-      case 'good': return '🟡';
-      case 'poor': return '🟠';
-      case 'critical': return '🔴';
-      default: return '⚪';
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <div className={`w-3 h-3 rounded-full ${getStatusColor()}`} />
-      <span className="capitalize">{health.status}</span>
-      {health.status === 'open' && (
-        <>
-          <span>{getQualityIndicator()}</span>
-          <span className="text-xs text-gray-500">
-            {health.latency}ms
-          </span>
-        </>
-      )}
-      {health.reconnectAttempts > 0 && (
-        <span className="text-xs text-orange-600">
-          Retry {health.reconnectAttempts}
-        </span>
-      )}
-    </div>
-  );
-};
-
-const ErrorBanner = ({ errors, onClearErrors }: { 
-  errors: ErrorState[]; 
-  onClearErrors: () => void; 
+const ErrorBanner = ({
+  errors,
+  onClearErrors,
+}: {
+  errors: ErrorState[];
+  onClearErrors: () => void;
 }) => {
   const latestError = errors[errors.length - 1];
-  
+
   if (!latestError) return null;
 
   return (
-    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h4 className="text-sm font-medium text-red-800 capitalize">
-            {latestError.type} Error
-          </h4>
-          <p className="text-sm text-red-700 mt-1">
-            {latestError.message}
+    <div className="chat-error" role="alert">
+      <div className="chat-error__body">
+        <p className="chat-error__title">{latestError.type} error</p>
+        <p className="chat-error__message">{latestError.message}</p>
+        {latestError.recoverable && (
+          <p className="chat-error__hint">
+            This looks recoverable. We will retry automatically in the background.
           </p>
-          {latestError.recoverable && (
-            <p className="text-xs text-red-600 mt-1">
-              This error is recoverable. The system will retry automatically.
-            </p>
-          )}
-        </div>
-        <button
-          onClick={onClearErrors}
-          className="text-red-600 hover:text-red-800 text-xs"
-        >
-          Dismiss
-        </button>
+        )}
       </div>
+      <button type="button" className="chat-error__dismiss" onClick={onClearErrors}>
+        Dismiss
+      </button>
     </div>
   );
 };
 
-const ChatThread = ({ placement, token, onThreadChange }: Props) => {
+const ChatThread = ({
+  placement,
+  token,
+  onThreadChange,
+  onConnectionHealthChange,
+}: Props) => {
   const queryClient = useQueryClient();
   const [optimisticMessages, setOptimisticMessages] = useState<ClientMessage[]>([]);
   const [liveMessages, setLiveMessages] = useState<ClientMessage[]>([]);
@@ -184,6 +143,9 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
         next[idx] = thread;
         return next;
       });
+    },
+    onConnectionChange: (health) => {
+      onConnectionHealthChange?.(health);
     },
     onError: (error) => {
       console.error('WebSocket error:', error);
@@ -354,26 +316,19 @@ const ChatThread = ({ placement, token, onThreadChange }: Props) => {
             <strong>{selectedThreadId}</strong>
           </div>
           <div className="chat-main__status">
-            <ConnectionIndicator health={connectionHealth} />
-            {(loadingState.connecting || loadingState.reconnecting) && (
-              <div className="flex items-center gap-1 text-xs text-blue-600">
-                <span className="animate-spin">⚡</span>
-                {loadingState.connecting && "Connecting..."}
-                {loadingState.reconnecting && "Reconnecting..."}
-              </div>
-            )}
-            {queueLength > 0 && (
-              <div className="text-xs text-orange-600">
-                Queue: {queueLength}
-              </div>
-            )}
-            {!isConnected && connectionHealth.status !== 'connecting' && (
+            <ConnectionIndicator
+              health={connectionHealth}
+              queueLength={queueLength}
+              variant="full"
+            />
+            {!isConnected && connectionHealth.status !== "connecting" && (
               <button
+                type="button"
+                className="chat-main__reconnect"
                 onClick={handleReconnect}
-                className="text-xs text-blue-600 hover:text-blue-800"
                 disabled={isReconnecting}
               >
-                {isReconnecting ? 'Reconnecting...' : 'Reconnect'}
+                {isReconnecting ? "Reconnecting…" : "Reconnect"}
               </button>
             )}
           </div>

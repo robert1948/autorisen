@@ -4,7 +4,7 @@
 
 This is a **production-ready FastAPI + React SaaS platform** deployed as containers to Heroku. The system implements a modular agent-based architecture where business logic is organized into specialized agents that handle specific domains (auth, monitoring, audit, etc.).
 
-**Current Version:** v0.2.1 (November 2025)
+**Current Version:** v0.2.5 (November 2025)
 
 ### Key Structural Patterns
 
@@ -19,11 +19,12 @@ This is a **production-ready FastAPI + React SaaS platform** deployed as contain
 ### Essential Make Targets
 
 ```bash
-make install           # Bootstrap Python venv + dependencies
-make docker-build      # Build autorisen:local with retries
-make deploy-heroku     # Full build → push → release to Heroku (with retry logic)
-make heroku-logs       # Live log tailing
-make codex-test        # CI-safe pytest with test database isolation
+make install        # Bootstrap Python venv + dependencies
+make project-info   # Print live roadmap stats from docs/project-plan.csv
+make codex-test     # CI-safe pytest with test database isolation
+make docker-build   # Build autorisen:local with retries
+make deploy-heroku  # Full build → push → release to Heroku (with retry logic)
+make heroku-logs    # Live log tailing
 ```
 
 ### Environment Configuration
@@ -86,6 +87,11 @@ service.py        # Business logic implementation
 - **Health Endpoints**: `/api/health` (with DB check), `/api/version`, `/api/security/stats`
 - **Audit Trail**: Request logging via `AuditLoggingMiddleware` → `AuditAgent`
 - **Security Stack**: DDoS protection, input sanitization, rate limiting with Redis backend
+
+### Roadmap & Planning
+
+- `docs/project-plan.csv` is the authoritative backlog; update it first, then run `python scripts/plan_sync.py --apply` to refresh `docs/Master_ProjectPlan.md`.
+- `make project-info` summarizes live task/hour totals directly from the CSV so CLI output matches the plan snapshot.
 
 ## Key Files to Understand
 

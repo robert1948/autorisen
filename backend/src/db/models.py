@@ -365,6 +365,46 @@ class AgentVersion(Base):
     agent = relationship("Agent", back_populates="versions")
 
 
+class AgentInstallation(Base):
+    """Track installed agents per user."""
+
+    __tablename__ = "agent_installations"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "agent_id", name="uq_agent_installations_user_agent"
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    agent_id = Column(
+        String(36),
+        ForeignKey("agents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    version = Column(String(20), nullable=False)
+    configuration = Column(JSON, nullable=False, server_default="{}")
+    status = Column(String(32), nullable=False, server_default="active")
+    installed_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user = relationship("User")
+    agent = relationship("Agent")
+
+
 class Task(Base):
     """Agent task execution tracking."""
 
@@ -416,7 +456,7 @@ class AuditEvent(Base):
 
     __tablename__ = "audit_events"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     task_id = Column(
         String(36), ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
     )

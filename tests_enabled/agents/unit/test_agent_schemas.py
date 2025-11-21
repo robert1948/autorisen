@@ -5,7 +5,6 @@ Tests Pydantic models, validation, serialization, and edge cases.
 """
 
 import pytest
-from typing import Dict, Any
 from pydantic import ValidationError
 
 from backend.src.modules.agents.cape_ai_guide.schemas import (

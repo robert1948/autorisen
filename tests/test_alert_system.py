@@ -381,7 +381,7 @@ class TestAlertAPI:
         }
 
         with patch("app.core.auth.get_current_user", return_value={"username": "test"}):
-        # # response = self.client.post(  # noqa: F841  # noqa: F841
+            response = self.client.post(
                 "/api/v1/alerts/rules", json=new_rule, headers=self.headers
             )
 

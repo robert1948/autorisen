@@ -7,13 +7,14 @@ ratings, analytics, and management.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 
 from backend.src.db import models
 from backend.src.db.session import get_session
+from backend.src.modules.auth.deps import get_current_user
 from .models import (
     MarketplaceSearchRequest,
     MarketplaceSearchResponse,
@@ -138,8 +139,9 @@ async def validate_agent(
 async def install_agent(
     agent_id: str,
     request: AgentInstallRequest,
+    req: Request,
     db: Session = Depends(get_session),
-    # TODO: Add user authentication and extract user_id
+    current_user: models.User = Depends(get_current_user),
 ) -> AgentInstallResponse:
     """
     Install an agent for the current user.
@@ -150,11 +152,13 @@ async def install_agent(
     - Configuration validation
     - Installation tracking
     """
-    # TODO: Extract user_id from authentication
-    user_id = "user_placeholder"  # Replace with actual auth
-
     service = MarketplaceService(db)
-    return await service.install_agent(request, user_id)
+    return await service.install_agent(
+        request,
+        current_user.id,
+        ip_address=req.client.host if req.client else None,
+        user_agent=req.headers.get("user-agent"),
+    )
 
 
 @router.get("/categories", response_model=list[str])

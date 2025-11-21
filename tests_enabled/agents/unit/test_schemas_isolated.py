@@ -4,10 +4,9 @@ Isolated unit tests for CapeAI Guide agent schemas.
 Tests Pydantic models without requiring full application imports.
 """
 
+from typing import Any, Dict, List, Optional
+
 import pytest
-import sys
-from pathlib import Path
-from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field, ValidationError
 
 

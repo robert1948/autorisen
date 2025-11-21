@@ -69,12 +69,12 @@ def get_test_user_token():
     }
 
     # Register user
-        # # register_response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+    register_response = client.post("/api/auth/v2/register", json=user_data)
     assert register_response.status_code == 200
 
     # Login to get token
     login_data = {"email": user_data["email"], "password": user_data["password"]}
-        # # login_response = client.post("/api/auth/v2/login", json=login_data)  # noqa: F841  # noqa: F841
+    login_response = client.post("/api/auth/v2/login", json=login_data)
     assert login_response.status_code == 200
 
     return login_response.json()["access_token"]
@@ -132,7 +132,7 @@ class TestCapeAIEndpoints:
             "session_id": self.session_id,
         }
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -172,7 +172,7 @@ class TestCapeAIEndpoints:
             "session_id": self.session_id,
         }
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -197,7 +197,7 @@ class TestCapeAIEndpoints:
             "context": {"page": "/onboarding"},
         }
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -211,7 +211,7 @@ class TestCapeAIEndpoints:
         """Test AI prompt without authentication token"""
         prompt_data = {"message": "Hello CapeAI", "context": {}}
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data)
 
         assert response.status_code == 401
 
@@ -220,7 +220,7 @@ class TestCapeAIEndpoints:
         # Missing required message field
         prompt_data = {"context": {}}
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
 
         assert response.status_code == 422  # Validation error
 
@@ -520,7 +520,7 @@ class TestCapeAIIntegration:
             "session_id": session_id,
         }
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
         assert response.status_code == 200
 
         # Step 2: Follow-up question
@@ -535,7 +535,7 @@ class TestCapeAIIntegration:
             "session_id": session_id,
         }
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
         assert response.status_code == 200
 
         # Step 3: Get conversation history
@@ -581,7 +581,7 @@ class TestCapeAIPerformance:
         prompt_data = {"message": "Quick test", "context": {"page": "/dashboard"}}
 
         start_time = time.time()
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
         end_time = time.time()
 
         assert response.status_code == 200
@@ -637,7 +637,7 @@ class TestCapeAISecurity:
             }
 
             # Should not return error, but should handle safely
-        # # response = client.post(  # noqa: F841  # noqa: F841
+            response = client.post(
                 "/api/ai/prompt", json=prompt_data, headers=self.headers
             )
             # Should either handle gracefully (200) or reject (400)
@@ -657,7 +657,7 @@ class TestCapeAISecurity:
                 "context": {"page": payload, "user_input": payload},
             }
 
-        # # response = client.post(  # noqa: F841  # noqa: F841
+            response = client.post(
                 "/api/ai/prompt", json=prompt_data, headers=self.headers
             )
             # Should handle XSS attempts gracefully
@@ -698,7 +698,7 @@ class TestCapeAIErrorHandling:
 
         prompt_data = {"message": "Test message", "context": {"page": "/dashboard"}}
 
-        # # response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=prompt_data, headers=self.headers)
 
         # Should still work with fallback (no Redis dependency for fallback)
         assert response.status_code == 200

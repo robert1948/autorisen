@@ -139,7 +139,7 @@ class TestHealthAndValidation:
     def test_password_validation_weak_passwords(self):
         """Test password validation rejects weak passwords"""
         for weak_password in WEAK_PASSWORDS:
-        # # response = client.post(  # noqa: F841  # noqa: F841
+            response = client.post(
                 "/api/auth/v2/validate-password", json={"password": weak_password}
             )
             assert response.status_code == 200
@@ -153,7 +153,7 @@ class TestHealthAndValidation:
     def test_password_validation_strong_passwords(self):
         """Test password validation accepts strong passwords"""
         for strong_password in STRONG_PASSWORDS:
-        # # response = client.post(  # noqa: F841  # noqa: F841
+            response = client.post(
                 "/api/auth/v2/validate-password", json={"password": strong_password}
             )
             assert response.status_code == 200
@@ -174,7 +174,7 @@ class TestUserRegistration:
     def test_registration_v2_success(self):
         """Test successful V2 registration"""
         user_data = get_unique_user_data("reg_success")
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/register", json=user_data)
         assert response.status_code == 200
         data = response.json()
         assert "id" in data
@@ -197,7 +197,7 @@ class TestUserRegistration:
         user_data = get_unique_user_data("reg_invalid")
         user_data["email"] = "invalid-email"
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/register", json=user_data)
         assert response.status_code == 422  # Validation error
 
     def test_registration_v2_weak_password(self):
@@ -208,7 +208,7 @@ class TestUserRegistration:
             user_data = get_unique_user_data(f"reg_weak_{i}")
             user_data["password"] = weak_password
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             # Should either reject with 422 (validation) or 400 (business logic)
             assert response.status_code in [400, 422]
 
@@ -220,7 +220,7 @@ class TestUserRegistration:
             user_data = get_unique_user_data(f"reg_missing_{field}")
             del user_data[field]
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             assert response.status_code == 422
 
     def test_registration_step1_success(self):
@@ -230,7 +230,7 @@ class TestUserRegistration:
             "password": "SecurePassword123!",
         }
 
-        # # response = client.post("/api/auth/register/step1", json=step1_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/register/step1", json=step1_data)
         assert response.status_code == 200
         data = response.json()
         assert data["success"]
@@ -247,7 +247,7 @@ class TestUserRegistration:
             "company_name": "Test Company",
         }
 
-        # # response = client.post("/api/auth/register/step2", json=step2_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/register/step2", json=step2_data)
         assert response.status_code in [
             200,
             500,
@@ -270,14 +270,14 @@ class TestUserLogin:
 
         # Create test user with unique email
         self.user_data = get_unique_user_data("login_test")
-        # # response = client.post("/api/auth/v2/register", json=self.user_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/register", json=self.user_data)
         assert response.status_code == 200
         self.login_data = get_unique_login_data(self.user_data["email"])
         db.close()
 
     def test_login_v2_success(self):
         """Test successful V2 login"""
-        # # response = client.post("/api/auth/v2/login", json=self.login_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/login", json=self.login_data)
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
@@ -292,7 +292,7 @@ class TestUserLogin:
             "password": "SecurePassword123!",
         }
 
-        # # response = client.post("/api/auth/v2/login", json=invalid_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/login", json=invalid_data)
         assert response.status_code == 401
         assert "invalid" in response.json()["detail"].lower()
 
@@ -303,26 +303,26 @@ class TestUserLogin:
             "password": "WrongPassword123!",
         }
 
-        # # response = client.post("/api/auth/v2/login", json=invalid_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/login", json=invalid_data)
         assert response.status_code == 401
         assert "invalid" in response.json()["detail"].lower()
 
     def test_login_v2_missing_credentials(self):
         """Test V2 login with missing credentials"""
         # Missing password
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/auth/v2/login", json={"email": self.login_data["email"]}
         )
         assert response.status_code == 422
 
         # Missing email
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/auth/v2/login", json={"password": self.login_data["password"]}
         )
         assert response.status_code == 422
 
         # Empty request
-        # # response = client.post("/api/auth/v2/login", json={})  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/login", json={})
         assert response.status_code == 422
 
 
@@ -339,7 +339,8 @@ class TestJWTTokenHandling:
         self.user_data = get_unique_user_data("jwt_test")
         client.post("/api/auth/v2/register", json=self.user_data)
         login_data = get_unique_login_data(self.user_data["email"])
-        # # login_response = client.post("/api/auth/v2/login", json=login_data)  # noqa: F841  # noqa: F841
+        login_response = client.post("/api/auth/v2/login", json=login_data)
+        assert login_response.status_code == 200
         self.access_token = login_response.json()["access_token"]
         db.close()
 
@@ -356,13 +357,13 @@ class TestJWTTokenHandling:
         headers = {"Authorization": f"Bearer {self.access_token}"}
         # Note: Add a protected endpoint test when available
         # For now, we test that the token is properly formatted
-        assert "Bearer " in f"Bearer {self.access_token}"
+        assert headers["Authorization"].startswith("Bearer ")
 
     def test_protected_endpoint_without_token(self):
         """Test accessing protected endpoint without token"""
         # This test would need a protected endpoint in the auth routes
         # For now, we verify token absence handling in login
-        # # response = client.post("/api/auth/v2/login", json={})  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/login", json={})
         assert response.status_code == 422
 
 
@@ -398,7 +399,7 @@ class TestSecurityAndErrorHandling:
             user_data = get_unique_user_data(f"xss_test_{i}")
             user_data["full_name"] = payload
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             # Should either succeed (with sanitized input) or fail validation
             assert response.status_code in [200, 400, 422]
 
@@ -406,7 +407,7 @@ class TestSecurityAndErrorHandling:
         """Test that passwords are properly hashed"""
         # Register user with unique data
         user_data = get_unique_user_data("hash_test")
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/register", json=user_data)
         assert response.status_code == 200
 
         # Check database directly to ensure password is hashed
@@ -417,9 +418,12 @@ class TestSecurityAndErrorHandling:
             .first()
         )
         assert user is not None
-        assert user.password_hash != user_data["password"]  # Should be hashed
-        assert len(user.password_hash) > 50  # Bcrypt hashes are long
-        assert user.password_hash.startswith("$2b$")  # Bcrypt format
+        stored_password = getattr(
+            user, "password_hash", getattr(user, "hashed_password", "")
+        )
+        assert stored_password != user_data["password"]  # Should be hashed
+        assert len(stored_password) > 50  # Bcrypt hashes are long
+        assert stored_password.startswith("$2b$")  # Bcrypt format
         db.close()
 
     def test_email_normalization(self):
@@ -433,7 +437,7 @@ class TestSecurityAndErrorHandling:
                 f"test{i}@example.com"  # Use unique email for each test
             )
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             if response.status_code == 200:
                 data = response.json()
                 # Email should be normalized to lowercase
@@ -457,7 +461,7 @@ class TestInputValidationAndSanitization:
             user_data = get_unique_user_data(f"long_input_{i}")
             user_data.update(test_case)
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             # Should handle gracefully - either accept (if no length limits) or reject
             assert response.status_code in [200, 400, 422]
 
@@ -474,7 +478,7 @@ class TestInputValidationAndSanitization:
             user_data = get_unique_user_data(f"unicode_{i}")
             user_data.update(test_case)
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             # Should either succeed or fail gracefully
             assert response.status_code in [200, 400, 422]
 
@@ -491,7 +495,7 @@ class TestInputValidationAndSanitization:
             user_data = get_unique_user_data(f"null_test_{i}")
             user_data.update(test_case)
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             # Should reject with validation error
             assert response.status_code in [400, 422]
 
@@ -509,7 +513,7 @@ class TestRoleBasedRegistration:
         for i, role in enumerate(valid_roles):
             user_data = get_unique_user_data(f"role_{role}_{i}", role)
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             assert response.status_code == 200
             data = response.json()
             assert "id" in data
@@ -522,7 +526,7 @@ class TestRoleBasedRegistration:
             user_data = get_unique_user_data(f"invalid_role_{i}")
             user_data["user_role"] = role
 
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             # Should reject invalid roles
             assert response.status_code in [400, 422]
 
@@ -537,7 +541,7 @@ class TestAsyncOperations:
             mock_email.return_value = None
 
             user_data = get_unique_user_data("async_test")
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+            response = client.post("/api/auth/v2/register", json=user_data)
             assert response.status_code == 200
             # Registration should succeed even if email task fails
 
@@ -561,18 +565,18 @@ class TestErrorScenarios:
         ]
 
         for malformed_json in malformed_requests:
-        # # response = client.post(  # noqa: F841  # noqa: F841
+            response = client.post(
                 "/api/auth/v2/register",
-                data=malformed_json,
+                content=malformed_json,
                 headers={"content-type": "application/json"},
             )
             assert response.status_code == 422  # Unprocessable Entity
 
     def test_content_type_validation(self):
         """Test that endpoints require correct content type"""
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/auth/v2/register",
-            data="not json",
+            content="not json",
             headers={"content-type": "text/plain"},
         )
         assert response.status_code == 422
@@ -587,7 +591,7 @@ class TestPerformanceBaseline:
 
         user_data = get_unique_user_data("perf_reg")
         start_time = time.time()
-        # # response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/register", json=user_data)
         end_time = time.time()
 
         assert response.status_code == 200
@@ -602,7 +606,7 @@ class TestPerformanceBaseline:
         login_data = get_unique_login_data(user_data["email"])
 
         start_time = time.time()
-        # # response = client.post("/api/auth/v2/login", json=login_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/login", json=login_data)
         end_time = time.time()
 
         assert response.status_code == 200

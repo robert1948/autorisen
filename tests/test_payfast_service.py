@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import os
-from decimal import Decimal
-
 import sys
+from decimal import Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.src.modules.payments import service
-from backend.src.modules.payments.config import PayFastSettings
+from backend.src.modules.payments import service  # noqa: E402
+from backend.src.modules.payments.config import PayFastSettings  # noqa: E402
 
 
 def _settings() -> PayFastSettings:

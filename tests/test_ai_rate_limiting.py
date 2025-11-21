@@ -68,7 +68,7 @@ class TestAIServiceRateLimitIntegration:
         from app.services.multi_provider_ai_service import MultiProviderAIService
 
         # Check that the service imports rate limiting
-        ai_service = MultiProviderAIService()
+        _ = MultiProviderAIService()
 
         # Verify RATE_LIMITING_AVAILABLE is properly set
         import app.services.multi_provider_ai_service as ai_module

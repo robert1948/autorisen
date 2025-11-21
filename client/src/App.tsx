@@ -28,7 +28,7 @@ import Checkout from "./pages/Checkout";
 
 // CapeControl Auth Components (Production)
 import LoginPage from "./components/Auth/LoginPage";
-import MFAChallenge from "./components/Auth/MFAChallenge"; 
+import MFAChallenge from "./components/Auth/MFAChallenge";
 import MFAEnroll from "./components/Auth/MFAEnroll";
 
 const App = () => (
@@ -39,7 +39,15 @@ const App = () => (
     }}
   >
     <Routes>
+      {/* Public marketing / entry routes */}
+      {/* Main customer-centric landing page using existing design */}
       <Route path="/" element={<Home />} />
+
+      <Route path="/demo" element={<Welcome />} />
+      <Route path="/how-it-works" element={<About />} />
+      <Route path="/signup" element={<Register />} />
+
+      {/* Legacy / auth flows */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -48,8 +56,8 @@ const App = () => (
       <Route path="/onboarding/customer" element={<OnboardingCustomer />} />
       <Route path="/onboarding/developer" element={<OnboardingDeveloper />} />
       <Route path="/verify-email/:token" element={<VerifyEmail />} />
-      
-      {/* New pages based on sitemap */}
+
+      {/* App routes based on sitemap */}
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/agents" element={<Agents />} />
@@ -64,11 +72,16 @@ const App = () => (
       <Route path="/onboarding/profile" element={<OnboardingProfile />} />
       <Route path="/about" element={<About />} />
       <Route path="/subscribe" element={<Subscribe />} />
-      
+
       {/* CapeControl Auth Routes - Production Ready */}
       <Route path="/auth/login" element={<LoginPage />} />
-      <Route path="/auth/mfa" element={<MFAChallenge onSuccess={() => console.log('MFA Success')} />} />
+      <Route
+        path="/auth/mfa"
+        element={<MFAChallenge onSuccess={() => console.log("MFA Success")} />}
+      />
       <Route path="/account/mfa-enroll" element={<MFAEnroll />} />
+
+      {/* Misc / test */}
       <Route path="/test/logo" element={<LogoTestPage />} />
     </Routes>
   </BrowserRouter>

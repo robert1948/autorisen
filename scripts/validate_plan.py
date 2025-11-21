@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.plan_utils import (
+from scripts.plan_utils import (  # noqa: E402
     PLAN_CSV,
     PLAN_HEADER,
     VALID_STATUSES,
@@ -72,7 +72,10 @@ def main() -> int:
 
         hours = row.get("estimated_hours", "")
         if hours and not hours.isdigit():
-            print(f"ERROR {task_id}: estimated_hours not numeric '{hours}'", file=sys.stderr)
+            print(
+                f"ERROR {task_id}: estimated_hours not numeric '{hours}'",
+                file=sys.stderr,
+            )
             ok = False
 
     if not ok:

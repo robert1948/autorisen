@@ -30,7 +30,6 @@ concurrency:
 
 env:
   HEROKU_APP: autorisen-dac8e65796e7
-  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
 jobs:
   deploy:
@@ -45,7 +44,14 @@ jobs:
           git checkout --detach "${GITHUB_SHA}"
           git submodule update --init --recursive || true
 
+      - name: Plan snapshot validation
+        run: |
+          python3 scripts/plan_sync.py --check-only
+          make project-info
+
       - name: Install Heroku CLI
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
           heroku --version
@@ -60,6 +66,8 @@ jobs:
           EOF
 
       - name: Docker login to Heroku registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
 
@@ -110,12 +118,16 @@ jobs:
           docker push "$IMAGE"
 
       - name: Release container to production
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "🚀 Releasing container to production..."
           heroku container:release web -a "$HEROKU_APP"
 
       - name: Run database migrations
         if: always()
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "🗃️ Running database migrations..."
           heroku run -a "$HEROKU_APP" -- \

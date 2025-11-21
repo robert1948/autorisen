@@ -2,7 +2,12 @@
  * API service for user profile and onboarding operations
  */
 
-const API_BASE_URL = '/api';
+import { getConfig } from "../config";
+
+function getApiBaseUrl(): string {
+  const config = getConfig();
+  return config.API_BASE_URL || "/api";
+}
 
 // Types
 export interface UserProfile {
@@ -81,7 +86,7 @@ export class APIError extends Error {
 
 // Helper function for API calls
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${getApiBaseUrl()}${endpoint}`;
   
   const defaultHeaders = {
     'Content-Type': 'application/json',

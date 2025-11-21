@@ -1,7 +1,9 @@
-const API_BASE =
-  ((import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_API_BASE as
-    | string
-    | undefined) ?? "/api";
+import { getConfig } from "../config";
+
+function getApiBase(): string {
+  const config = getConfig();
+  return config.API_BASE_URL || "/api";
+}
 
 const AUTH_STORAGE_KEY = "autorisen-auth";
 
@@ -50,7 +52,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${getApiBase()}${endpoint}`, {
     method,
     headers: requestHeaders,
     body: body !== undefined ? JSON.stringify(body) : undefined,

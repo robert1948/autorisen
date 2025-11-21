@@ -40,7 +40,7 @@ class AuthTestSuite:
             "experience": "intermediate",
         }
 
-        # # response = await self.client.post("/api/auth/register", json=customer_data)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/register", json=customer_data)    
         assert response.status_code == 201, f"Registration failed: {response.text}"
 
         data = response.json()
@@ -65,7 +65,7 @@ class AuthTestSuite:
             "experience": "expert",
         }
 
-        # # response = await self.client.post("/api/auth/register", json=developer_data)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/register", json=developer_data)    
         assert (
             response.status_code == 201
         ), f"Developer registration failed: {response.text}"
@@ -77,7 +77,7 @@ class AuthTestSuite:
         logger.info("✅ Developer registration successful")
 
         # Test duplicate email (should fail)
-        # # response = await self.client.post("/api/auth/register", json=customer_data)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/register", json=customer_data)    
         assert response.status_code == 409, "Duplicate email should be rejected"
 
         logger.info("✅ Duplicate email properly rejected")
@@ -92,7 +92,7 @@ class AuthTestSuite:
             "password": "TestPassword123!",
         }
 
-        # # response = await self.client.post("/api/auth/login", json=login_data)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/login", json=login_data)    
         assert response.status_code == 200, f"Login failed: {response.text}"
 
         data = response.json()
@@ -110,7 +110,7 @@ class AuthTestSuite:
             "password": "WrongPassword",
         }
 
-        # # response = await self.client.post("/api/auth/login", json=invalid_login)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/login", json=invalid_login)    
         assert response.status_code == 401, "Invalid login should be rejected"
 
         logger.info("✅ Invalid login properly rejected")
@@ -142,7 +142,7 @@ class AuthTestSuite:
 
         refresh_data = {"refresh_token": self.tokens["customer"]["refresh_token"]}
 
-        # # response = await self.client.post("/api/auth/refresh", json=refresh_data)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/refresh", json=refresh_data)    
         assert response.status_code == 200, f"Token refresh failed: {response.text}"
 
         data = response.json()
@@ -188,7 +188,7 @@ class AuthTestSuite:
         }
 
         headers = {"Authorization": f"Bearer {self.tokens['customer']['access_token']}"}
-        # # response = await self.client.post(  # noqa: F841  # noqa: F841
+        response = await self.client.post(    
             "/api/auth/change-password", json=change_data, headers=headers
         )
         assert response.status_code == 200, f"Password change failed: {response.text}"
@@ -202,7 +202,7 @@ class AuthTestSuite:
             "password": "NewTestPassword456!",
         }
 
-        # # response = await self.client.post("/api/auth/login", json=login_data)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/login", json=login_data)    
         assert response.status_code == 200, "Login with new password failed"
 
         logger.info("✅ Password change successful")
@@ -245,7 +245,7 @@ class AuthTestSuite:
         # Request password reset
         reset_request = {"email": "test_customer@example.com"}
 
-        # # response = await self.client.post(  # noqa: F841  # noqa: F841
+        response = await self.client.post(    
             "/api/auth/reset-password", json=reset_request
         )
         assert (
@@ -263,7 +263,7 @@ class AuthTestSuite:
         logger.info("🧪 Testing logout...")
 
         headers = {"Authorization": f"Bearer {self.tokens['customer']['access_token']}"}
-        # # response = await self.client.post("/api/auth/logout", headers=headers)  # noqa: F841  # noqa: F841
+        response = await self.client.post("/api/auth/logout", headers=headers)    
         assert response.status_code == 200, f"Logout failed: {response.text}"
 
         data = response.json()

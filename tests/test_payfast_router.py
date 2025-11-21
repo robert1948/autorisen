@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -12,12 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.src.modules.payments.router import router
-from backend.src.modules.payments.config import (
+from backend.src.modules.payments import service  # noqa: E402
+from backend.src.modules.payments.config import (  # noqa: E402
     PayFastSettings,
     reset_payfast_settings_cache,
 )
-from backend.src.modules.payments import service
+from backend.src.modules.payments.router import router  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -65,16 +64,6 @@ def test_checkout_endpoint_returns_signed_fields():
 
 def test_itn_endpoint_validates_signature(monkeypatch):
     client = _client()
-    payload = {
-        "merchant_id": "10000100",
-        "merchant_key": "abc123",
-        "return_url": "https://example.com/return",
-        "cancel_url": "https://example.com/cancel",
-        "notify_url": "https://example.com/itn",
-        "amount": "10.00",
-        "item_name": "Test",
-        "email_address": "customer@example.com",
-    }
     fields = service.build_checkout_fields(
         settings=PayFastSettings(
             merchant_id="10000100",

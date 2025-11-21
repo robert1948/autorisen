@@ -469,10 +469,9 @@ class TestConversationManager:
             "conversation_type": "general",
             "status": "active",
         }
-
-        conv1 = await manager.create_conversation(user_id, conv_data_1)
-        conv2 = await manager.create_conversation(user_id, conv_data_2)
-        conv3 = await manager.create_conversation(user_id, conv_data_3)
+        await manager.create_conversation(user_id, conv_data_1)
+        await manager.create_conversation(user_id, conv_data_2)
+        await manager.create_conversation(user_id, conv_data_3)
 
         # Get all conversations
         all_conversations = await manager.get_user_conversations(user_id)
@@ -578,10 +577,10 @@ class TestConversationManager:
             "description": "Discussing database schemas and optimization",
             "tags": ["database", "sql", "optimization"],
         }
-
-        conv1 = await manager.create_conversation(user_id, conv1_data)
-        conv2 = await manager.create_conversation(user_id, conv2_data)
-        conv3 = await manager.create_conversation(user_id, conv3_data)
+        conversations = []
+        for payload in (conv1_data, conv2_data, conv3_data):
+            conversations.append(await manager.create_conversation(user_id, payload))
+        conv1, conv2, conv3 = conversations
 
         # Add messages to conversations
         await manager.add_message(
@@ -695,8 +694,8 @@ class TestConversationManager:
         }
 
         conv1 = await manager.create_conversation(user_id, conv1_data)
-        conv2 = await manager.create_conversation(user_id, conv2_data)
-        conv3 = await manager.create_conversation(user_id, conv3_data)
+        _ = await manager.create_conversation(user_id, conv2_data)
+        _ = await manager.create_conversation(user_id, conv3_data)
 
         # Find similar conversations to conv1
         similar = await manager.get_similar_conversations(
@@ -729,6 +728,10 @@ class TestConversationManager:
         assert export_data["user_id"] == user_id
         assert export_data["conversation_count"] == 2
         assert len(export_data["conversations"]) == 2
+        assert any(
+            convo["conversation_id"] == conv2.conversation_id
+            for convo in export_data["conversations"]
+        )
 
         # Export specific conversations
         specific_export = await manager.export_conversations(
@@ -1152,7 +1155,7 @@ def run_performance_benchmarks():
 
         # Test search performance
         search_start = time.time()
-        results = await conversation.search_messages("benchmark")
+        _ = await conversation.search_messages("benchmark")
         search_end = time.time()
         search_duration = search_end - search_start
 

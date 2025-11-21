@@ -15,7 +15,7 @@ except ImportError:
 
 # Test 2: Can we import FastAPI components?
 try:
-    from fastapi import APIRouter, FastAPI
+    from fastapi import APIRouter
 
     print("✅ FastAPI imported successfully")
 except ImportError:

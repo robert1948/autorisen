@@ -13,9 +13,9 @@ from pathlib import Path
 backend_src = Path(__file__).parent.parent.parent.parent / "backend" / "src"
 sys.path.insert(0, str(backend_src))
 
-from modules.agents.cape_ai_guide.schemas import CapeAIGuideTaskInput
-from modules.agents.cape_ai_guide.service import CapeAIGuideService
-from modules.agents.cape_ai_guide.knowledge_base import KnowledgeBase
+from modules.agents.cape_ai_guide.knowledge_base import KnowledgeBase  # noqa: E402
+from modules.agents.cape_ai_guide.schemas import CapeAIGuideTaskInput  # noqa: E402
+from modules.agents.cape_ai_guide.service import CapeAIGuideService  # noqa: E402
 
 
 async def test_knowledge_base():

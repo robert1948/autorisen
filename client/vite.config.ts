@@ -44,6 +44,8 @@ export default defineConfig(({ mode }) => {
             let extType = info[info.length - 1];
             if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
               extType = 'img';
+            } else if (/woff2?|eot|ttf|otf/i.test(extType)) {
+              extType = 'fonts';
             }
             return `assets/${extType}/[name]-[hash][extname]`;
           },
@@ -51,8 +53,13 @@ export default defineConfig(({ mode }) => {
           entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
-      // Generate manifest for additional cache control
+      // Generate manifest for additional cache control and build fingerprinting
       manifest: true,
+      // Optimize output size
+      target: 'esnext',
+      minify: 'esbuild',
+      // Source maps for production debugging
+      sourcemap: mode === 'production' ? 'hidden' : true,
     },
     // If you ever serve under a subpath in prod, set base here.
     // base: "/",

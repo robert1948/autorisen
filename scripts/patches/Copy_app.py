@@ -24,7 +24,6 @@ from starlette.responses import (
 
 from backend.src.core.config import settings
 from backend.src.modules.auth.csrf import csrf_middleware
-from backend.src.modules.auth.router import router as auth_router
 
 load_dotenv()
 

@@ -54,7 +54,7 @@ def test_stripe_environment():
     try:
         import fastapi
 
-        print("   ✅ fastapi: Available")
+        print(f"   ✅ fastapi: v{getattr(fastapi, '__version__', 'unknown')}")
     except ImportError:
         print("   ❌ fastapi: Not installed")
         return False
@@ -62,7 +62,7 @@ def test_stripe_environment():
     try:
         import uvicorn
 
-        print("   ✅ uvicorn: Available")
+        print(f"   ✅ uvicorn: v{getattr(uvicorn, '__version__', 'unknown')}")
     except ImportError:
         print("   ❌ uvicorn: Not installed")
         return False
@@ -83,7 +83,7 @@ def test_stripe_environment():
     try:
         from app.main import app
 
-        print("   ✅ FastAPI app: Available")
+        print(f"   ✅ FastAPI app: {getattr(app, 'title', 'available')}")
     except ImportError as e:
         print(f"   ❌ FastAPI app: {e}")
         return False

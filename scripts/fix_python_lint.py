@@ -44,7 +44,7 @@ def remove_unused_variables(content):
             and "client.post(" in line
         ):
             # Comment out instead of removing to preserve test structure
-            fixed_lines.append(f"        # {line.strip()}  # noqa: F841")
+            fixed_lines.append(f"        # {line.strip()}  ")
         else:
             fixed_lines.append(line)
 

@@ -1,5 +1,5 @@
 # CapeControl Project Plan v0.3.0 - Codex-Optimized Structure
-# Generated: 2025-11-08
+# Generated: 2025-11-14
 # Description: Enhanced project plan with phases, dependencies, and AI guidance for Codex development
 # 
 # STRUCTURE IMPROVEMENTS:
@@ -90,10 +90,10 @@ MAINT-006,maintenance,Documentation updates and knowledge management,docs,todo,P
 # =================================================================================
 # SUMMARY STATISTICS
 # =================================================================================
-# Total Tasks: 36
-# Completed: 12 (33.3%)
-# In Progress: 1 (2.8%)
-# Todo: 23 (63.9%)
+# Total Tasks: 35
+# Completed: 12 (34.3%)
+# In Progress: 1 (2.9%)
+# Todo: 22 (62.9%)
 # 
 # Estimated Hours by Phase:
 # Foundation: 50 hours (COMPLETED)
@@ -105,164 +105,68 @@ MAINT-006,maintenance,Documentation updates and knowledge management,docs,todo,P
 # 
 # Total Project Estimate: 358 hours
 # Completed Work: 118 hours (33%)
-# Remaining Work: 240 hours (67%)
-# ARCHIVED MILESTONES - NOW COMPLETED
-
-## 📋 OverviewM3-ONB-001,Verify CSRF + login flow end-to-end (frontend ↔ backend),"frontend, backend",Done,P0,,backend/src/modules/auth/* ; client/src/pages/login/* ; backend/tests/test_security_csrf.py,curl -sS -I https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf ; pytest -q backend/tests/test_security_csrf.py,2025-11-07: CSRF middleware and async/trio test suite verified — backend secure for production.,2025-11-07
-
-M3-ONB-002,Wire frontend login form to backend and show error/success states,frontend,Done,P0,M3-ONB-001,client/src/pages/Login.tsx ; client/src/lib/api.ts,Manual: login with test user on production; check localStorage/session and redirect.,Production authentication system completed with CSRF protection and MFA support.,2025-11-07
-
-Comprehensive update of project planning and infrastructure files to reflect current production status and establish clear roadmap for future development phases.M4-SMK-001,Run full smoke on staging (dev.cape-control.com),devops,Done,P0,M3-ONB-002,docs/Release_Runbook.md ; scripts/smoke.sh,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health,Production smoke tests passed on live Heroku deployment.,2025-11-07
-
-M5-SMK-002,Run final smoke on production (cape-control.com),devops,Done,P0,M4-SMK-001,docs/Release_Runbook.md,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf,Production deployment live and verified with security hardening.,2025-11-07
-
-## 🎯 Updated FilesDOC-RUN-001,Create/complete Release Runbook skeleton,devops,Done,P1,,docs/Release_Runbook.md,"Production deployment documented in README.md with comprehensive deployment and verification procedures.",2025-11-07
-
-CHK-LST-001,Execute full pre-release checklist,project,Done,P1,M4-SMK-001,docs/Checklist_MVP.md,Production checklist completed - system live and operational.,Production system deployed and operational on Heroku with full security hardening.,2025-11-07
-
-### 1. Project Planning
-
-- **`docs/project-plan.csv`** - NEW comprehensive project roadmap# CURRENT ACTIVE PROJECTS - See docs/project-plan.csv for current roadmap
-
-  - Documented completed production milestones# This file is now archived for historical reference
-
-  - Established current phase: ChatKit Integration & Agent Framework  # Active project tracking moved to docs/project-plan.csv with comprehensive roadmap
-
-  - Defined future phases: Production Optimization, Business Features, MaintenanceMIGRATION-001,Migrate project tracking to new format,project,Done,P1,,docs/project-plan.csv,Updated project plan with comprehensive current and future phases,2025-11-08
-
-  - Added verification commands and artifact tracking
-
-- **`docs/autorisen_project_plan.csv`** - ARCHIVED legacy plan
-  - Marked all milestones as completed with dates
-  - Added migration notice to new format
-
-### 2. Repository Configuration
-
-#### `.gitignore` Updates
-- Enhanced Python and Node.js artifact exclusions
-- Added comprehensive development tool exclusions
-- Improved security file protection
-- Added agent framework and ChatKit development paths
-- Better coverage for testing artifacts
-
-#### `.dockerignore` Updates  
-- Optimized for multi-stage Docker builds
-- Improved security by excluding secrets and development files
-- Added agent framework and ChatKit exclusions
-- Streamlined for faster container builds
-- Clear separation of included/excluded assets
-
-### 3. GitHub Actions Workflows
-
-#### `deploy-heroku.yml` - Production Deployment
-- Enhanced verification steps for project structure
-- Improved asset verification in built containers  
-- Added comprehensive health checks post-deployment
-- Better error handling and deployment summary
-- Optimized for production security requirements
-
-#### `ci-test.yml` - Comprehensive CI Pipeline
-- Split into separate backend/frontend test jobs
-- Added linting and type checking
-- Docker build testing for pull requests
-- Security scanning with Trivy
-- Improved coverage reporting and artifact management
-
-#### `deploy-staging.yml` - Enhanced Staging Pipeline  
-- Pre-deployment testing requirements
-- Proper staging environment configuration
-- Comprehensive smoke testing
-- Better deployment verification
-
-### 4. Heroku Configuration
-
-#### `heroku.yml` Updates
-- Corrected release command to use Alembic properly
-- Optimized worker configuration for production load
-- Updated to align with current backend structure
-
-#### `Procfile` Updates
-- Modernized process configuration
-- Proper worker class specification
-- Aligned release command with backend structure
-
-### 5. Docker Configuration
-
-#### `Dockerfile` (Main) Updates  
-- Multi-stage build optimization
-- Enhanced security with non-root user
-- Better dependency management
-- Improved build caching
-- Production-ready configuration with health checks
-
-#### `Dockerfile.production` Updates
-- ARG-based version control
-- Comprehensive build optimization
-- Enhanced security measures
-- Better resource utilization
 
 ## 🚀 Current System Status
 
 ### ✅ Production Ready Components
-- Authentication system with CSRF protection
-- MFA implementation with TOTP
-- Security hardening (ENV=prod, DEBUG=false)
-- Logo system with multi-size assets
-- Production deployment on Heroku
-- Comprehensive CI/CD pipeline
+# - Authentication system with CSRF protection
+# - MFA implementation with TOTP
+# - Security hardening (ENV=prod, DEBUG=false)
+# - Logo system with multi-size assets
+# - Production deployment on Heroku
+# - Comprehensive CI/CD pipeline
 
 ### 🔄 Current Phase: ChatKit Integration
-- Backend ChatKit token service
-- Agent registry database schema  
-- Flow orchestration API
-- Frontend chat components
-- Agent marketplace UI
-- Developer agent builder
+# - Backend ChatKit token service
+# - Agent registry database schema  
+# - Flow orchestration API
+# - Frontend chat components
+# - Agent marketplace UI
+# - Developer agent builder
 
 ### 📈 Next Phases Planned
-1. **Production Optimization** - Performance monitoring, caching, rate limiting
-2. **Business Features** - User dashboard, admin panel, analytics
-3. **Maintenance & Operations** - Ongoing updates, documentation, monitoring
+# 1. **Production Optimization** - Performance monitoring, caching, rate limiting
+# 2. **Business Features** - User dashboard, admin panel, analytics
+# 3. **Maintenance & Operations** - Ongoing updates, documentation, monitoring
 
 ## 🔧 Verification Commands
 
 ### Production Health Check
-```bash
-curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
-```
+# ```bash
+# curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
+# ```
 
 ### CSRF Endpoint Verification
-```bash  
-curl -sS -I https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf
-```
+# ```bash  
+# curl -sS -I https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf
+# ```
 
 ### Docker Build Test
-```bash
-docker build -t autorisen-test .
-```
+# ```bash
+# docker build -t autorisen-test .
+# ```
 
 ### Run Test Suite
-```bash
-pytest backend/tests/ -v --cov=backend/src
-```
+# ```bash
+# pytest backend/tests/ -v --cov=backend/src
+# ```
 
 ## 📝 Notes
 
-- All production milestones marked complete as of 2025-11-07
-- Project tracking migrated to comprehensive CSV format
-- Infrastructure optimized for current and future development
-- Security hardening maintained throughout all configurations
-- Clear separation between development and production concerns
+# - All production milestones marked complete as of 2025-11-07
+# - Project tracking migrated to comprehensive CSV format
+# - Infrastructure optimized for current and future development
+# - Security hardening maintained throughout all configurations
+# - Clear separation between development and production concerns
 
 ## 🎯 Next Actions
 
-1. Begin ChatKit backend integration implementation
-2. Set up agent registry database schema
-3. Implement flow orchestration API
-4. Update project plan status as work progresses
-5. Monitor production deployment health and performance
-
----
-**Update completed:** November 8, 2025  
-**Production URL:** https://autorisen-dac8e65796e7.herokuapp.com  
-**Status:** ✅ Production Ready
+# 1. Begin ChatKit backend integration implementation
+# 2. Set up agent registry database schema
+# 3. Implement flow orchestration API
+# 4. Update project plan status as work progresses
+# 5. Monitor production deployment health and performance
+# ---
+# **Update completed:** November 8, 2025  
+# **Production URL:** https://autorisen-dac8e65796e7.herokuapp.com  
+# **Status:** ✅ Production Ready

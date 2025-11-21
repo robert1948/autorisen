@@ -38,19 +38,19 @@ const chatConfig: Record<Exclude<ActiveChat, null>, ChatView> = {
     placement: "support",
     title: "Talk with CapeControl Support",
     description:
-      "Need a hand? Connect with a specialist for billing, onboarding, or troubleshooting in seconds.",
+      "Need a hand? Connect with a specialist for setup, workflows, or troubleshooting in seconds.",
   },
   onboarding: {
     placement: "onboarding",
     title: "Meet CapeAI — Your Launch Guide",
     description:
-      "A guided tour through customer onboarding, tenant setup, and your first automations.",
+      "Walk through your first workflow map and see where AI can safely take work off your plate.",
   },
   energy: {
     placement: "energy",
-    title: "Explain My Usage",
+    title: "Explain My Operations",
     description:
-      "Ask why energy spiked last night or get proactive suggestions for savings.",
+      "Ask where time or cost spiked this week and get a clear, business-friendly explanation.",
   },
   developer: {
     placement: "developer",
@@ -104,15 +104,20 @@ const Home = () => {
     <div className="landing">
       <TopNav onOpenSupport={() => launchChat("support")} />
       <main className="landing__main">
+        {/* HERO */}
         <section className="hero" id="home">
           <div className="hero__content">
-            <span className="badge badge--accent">CapeControl Platform</span>
+            <span className="badge badge--accent">Built for small business ops</span>
             <h1>
-              Where Intelligence Meets Impact—<br /> AI Accessible to Everyone.
+              AI that learns how your business runs—
+              <br />
+              then quietly removes the busywork.
             </h1>
             <p>
-              Democratize AI across your organization with CapeControl. Launch guided onboarding,
-              query energy and finance data, and empower developers with compliant agent workflows.
+              If you&apos;re the founder or operations lead, you&apos;re probably the one holding
+              everything together: spreadsheets, emails, follow-ups, and approvals. CapeControl
+              listens first, maps how your day really works, then deploys AI-powered workflows that
+              reduce manual tasks without forcing you into a rigid new system.
             </p>
             <div className="hero__actions">
               <button
@@ -120,17 +125,17 @@ const Home = () => {
                 className="btn btn--primary"
                 onClick={() => launchChat("onboarding")}
               >
-                Launch CapeAI Guide
+                Start a workflow-mapping session
               </button>
               <button
                 type="button"
                 className="btn btn--ghost"
                 onClick={() => launchChat("support")}
               >
-                Talk to Support
+                Talk to our team
               </button>
               <a className="btn btn--link" href="#demo">
-                See how it works →
+                See a real workflow →
               </a>
             </div>
             <div className="hero__status">
@@ -142,24 +147,25 @@ const Home = () => {
             </div>
           </div>
 
+          {/* HERO VISUAL */}
           <div className="hero__visual" aria-hidden="true">
             <div className="hero__pane">
               <header>
                 <div>
                   <p className="hero__pane-eyebrow">CapeAI Assistant</p>
-                  <h3>Customer onboarding checklist</h3>
+                  <h3>Daily operations checklist</h3>
                 </div>
                 <span className="hero__badge">Live</span>
               </header>
               <ul>
                 <li>
-                  <span>✓</span>Create tenant and invite teammates
+                  <span>✓</span>Capture today&apos;s incoming requests and tasks
                 </li>
                 <li>
-                  <span>✓</span>Connect data sources &amp; tools
+                  <span>✓</span>Route work to the right person with clear next steps
                 </li>
                 <li>
-                  <span>•</span>Automate weekly usage digest
+                  <span>•</span>Summarise what&apos;s blocking progress before the day ends
                 </li>
               </ul>
               <footer>
@@ -168,87 +174,92 @@ const Home = () => {
                   className="btn btn--mini"
                   onClick={() => launchChat("energy")}
                 >
-                  Explain last night’s spike
+                  Show me where time was lost
                 </button>
-                <p>AI responses verified with safety guardrails.</p>
+                <p>AI responses are logged with audit trails and safety guardrails.</p>
               </footer>
             </div>
           </div>
         </section>
 
+        {/* HIGHLIGHTS */}
         <section className="section highlights" id="features">
-          <h2>Built for teams shipping AI-driven experiences.</h2>
+          <h2>Built for founders and ops teams who need their day back.</h2>
           <div className="highlights__grid">
             <article>
-              <h3>Guided Onboarding</h3>
+              <h3>Workflow Mapping &amp; Onboarding</h3>
               <p>
-                CapeAI walks every new customer through account creation, environment setup, and the
-                first automations—no playbooks required.
+                Start with one real process—like onboarding a client or managing a job. CapeAI maps
+                the steps, identifies the friction, and turns it into a repeatable, trackable
+                workflow.
               </p>
             </article>
             <article>
-              <h3>Operational Insights</h3>
+              <h3>Operations Command Center</h3>
               <p>
-                Ask natural-language questions about tenant energy usage or transaction data and get
-                clean, auditable answers.
+                Ask plain-language questions about work in progress, bottlenecks, or recurring
+                issues. Get clear answers, not raw data, so you can make decisions faster.
               </p>
             </article>
             <article>
-              <h3>Developers Welcome</h3>
+              <h3>Developers When You&apos;re Ready</h3>
               <p>
-                Build on top of our agent platform with role-based access, quota enforcement, and
-                observability baked in.
+                Start no-code. When you&apos;re ready, your team or partners can extend CapeControl
+                with custom agents, tools, and integrations—without losing governance.
               </p>
             </article>
           </div>
         </section>
 
+        {/* SHOWCASE */}
         <section className="section showcase" id="demo">
           <div className="showcase__content">
-            <h2>CapeAI Automates Every Step.</h2>
+            <h2>From messy process to clear, assisted workflow.</h2>
             <p>
-              Trigger a guided chat from marketing, keep it running inside the app, and hand off to
-              support seamlessly—the same conversation, all in one thread.
+              Pick one process—like quoting, onboarding, or job handover. CapeControl turns the
+              existing emails and spreadsheets into a guided flow, with AI agents nudging the next
+              step and surfacing what needs your attention.
             </p>
             <ul>
-              <li>Multi-placement ChatKit sessions with per-tool guardrails.</li>
-              <li>Thread persistence backed by Postgres for return visits.</li>
-              <li>Ops visibility with audit-grade event logging.</li>
+              <li>Keep the tools you use today; add structure and automation on top.</li>
+              <li>One conversation that follows your customer from first contact to follow-up.</li>
+              <li>Ops visibility with audit-grade event logging and clear owners for each step.</li>
             </ul>
           </div>
           <div className="showcase__panel" aria-hidden="true">
             <div className="chart">
-              <p>Weekly Engagement</p>
+              <p>Manual hours per week</p>
               <div className="chart__bars">
-                <div style={{ height: "35%" }} />
-                <div style={{ height: "55%" }} />
-                <div style={{ height: "78%" }} />
-                <div style={{ height: "90%" }} />
+                <div style={{ height: "85%" }} />
+                <div style={{ height: "70%" }} />
+                <div style={{ height: "45%" }} />
+                <div style={{ height: "30%" }} />
               </div>
             </div>
             <div className="showcase__stats">
               <div>
-                <span>92%</span>
-                Assisted onboarding completion
+                <span>40%</span>
+                Less time spent on repetitive admin
               </div>
               <div>
-                <span>38%</span>
-                Faster support resolution
+                <span>2×</span>
+                Faster from request to completed workflow
               </div>
             </div>
           </div>
         </section>
 
+        {/* PRICING */}
         <section className="section pricing" id="pricing">
-          <h2>Plans that scale with your impact.</h2>
+          <h2>Start small, grow as your workflows mature.</h2>
           <div className="pricing__tiers">
             <article>
               <p className="pricing__badge">Starter</p>
               <h3>$0</h3>
               <ul>
-                <li>CapeAI onboarding guide</li>
-                <li>Energy &amp; finance read access</li>
-                <li>Developer sandbox tools</li>
+                <li>One guided workflow-mapping session</li>
+                <li>CapeAI assistant for a single process</li>
+                <li>Basic reporting and history</li>
               </ul>
               <Link to="/register" className="btn btn--ghost">
                 Get Started Free
@@ -256,11 +267,13 @@ const Home = () => {
             </article>
             <article className="pricing__featured">
               <p className="pricing__badge">Growth</p>
-              <h3>$249<span>/mo</span></h3>
+              <h3>
+                $249<span>/mo</span>
+              </h3>
               <ul>
-                <li>Unlimited ChatKit seats</li>
-                <li>Tenant analytics dashboards</li>
-                <li>Ops Copilot &amp; runbooks</li>
+                <li>Multiple workflows across your business</li>
+                <li>Team access with roles and permissions</li>
+                <li>Ops insights and automation tuning</li>
               </ul>
               <a href="#contact" className="btn btn--primary">
                 Talk to Sales
@@ -268,10 +281,10 @@ const Home = () => {
             </article>
             <article>
               <p className="pricing__badge">Enterprise</p>
-              <h3>Let’s talk</h3>
+              <h3>Let&apos;s talk</h3>
               <ul>
-                <li>Dedicated environment</li>
-                <li>Custom tool adapters</li>
+                <li>Dedicated environment &amp; governance</li>
+                <li>Custom tool adapters and integrations</li>
                 <li>24/7 support &amp; SLAs</li>
               </ul>
               <a href="#contact" className="btn btn--ghost">
@@ -281,37 +294,41 @@ const Home = () => {
           </div>
         </section>
 
+        {/* FAQ */}
         <section className="section faq" id="faq">
           <h2>Frequently asked questions</h2>
           <div className="faq__grid">
             <article>
-              <h3>Does ChatKit require my developers to change code?</h3>
+              <h3>Do I need technical skills to get value?</h3>
               <p>
-                No—CapeControl mints secure tokens server-side. You can embed ChatKit widgets
-                anywhere without exposing secrets.
+                No. We start with a conversation about how your business runs today and help you map
+                one workflow. You don&apos;t need to design prompts, write code, or rebuild your
+                stack to see results.
               </p>
             </article>
             <article>
-              <h3>How do you keep conversations safe?</h3>
+              <h3>Will I have to change all my tools?</h3>
               <p>
-                Threads are persisted with audit logs and tool usage tracking. You decide which tools
-                are available per placement.
+                Not at all. CapeControl layers on top of your existing tools wherever possible,
+                using AI agents and workflows to connect the dots and reduce manual steps.
               </p>
             </article>
             <article>
-              <h3>Can I monitor system health?</h3>
+              <h3>Is our data secure and auditable?</h3>
               <p>
-                Yes, the platform exposes structured logs, web vitals, and API smoke checks—plus Ops
-                Copilot right in the admin console.
+                Yes. Workflows run with audit logs, role-based access, and environment separation.
+                You can see who did what, when—and which agents were involved in each action.
               </p>
             </article>
           </div>
         </section>
+
+        {/* AUTH-GATED EXPERIENCE SECTIONS */}
         <AuthGate
           fallback={
             <section className="section experiences" id="experiences">
               <h2>Experience CapeControl right now</h2>
-              <p>Please log in to access onboarding and developer tools.</p>
+              <p>Please log in to access guided workflows and developer tools.</p>
             </section>
           }
         >
@@ -329,23 +346,25 @@ const Home = () => {
           <MarketplaceShowcase />
         </AuthGate>
 
+        {/* ABOUT */}
         <section className="section about" id="about">
           <h2>About CapeControl</h2>
           <div className="about__content">
             <p>
-              CapeControl is built by Cape Craft Projects CC with a single goal: make enterprise AI
-              approachable, compliant, and genuinely useful for every team. Our platform blends
-              guided onboarding, transparent automation, and developer tooling so you can move from
-              idea to production insight in days—not quarters.
+              CapeControl is built by Cape Craft Projects CC with a single goal: give small
+              businesses and lean teams enterprise-grade AI workflows without enterprise complexity.
+              We blend guided onboarding, transparent automation, and developer tooling so you can
+              move from messy processes to reliable flows in days—not quarters.
             </p>
             <ul className="about__list">
               <li>Headquarters: Cape Town, South Africa (VAT: 4270105119)</li>
-              <li>Focus: Secure AI agents, operational intelligence, and automation</li>
-              <li>Mission: Empower organizations worldwide to innovate responsibly with AI</li>
+              <li>Focus: Secure AI agents, operational intelligence, and workflow automation</li>
+              <li>Mission: Help operators reclaim their day and scale responsibly with AI</li>
             </ul>
           </div>
         </section>
 
+        {/* LEGAL SECTIONS (unchanged structure) */}
         <section className="section legal" id="privacy">
           <h2>Privacy Policy</h2>
           <div className="legal__card">
@@ -386,6 +405,7 @@ const Home = () => {
         </section>
       </main>
 
+      {/* FOOTER (unchanged layout, copy slightly tuned above) */}
       <footer className="footer">
         <div className="footer__content">
           <div className="footer__main">
@@ -401,12 +421,12 @@ const Home = () => {
               <div>
                 <h3>CapeControl</h3>
                 <p>
-                  Enterprise AI platform democratizing AI development with seamless integration,
-                  developer-first experience, and enterprise-grade security.
+                  Workflow-first AI platform that helps small businesses and growing teams run more
+                  smoothly, with enterprise-grade security behind the scenes.
                 </p>
                 <p className="footer__brand-meta">Cape Craft Projects CC (VAT: 4270105119)</p>
                 <p className="footer__brand-meta">Trading as Cape Control</p>
-                <p className="footer__brand-meta">Empowering AI innovation worldwide</p>
+                <p className="footer__brand-meta">Empowering AI-driven operations worldwide</p>
               </div>
             </div>
 
@@ -420,7 +440,7 @@ const Home = () => {
                   <a href="#experiences">How It Works</a>
                 </li>
                 <li>
-                  <a href="#features">Our Vision</a>
+                  <a href="#features">Workflows</a>
                 </li>
                 <li>
                   <a href="#pricing">Pricing</a>
@@ -471,7 +491,7 @@ const Home = () => {
           <div className="footer__bottom">
             <p>© {new Date().getFullYear()} CapeControl. All rights reserved.</p>
             <div className="footer__bottom-meta">
-              <span>Built with ❤️ for the AI community.</span>
+              <span>Built with ❤️ for operators and their teams.</span>
               <span>v{__APP_VERSION__}</span>
               <span className="footer__status">
                 <span className="footer__status-dot" aria-hidden="true" />
@@ -481,6 +501,7 @@ const Home = () => {
           </div>
         </div>
       </footer>
+
       {chatModalConfig && (
         <ChatModal
           open={!!activeChat}

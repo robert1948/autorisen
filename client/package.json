@@ -1,12 +1,13 @@
 {
   "name": "autorisen-client",
-  "version": "0.2.3-fresh-deploy",
+  "version": "0.2.5",
   "private": true,
   "description": "CapeControl authentication system with full-width layout, dynamic versioning, and optimized performance",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:production": "../scripts/build-frontend.sh",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "test": "vitest run",

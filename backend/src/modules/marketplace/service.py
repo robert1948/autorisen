@@ -210,7 +210,11 @@ class MarketplaceService:
         }
 
     async def install_agent(
-        self, request: AgentInstallRequest, user_id: str
+        self,
+        request: AgentInstallRequest,
+        user_id: str,
+        ip_address: str = None,
+        user_agent: str = None,
     ) -> AgentInstallResponse:
         """Install an agent for a user."""
 
@@ -254,17 +258,50 @@ class MarketplaceService:
                 detail=f"No published version found for agent '{agent.name}'{version_msg}",
             )
 
-        # TODO: Check if user already has this agent installed
-        # TODO: Handle dependency resolution
-        # TODO: Perform actual installation steps
-
-        # Create installation record (placeholder)
-        installation_id = (
-            f"install_{agent.id}_{user_id}_{datetime.utcnow().timestamp()}"
+        # Check if already installed
+        install_stmt = select(models.AgentInstallation).where(
+            and_(
+                models.AgentInstallation.user_id == user_id,
+                models.AgentInstallation.agent_id == agent.id,
+            )
         )
+        existing_install = self.db.scalar(install_stmt)
 
-        # TODO: Track installation in database
-        # For now, simulate successful installation
+        if existing_install:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Agent '{agent.name}' is already installed",
+            )
+
+        # Create installation record
+        installation = models.AgentInstallation(
+            user_id=user_id,
+            agent_id=agent.id,
+            version=version.version,
+            configuration=request.configuration or {},
+            status="active",
+            installed_at=datetime.utcnow(),
+        )
+        self.db.add(installation)
+        self.db.flush()  # Ensure ID is generated
+
+        # Create audit event
+        audit_event = models.AuditEvent(
+            agent_id=agent.id,
+            user_id=user_id,
+            event_type="agent_install",
+            payload={
+                "version": version.version,
+                "installation_id": installation.id,
+                "configuration": request.configuration,
+            },
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        self.db.add(audit_event)
+
+        self.db.commit()
+        self.db.refresh(installation)
 
         next_steps = []
         manifest = version.manifest or {}
@@ -281,7 +318,7 @@ class MarketplaceService:
             success=True,
             agent_id=agent.id,
             version=version.version,
-            installation_id=installation_id,
+            installation_id=installation.id,
             message=f"Successfully installed {agent.name} v{version.version}",
             next_steps=next_steps,
         )

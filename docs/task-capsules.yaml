@@ -1,0 +1,193 @@
+# docs/task_capsules.yaml
+# Canonical task-capsules for Ops / Maintenance
+
+- id: OPS-STATUS
+  name: "Project Status Overview"
+  triggers:
+    - "what is the project status"
+    - "status report"
+    - "overall status"
+  goal: >
+    Generate a concise, up-to-date status summary for the project, including
+    completed items, work-in-progress, and the next 3–5 recommended actions.
+  scope:
+    - "docs/*PROJECT_PLAN*.md"
+    - "docs/*project_plan*.csv"
+    - "docs/CONTROL_DASHBOARD_SUMMARY.md"
+    - "Checklist*.md"
+  steps:
+    - "Read the project plan CSV and any status dashboard docs."
+    - "Identify items marked todo/busy/done and any blockers."
+    - "Produce a short status summary plus a bullet list of recommended next steps."
+  outputs:
+    - "Chat summary in Markdown (STATUS BLOCK)."
+  verification:
+    - "Check that the status mentions date, environment (local/staging/prod), and any critical blockers."
+
+- id: OPS-PLAN-SYNC
+  name: "Update Project Plan & Related Files"
+  triggers:
+    - "update project plan"
+    - "sync project plan"
+    - "update project plan and all related project files"
+  goal: >
+    Bring the project-plan CSV and related docs (MVP scope, checklists, dashboards)
+    back in sync with the actual state of the codebase and deployments.
+  scope:
+    - "docs/*project_plan*.csv"
+    - "docs/MVP_SCOPE.md"
+    - "docs/Checklist*.md"
+    - "docs/CONTROL_DASHBOARD_SUMMARY.md"
+  steps:
+    - "Review recent commits and deployment notes."
+    - "Update project-plan CSV: adjust status, owners, priorities, and completion dates."
+    - "Update checklists and dashboards to reflect the same state."
+    - "Add links to new artifacts (Figma, Heroku apps, docs) where relevant."
+  outputs:
+    - "Updated CSV and Markdown docs with consistent statuses."
+  verification:
+    - "Confirm that at least one recently completed task in git history is reflected as 'done' in the project plan."
+
+- id: OPS-MAKEFILE
+  name: "Check and Update Makefile"
+  triggers:
+    - "check and update Makefile"
+    - "Makefile audit"
+  goal: >
+    Ensure the Makefile reflects current workflows (local dev, tests, linting, build, deploy),
+    and remove or clearly mark obsolete targets.
+  scope:
+    - "Makefile"
+    - "docs/PLAYBOOKS_OVERVIEW.md"
+  steps:
+    - "List all targets in the Makefile and group them by purpose (dev, test, build, deploy, maintenance)."
+    - "Remove or comment targets that reference deleted scripts or obsolete paths."
+    - "Add or update targets that map to current workflows (e.g. docker compose, pytest, lint, deploy-heroku)."
+    - "Document important targets in PLAYBOOKS_OVERVIEW.md."
+  outputs:
+    - "Refined Makefile and a short doc snippet describing key targets."
+  verification:
+    - "Run `make help` (if available) or a few key targets to ensure there are no obvious errors."
+
+- id: OPS-MARKUP-LINT
+  name: "Lint and Fix Markup Files"
+  triggers:
+    - "check and fix markup files"
+    - "markdown lint"
+    - "markup linting"
+  goal: >
+    Run markdownlint (or equivalent) across docs and fix safe issues (spacing, headers,
+    trailing spaces) without changing the meaning of the content.
+  scope:
+    - "docs/**/*.md"
+    - "*.md"
+  steps:
+    - "Run markdownlint on all Markdown docs."
+    - "Auto-fix simple issues (line length where allowed, trailing spaces, heading spacing)."
+    - "Manually adjust any remaining high-severity issues that affect rendering."
+  outputs:
+    - "Cleaner Markdown files with consistent style."
+  verification:
+    - "Re-run markdownlint and confirm no errors and only acceptable warnings remain."
+
+- id: OPS-GITIGNORE
+  name: "Update .gitignore"
+  triggers:
+    - "update .gitignore"
+    - "gitignore audit"
+  goal: >
+    Ensure .gitignore excludes build artifacts, secrets, and local tooling files,
+    while still tracking all required source and config files.
+  scope:
+    - ".gitignore"
+  steps:
+    - "Scan the repo for large or generated files that should not be committed."
+    - "Add patterns for dist/build, .env.local, virtual envs, IDE configs, and other tooling intermediates."
+    - "Remove overly broad patterns that accidentally ignore source files."
+  outputs:
+    - "Updated .gitignore, plus a short note of any significant changes."
+  verification:
+    - "Run `git status` and confirm that only intentional files are untracked/modified."
+
+- id: OPS-DOCKERIGNORE
+  name: "Update .dockerignore"
+  triggers:
+    - "update .dockerignore"
+    - "dockerignore audit"
+  goal: >
+    Optimise Docker build context by excluding node_modules, build artifacts, tests,
+    docs, and other non-runtime files where safe.
+  scope:
+    - ".dockerignore"
+    - "Dockerfile*"
+  steps:
+    - "Review Dockerfile build steps to see which files are actually needed."
+    - "Update .dockerignore to exclude unnecessary directories (node_modules, venvs, .git, docs, tests)."
+    - "Ensure that required config and migrations are still included."
+  outputs:
+    - "Updated .dockerignore tuned to the current Dockerfile."
+  verification:
+    - "Build the image and confirm it succeeds and that container runtime behaviour is unchanged."
+
+- id: OPS-GITHUB
+  name: "Update GitHub (Commit & Push)"
+  triggers:
+    - "update github"
+    - "push changes"
+  goal: >
+    Commit local changes with a clear message and push to the main integration branch
+    (e.g. main or develop) on GitHub.
+  scope:
+    - "Entire working tree"
+  steps:
+    - "Run tests and lint to make sure the tree is in a good state."
+    - "Stage all relevant files (avoid committing secrets or big binaries)."
+    - "Create a clear, conventional commit message (feat/fix/chore/docs)."
+    - "Push to the configured remote branch."
+  outputs:
+    - "New commit(s) on GitHub with clean status locally (no uncommitted work)."
+  verification:
+    - "Run `git status` to confirm working tree is clean after the push."
+
+- id: OPS-HEROKU
+  name: "Update Heroku Containers"
+  triggers:
+    - "update heroku containers"
+    - "deploy heroku"
+  goal: >
+    Build fresh Docker images and deploy them to the configured Heroku app(s),
+    then verify health endpoints.
+  scope:
+    - "Dockerfile*"
+    - "heroku.yml"
+    - "Procfile"
+    - "Makefile"
+  steps:
+    - "Build the Docker images for backend/frontend according to the Makefile or Heroku docs."
+    - "Log in to Heroku container registry and push images."
+    - "Release the new containers and check health endpoints (/health, /alive)."
+  outputs:
+    - "Updated Heroku release with notes recorded in deployment log or docs."
+  verification:
+    - "Confirm the Heroku app is reachable and health endpoints return OK."
+
+- id: OPS-DOCKERHUB
+  name: "Update Docker Hub Images"
+  triggers:
+    - "update docker hub"
+    - "push docker images"
+  goal: >
+    Build and push versioned Docker images to Docker Hub (or other registry), tagging
+    with semantic or date-based versions.
+  scope:
+    - "Dockerfile*"
+    - ".github/workflows/*docker*.yml"
+  steps:
+    - "Build images locally (or via CI) using the current Dockerfile(s)."
+    - "Tag images with repository name and version (e.g. v0.2.3, latest)."
+    - "Push images to Docker Hub."
+    - "Optionally update docs with the new image tags."
+  outputs:
+    - "Fresh images available in the registry with documented tags."
+  verification:
+    - "Pull the new image and run a quick container smoke test."

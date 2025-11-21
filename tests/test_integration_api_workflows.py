@@ -20,21 +20,20 @@ import os
 import sys
 import time
 import uuid
-from typing import Any
+from typing import Any, cast
 
 import pytest
+from httpx import ASGITransport, AsyncClient, Response
 
 # Add the backend directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from fastapi.testclient import TestClient
 
 from app.database import SessionLocal, engine
 from app.main import app
 from app.models import Base, User, UserProfile
 
 # Test configuration
-TEST_BASE_URL = "http://localhost:8000"
+TEST_BASE_URL = "http://testserver"
 TEST_API_PREFIX = "/api"
 
 # Test data templates
@@ -58,18 +57,25 @@ class IntegrationTestHelper:
     """Helper class for integration test utilities"""
 
     def __init__(self):
-        self.client = None
+        self.client: AsyncClient | None = None
         self.test_users = []
         self.test_sessions = []
 
     async def setup_client(self):
         """Initialize HTTP client for API testing"""
-        self.client = TestClient(app)
+        transport = ASGITransport(app=app)
+        self.client = AsyncClient(transport=transport, base_url=TEST_BASE_URL)
 
     async def cleanup_client(self):
         """Cleanup HTTP client"""
         if self.client:
-            self.client.close()
+            await self.client.aclose()
+
+    def get_client(self) -> AsyncClient:
+        """Return the active HTTP client."""
+        if self.client is None:
+            raise RuntimeError("HTTP client is not initialized")
+        return self.client
 
     def create_unique_email(self) -> str:
         """Generate unique email for testing"""
@@ -88,7 +94,10 @@ class IntegrationTestHelper:
         if user_data is None:
             user_data = self.create_test_user_data()
 
-        # # response = self.client.post(  # noqa: F841  # noqa: F841
+        if self.client is None:
+            raise RuntimeError("HTTP client is not initialized")
+
+        response = await self.client.post(
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
 
@@ -103,7 +112,10 @@ class IntegrationTestHelper:
 
     async def login_test_user(self, email: str, password: str) -> dict[str, Any]:
         """Login test user and return tokens"""
-        # # response = self.client.post(  # noqa: F841  # noqa: F841
+        if self.client is None:
+            raise RuntimeError("HTTP client is not initialized")
+
+        response = await self.client.post(
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": email, "password": password},
         )
@@ -184,9 +196,11 @@ class TestAuthenticationV2Workflows:
         """Test complete email validation workflow"""
         print("\n📧 Testing email validation workflow...")
 
+        client = test_helper.get_client()
+
         # Test 1: Valid available email
         valid_email = test_helper.create_unique_email()
-        response = await test_helper.client.get(
+        response = await client.get(
             f"{TEST_API_PREFIX}/auth/v2/validate-email", params={"email": valid_email}
         )
 
@@ -197,7 +211,7 @@ class TestAuthenticationV2Workflows:
         print(f"✅ Valid email validation: {valid_email}")
 
         # Test 2: Invalid email format
-        response = await test_helper.client.get(
+        response = await client.get(
             f"{TEST_API_PREFIX}/auth/v2/validate-email",
             params={"email": "invalid-email"},
         )
@@ -212,7 +226,7 @@ class TestAuthenticationV2Workflows:
         user_data = test_helper.create_test_user_data()
         await test_helper.register_test_user(user_data)
 
-        response = await test_helper.client.get(
+        response = await client.get(
             f"{TEST_API_PREFIX}/auth/v2/validate-email",
             params={"email": user_data["email"]},
         )
@@ -228,7 +242,7 @@ class TestAuthenticationV2Workflows:
         print("\n🔐 Testing password validation workflow...")
 
         # Test 1: Weak password
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/validate-password", json={"password": "weak"}
         )
 
@@ -239,7 +253,7 @@ class TestAuthenticationV2Workflows:
         print(f"✅ Weak password validation: score={data['score']}")
 
         # Test 2: Strong password
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/validate-password",
             json={"password": "StrongPassword123!@#"},
         )
@@ -265,7 +279,7 @@ class TestAuthenticationV2Workflows:
 
         # Test 1: Successful registration
         user_data = test_helper.create_test_user_data()
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
 
@@ -279,7 +293,7 @@ class TestAuthenticationV2Workflows:
         print(f"✅ Successful registration: {user_data['email']}")
 
         # Test 2: Duplicate email registration
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
 
@@ -292,7 +306,7 @@ class TestAuthenticationV2Workflows:
         invalid_data = user_data.copy()
         invalid_data["email"] = "invalid-email"
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/register", json=invalid_data
         )
 
@@ -308,7 +322,7 @@ class TestAuthenticationV2Workflows:
         await test_helper.register_test_user(user_data)
 
         # Test 1: Successful login
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": user_data["email"], "password": user_data["password"]},
         )
@@ -324,7 +338,7 @@ class TestAuthenticationV2Workflows:
         access_token = data["access_token"]
 
         # Test 2: Invalid credentials
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": user_data["email"], "password": "wrong_password"},
         )
@@ -335,7 +349,7 @@ class TestAuthenticationV2Workflows:
         print("✅ Invalid credentials rejection")
 
         # Test 3: Non-existent user
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": "nonexistent@example.com", "password": "password123"},
         )
@@ -373,7 +387,7 @@ class TestCapeAIWorkflows:
             "conversation_id": str(uuid.uuid4()),
         }
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt", json=ai_request, headers=headers
         )
 
@@ -395,7 +409,7 @@ class TestCapeAIWorkflows:
             "conversation_id": conversation_id,
         }
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt", json=followup_request, headers=headers
         )
 
@@ -405,7 +419,7 @@ class TestCapeAIWorkflows:
         print("✅ Follow-up AI prompt successful")
 
         # Test 3: Unauthenticated request
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt", json=ai_request
         )
 
@@ -422,7 +436,7 @@ class TestCapeAIWorkflows:
         conversation_id, headers = await self.test_ai_prompt_workflow()
 
         # Test 1: Retrieve conversation history
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/conversation/{conversation_id}", headers=headers
         )
 
@@ -434,7 +448,7 @@ class TestCapeAIWorkflows:
 
         # Test 2: Non-existent conversation
         fake_id = str(uuid.uuid4())
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/conversation/{fake_id}", headers=headers
         )
 
@@ -446,7 +460,7 @@ class TestCapeAIWorkflows:
         print("✅ Non-existent conversation handled")
 
         # Test 3: Unauthenticated history request
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/conversation/{conversation_id}"
         )
 
@@ -461,7 +475,7 @@ class TestCapeAIWorkflows:
         conversation_id, headers = await self.test_ai_prompt_workflow()
 
         # Test 1: Delete conversation
-        response = await test_helper.client.delete(
+        response = await test_helper.get_client().delete(
             f"{TEST_API_PREFIX}/ai/conversation/{conversation_id}", headers=headers
         )
 
@@ -471,7 +485,7 @@ class TestCapeAIWorkflows:
         print("✅ Conversation deleted successfully")
 
         # Test 2: Verify conversation is cleared
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/conversation/{conversation_id}", headers=headers
         )
 
@@ -482,7 +496,7 @@ class TestCapeAIWorkflows:
 
         # Test 3: Delete non-existent conversation
         fake_id = str(uuid.uuid4())
-        response = await test_helper.client.delete(
+        response = await test_helper.get_client().delete(
             f"{TEST_API_PREFIX}/ai/conversation/{fake_id}", headers=headers
         )
 
@@ -502,7 +516,7 @@ class TestCapeAIWorkflows:
         headers = test_helper.get_auth_headers(login_response["access_token"])
 
         # Test 1: Get contextual suggestions
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/suggestions",
             params={"context": "dashboard", "user_level": "beginner"},
             headers=headers,
@@ -515,7 +529,7 @@ class TestCapeAIWorkflows:
         print(f"✅ AI suggestions retrieved: {len(data['suggestions'])} suggestions")
 
         # Test 2: Get suggestions without context
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/suggestions", headers=headers
         )
 
@@ -525,7 +539,9 @@ class TestCapeAIWorkflows:
         print("✅ Default suggestions retrieved")
 
         # Test 3: Unauthenticated suggestions request
-        response = await test_helper.client.get(f"{TEST_API_PREFIX}/ai/suggestions")
+        response = await test_helper.get_client().get(
+            f"{TEST_API_PREFIX}/ai/suggestions"
+        )
 
         assert response.status_code == 401
         print("✅ Unauthenticated suggestions request rejected")
@@ -540,7 +556,7 @@ class TestEndToEndIntegration:
 
         # Step 1: Email validation
         email = test_helper.create_unique_email()
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/auth/v2/validate-email", params={"email": email}
         )
         assert response.status_code == 200
@@ -549,7 +565,7 @@ class TestEndToEndIntegration:
 
         # Step 2: Password validation
         password = "SecurePassword123!@#"
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/validate-password", json={"password": password}
         )
         assert response.status_code == 200
@@ -561,7 +577,7 @@ class TestEndToEndIntegration:
         user_data["email"] = email
         user_data["password"] = password
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/register", json=user_data
         )
         assert response.status_code == 201
@@ -569,7 +585,7 @@ class TestEndToEndIntegration:
         print(f"✅ Step 3: User registration successful - ID: {user_info['id']}")
 
         # Step 4: User login
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": email, "password": password},
         )
@@ -591,7 +607,7 @@ class TestEndToEndIntegration:
             "conversation_id": conversation_id,
         }
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt", json=ai_request, headers=headers
         )
         assert response.status_code == 200
@@ -600,7 +616,7 @@ class TestEndToEndIntegration:
         print("✅ Step 5: AI interaction successful")
 
         # Step 6: Get contextual suggestions
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/suggestions",
             params={"context": "onboarding", "user_level": "beginner"},
             headers=headers,
@@ -617,14 +633,14 @@ class TestEndToEndIntegration:
             "conversation_id": conversation_id,
         }
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt", json=followup_request, headers=headers
         )
         assert response.status_code == 200
         print("✅ Step 7: Conversation continuation successful")
 
         # Step 8: Check conversation history
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/conversation/{conversation_id}", headers=headers
         )
         assert response.status_code == 200
@@ -668,7 +684,7 @@ class TestEndToEndIntegration:
                 "conversation_id": str(uuid.uuid4()),
             }
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+            response = await test_helper.get_client().post(
                 f"{TEST_API_PREFIX}/ai/prompt", json=ai_request, headers=headers
             )
 
@@ -693,7 +709,7 @@ class TestEndToEndIntegration:
         # Test 1: Invalid authentication token
         invalid_headers = {"Authorization": "Bearer invalid_token_12345"}
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt",
             json={"message": "test", "conversation_id": str(uuid.uuid4())},
             headers=invalid_headers,
@@ -702,14 +718,14 @@ class TestEndToEndIntegration:
         print("✅ Invalid token rejection")
 
         # Test 2: Malformed requests
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/register", json={"invalid": "data"}
         )
         assert response.status_code in [400, 422]
         print("✅ Malformed request rejection")
 
         # Test 3: Missing required fields
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/auth/v2/login",
             json={"email": "test@example.com"},  # Missing password
         )
@@ -725,7 +741,7 @@ class TestEndToEndIntegration:
         headers = test_helper.get_auth_headers(login_response["access_token"])
 
         # Send malformed AI request
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+        response = await test_helper.get_client().post(
             f"{TEST_API_PREFIX}/ai/prompt",
             json={
                 "message": "",  # Empty message
@@ -758,7 +774,9 @@ class TestPerformanceAndReliability:
         headers = test_helper.get_auth_headers(login_response["access_token"])
 
         # Test response times for different endpoints
-        endpoints_to_test = [
+        client = test_helper.get_client()
+
+        endpoints_to_test: list[tuple[str, str, dict[str, Any]]] = [
             (
                 "GET",
                 f"{TEST_API_PREFIX}/auth/v2/validate-email",
@@ -778,9 +796,9 @@ class TestPerformanceAndReliability:
             start_time = time.time()
 
             if method == "GET":
-                response = await test_helper.client.get(endpoint, **kwargs)
+                response = await client.get(endpoint, **kwargs)
             else:
-        # # response = await test_helper.client.post(endpoint, **kwargs)  # noqa: F841  # noqa: F841
+                response = await client.post(endpoint, **kwargs)
 
             end_time = time.time()
             response_time = (end_time - start_time) * 1000  # Convert to milliseconds
@@ -811,7 +829,7 @@ class TestPerformanceAndReliability:
         # Make rapid consecutive requests
         rapid_requests = []
         for i in range(10):
-            request_coro = test_helper.client.get(
+            request_coro = test_helper.get_client().get(
                 f"{TEST_API_PREFIX}/ai/suggestions", headers=headers
             )
             rapid_requests.append(request_coro)
@@ -826,9 +844,12 @@ class TestPerformanceAndReliability:
         for response in responses:
             if isinstance(response, Exception):
                 continue
-            elif response.status_code == 200:
+
+            http_response = cast(Response, response)
+
+            if http_response.status_code == 200:
                 success_count += 1
-            elif response.status_code == 429:  # Too Many Requests
+            elif http_response.status_code == 429:  # Too Many Requests
                 rate_limited_count += 1
 
         print(
@@ -872,7 +893,7 @@ class TestPerformanceAndReliability:
                 "conversation_id": conversation_id,
             }
 
-        # # response = await test_helper.client.post(  # noqa: F841  # noqa: F841
+            response = await test_helper.get_client().post(
                 f"{TEST_API_PREFIX}/ai/prompt", json=ai_request, headers=headers
             )
 
@@ -880,7 +901,7 @@ class TestPerformanceAndReliability:
             assert response.json()["conversation_id"] == conversation_id
 
         # Verify conversation history consistency
-        response = await test_helper.client.get(
+        response = await test_helper.get_client().get(
             f"{TEST_API_PREFIX}/ai/conversation/{conversation_id}", headers=headers
         )
 

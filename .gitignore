@@ -1,6 +1,6 @@
 # AutoLocal/CapeControl .gitignore
 # Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
-# Updated: November 10, 2025
+# Updated: November 14, 2025
 
 # Python
 __pycache__/
@@ -131,13 +131,10 @@ backend/migrations/versions/*_temp.py
 
 # Generated/backup artifacts - Updated for November 2025 structure
 docs/PLAYBOOK_OVERVIEW.md
-docs/Master_ProjectPlan.md
-docs/autorisen_project_plan.csv
 
-# Keep current project plan files (November 2025)
-!docs/Master_ProjectPlan_Updated_Nov2025.md
-!docs/project_plan_nov2025.csv
-!docs/PROJECT_STATUS_SUMMARY_NOV2025.md
+# Track authoritative project plan files
+!docs/Master_ProjectPlan.md
+!docs/project-plan.csv
 
 # Development artifacts and analysis
 client/src/components/generated/

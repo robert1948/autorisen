@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PlanSyncAgent helper for docs/autorisen_project_plan.csv."""
+"""PlanSyncAgent helper for docs/project-plan.csv."""
 
 import re
 import sys
@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.plan_utils import PLAN_CSV, load_plan_rows
+from scripts.plan_utils import PLAN_CSV, load_plan_rows  # noqa: E402
 
 CSV_PATH = PLAN_CSV
 MD_PATH = Path("docs/Master_ProjectPlan.md")
@@ -42,7 +42,7 @@ def extract_fenced(md_text: str):
 
 def render_table(rows, fieldnames):
     # choose columns to output
-    cols = ["id", "phase", "task", "owner", "status", "priority", "estimated_hours"]
+    cols = ["id", "task", "owner", "status", "priority", "completion_date"]
     cols = [c for c in cols if c in fieldnames]
 
     # header

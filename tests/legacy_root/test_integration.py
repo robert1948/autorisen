@@ -5,8 +5,8 @@ Tests the complete integration including database, task execution, and API endpo
 """
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add backend src to path
@@ -18,9 +18,9 @@ os.environ["DATABASE_URL"] = "postgresql://devuser:devpass@localhost:5433/devdb"
 os.environ["SECRET_KEY"] = "test-secret-key-for-integration-testing"
 os.environ["ENV"] = "development"
 
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
-from fastapi.routing import APIRoute
+from fastapi import FastAPI  # noqa: E402
+from fastapi.routing import APIRoute  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
 
 async def test_app_creation():
@@ -106,8 +106,8 @@ async def test_agent_capabilities_endpoint():
 async def test_database_connectivity():
     """Test database connectivity and agent record."""
     try:
-        from db.session import SessionLocal
         from db.models import Agent
+        from db.session import SessionLocal
 
         with SessionLocal() as db:
             agent = db.query(Agent).filter(Agent.id == "cape-ai-guide").first()
@@ -130,11 +130,10 @@ def test_agent_components():
         # Test direct imports (should work now)
         sys.path.insert(0, str(backend_src))
 
+        from modules.agents.cape_ai_guide.knowledge_base import KnowledgeBase
         from modules.agents.cape_ai_guide.schemas import (
             CapeAIGuideTaskInput,
-            CapeAIGuideTaskOutput,
         )
-        from modules.agents.cape_ai_guide.knowledge_base import KnowledgeBase
 
         # Test schema creation
         input_schema = CapeAIGuideTaskInput(query="Test query")

@@ -419,6 +419,7 @@ marketplace_discovery_rate: counter
 ## 11. 🧭 Implementation Roadmap
 
 ### Phase 1: Foundation (Weeks 1-3)
+
 * **Agent Registry + Basic CRUD**
   * PostgreSQL schema setup with migrations
   * FastAPI agent router with CRUD endpoints
@@ -427,6 +428,7 @@ marketplace_discovery_rate: counter
 * **Deliverable**: Agent creation and listing functionality
 
 ### Phase 2: Core Execution (Weeks 4-6)  
+
 * **Orchestrator + Task Runner**
   * Task execution engine with isolation
   * Multi-step plan execution
@@ -435,6 +437,7 @@ marketplace_discovery_rate: counter
 * **Deliverable**: Agent execution with live progress tracking
 
 ### Phase 3: Marketplace & Discovery (Weeks 7-9)
+
 * **Discovery UI + Install Flow**
   * React marketplace interface
   * Agent detail pages with manifest preview
@@ -443,6 +446,7 @@ marketplace_discovery_rate: counter
 * **Deliverable**: End-to-end agent discovery and installation
 
 ### Phase 4: Security & Governance (Weeks 10-12)
+
 * **Middleware Integration + Policy Engine**
   * Security agents (rate limiting, input sanitization)
   * Audit logging with event tracking
@@ -451,6 +455,7 @@ marketplace_discovery_rate: counter
 * **Deliverable**: Production-ready security and compliance
 
 ### Phase 5: Scale & Optimize (Weeks 13-16)
+
 * **Performance Optimization + Analytics**
   * Redis caching and queue management
   * Database read replicas and connection pooling

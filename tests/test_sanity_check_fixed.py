@@ -64,6 +64,8 @@ class TestDatabaseModels:
             import app.models as models_module
             from app.models import AuditLog, User, UserProfile
 
+            _ = (AuditLog, User, UserProfile)
+
             available_models = [
                 name
                 for name in dir(models_module)
@@ -109,6 +111,8 @@ class TestDatabaseModels:
 
             # Import specific models instead of using wildcard
             from app.models import AuditLog, User, UserProfile
+
+            _ = (AuditLog, User, UserProfile)
 
             model_class = getattr(models_module, model_name, None)
 

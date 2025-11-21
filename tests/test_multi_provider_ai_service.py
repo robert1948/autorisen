@@ -78,7 +78,7 @@ class TestMultiProviderAIService:
             "app.services.multi_provider_ai_service.anthropic.AsyncAnthropic"
         ) as mock_claude:
 
-            service = MultiProviderAIService()
+            _ = MultiProviderAIService()
 
             # Verify clients are initialized
             mock_openai.assert_called_once_with(api_key="test-openai-key")

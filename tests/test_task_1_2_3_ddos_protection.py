@@ -37,7 +37,7 @@ class TestDDoSProtectionBasic:
 
     def test_ai_endpoints_still_protected(self):
         """Test that AI endpoints maintain their specific rate limits"""
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/ai/prompt",
             json={
                 "message": "DDoS protection test",
@@ -81,6 +81,10 @@ class TestBurstAttackDetection:
         # Note: Due to test environment, we might not trigger actual burst detection
         # This test validates the mechanism exists
         assert len(responses) > 0  # At least some requests were made
+        if burst_detected:
+            print("✅ Burst attack detection triggered during test")
+        else:
+            print("ℹ️ Burst detection not triggered in this environment")
 
     def test_burst_attack_headers(self):
         """Test that burst attack responses include proper headers"""
@@ -200,7 +204,7 @@ class TestDDoSConfigurationAndLimits:
 
     def test_ai_endpoint_ddos_protection(self):
         """Test that AI endpoints have DDoS protection"""
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/ai/prompt",
             json={
                 "message": "DDoS configuration test",
@@ -244,7 +248,7 @@ class TestBackwardCompatibility:
 
     def test_ai_specific_limits_maintained(self):
         """Test that AI-specific limits are maintained"""
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/ai/prompt",
             json={
                 "message": "Compatibility test",
@@ -285,7 +289,7 @@ def test_task_1_2_3_ddos_protection_integration():
         print("✅ Rate limiting functionality preserved")
 
         # Test AI endpoint protection
-        # # ai_response = client.post(  # noqa: F841  # noqa: F841
+        ai_response = client.post(
             "/api/ai/prompt",
             json={
                 "message": "DDoS integration test",

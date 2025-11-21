@@ -14,10 +14,15 @@ def _determine_database_url() -> str:
     if "pytest" in sys.modules:
         return "sqlite:///" + os.path.join("/tmp", "autolocal_test_pytest.db")
 
-    try:
-        from backend.src.settings import settings  # type: ignore
+    configured = None
 
-        configured = getattr(settings, "DATABASE_URL", None)
+    try:
+        # Settings live in core.config; fall back gracefully if import fails
+        from backend.src.core.config import settings  # type: ignore
+
+        configured = getattr(settings, "database_url", None) or getattr(
+            settings, "DATABASE_URL", None
+        )
     except Exception:
         configured = None
 

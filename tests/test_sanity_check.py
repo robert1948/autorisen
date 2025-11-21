@@ -64,6 +64,8 @@ class TestDatabaseModels:
             # Import specific models instead of using wildcard
             from app.models import AuditLog, User, UserProfile
 
+            _ = (AuditLog, User, UserProfile)
+
             available_models = [
                 name
                 for name in dir(models_module)
@@ -103,6 +105,8 @@ class TestDatabaseModels:
 
             # Import specific models instead of using wildcard
             from app.models import AuditLog, User, UserProfile
+
+            _ = (AuditLog, User, UserProfile)
 
             model_class = getattr(models_module, model_name, None)
             if model_class is None:
@@ -328,25 +332,21 @@ class TestMiddlewareIntegration:
     def test_ddos_protection_functionality(self):
         """Test DDoS protection middleware functionality"""
         try:
-            from unittest.mock import AsyncMock
-
-            from fastapi import Request, Response
-
             from app.middleware.ddos_protection import DDoSProtectionMiddleware
-
-            app_mock = Mock()
-            middleware = DDoSProtectionMiddleware(app_mock)
-            assert hasattr(middleware, "max_requests")
-            assert hasattr(middleware, "window")
-            assert hasattr(middleware, "request_counts")
         except ImportError:
             pytest.skip("DDoSProtectionMiddleware not available")
+
+        app_mock = Mock()
+        middleware = DDoSProtectionMiddleware(app_mock)
+        assert hasattr(middleware, "max_requests")
+        assert hasattr(middleware, "window")
+        assert hasattr(middleware, "request_counts")
 
     @pytest.mark.asyncio
     async def test_middleware_request_processing(self):
         """Test middleware request processing"""
         try:
-            from unittest.mock import AsyncMock, Mock
+            from unittest.mock import AsyncMock
 
             from fastapi import Request
 
@@ -656,7 +656,6 @@ class TestSecurityImplementation:
     def test_password_security_patterns(self):
         """Test password security patterns"""
         try:
-            import bcrypt
             from passlib.context import CryptContext
 
             pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -672,7 +671,7 @@ class TestSecurityImplementation:
     def test_jwt_token_patterns(self):
         """Test JWT token implementation"""
         try:
-            from jose import JWTError, jwt
+            from jose import jwt
 
             test_payload = {"sub": "test_user", "exp": 1234567890}
             secret_key = "test_secret_key"
@@ -831,6 +830,9 @@ class TestIntegrationScenarios:
             assert (
                 len(found_columns) > 0
             ), f"Should find at least some expected columns, found: {column_names}"
+            assert hasattr(UserProfile, "__tablename__") or hasattr(
+                UserProfile, "__table__"
+            )
         except ImportError:
             pytest.skip("Model integration testing not available")
 

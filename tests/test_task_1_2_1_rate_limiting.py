@@ -124,11 +124,9 @@ class TestRateLimitingFunctionality:
         """Test that different IPs get separate rate limit buckets"""
         # Normal request
         response1 = client.get("/api/", headers={})
-        remaining1 = int(response1.headers["X-RateLimit-Remaining-Minute"])
 
         # Request with X-Forwarded-For header (simulating different IP)
         response2 = client.get("/api/", headers={"X-Forwarded-For": "192.168.1.100"})
-        remaining2 = int(response2.headers["X-RateLimit-Remaining-Minute"])
 
         # Should both be valid responses with rate limit headers
         assert response1.status_code == 200

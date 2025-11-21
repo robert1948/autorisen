@@ -1,7 +1,7 @@
 # backend/tests/test_auth.py
-from __future__ import annotations
-
 """Integration tests for authentication flow (register -> login -> refresh -> me)."""
+
+from __future__ import annotations
 
 import json
 import re

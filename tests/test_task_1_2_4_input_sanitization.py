@@ -55,11 +55,11 @@ def get_test_user_token():
     }
 
     # Register user
-        # # register_response = client.post("/api/auth/v2/register", json=user_data)  # noqa: F841  # noqa: F841
+    register_response = client.post("/api/auth/v2/register", json=user_data)
     if register_response.status_code != 200:
         # User might already exist, try login
         login_data = {"email": user_data["email"], "password": user_data["password"]}
-        # # login_response = client.post("/api/auth/v2/login", json=login_data)  # noqa: F841  # noqa: F841
+        login_response = client.post("/api/auth/v2/login", json=login_data)
         if login_response.status_code == 200:
             return login_response.json()["access_token"]
         return None
@@ -251,7 +251,7 @@ class TestInputSanitizationMiddleware:
             "context": {"page": "/dashboard"},
         }
 
-        # # response = client.post("/api/ai/prompt", json=safe_data, headers=self.headers)  # noqa: F841  # noqa: F841
+        response = client.post("/api/ai/prompt", json=safe_data, headers=self.headers)
         assert response.status_code == 200
 
         # Headers should not indicate sanitization for safe content
@@ -267,7 +267,7 @@ class TestInputSanitizationMiddleware:
             "context": {"page": "/dashboard"},
         }
 
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             "/api/ai/prompt", json=dangerous_data, headers=self.headers
         )
 
@@ -291,7 +291,7 @@ class TestInputSanitizationMiddleware:
             "company": "Test Company",
         }
 
-        # # response = client.post("/api/auth/v2/register", json=malicious_user_data)  # noqa: F841  # noqa: F841
+        response = client.post("/api/auth/v2/register", json=malicious_user_data)
 
         # Should either be sanitized or rejected
         if response.status_code == 200:
@@ -454,15 +454,13 @@ class TestSanitizationIntegration:
             )
             mock_openai.chat.completions.create.return_value = mock_response
 
-        # # response = client.post(  # noqa: F841  # noqa: F841
-                "/api/ai/prompt", json=test_prompt, headers=self.headers
-            )
+        response = client.post("/api/ai/prompt", json=test_prompt, headers=self.headers)
 
-            assert response.status_code == 200
+        assert response.status_code == 200
 
-            # Should have sanitized the input
-            response_data = response.json()
-            assert "response" in response_data
+        # Should have sanitized the input
+        response_data = response.json()
+        assert "response" in response_data
 
     def test_security_stats_endpoint(self):
         """Test security statistics endpoint"""
@@ -515,7 +513,7 @@ def test_sanitization_benchmark():
 
         # Run sanitization 100 times
         for _ in range(100):
-            result = sanitizer.sanitize_input(test_input, SanitizationLevel.AI_PROMPT)
+            sanitizer.sanitize_input(test_input, SanitizationLevel.AI_PROMPT)
 
         end_time = time.time()
         avg_time = (end_time - start_time) / 100

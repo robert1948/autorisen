@@ -5,15 +5,14 @@ Provides shared fixtures for database, API client, and mock services
 across all agent test suites.
 """
 
-import pytest
 import asyncio
-import os
-from typing import AsyncGenerator, Generator
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Generator
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 # Test database URL
@@ -64,8 +63,8 @@ def test_db(test_engine) -> Generator[Session, None, None]:
 @pytest.fixture
 def client(test_db):
     """FastAPI test client with database dependency override."""
-    from backend.src.app import create_app
-    from backend.src.core.database import get_db
+    from backend.src.app import create_app  # noqa: E402
+    from backend.src.db.session import get_db  # noqa: E402
 
     def override_get_db():
         return test_db

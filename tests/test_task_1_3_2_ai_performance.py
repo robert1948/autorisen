@@ -10,17 +10,25 @@ Comprehensive tests for AI performance monitoring system:
 - Health monitoring and optimization recommendations
 """
 
+import importlib
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
-from app.services.ai_performance_service import (
-    AIPerformanceMonitor,
-    AIProvider,
-    get_ai_performance_monitor,
-)
+import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+try:
+    ai_perf_module = importlib.import_module("app.services.ai_performance_service")
+except ImportError:  # pragma: no cover
+    pytest.skip(
+        "app.services.ai_performance_service not available", allow_module_level=True
+    )
+
+AIPerformanceMonitor = ai_perf_module.AIPerformanceMonitor
+AIProvider = ai_perf_module.AIProvider
+get_ai_performance_monitor = ai_perf_module.get_ai_performance_monitor
+
+from app.main import app  # noqa: E402
 
 
 class TestAIPerformanceService:
@@ -367,7 +375,7 @@ class TestAIPerformanceAPI:
             "quality_score": 0.9,
         }
 
-        # # response = self.client.post(  # noqa: F841  # noqa: F841
+        response = self.client.post(
             "/api/v1/ai-performance/metrics/record", json=usage_data
         )
 
@@ -487,7 +495,7 @@ class TestCapeAIIntegration:
             "session_id": "test-session-123",
         }
 
-        # # response = self.client.post("/ai/prompt", json=request_data)  # noqa: F841  # noqa: F841
+        response = self.client.post("/ai/prompt", json=request_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -525,7 +533,7 @@ class TestCapeAIIntegration:
             "session_id": "test-session-123",
         }
 
-        # # response = self.client.post("/ai/prompt", json=request_data)  # noqa: F841  # noqa: F841
+        response = self.client.post("/ai/prompt", json=request_data)
 
         assert response.status_code == 200  # Should return fallback response
         data = response.json()

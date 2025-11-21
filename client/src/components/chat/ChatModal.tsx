@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 
 import ChatThread from "./ChatThread";
+import ConnectionIndicator from "./ConnectionIndicator";
 import {
   fetchOnboardingChecklist,
   updateOnboardingChecklist,
   type ChecklistSummary,
 } from "../../lib/api";
 import { useChatSession } from "../../hooks/useChatSession";
+import type { ConnectionHealth } from "../../types/websocket";
 
 export type ChatPlacement =
   | "support"
@@ -39,6 +41,7 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
   const [checklist, setChecklist] = useState<ChecklistSummary | null>(null);
   const [checklistError, setChecklistError] = useState<string | null>(null);
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+  const [connectionHealth, setConnectionHealth] = useState<ConnectionHealth | null>(null);
   const {
     token,
     loading,
@@ -107,9 +110,14 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
             <p className="chat-modal__eyebrow">{placementLabel}</p>
             <h2>{title}</h2>
           </div>
-          <button type="button" className="chat-modal__close" onClick={onClose}>
-            ×
-          </button>
+          <div className="chat-modal__header-actions">
+            {connectionHealth && (
+              <ConnectionIndicator health={connectionHealth} variant="compact" />
+            )}
+            <button type="button" className="chat-modal__close" onClick={onClose}>
+              ×
+            </button>
+          </div>
         </header>
         {description && <p className="chat-modal__description">{description}</p>}
 
@@ -133,6 +141,7 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
             onThreadChange={(threadId) =>
               startSession({ threadId, mode: "initial" })
             }
+            onConnectionHealthChange={setConnectionHealth}
           />
         )}
         {token && !loading && !error && (

@@ -6,7 +6,6 @@ This script provides the structure and prompts for Codex to generate complete te
 """
 
 import os
-import sys
 from pathlib import Path
 
 # Template for Codex to generate comprehensive test framework

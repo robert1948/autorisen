@@ -1,6 +1,6 @@
 # AutoLocal/CapeControl .dockerignore
 # Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
-# Updated: November 10, 2025
+# Updated: November 14, 2025
 
 # Git and IDE
 .git
@@ -83,8 +83,8 @@ tests/
 tests_disabled/
 tests_enabled/
 docs/
-!docs/Master_ProjectPlan_Updated_Nov2025.md
-!docs/project_plan_nov2025.csv
+!docs/Master_ProjectPlan.md
+!docs/project-plan.csv
 !docs/PROJECT_STATUS_SUMMARY_NOV2025.md
 .github/
 *.db
@@ -156,8 +156,6 @@ docs/pages_overview.md
 docs/checklists/temp/
 docs/playbooks/design/06-target-frame.md
 docs/PLAYBOOK_OVERVIEW.md
-docs/Master_ProjectPlan.md
-docs/autorisen_project_plan.csv
 
 # Generated/demo pages (development only) - use patterns for flexibility
 client/src/pages/Demo*.tsx

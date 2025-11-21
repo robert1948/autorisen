@@ -21,7 +21,7 @@ try:
     from app.services.audit_service import get_audit_logger
     from sqlalchemy.orm import sessionmaker
 
-    from app.database import engine, get_db
+    from app.database import engine
     from app.models import User
 
     print("✅ Successfully imported registration modules")
@@ -49,7 +49,7 @@ def test_registration_performance():
         # Test 2: Email uniqueness check speed
         start_time = time.time()
         test_email = "performance.test@example.com"
-        existing_user = session.query(User).filter(User.email == test_email).first()
+        _ = session.query(User).filter(User.email == test_email).first()
         email_check_time = time.time() - start_time
         print(f"✅ Email uniqueness check: {email_check_time:.3f}s")
 
@@ -73,7 +73,7 @@ def test_registration_performance():
         start_time = time.time()
         from app.auth_enhanced import get_password_hash
 
-        hashed = get_password_hash("test_password_123")
+        _ = get_password_hash("test_password_123")
         hash_time = time.time() - start_time
         print(f"✅ Password hashing time: {hash_time:.3f}s")
 

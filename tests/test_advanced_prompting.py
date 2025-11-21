@@ -216,7 +216,6 @@ class TestAdvancedPromptingService:
         # Add mock template to service
         prompting_service.templates[mock_template.template_id] = mock_template
         initial_usage = mock_template.usage_count
-        initial_success_rate = mock_template.success_rate
 
         # Update performance with success
         await prompting_service.update_template_performance(
@@ -483,7 +482,7 @@ class TestAdvancedPromptingAPI:
                 mock_service.return_value = mock_prompting_service
 
                 client = TestClient(app)
-        # # response = client.post(  # noqa: F841  # noqa: F841
+                response = client.post(
                     "/api/prompting/generate",
                     json={
                         "template_id": "test_template",
@@ -538,7 +537,7 @@ class TestAdvancedPromptingAPI:
                 mock_service.return_value = mock_prompting_service
 
                 client = TestClient(app)
-        # # response = client.post(  # noqa: F841  # noqa: F841
+                response = client.post(
                     "/api/prompting/templates",
                     json={
                         "name": "Custom Template",

@@ -5,9 +5,8 @@ Tests individual components without FastAPI/database dependencies.
 """
 
 import asyncio
-import sys
-from pathlib import Path
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 

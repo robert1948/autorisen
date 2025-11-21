@@ -100,18 +100,20 @@ class PerformanceTestHelper:
         self,
         endpoint: str,
         method: str = "GET",
-        data: dict = None,
-        headers: dict = None,
-    ) -> float:
+        data: dict | None = None,
+        headers: dict | None = None,
+    ) -> tuple[float, int]:
         """Measure response time for a single request"""
         start_time = time.time()
 
         if method == "GET":
             response = self.client.get(endpoint, headers=headers or self.headers)
         elif method == "POST":
-        # # response = self.client.post(  # noqa: F841  # noqa: F841
+            response = self.client.post(
                 endpoint, json=data, headers=headers or self.headers
             )
+        else:
+            raise ValueError(f"Unsupported method: {method}")
 
         end_time = time.time()
         response_time = end_time - start_time
@@ -119,7 +121,11 @@ class PerformanceTestHelper:
         return response_time, response.status_code
 
     def concurrent_requests(
-        self, endpoint: str, num_requests: int, method: str = "GET", data: dict = None
+        self,
+        endpoint: str,
+        num_requests: int,
+        method: str = "GET",
+        data: dict | None = None,
     ) -> list[dict]:
         """Execute concurrent requests and measure performance"""
         results = []
@@ -218,6 +224,7 @@ class TestAuthenticationPerformance:
         """Test health endpoint performance under load"""
         print("\n⚡ Testing health endpoint performance...")
         global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         # Single request baseline
         response_time, status_code = perf_helper.measure_response_time("/api/health")
@@ -244,6 +251,8 @@ class TestAuthenticationPerformance:
     def test_login_endpoint_performance(self):
         """Test login endpoint performance"""
         print("\n🔐 Testing login endpoint performance...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         # Create test user data
         login_data = {
@@ -264,10 +273,15 @@ class TestAuthenticationPerformance:
             "tos_accepted": True,
         }
 
-        # # response = client.post(  # noqa: F841  # noqa: F841
+        response = client.post(
             f"{TEST_API_PREFIX}/auth/v2/register", json=register_data
         )
-        # Ignore if user already exists
+        if response.status_code in (200, 201):
+            print("✅ Test user registered for login performance")
+        else:
+            print(
+                f"ℹ️ Registration response ignored (status {response.status_code}): {response.text}"
+            )
 
         # Test login performance
         response_time, status_code = perf_helper.measure_response_time(
@@ -296,6 +310,8 @@ class TestAuthenticationPerformance:
     def test_email_validation_performance(self):
         """Test email validation endpoint performance"""
         print("\n📧 Testing email validation performance...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         test_email = f"perf_test_{uuid.uuid4().hex[:8]}@example.com"
         endpoint = f"{TEST_API_PREFIX}/auth/v2/validate-email"
@@ -332,6 +348,8 @@ class TestCapeAIPerformance:
     def test_ai_prompt_performance(self, mock_redis, mock_openai):
         """Test AI prompt endpoint performance"""
         print("\n🤖 Testing AI prompt performance...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         # Mock fast AI responses
         mock_redis.lrange.return_value = []
@@ -387,6 +405,8 @@ class TestCapeAIPerformance:
     def test_conversation_history_performance(self, mock_redis):
         """Test conversation history retrieval performance"""
         print("\n💬 Testing conversation history performance...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         # Mock conversation history data
         mock_conversation = [
@@ -422,6 +442,8 @@ class TestCapeAIPerformance:
     def test_ai_suggestions_performance(self):
         """Test AI suggestions endpoint performance"""
         print("\n💡 Testing AI suggestions performance...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         endpoint = f"{TEST_API_PREFIX}/ai/suggestions"
 
@@ -455,6 +477,8 @@ class TestSystemPerformance:
     def test_system_resource_usage(self):
         """Test system resource usage under load"""
         print("\n🖥️ Testing system resource usage...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         # Baseline system metrics
         baseline_metrics = perf_helper.get_system_metrics()
@@ -463,6 +487,8 @@ class TestSystemPerformance:
 
         # Generate load across multiple endpoints
         def generate_load():
+            global perf_helper
+            assert perf_helper is not None, "Performance test helper not initialized"
             endpoints = [
                 ("/api/health", "GET", None),
                 (f"{TEST_API_PREFIX}/ai/suggestions?context=dashboard", "GET", None),
@@ -509,6 +535,8 @@ class TestSystemPerformance:
     def test_database_connection_performance(self):
         """Test database connection and query performance"""
         print("\n🗄️ Testing database performance...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         def db_operation():
             db = SessionLocal()
@@ -516,6 +544,7 @@ class TestSystemPerformance:
                 # Simple query
                 start_time = time.time()
                 users = db.query(User).limit(10).all()
+                assert len(users) <= 10
                 end_time = time.time()
                 return end_time - start_time
             finally:
@@ -545,6 +574,8 @@ class TestSystemPerformance:
     def test_memory_leak_detection(self):
         """Test for memory leaks during extended operation"""
         print("\n🔍 Testing for memory leaks...")
+        global perf_helper
+        assert perf_helper is not None, "Performance test helper not initialized"
 
         initial_memory = psutil.virtual_memory().used / 1024 / 1024  # MB
 

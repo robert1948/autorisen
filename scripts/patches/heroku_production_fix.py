@@ -86,7 +86,7 @@ __all__ = [
 def create_performance_optimized_auth():
     """Create optimized auth route for production"""
 
-    optimized_validation = '''
+    _ = '''
 # Performance optimized email validation
 @router.get("/v2/validate-email", tags=["auth-v2"])
 async def validate_email(email: str, db: Session = Depends(get_db)):

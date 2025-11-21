@@ -118,10 +118,20 @@ export const createWebSocketClient = (options: WebSocketClientOptions): WebSocke
       const envelope = parseEnvelope(event.data as string);
       if (!envelope) return;
       options.onMessage?.(envelope);
-      if (envelope.type === "chat.event" && envelope.event) {
-        options.onEvent?.(mapEvent(envelope.event));
-      } else if (envelope.type === "thread.updated" && envelope.thread) {
-        options.onThreadUpdate?.(mapThread(envelope.thread));
+      if (
+        envelope.type === "chat.event" &&
+        "event" in envelope &&
+        envelope.event
+      ) {
+        const rawEvent = envelope.event as ChatEventResponse | ChatMessage;
+        options.onEvent?.(mapEvent(rawEvent));
+      } else if (
+        envelope.type === "thread.updated" &&
+        "thread" in envelope &&
+        envelope.thread
+      ) {
+        const rawThread = envelope.thread as ChatThreadResponse | ChatThread;
+        options.onThreadUpdate?.(mapThread(rawThread));
       }
     };
     socket.onclose = () => {

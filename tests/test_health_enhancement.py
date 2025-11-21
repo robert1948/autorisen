@@ -346,7 +346,7 @@ class TestHealthAPIEndpoints:
 
     def test_trigger_health_check_endpoint(self):
         """Test health check trigger endpoint"""
-        # # response = client.post("/api/health/check")  # noqa: F841  # noqa: F841
+        response = client.post("/api/health/check")    
         assert response.status_code == 200
         data = response.json()
         assert "message" in data

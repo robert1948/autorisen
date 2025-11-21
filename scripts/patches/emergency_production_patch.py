@@ -127,11 +127,11 @@ def main():
     print("🚨 Creating emergency production patches...")
 
     # Create audit service patch
-    audit_patch = patch_audit_service()
+    _ = patch_audit_service()
     print("✅ Created audit service patch")
 
     # Create registration patch
-    reg_patch = patch_registration()
+    _ = patch_registration()
     print("✅ Created registration patch")
 
     print("\n📋 Emergency fixes ready:")

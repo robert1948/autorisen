@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.plan_utils import PLAN_CSV, load_plan_rows
+from scripts.plan_utils import PLAN_CSV, load_plan_rows  # noqa: E402
 
 OUT = "docs/Master_ProjectPlan.generated.md"
 

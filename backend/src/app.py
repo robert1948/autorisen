@@ -281,6 +281,65 @@ def create_app() -> FastAPI:
         max_age=86400,
     )
 
+    # Cache headers middleware for production cache-correctness (runs LAST to override any defaults)
+    @app.middleware("http")
+    async def cache_headers_middleware(request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+
+        # Force clear any existing cache headers first
+        if "Cache-Control" in response.headers:
+            del response.headers["Cache-Control"]
+        if "Pragma" in response.headers:
+            del response.headers["Pragma"]
+
+        # Apply our cache-correctness rules
+        # 1. Immutable, long cache for hashed assets from Vite
+        if path.startswith("/assets/") and any(
+            path.endswith(ext)
+            for ext in (
+                ".js",
+                ".css",
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".svg",
+                ".webp",
+                ".woff",
+                ".woff2",
+                ".ttf",
+                ".map",
+                ".ico",
+            )
+        ):
+            # Example: /assets/js/index-DAo417Vc.js
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+
+        # 2. Specific files that should cache for a long time
+        elif path in ["/favicon.ico", "/site.webmanifest", "/robots.txt"]:
+            response.headers["Cache-Control"] = "public, max-age=31536000"
+
+        # 3. Never cache HTML shells or config - always revalidate for new builds
+        elif (
+            path == "/"
+            or path.endswith(".html")
+            or path in EXPECTED_ROUTES
+            or path == "/config.json"
+        ):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+
+        # 4. API endpoints should not be cached by default
+        elif path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
+
+        # 5. Everything else gets short cache with revalidation
+        else:
+            response.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
+
+        return response
+
     # Rate limiting (idempotent even if slowapi is absent/falls back)
     try:
         configure_rate_limit(app)
@@ -371,6 +430,28 @@ def create_app() -> FastAPI:
     def _bots_wlw(prefix: str):
         return PlainTextResponse(
             "Not found", status_code=404, headers={"Cache-Control": "no-store"}
+        )
+
+    @app.get("/config.json", include_in_schema=False)
+    def runtime_config():
+        """Serve runtime configuration with no-cache headers"""
+        config_data = {
+            "API_BASE_URL": "/api",
+            "VERSION": os.getenv("APP_VERSION", "dev"),
+            "ENVIRONMENT": os.getenv("APP_ENV")
+            or os.getenv("ENVIRONMENT")
+            or os.getenv("ENV")
+            or "production",
+            "BUILD_SHA": os.getenv("GIT_SHA", "unknown")[:8],
+            "BUILD_TIME": datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+        }
+        return JSONResponse(
+            content=config_data,
+            headers={
+                "Cache-Control": "no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
         )
 
     # Simple alias for external uptime checks

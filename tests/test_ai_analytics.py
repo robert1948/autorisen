@@ -530,7 +530,7 @@ class TestAIAnalyticsAPI:
                 mock_service.return_value = mock_analytics_service
 
                 client = TestClient(app)
-        # # response = client.post(  # noqa: F841  # noqa: F841
+                response = client.post(
                     "/api/analytics/feedback",
                     json={
                         "response_id": "resp_123",
@@ -567,7 +567,7 @@ class TestAIAnalyticsAPI:
                 mock_service.return_value = mock_analytics_service
 
                 client = TestClient(app)
-        # # response = client.post(  # noqa: F841  # noqa: F841
+                response = client.post(
                     "/api/analytics/quality/analyze",
                     json={
                         "response_content": "This is a test response",

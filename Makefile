@@ -10,6 +10,11 @@ MCP_BIND_HOST      ?= 0.0.0.0
 MCP_PORT           ?= 8000
 MCP_SMOKE_PORT     ?= 8787
 
+TASK_CAPSULE_DIR := docs/task-capsules
+TASK_CAPSULE_TEMPLATE := docs/task-capsule-template.md
+PROJECT_PLAN_CSV := docs/project-plan.csv
+
+
 export PYTHONPATH ?= $(CURDIR)
 
 
@@ -27,9 +32,9 @@ mcp-host:
 		"$$UVICORN_BIN" backend.src.app:app --host $(MCP_BIND_HOST) --port $(MCP_PORT)
 
 # =============================================================================
-# Makefile — AutoLocal/CapeControl v0.2.1
+# Makefile — AutoLocal/CapeControl v0.2.5
 # Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
-# Updated: November 10, 2025
+# Updated: November 14, 2025
 # =============================================================================
 
 SHELL := /bin/bash
@@ -146,25 +151,42 @@ project-info: ## Show current project version and status information
 	@echo ""
 	@echo "🚀 \033[1mAutoLocal/CapeControl Project Information\033[0m"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "📊 Version: v0.2.1 (November 10, 2025)"
-	@echo "🎯 Status: 87% Complete (7/8 major milestones)"
+	@echo "📊 Version: v0.2.5 (November 14, 2025)"
+	@echo "🎯 Focus: Stripe billing, usage metering, ops hardening"
 	@echo ""
-	@echo "✅ \033[32mCompleted Phases:\033[0m"
-	@echo "   • ChatKit Frontend Enhancement - Enterprise WebSocket implementation"
-	@echo "   • Payment System Configuration - PayFast primary, Stripe preserved"
-	@echo "   • Infrastructure & DevOps - GitHub security, container deployment"
-	@echo ""
-	@echo "🔄 \033[33mActive Development:\033[0m"
-	@echo "   • Payment Frontend Implementation (3-4 day effort)"
-	@echo "   • Target completion: November 13-14, 2025"
-	@echo ""
-	@echo "🔗 \033[34mDeployment URLs:\033[0m"
+	@echo "🔗 \033[34mKey Links:\033[0m"
 	@echo "   • Staging: https://dev.cape-control.com"
-	@echo "   • Production: https://autorisen-dac8e65796e7.herokuapp.com"
-	@echo "   • Docker Hub: stinkie/autorisen:v0.2.1"
+	@echo "   • Production: https://cape-control.com"
+	@echo "   • Docker Hub: stinkie/autorisen:v0.2.5"
+	@echo ""
+	@$(PY) scripts/project_info.py
 	@echo ""
 	@git log --oneline -5 2>/dev/null || echo "📝 Git history: Not available"
 	@echo ""
+
+ops-release-all: ## Sync plan, fix docs, show info, push to git, and release to Heroku & DockerHub
+	@echo "🚀 Starting full release sequence..."
+	@$(MAKE) codex-plan-apply
+	@$(MAKE) codex-docs-fix || echo "⚠️  Docs linting had issues (auto-fix applied where possible). Continuing..."
+	@$(MAKE) project-info
+	@echo "📝 Git Status:"
+	@git status --short
+	@echo ""
+	@echo "⚠️  Ready to push to GitHub and deploy to Heroku + DockerHub?"
+	@echo "    Ensure all changes are committed."
+	@echo "    This will:"
+	@echo "    1. git push origin main"
+	@echo "    2. make deploy-heroku (Staging + Prod)"
+	@echo "    3. make dockerhub-release"
+	@echo ""
+	@read -p "Press Enter to continue or Ctrl+C to cancel..." _
+	@echo "📦 Pushing to GitHub..."
+	@git push origin main
+	@echo "🚀 Deploying to Heroku..."
+	@$(MAKE) deploy-heroku
+	@echo "🐳 Releasing to DockerHub..."
+	@$(MAKE) dockerhub-release
+	@echo "✅ Full release sequence completed!"
 
 # ----------------------------------------------------------------------------- 
 # Python env / dev tasks
@@ -206,7 +228,7 @@ payments-checkout: ## Generate a sample PayFast checkout payload
 	@$(VENV)/bin/python scripts/payfast_checkout.py
 
 # ----------------------------------------------------------------------------- 
-# Enhanced WebSocket & Payment Development (v0.2.1)
+# Enhanced WebSocket & Payment Development (v0.2.5)
 # -----------------------------------------------------------------------------
 websocket-test: ## Test WebSocket functionality with health monitoring
 	@echo "Testing WebSocket service..."
@@ -273,15 +295,17 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 # -----------------------------------------------------------------------------
 deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) and production (capecraft) with enhanced logging
 	@echo "🔐 Logging in to Heroku Container Registry..."
-	@for i in 1 2 3; do \
-		if heroku container:login >/dev/null 2>&1; then echo "✅ Login successful"; break; fi; \
+	@LOGIN_OK=0; \
+	for i in 1 2 3; do \
+		if heroku container:login >/dev/null 2>&1; then echo "✅ Login successful"; LOGIN_OK=1; break; fi; \
 		echo "⚠️  Login failed (attempt $$i/3). Retrying in 5s..."; sleep 5; \
-	done
+	done; \
+	if [ "$$LOGIN_OK" -ne 1 ]; then echo "❌ Login failed after retries"; exit 1; fi
 	@echo ""
 	@echo "🚀 === DEPLOYING TO STAGING ($(HEROKU_APP_STG)) ==="
 	@echo "🏷️  Tagging image for staging registry..."
 	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_STG)/web
-	@echo "� Pushing image to staging registry..."
+	@echo "📤 Pushing image to staging registry..."
 	@for i in 1 2 3; do \
 		if docker push registry.heroku.com/$(HEROKU_APP_STG)/web; then echo "✅ Staging push successful"; break; fi; \
 		echo "⚠️  Staging push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
@@ -293,7 +317,7 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 		echo "⚠️  Staging release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
 		[ $$i -eq 3 ] && { echo "❌ Staging release failed after retries"; exit 1; } || true; \
 	done
-	@echo "✅ Staging deployment completed! App URL: https://$(HEROKU_APP_STG).herokuapp.com"
+	@echo "✅ Staging deployment completed! App URL: $(STAGING_URL)"
 	@echo ""
 	@echo "🚀 === DEPLOYING TO PRODUCTION ($(HEROKU_APP_PROD)) ==="
 	@echo "🏷️  Tagging image for production registry..."
@@ -310,11 +334,11 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 		echo "⚠️  Production release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
 		[ $$i -eq 3 ] && { echo "❌ Production release failed after retries"; exit 1; } || true; \
 	done
-	@echo "✅ Production deployment completed! App URL: https://$(HEROKU_APP_PROD).herokuapp.com"
+	@echo "✅ Production deployment completed! App URL: $(PROD_BASE_URL)"
 	@echo ""
 	@echo "🎉 DUAL DEPLOYMENT COMPLETED!"
-	@echo "   📋 Staging:    https://$(HEROKU_APP_STG).herokuapp.com"
-	@echo "   🚀 Production: https://$(HEROKU_APP_PROD).herokuapp.com"
+	@echo "   📋 Staging:    $(STAGING_URL)"
+	@echo "   🚀 Production: $(PROD_BASE_URL)"
 
 heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
@@ -372,8 +396,12 @@ clean: ## Remove common build artifacts
 plan-validate: ## Validate plan CSV with tools/validate_plan_csv.py
 	$(PY) tools/validate_plan_csv.py
 
-plan-open: ## Open plan & Codex project plan
-	code docs/CODEX_PROJECT_PLAN.md data/plan.csv
+plan-open: ## Open project plan sources (CSV + Markdown)
+	@if command -v code >/dev/null 2>&1; then \
+		code docs/autorisen_project_plan.csv docs/Master_ProjectPlan.md; \
+	else \
+		echo "Open docs/autorisen_project_plan.csv and docs/Master_ProjectPlan.md in your editor."; \
+	fi
 
 # ----------------------------------------------------------------------------- 
 # Alembic
@@ -489,6 +517,8 @@ agents-test: ## Run agents unit tests
 agents-run: ## Run an agent: make agents-run name=<slug> task="..."
 	@[ -n "$$name" ] || (echo "Usage: make agents-run name=<slug> task=\"...\""; exit 1)
 	@$(PY) scripts/agents_run.py --agent $$name --task "$$task"
+
+
 
 # ----------------------------------------------------------------------------- 
 # Codex helpers
@@ -646,7 +676,7 @@ test-agents: ## Run agent-specific tests
 # -----------------------------------------------------------------------------
 smoke-staging: ## Health + CSRF discovery (OpenAPI) against $(STAGING_URL)
 	@echo "== Smoke test against $(STAGING_URL) =="
-	@curl -fsS "$(STAGING_URL)/api/api/health" | jq . >/dev/null && echo "✓ /api/api/health OK" || { echo "✗ /api/api/health failed"; exit 1; }
+	@curl -fsS "$(STAGING_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 	@echo "Discovering CSRF probe path from OpenAPI..."
 	@set -e; \
 	if ! command -v jq >/dev/null 2>&1; then echo "⚠️  jq not found; install jq to use OpenAPI discovery"; exit 0; fi; \
@@ -684,7 +714,7 @@ smoke-staging: ## Health + CSRF discovery (OpenAPI) against $(STAGING_URL)
 
 smoke-local: ## Health + CSRF probe against localhost backend
 	@echo "== Smoke test against http://localhost:$(PORT) =="
-	@curl -fsS "http://localhost:$(PORT)/api/api/health" >/dev/null && echo "✓ /api/api/health OK" || { echo "✗ /api/api/health failed"; exit 1; }
+	@curl -fsS "http://localhost:$(PORT)/api/health" >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 	@$(MAKE) csrf-probe-local || true
 
 csrf-probe-staging: ## Direct CSRF probe (staging)
@@ -707,7 +737,7 @@ codex-smoke: smoke-staging csrf-probe-staging ## Combined staging smoke & CSRF
 
 smoke-prod: ## Quick production health (no CSRF probe)
 	@echo "== Smoke test against $(PROD_BASE_URL) =="
-	@curl -fsS "$(PROD_BASE_URL)/api/api/health" | jq . >/dev/null && echo "✓ /api/api/health OK" || { echo "✗ /api/api/health failed"; exit 1; }
+	@curl -fsS "$(PROD_BASE_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 
 # ----------------------------------------------------------------------------- 
 # Strict mode tests
@@ -864,6 +894,76 @@ dockerhub-update-description: ## PATCH repository description via Docker Hub API
 dockerhub-clean: ## Prune dangling images
 	@echo "Pruning dangling images…"
 	-docker image prune -f
+
+	# ----------------------------------------------------------------------------- 
+# Task Capsule Generator (advanced)
+# -----------------------------------------------------------------------------
+
+.PHONY: new-task-capsule
+new-task-capsule: ## Create a new Task Capsule file: make new-task-capsule ID=AUTH-004
+	@if [ -z "$(ID)" ]; then \
+		echo "❌ Missing ID. Usage: make new-task-capsule ID=AUTH-004"; exit 1; \
+	fi
+	@mkdir -p $(TASK_CAPSULE_DIR)
+	@OUTPUT_FILE="$(TASK_CAPSULE_DIR)/TC-$(ID).md"; \
+	if [ -f "$$OUTPUT_FILE" ]; then \
+		echo "❌ Task Capsule already exists: $$OUTPUT_FILE"; exit 1; \
+	fi; \
+	if [ ! -f "$(TASK_CAPSULE_TEMPLATE)" ]; then \
+		echo "❌ Template not found: $(TASK_CAPSULE_TEMPLATE)"; exit 1; \
+	fi; \
+	echo "📝 Creating Task Capsule from template..."; \
+	TODAY=$$(date +%Y-%m-%d); \
+	# Render template with ID + today
+	sed -e "s/TC-____/TC-$(ID)/g" -e "s/<today>/$$TODAY/g" "$(TASK_CAPSULE_TEMPLATE)" > "$$OUTPUT_FILE"; \
+	# Try to pull matching row from autorisen_project_plan.csv
+	if [ -f "$(PROJECT_PLAN_CSV)" ]; then \
+		ROW=$$(grep -m1 "^$(ID)," "$(PROJECT_PLAN_CSV)" || true); \
+		if [ -n "$$ROW" ]; then \
+			echo ""; \
+			echo "🔗 Linking to $(PROJECT_PLAN_CSV) row for ID=$(ID)"; \
+			TASK=$$(echo "$$ROW" | cut -d',' -f2); \
+			OWNER=$$(echo "$$ROW" | cut -d',' -f3); \
+			STATUS=$$(echo "$$ROW" | cut -d',' -f4); \
+			PRIORITY=$$(echo "$$ROW" | cut -d',' -f5); \
+			COMP_DATE=$$(echo "$$ROW" | cut -d',' -f6); \
+			NOTES=$$(echo "$$ROW" | cut -d',' -f7); \
+			ARTIFACTS=$$(echo "$$ROW" | cut -d',' -f8); \
+			VERIFY=$$(echo "$$ROW" | cut -d',' -f9); \
+			{ \
+				echo ""; \
+				echo "---"; \
+				echo ""; \
+				echo "## Linked Project Plan Row"; \
+				echo ""; \
+				echo "- **id**: $(ID)"; \
+				echo "- **task**: $${TASK}"; \
+				echo "- **owner**: $${OWNER}"; \
+				echo "- **status**: $${STATUS}"; \
+				echo "- **priority**: $${PRIORITY}"; \
+				echo "- **completion_date**: $${COMP_DATE}"; \
+				echo "- **notes**: $${NOTES}"; \
+				echo "- **artifacts**: $${ARTIFACTS}"; \
+				echo "- **verification_commands**: $${VERIFY}"; \
+			} >> "$$OUTPUT_FILE"; \
+		else \
+			echo "ℹ No matching row for ID=$(ID) in $(PROJECT_PLAN_CSV)"; \
+		fi; \
+	else \
+		echo "ℹ Project plan CSV not found: $(PROJECT_PLAN_CSV)"; \
+	fi; \
+	echo ""; \
+	echo "✅ Task Capsule created:"; \
+	echo "   $$OUTPUT_FILE"; \
+	# Open in VS Code if available
+	if command -v code >/dev/null 2>&1; then \
+		echo "🚀 Opening in VS Code..."; \
+		code "$$OUTPUT_FILE"; \
+	fi; \
+	echo ""; \
+	echo "💡 To commit later:"; \
+	echo "   git add $$OUTPUT_FILE && git commit -m 'docs: add task capsule TC-$(ID)'"
+
 
 # ----------------------------------------------------------------------------- 
 # Playbooks (Codex loop)
@@ -1030,31 +1130,7 @@ mcp-smoke:
 	SERVER_PID=; \
 	cleanup() { trap - INT TERM EXIT; \
 		if [ -n "$$SERVER_PID" ]; then \
-			kill $$SERVER_PID >/dev/null 2>&1 || true; \
-			wait $$SERVER_PID 2>/dev/null || true; \
-		fi; \
-		rm -f "$$LOG_FILE"; \
-	}; \
-	trap cleanup INT TERM EXIT; \
-	UVICORN_BIN=$$( [ -x "$(VENV)/bin/uvicorn" ] && echo "$(VENV)/bin/uvicorn" || command -v uvicorn ); \
-	if [ -z "$$UVICORN_BIN" ]; then echo "uvicorn not found; run 'make install' first" >&2; exit 127; fi; \
-	ENABLE_MCP_HOST=1 ENV=$(ENV) OPENAI_API_KEY=$$OPENAI_API_KEY \
-		EMAIL_TOKEN_SECRET=$${EMAIL_TOKEN_SECRET:-dev-mcp-smoke-secret} \
-		FROM_EMAIL=$${FROM_EMAIL:-mcp-smoke@example.com} \
-		SMTP_HOST=$${SMTP_HOST:-localhost} \
-		SMTP_USERNAME=$${SMTP_USERNAME:-mcp-smoke-user} \
-		SMTP_PASSWORD=$${SMTP_PASSWORD:-mcp-smoke-pass} \
-		PORT=$(MCP_SMOKE_PORT) \
-		"$$UVICORN_BIN" backend.src.app:app --host 127.0.0.1 --port $(MCP_SMOKE_PORT) >>"$$LOG_FILE" 2>&1 & \
-	SERVER_PID=$$!; \
-	for i in $$(seq 1 20); do \
-		if curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/api/health >/dev/null 2>&1; then break; fi; \
-		sleep 0.25; \
-	done; \
-	if ! curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/api/health >/dev/null 2>&1; then \
-		echo "MCP host failed to start:" >&2; \
-		cat "$$LOG_FILE" >&2 || true; \
-		exit 1; \
+			kill $$SERVER
 	fi; \
 	RESP=$$(curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/ops/mcp/smoke); \
 	echo "$$RESP" | jq .; \
@@ -1213,3 +1289,11 @@ capecraft-help:
 	@echo "1. Design specification created from MindMup"
 	@echo "2. Import spec into Figma for visual design"
 	@echo "4. Integrate components into page routing"
+
+capsule-status:
+	@echo "CAPSULE: OPS-STATUS — Project Status Overview"
+	@# here you’d run whatever scripts/checks Codex recommended
+
+capsule-plan-sync:
+	@echo "CAPSULE: OPS-PLAN-SYNC — Update Project Plan & Related Files"
+	@# run scripts to regenerate docs or summaries

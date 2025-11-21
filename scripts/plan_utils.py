@@ -7,31 +7,27 @@ import csv
 from pathlib import Path
 from typing import Iterator
 
-PLAN_CSV = Path("docs/autorisen_project_plan.csv")
+PLAN_CSV = Path("docs/project-plan.csv")
 PLAN_HEADER = [
     "id",
-    "phase",
     "task",
     "owner",
     "status",
     "priority",
-    "dependencies",
-    "estimated_hours",
     "completion_date",
-    "artifacts",
-    "verification",
     "notes",
-    "codex_hints",
+    "artifacts",
+    "verification_commands",
 ]
-VALID_PHASES = {
-    "foundation",
-    "agents",
-    "payments",
-    "optimization",
-    "business",
-    "maintenance",
+# VALID_PHASES removed as 'phase' column is no longer present
+VALID_STATUSES = {
+    "todo",
+    "in-progress",
+    "completed",
+    "blocked",
+    "deferred",
+    "recurring",
 }
-VALID_STATUSES = {"todo", "in-progress", "completed", "blocked", "deferred"}
 
 
 def _iter_clean_lines(path: Path) -> Iterator[str]:
@@ -66,8 +62,5 @@ def load_plan_rows(path: Path = PLAN_CSV) -> tuple[list[str], list[dict[str, str
     rows: list[dict[str, str]] = []
     for raw_row in reader:
         normalized = {key: (raw_row.get(key) or "").strip() for key in PLAN_HEADER}
-        phase = normalized.get("phase", "")
-        if phase not in VALID_PHASES:
-            continue
         rows.append(normalized)
     return header, rows
