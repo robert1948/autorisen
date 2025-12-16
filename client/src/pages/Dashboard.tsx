@@ -4,6 +4,7 @@ import { api, DashboardStats, ActivityItem } from '../services/api';
 import { PaymentDashboardSummary, RecentPaymentsWidget, QuickPaymentButton } from '../components/payments/PaymentIntegration';
 import { PaymentStateProvider } from '../context/PaymentStateContext';
 import { PaymentErrorBoundary } from '../components/payments/PaymentErrorBoundary';
+import { features } from '../config/features';
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -91,18 +92,22 @@ const Dashboard: React.FC = () => {
             <span className="text-sm text-gray-500">Welcome back!</span>
           </div>
           <nav className="flex space-x-4">
-            <Link 
-              to="/onboarding/guide" 
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Getting Started
-            </Link>
-            <Link 
-              to="/billing" 
-              className="text-gray-600 hover:text-gray-700"
-            >
-              Billing
-            </Link>
+            {features.onboarding && (
+              <Link 
+                to="/onboarding/guide" 
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Getting Started
+              </Link>
+            )}
+            {features.payments && (
+              <Link 
+                to="/billing" 
+                className="text-gray-600 hover:text-gray-700"
+              >
+                Billing
+              </Link>
+            )}
             <Link 
               to="/onboarding/profile" 
               className="text-gray-600 hover:text-gray-700"
@@ -231,48 +236,54 @@ const Dashboard: React.FC = () => {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-4">
-              <PaymentErrorBoundary>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <QuickPaymentButton 
-                    className="w-full"
-                    onClick={() => window.location.href = '/checkout'}
-                  />
-                </div>
-              </PaymentErrorBoundary>
+              {features.payments && (
+                <PaymentErrorBoundary>
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <QuickPaymentButton 
+                      className="w-full"
+                      onClick={() => window.location.href = '/checkout'}
+                    />
+                  </div>
+                </PaymentErrorBoundary>
+              )}
 
-              <Link
-                to="/agents"
-                className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Manage Agents</p>
-                    <p className="text-xs text-gray-500">Create, test, and deploy agents</p>
-                  </div>
-                </div>
-              </Link>
+              {features.agentsShell && (
+                <>
+                  <Link
+                    to="/agents"
+                    className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">Manage Agents</p>
+                        <p className="text-xs text-gray-500">Create, test, and deploy agents</p>
+                      </div>
+                    </div>
+                  </Link>
 
-              <Link
-                to="/marketplace"
-                className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Browse Marketplace</p>
-                    <p className="text-xs text-gray-500">Find new tools and agents</p>
-                  </div>
-                </div>
-              </Link>
+                  <Link
+                    to="/marketplace"
+                    className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">Browse Marketplace</p>
+                        <p className="text-xs text-gray-500">Find new tools and agents</p>
+                      </div>
+                    </div>
+                  </Link>
+                </>
+              )}
 
               <Link
                 to="/settings"
@@ -295,86 +306,90 @@ const Dashboard: React.FC = () => {
           </section>
 
           {/* Payment Summary */}
-          <PaymentErrorBoundary>
-            <PaymentStateProvider>
-              <section>
-                <PaymentDashboardSummary />
-              </section>
-            </PaymentStateProvider>
-          </PaymentErrorBoundary>
+          {features.payments && (
+            <PaymentErrorBoundary>
+              <PaymentStateProvider>
+                <section>
+                  <PaymentDashboardSummary />
+                </section>
+              </PaymentStateProvider>
+            </PaymentErrorBoundary>
+          )}
         </div>
 
         {/* Full-width Payment Widgets */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Payments */}
-          <PaymentErrorBoundary>
-            <PaymentStateProvider>
-              <RecentPaymentsWidget 
-                className="lg:col-span-1"
-                limit={5}
-              />
-            </PaymentStateProvider>
-          </PaymentErrorBoundary>
+        {features.payments && (
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Recent Payments */}
+            <PaymentErrorBoundary>
+              <PaymentStateProvider>
+                <RecentPaymentsWidget 
+                  className="lg:col-span-1"
+                  limit={5}
+                />
+              </PaymentStateProvider>
+            </PaymentErrorBoundary>
 
-          {/* Payment Actions */}
-          <section className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Actions</h3>
-              <div className="space-y-4">
-                <Link
-                  to="/checkout"
-                  className="block bg-blue-50 rounded-lg p-4 hover:bg-blue-100 transition-colors"
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
+            {/* Payment Actions */}
+            <section className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Actions</h3>
+                <div className="space-y-4">
+                  <Link
+                    to="/checkout"
+                    className="block bg-blue-50 rounded-lg p-4 hover:bg-blue-100 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">Make Payment</p>
+                        <p className="text-xs text-gray-500">Process a new payment</p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">Make Payment</p>
-                      <p className="text-xs text-gray-500">Process a new payment</p>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
 
-                <Link
-                  to="/billing/methods"
-                  className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                  <Link
+                    to="/billing/methods"
+                    className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">Payment Methods</p>
+                        <p className="text-xs text-gray-500">Manage your payment methods</p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">Payment Methods</p>
-                      <p className="text-xs text-gray-500">Manage your payment methods</p>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
 
-                <Link
-                  to="/billing/invoices"
-                  className="block bg-green-50 rounded-lg p-4 hover:bg-green-100 transition-colors"
-                >
-                  <div className="flex items-center">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                      </svg>
+                  <Link
+                    to="/billing/invoices"
+                    className="block bg-green-50 rounded-lg p-4 hover:bg-green-100 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">Invoice History</p>
+                        <p className="text-xs text-gray-500">View past invoices and payments</p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">Invoice History</p>
-                      <p className="text-xs text-gray-500">View past invoices and payments</p>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -16,6 +16,8 @@ FE-007,Full-width layout optimization,frontend,completed,P1,2025-11-09,Responsiv
 FE-008,Dynamic version display,frontend,completed,P1,2025-11-09,Automated version from package.json via build system,client/vite.config.ts,Footer shows v0.2.0 correctly
 FE-009,TypeScript error resolution,frontend,completed,P1,,Fixed 11 TypeScript compilation errors across React components,client/src/pages/Register.tsx,npm run type-check passes cleanly
 FE-010,Page content creation,frontend,completed,P1,,Created comprehensive Marketplace/Agents/Settings pages with routing,client/src/pages/{Marketplace,Agents,Settings}.tsx,User flow diagram implementation complete
+FE-011,Feature flag infrastructure,frontend,completed,P1,2025-12-16,Vite env var based feature flags,client/src/config/features.ts,Check client/.env
+FE-012,Route gating & feature protection,frontend,completed,P1,2025-12-16,Protected routes based on feature flags,client/src/App.tsx,Toggle flags in .env
 UI-001,Logo component with size variants,frontend,completed,P2,2025-11-07,Smart Logo component serves optimized image sizes,client/src/components/ui/Logo.tsx,Test logo rendering across devices
 UI-002,Responsive logo design system,frontend,completed,P2,2025-11-07,Mobile-first CSS with breakpoints for logo scaling,client/src/index.css,Visual test on mobile/tablet/desktop
 DEVOPS-001,Docker containerization,devops,completed,P1,2025-11-07,Multi-stage Dockerfile with frontend build + Python runtime,Dockerfile Dockerfile.production,docker build -t autorisen .
@@ -25,6 +27,7 @@ DEVOPS-004,Database migrations,devops,completed,P1,2025-11-07,Alembic migrations
 DEVOPS-005,CI/CD GitHub Actions,devops,completed,P1,2025-11-07,Automated testing and deployment workflows,.github/workflows/*,Check Actions tab for green builds
 DEVOPS-035,Production deployment,devops,completed,P0,2025-11-07,Live on Heroku with container deployment and security hardening,https://autorisen-dac8e65796e7.herokuapp.com,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
 DEVOPS-036,Static asset optimization,devops,completed,P1,2025-11-07,Multiple logo sizes for performance optimization,client/public/icons/*,Lighthouse audit for asset loading
+DEVOPS-006,Staging deployment automation,devops,completed,P1,2025-12-16,Makefile target for staging deploy,Makefile,make deploy-autorisen
 CODE-001,Python linting & optimization,backend,completed,P1,2025-11-09,Comprehensive Python code quality improvements with ruff,backend/src/modules/user/service.py,ruff check backend/
 CODE-002,Markdown documentation linting,docs,completed,P1,2025-11-09,97 markdown files linted and optimized,docs/MARKDOWN_LINTING_SUMMARY.md,markdownlint docs/
 CODE-003,Backend performance optimizations,backend,completed,P1,2025-11-09,O(n²) to O(n) performance improvements in user service,backend/src/modules/user/service.py,Performance benchmarks

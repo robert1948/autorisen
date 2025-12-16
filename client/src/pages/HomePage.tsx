@@ -1,9 +1,9 @@
 import React from 'react';
-import Homepage from '../components/generated/Homepage';
+import Homepage from '../components/HomePage';
 
 const HomePageWrapper: React.FC = () => {
   return (
-    <div className="page-container">
+    <div>
       <Homepage />
     </div>
   );

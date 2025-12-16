@@ -43,20 +43,18 @@ The JSON spec includes:
 
 ### **Phase 1: Figma Design Creation**
 
-```bash
-## Use our existing Figma workflow
-make design-helper
+**Note:** Automated Figma integration has been removed for security. Please refer to `docs/figma/DESIGN_REFERENCES.md` for the active design file.
 
-## Generate components from your Figma designs
-make design-generate NODE_ID=<frame-id> COMPONENT=HomePage
-make design-generate NODE_ID=<frame-id> COMPONENT=SubscribePage
-## ... etc for each page
-```text
+**Manual Workflow:**
+1. Open the [Active Design File](https://www.figma.com/design/92Jd8bEnVNWOVKNbvvyStY/CapeControl?node-id=16-7&t=w2oQXpYd47iU1HZL-0).
+2. Export assets or inspect CSS properties.
+3. Manually create components in `client/src/components/`.
+
 ### **Phase 2: React Component Development**
 
 ```bash
-## Components will be auto-generated in:
-client/src/components/generated/
+## Components should be manually created in:
+client/src/components/
 ├── HomePage.tsx
 ├── SubscribePage.tsx
 ├── AboutPage.tsx

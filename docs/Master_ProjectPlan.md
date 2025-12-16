@@ -169,6 +169,8 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | FE-008 | Dynamic version display | frontend | completed | P1 | 2025-11-09 |
 | FE-009 | TypeScript error resolution | frontend | completed | P1 |  |
 | FE-010 | Page content creation | frontend | completed | P1 |  |
+| FE-011 | Feature flag infrastructure | frontend | completed | P1 | 2025-12-16 |
+| FE-012 | Route gating & feature protection | frontend | completed | P1 | 2025-12-16 |
 | UI-001 | Logo component with size variants | frontend | completed | P2 | 2025-11-07 |
 | UI-002 | Responsive logo design system | frontend | completed | P2 | 2025-11-07 |
 | DEVOPS-001 | Docker containerization | devops | completed | P1 | 2025-11-07 |
@@ -178,6 +180,7 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | DEVOPS-005 | CI/CD GitHub Actions | devops | completed | P1 | 2025-11-07 |
 | DEVOPS-035 | Production deployment | devops | completed | P0 | 2025-11-07 |
 | DEVOPS-036 | Static asset optimization | devops | completed | P1 | 2025-11-07 |
+| DEVOPS-006 | Staging deployment automation | devops | completed | P1 | 2025-12-16 |
 | CODE-001 | Python linting & optimization | backend | completed | P1 | 2025-11-09 |
 | CODE-002 | Markdown documentation linting | docs | completed | P1 | 2025-11-09 |
 | CODE-003 | Backend performance optimizations | backend | completed | P1 | 2025-11-09 |

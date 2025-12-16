@@ -193,11 +193,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const redirectToLogin = () => {
-    if (window.location.pathname !== "/login") {
-      window.location.assign("/login");
-    }
-  };
+const redirectToLogin = () => {
+  if (window.location.pathname !== "/auth/login") {
+    window.location.assign("/auth/login");
+  }
+};
 
   const refreshToken = async () => {
     const refreshValue =

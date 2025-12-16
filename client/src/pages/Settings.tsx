@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProfileSettings from './profile/ProfileSettings';
 import Security from './profile/Security';
 import ApiTokens from './profile/ApiTokens';
+import { features } from '../config/features';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'api' | 'billing'>('profile');
@@ -11,7 +12,7 @@ const Settings: React.FC = () => {
     { id: 'profile', label: 'Profile', icon: 'user' },
     { id: 'security', label: 'Security', icon: 'shield' },
     { id: 'api', label: 'API Tokens', icon: 'key' },
-    { id: 'billing', label: 'Billing', icon: 'credit-card' }
+    ...(features.payments ? [{ id: 'billing', label: 'Billing', icon: 'credit-card' }] : [])
   ];
 
   const getTabIcon = (iconType: string) => {
@@ -64,12 +65,14 @@ const Settings: React.FC = () => {
             >
               Dashboard
             </Link>
-            <Link 
-              to="/agents" 
-              className="text-gray-600 hover:text-gray-700"
-            >
-              My Agents
-            </Link>
+            {features.agentsShell && (
+              <Link 
+                to="/agents" 
+                className="text-gray-600 hover:text-gray-700"
+              >
+                My Agents
+              </Link>
+            )}
           </nav>
         </div>
       </header>

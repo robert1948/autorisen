@@ -85,7 +85,8 @@
         "elements": [
           {
             "type": "hero_section",
-            "content": "CapeControl branding and value proposition"
+            "content": "Turn complex work into calm, AI-guided control",
+            "subhead": "Manage tasks, projects, decisions, and workflows with an always-on AI assistant that keeps everything clear, organised, and under control."
           },
           {
             "type": "navigation",

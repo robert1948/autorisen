@@ -1,0 +1,45 @@
+id,task,owner,status,priority,completion_date,notes,artifacts,verification_commands
+# COMPLETED MILESTONES – Production Ready System (Updated 2025-12-16)
+AUTH-001,Core authentication infrastructure,backend,completed,P0,2025-11-07,JWT-based auth with secure session management,backend/src/modules/auth/*,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
+AUTH-002,Login/Register UI components,frontend,completed,P0,2025-11-07,CapeControl auth UI with LoginPage and validation,client/src/components/Auth/*,Manual test /auth/login
+AUTH-003,CSRF protection implementation,backend,completed,P0,2025-11-07,Production CSRF middleware,backend/src/middleware/csrf.py,pytest backend/tests/test_security_csrf.py
+AUTH-004,MFA system (TOTP),backend,completed,P0,2025-11-07,6-digit TOTP with QR enrollment,backend/src/modules/auth/mfa.py,Manual MFA test
+AUTH-005,Security hardening & tests,backend,completed,P0,2025-11-07,ENV hardening & security tests,backend/tests/test_security.py,curl -I /api/auth/csrf
+AUTH-006,Production authentication validation,backend,completed,P0,2025-11-07,E2E auth verified in prod,docs/Release_Runbook.md,Manual prod test
+
+FE-001,React SPA foundation,frontend,completed,P1,2025-11-07,Vite + React + TS + Tailwind,client/src/*,npm run dev
+FE-002,Routing & navigation,frontend,completed,P1,2025-12-16,Canonical /auth/* and /app/* routing with aliases,client/src/App.tsx,Navigate to /auth/login and /app/dashboard
+FE-003,Auth context & state management,frontend,completed,P1,2025-11-07,AuthContext with token persistence,client/src/features/auth/AuthContext.tsx,Inspect localStorage
+FE-004,Login + MFA UI,frontend,completed,P0,2025-11-07,LoginPage MFAChallenge MFAEnroll,client/src/components/Auth/*,Manual flow test
+FE-005,Logo & favicon system,frontend,completed,P1,2025-11-07,Multi-size logo + PWA icons,client/public/icons/*,Browser favicon check
+FE-011,Feature flag infrastructure,frontend,completed,P1,2025-12-16,Vite env-based flags,client/src/config/features.ts,Toggle .env flags
+FE-012,Route gating & feature protection,frontend,completed,P1,2025-12-16,Feature-gated & onboarding-gated routes,client/src/App.tsx,Disable flags and verify redirects
+
+DEVOPS-001,Docker containerization,devops,completed,P1,2025-11-07,Multi-stage Docker build,Dockerfile,docker build .
+DEVOPS-002,Heroku deployment pipeline,devops,completed,P0,2025-11-07,GitHub Actions + Heroku,deploy-heroku.yml,Check Actions
+DEVOPS-035,Production deployment,devops,completed,P0,2025-11-07,Live production system,Heroku app URL,curl /api/health
+
+# CURRENT PHASE – ChatKit & Agent Framework
+CHAT-001,ChatKit backend integration,backend,completed,P0,2025-11-10,ChatKit API + tools,backend/src/modules/chatkit/*,pytest chatkit
+CHAT-002,Agent registry schema,backend,completed,P0,2025-11-08,Agent + version schema,backend/migrations/*,pytest registry tests
+CHAT-003,Flow orchestration API,backend,completed,P0,2025-11-10,Run + history endpoints,backend/src/modules/flows/*,pytest flows
+CHAT-004,ChatKit frontend components,frontend,completed,P0,2025-11-13,Launcher + modal + telemetry,client/src/components/chat/*,npm run build
+CHAT-005,Agent marketplace UI,frontend,todo,P1,,UI shell exists, feature-flagged,client/src/pages/Marketplace.tsx,Enable flag and load page
+CHAT-006,Developer agent builder,frontend,todo,P1,,Agent editor UI,client/src/pages/Developer.tsx,Create test agent
+CHAT-007,Onboarding flow integration,frontend,todo,P1,,Checklist + progress sync,client/src/components/onboarding/*,Complete onboarding flow
+
+# PAYMENTS – PayFast
+PAY-001,PaymentsAgent service,backend,completed,P0,2025-11-10,PayFast adapter + ITN,backend/src/modules/payments/*,pytest payfast
+PAY-002,Checkout API + ChatKit tool,backend,completed,P0,2025-11-10,Checkout endpoint,backend/src/modules/payments/*,curl checkout
+PAY-003,ITN ingestion & audit log,backend,todo,P0,,Persist ITN events,backend/src/modules/payments/webhooks.py,Simulate ITN
+PAY-004,Payments DB schema,backend,todo,P0,,Transactions + invoices tables,backend/migrations/*,alembic upgrade
+PAY-006,Payments UI entry points,frontend,todo,P1,,Buttons + entry points,client/src/components/payments/*,Manual UI test
+PAY-008,Payment return & status handling,frontend,todo,P0,,Handle success/cancel/failure redirects,client/src/pages/PaymentStatus.tsx,Simulate PayFast return
+
+# NEXT PHASE – Optimization & Scale
+OPT-001,Performance monitoring,devops,todo,P1,,Metrics & alerts,monitoring/*,Check dashboard
+OPT-006,Security audit,security,todo,P0,,Third-party audit,docs/security_audit.md,Audit report
+
+# FUTURE – Business Enhancements
+BIZ-001,User analytics dashboard,frontend,todo,P2,,Analytics dashboard,client/src/pages/Dashboard.tsx,UAT
+BIZ-002,Admin panel,frontend,todo,P2,,Admin UI,client/src/pages/Admin.tsx,Admin tests

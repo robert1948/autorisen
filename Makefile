@@ -1297,3 +1297,6 @@ capsule-status:
 capsule-plan-sync:
 	@echo "CAPSULE: OPS-PLAN-SYNC — Update Project Plan & Related Files"
 	@# run scripts to regenerate docs or summaries
+
+deploy-autorisen: ## Deploy specifically to autorisen (staging)
+	@$(MAKE) heroku-deploy-stg
