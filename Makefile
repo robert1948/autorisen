@@ -627,8 +627,8 @@ codex-test: ## Run pytest with CI-safe defaults
 	@set -e; \
 	$(TEST_ENV_EXPORT) \
 	. "$(VENV)/bin/activate" 2>/dev/null || true; \
-	$(PY) -m pip install -q -r "$(REQ)"; \
-	pytest -q
+	$(VENV)/bin/python -m pip install -q -r "$(REQ)"; \
+	$(VENV)/bin/pytest -q
 
 codex-test-cov: ## Run pytest with coverage
 	@echo "== Running pytest with coverage =="

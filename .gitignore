@@ -314,3 +314,25 @@ coverage/
 # Bundle analyzer reports
 bundle-analyzer-report.html
 webpack-bundle-analyzer.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Local databases / scratch
+*.db
+*.sqlite
+*.sqlite3
+tmp/
+archive/local/
+
+# OS / editor
+.DS_Store
+.vscode/settings.json.tmp
