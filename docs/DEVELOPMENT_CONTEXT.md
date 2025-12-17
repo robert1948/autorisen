@@ -2,6 +2,14 @@
 
 This note captures the expected local environment defaults, helpful make targets, and smoke checks so onboarding stays quick.
 
+## Operating Doctrine
+
+- **Codebase Identity**: `CapeControl`
+- **Deployment Targets**:
+    - `local`: Docker Compose environment
+    - `autorisen`: Staging environment
+    - `capecraft`: Production environment
+
 ## Services & Ports
 
 - **Backend API**: `http://localhost:8000`

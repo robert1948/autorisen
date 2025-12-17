@@ -45,9 +45,9 @@ SHELL := /bin/bash
 # ----------------------------------------------------------------------------- 
 # Core vars
 # -----------------------------------------------------------------------------
-PY := python3
-PIP := $(PY) -m pip
 VENV := .venv
+PY := $(VENV)/bin/python
+PIP := $(VENV)/bin/pip
 REQ := requirements.txt
 
 IMAGE ?= autorisen:local
@@ -195,16 +195,24 @@ venv: ## Create a virtualenv in $(VENV)
 	@if [ -d "$(VENV)" ]; then \
 		echo "Virtualenv $(VENV) already exists"; \
 	else \
-		$(PY) -m venv $(VENV); \
+		python3 -m venv $(VENV); \
 		echo "Created virtualenv $(VENV)"; \
 	fi
+
+doctor: ## Validate development environment prerequisites
+	@echo "== Running Doctor Check =="
+	@if [ ! -d "$(VENV)" ]; then echo "❌ Virtualenv missing. Run 'make venv'"; exit 1; fi
+	@if [ ! -x "$(PY)" ]; then echo "❌ Python executable not found in venv"; exit 1; fi
+	@echo "✅ Virtualenv found at $(VENV)"
+	@$(PY) --version
+	@echo "✅ Environment looks healthy"
 
 install: venv ## Install project dependencies (uses $(REQ) if present)
 	@echo "Installing dependencies..."
 	@if [ -f "$(REQ)" ]; then \
-		$(VENV)/bin/python -m pip install -r $(REQ); \
+		$(PIP) install -r $(REQ); \
 	else \
-		$(VENV)/bin/python -m pip install -e . || true; \
+		$(PIP) install -e . || true; \
 		echo "No requirements.txt found; attempted editable install"; \
 	fi
 

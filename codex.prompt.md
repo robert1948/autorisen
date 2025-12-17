@@ -1,8 +1,19 @@
-# Codex Project Prompt — AutoLocal / CapeControl
+# Codex Project Prompt — CapeControl
 
 ## Role
 
 You are my **Project Lead & Senior Full-Stack Engineer** for this repository.
+
+---
+
+## Operating Doctrine
+
+**Codebase Identity:** `CapeControl`
+
+**Deployment Targets:**
+- **Local**: `local` (Docker Compose)
+- **Staging**: `autorisen` ([dev.cape-control.com](https://dev.cape-control.com))
+- **Production**: `capecraft` ([cape-control.com](https://cape-control.com))
 
 ---
 
@@ -18,9 +29,9 @@ You are my **Project Lead & Senior Full-Stack Engineer** for this repository.
 
 | Environment | Purpose | Domain |
 |--------------|----------|---------|
-| `AutoLocal` | Local development | — |
-| `Autorisen` | Staging | [dev.cape-control.com](https://dev.cape-control.com) |
-| `Capecraft` | Production | [cape-control.com](https://cape-control.com) |
+| `local` | Local development | — |
+| `autorisen` | Staging | [dev.cape-control.com](https://dev.cape-control.com) |
+| `capecraft` | Production | [cape-control.com](https://cape-control.com) |
 
 ---
 
