@@ -47,7 +47,7 @@ SHELL := /bin/bash
 # -----------------------------------------------------------------------------
 VENV := .venv
 PY := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
+PIP := $(PY) -m pip
 REQ := requirements.txt
 
 IMAGE ?= autorisen:local
@@ -635,8 +635,8 @@ codex-test: ## Run pytest with CI-safe defaults
 	@set -e; \
 	$(TEST_ENV_EXPORT) \
 	. "$(VENV)/bin/activate" 2>/dev/null || true; \
-	$(VENV)/bin/python -m pip install -q -r "$(REQ)"; \
-	$(VENV)/bin/pytest -q
+	$(PIP) install -q -r "$(REQ)"; \
+	$(PY) -m pytest -q
 
 codex-test-cov: ## Run pytest with coverage
 	@echo "== Running pytest with coverage =="

@@ -26,7 +26,8 @@ from starlette.responses import (
 from backend.src.core.config import settings
 from backend.src.core.rate_limit import configure_rate_limit
 from backend.src.db.session import SessionLocal
-from backend.src.modules.auth.csrf import csrf_middleware
+from backend.src.modules.auth.csrf import CSRFMiddleware
+from backend.src.middleware.cache_headers import CacheHeadersMiddleware
 
 try:
     from app.middleware.ddos_protection import DDoSProtectionMiddleware  # type: ignore
@@ -247,8 +248,8 @@ def create_app() -> FastAPI:
     if InputSanitizationMiddleware:
         app.add_middleware(InputSanitizationMiddleware)  # type: ignore[arg-type]
 
-    # CSRF middleware (Starlette BaseHTTPMiddleware dispatch)
-    app.add_middleware(BaseHTTPMiddleware, dispatch=csrf_middleware)
+    # CSRF middleware (Pure ASGI)
+    app.add_middleware(CSRFMiddleware)
 
     # CORS
     allow_origins = {
@@ -282,63 +283,7 @@ def create_app() -> FastAPI:
     )
 
     # Cache headers middleware for production cache-correctness (runs LAST to override any defaults)
-    @app.middleware("http")
-    async def cache_headers_middleware(request, call_next):
-        response = await call_next(request)
-        path = request.url.path
-
-        # Force clear any existing cache headers first
-        if "Cache-Control" in response.headers:
-            del response.headers["Cache-Control"]
-        if "Pragma" in response.headers:
-            del response.headers["Pragma"]
-
-        # Apply our cache-correctness rules
-        # 1. Immutable, long cache for hashed assets from Vite
-        if path.startswith("/assets/") and any(
-            path.endswith(ext)
-            for ext in (
-                ".js",
-                ".css",
-                ".png",
-                ".jpg",
-                ".jpeg",
-                ".svg",
-                ".webp",
-                ".woff",
-                ".woff2",
-                ".ttf",
-                ".map",
-                ".ico",
-            )
-        ):
-            # Example: /assets/js/index-DAo417Vc.js
-            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-
-        # 2. Specific files that should cache for a long time
-        elif path in ["/favicon.ico", "/site.webmanifest", "/robots.txt"]:
-            response.headers["Cache-Control"] = "public, max-age=31536000"
-
-        # 3. Never cache HTML shells or config - always revalidate for new builds
-        elif (
-            path == "/"
-            or path.endswith(".html")
-            or path in EXPECTED_ROUTES
-            or path == "/config.json"
-        ):
-            response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-
-        # 4. API endpoints should not be cached by default
-        elif path.startswith("/api/"):
-            response.headers["Cache-Control"] = "no-store"
-
-        # 5. Everything else gets short cache with revalidation
-        else:
-            response.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
-
-        return response
+    app.add_middleware(CacheHeadersMiddleware)
 
     # Rate limiting (idempotent even if slowapi is absent/falls back)
     try:

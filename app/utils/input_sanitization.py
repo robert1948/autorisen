@@ -20,9 +20,9 @@ from enum import Enum
 from typing import Any, Dict, List, MutableMapping, Optional, Tuple
 
 from starlette.datastructures import MutableHeaders
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 log = logging.getLogger("input_sanitization")
 
@@ -160,12 +160,13 @@ class InputSanitizer:
                 sanitization_applied = True
             threats.extend(prompt_threats)
 
-        sanitized, pii, changed = self._redact_pii(sanitized)
-        if changed:
-            sanitization_applied = True
-        if pii:
-            pii_found.extend(pii)
-            threats.append("pii_redacted")
+            # Only redact PII for AI prompts
+            sanitized, pii, changed = self._redact_pii(sanitized)
+            if changed:
+                sanitization_applied = True
+            if pii:
+                pii_found.extend(pii)
+                threats.append("pii_redacted")
 
         is_safe = len(threats) == 0
 
@@ -276,78 +277,110 @@ def validate_ai_prompt(
     }
 
 
-class InputSanitizationMiddleware(BaseHTTPMiddleware):
+class InputSanitizationMiddleware:
     """
     Middleware that sanitizes incoming JSON payloads and annotates responses.
     """
 
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         *,
         sanitizer: Optional[InputSanitizer] = None,
         ai_reject_score: int = 70,
     ) -> None:
-        super().__init__(app)
+        self.app = app
         self.sanitizer = sanitizer or _GLOBAL_SANITIZER
         self.ai_reject_score = ai_reject_score
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope, receive)
+        
+        if not self._should_process(request):
+            await self.app(scope, receive, send)
+            return
+
+        # Read body
+        body_bytes = await request.body()
+        
         sanitized_flag = False
         sanitization_meta: Dict[str, Any] = {}
+        payload = None
+        reject_response = None
 
-        if self._should_process(request):
-            body_bytes = await request.body()
-            if body_bytes:
-                try:
-                    payload = json.loads(body_bytes)
-                except json.JSONDecodeError:
-                    payload = None
-                if isinstance(payload, dict):
+        if body_bytes:
+            try:
+                payload = json.loads(body_bytes)
+            except json.JSONDecodeError:
+                payload = None
+            
+            if isinstance(payload, dict):
+                (
+                    payload,
+                    sanitized_flag,
+                    sanitization_meta,
+                    reject_response,
+                ) = self._process_payload(request, payload)
+            elif isinstance(payload, list):
+                new_items = []
+                for item in payload:
+                    if not isinstance(item, dict):
+                        new_items.append(item)
+                        continue
                     (
-                        payload,
-                        sanitized_flag,
-                        sanitization_meta,
-                        reject_response,
-                    ) = self._process_payload(request, payload)
-                    if reject_response is not None:
-                        return reject_response
-                    if sanitized_flag:
-                        self._set_request_body(request, payload)
-                elif isinstance(payload, list):
-                    new_items = []
-                    for item in payload:
-                        if not isinstance(item, dict):
-                            new_items.append(item)
-                            continue
-                        (
-                            processed,
-                            item_sanitized,
-                            item_meta,
-                            reject_response,
-                        ) = self._process_payload(request, item)
-                        if reject_response is not None:
-                            return reject_response
-                        if item_sanitized:
-                            sanitized_flag = True
-                        new_items.append(processed)
-                        sanitization_meta = self._merge_meta(
-                            sanitization_meta, item_meta
+                        processed,
+                        item_sanitized,
+                        item_meta,
+                        item_reject,
+                    ) = self._process_payload(request, item)
+                    if item_reject is not None:
+                        reject_response = item_reject
+                        break
+                    if item_sanitized:
+                        sanitized_flag = True
+                    new_items.append(processed)
+                    sanitization_meta = self._merge_meta(
+                        sanitization_meta, item_meta
+                    )
+                if not reject_response:
+                    payload = new_items
+
+        if reject_response:
+            await reject_response(scope, receive, send)
+            return
+
+        # Prepare new body if sanitized
+        if sanitized_flag and payload is not None:
+            new_body = json.dumps(payload).encode("utf-8")
+        else:
+            new_body = body_bytes
+
+        # Replay body
+        sent = False
+        async def new_receive() -> Message:
+            nonlocal sent
+            if sent:
+                return {"type": "http.disconnect"}
+            sent = True
+            return {"type": "http.request", "body": new_body, "more_body": False}
+
+        # Send wrapper for headers
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                if sanitized_flag or getattr(request.state, "input_sanitized", False):
+                    headers = MutableHeaders(scope=message)
+                    headers["X-Input-Sanitized"] = "true"
+                    if sanitization_meta.get("threats"):
+                        headers["X-Input-Sanitization-Threats"] = ",".join(
+                            sanitization_meta["threats"]
                         )
-                    if sanitized_flag:
-                        self._set_request_body(request, new_items)
+            await send(message)
 
-        response = await call_next(request)
-
-        if sanitized_flag or getattr(request.state, "input_sanitized", False):
-            headers = MutableHeaders(response.headers)
-            headers["X-Input-Sanitized"] = "true"
-            if sanitization_meta.get("threats"):
-                headers["X-Input-Sanitization-Threats"] = ",".join(
-                    sanitization_meta["threats"]
-                )
-
-        return response
+        await self.app(scope, new_receive, send_wrapper)
 
     def _should_process(self, request: Request) -> bool:
         if request.method not in {"POST", "PUT", "PATCH"}:
@@ -451,15 +484,6 @@ class InputSanitizationMiddleware(BaseHTTPMiddleware):
             merged["threats"] = []
         merged["threats"].extend(_lift_list(secondary.get("threats", [])))
         return merged
-
-    def _set_request_body(self, request: Request, payload: Any) -> None:
-        new_body = json.dumps(payload).encode("utf-8")
-
-        async def receive() -> Dict[str, Any]:
-            return {"type": "http.request", "body": new_body, "more_body": False}
-
-        request._receive = receive  # type: ignore[attr-defined]
-        request._body = new_body  # type: ignore[attr-defined]
 
 
 __all__ = [

@@ -24,7 +24,7 @@ class TestCapeAIGuideTaskInput:
         assert input_data.query == "How do I get started?"
         assert input_data.user_level == "beginner"  # default value
         assert input_data.preferred_format == "text"  # default value
-        assert input_data.context is None  # optional field
+        assert input_data.context == {}  # optional field defaults to empty dict
 
     def test_complete_valid_input(self):
         """Test complete input with all fields populated."""

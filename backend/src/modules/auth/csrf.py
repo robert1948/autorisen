@@ -100,19 +100,34 @@ def require_csrf_token(request: Request) -> None:
     return None
 
 
-async def csrf_middleware(
-    request: Request, call_next: Callable[[Request], Awaitable[Response]]
-) -> Response:
-    method = (request.method or "").upper()
-    if method in SAFE_METHODS:
-        return await call_next(request)
+from starlette.types import ASGIApp, Scope, Receive, Send
 
-    try:
-        require_csrf_token(request)
-    except HTTPException as exc:
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
-    return await call_next(request)
+class CSRFMiddleware:
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope, receive)
+
+        # Check if we should skip
+        method = request.method
+        if method in SAFE_METHODS:
+            await self.app(scope, receive, send)
+            return
+
+        try:
+            require_csrf_token(request)
+        except HTTPException as exc:
+            response = JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+            await response(scope, receive, send)
+            return
+
+        await self.app(scope, receive, send)
 
 
 @csrf_router.get("/csrf")
