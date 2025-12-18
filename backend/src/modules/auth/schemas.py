@@ -92,6 +92,7 @@ class LoginRequest(BaseModel):
 
     email: EmailStr
     password: str
+    recaptcha_token: Optional[str] = None
 
 
 class RefreshRequest(BaseModel):
@@ -143,3 +144,29 @@ RegisterStep2In.model_rebuild()
 RegisterStep2Out.model_rebuild()
 TokenResponse.model_rebuild()
 AnalyticsEventIn.model_rebuild()
+
+class LoginResponse(BaseModel):
+    """Canonical login response."""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    email_verified: bool = True
+
+class MeResponse(BaseModel):
+    """Canonical user profile response."""
+    id: str
+    email: EmailStr
+    first_name: str
+    last_name: str
+    role: str
+    is_active: bool
+    email_verified: bool
+
+class ErrorResponse(BaseModel):
+    """Canonical error response."""
+    detail: str
+
+# Resolve forward references
+LoginResponse.model_rebuild()
+MeResponse.model_rebuild()
+ErrorResponse.model_rebuild()

@@ -58,6 +58,7 @@ from backend.src.services.emailer import (
 from backend.src.services.security import decode_jwt
 
 from .csrf import csrf_router, issue_csrf_token, require_csrf_token
+from .schemas import LoginRequest, LoginResponse, MeResponse, ErrorResponse
 from .deps import (
     _bearer_from_header,
     _load_user_from_claims,
@@ -107,20 +108,11 @@ CompanyNameStr = Annotated[
 IdTokenStr = Annotated[str, StringConstraints(min_length=10, max_length=4096)]
 
 
-class LoginIn(BaseModel):
-    email: EmailStr
-    password: PasswordStr
-    recaptcha_token: Optional[str] = None
+# LoginIn replaced by LoginRequest from schemas
+# TokensOut replaced by LoginResponse from schemas
 
 
-class TokensOut(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    email_verified: bool = True
-
-
-class SocialTokensOut(TokensOut):
+class SocialTokensOut(LoginResponse):
     email: EmailStr
 
 
@@ -220,14 +212,7 @@ class RegisterIn(BaseModel):
         return self
 
 
-class MeOut(BaseModel):
-    id: str
-    email: EmailStr
-    first_name: str
-    last_name: str
-    role: str
-    is_active: bool
-    email_verified: bool
+# MeOut replaced by MeResponse from schemas
 
 
 class RefreshIn(BaseModel):
@@ -1245,7 +1230,7 @@ async def register_step2(
         raise HTTPException(status_code=500, detail="Registration failed") from e
 
 
-@router.post("/register", response_model=TokensOut, status_code=201)
+@router.post("/register", response_model=LoginResponse, status_code=201)
 async def register_single(
     payload: RegisterIn,
     request: Request,
@@ -1303,7 +1288,7 @@ async def register_single(
     except Exception as exc:  # pragma: no cover
         log.exception("register_single_finalize email=%s err=%s", email, exc)
 
-    return TokensOut(
+    return LoginResponse(
         access_token=access_token, refresh_token=refresh_token, email_verified=True
     )
 
@@ -1381,9 +1366,9 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
 # -----------
 
 
-@router.post("/login", response_model=TokensOut, status_code=200)
+@router.post("/login", response_model=LoginResponse, status_code=200)
 async def login(
-    payload: LoginIn,
+    payload: LoginRequest,
     request: Request,
     response: Response,
     db: Session = Depends(get_db),
@@ -1433,7 +1418,7 @@ async def login(
             )
             record_login_attempt(ip, email, success=True)
             _set_refresh_cookie(response, refresh_token, expires_at=expires_at)
-            return TokensOut(
+            return LoginResponse(
                 access_token=access_token,
                 refresh_token=refresh_token,
                 email_verified=True,
@@ -1491,7 +1476,7 @@ async def login(
         record_login_attempt(ip, email, success=True)
         fallback_expiry = datetime.now(timezone.utc) + timedelta(days=7)
         _set_refresh_cookie(response, refresh_token, expires_at=fallback_expiry)
-        return TokensOut(
+        return LoginResponse(
             access_token=access, refresh_token=refresh_token, email_verified=True
         )
     except Exception as e:
@@ -1787,9 +1772,9 @@ async def refresh(
 # ----
 
 
-@router.get("/me", response_model=MeOut)
+@router.get("/me", response_model=MeResponse)
 async def me(current_user=Depends(get_current_user)):
-    return MeOut(
+    return MeResponse(
         id=current_user.id,
         email=current_user.email,
         first_name=current_user.first_name,
