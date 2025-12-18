@@ -28,7 +28,7 @@ DEVOPS-005,CI/CD GitHub Actions,devops,completed,P1,2025-11-07,Automated testing
 DEVOPS-035,Production deployment,devops,completed,P0,2025-11-07,Live on Heroku with container deployment and security hardening,https://autorisen-dac8e65796e7.herokuapp.com,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
 DEVOPS-036,Static asset optimization,devops,completed,P1,2025-11-07,Multiple logo sizes for performance optimization,client/public/icons/*,Lighthouse audit for asset loading
 DEVOPS-006,Staging deployment automation,devops,completed,P1,2025-12-16,Makefile target for staging deploy,Makefile,make deploy-autorisen
-CODE-001,Python linting & optimization,backend,completed,P1,2025-11-09,Comprehensive Python code quality improvements with ruff,backend/src/modules/user/service.py,ruff check backend/
+CODE-001,Python linting & optimization,backend,completed,P1,2025-12-18,Comprehensive Python code quality improvements with ruff,backend/src/modules/user/service.py,ruff check backend/
 CODE-002,Markdown documentation linting,docs,completed,P1,2025-11-09,97 markdown files linted and optimized,docs/MARKDOWN_LINTING_SUMMARY.md,markdownlint docs/
 CODE-003,Backend performance optimizations,backend,completed,P1,2025-11-09,O(n²) to O(n) performance improvements in user service,backend/src/modules/user/service.py,Performance benchmarks
 
@@ -75,7 +75,15 @@ MAINT-002,Documentation maintenance,docs,recurring,P2,,Keep technical documentat
 MAINT-003,Test suite expansion,backend,recurring,P1,,Maintain >90% test coverage with performance benchmarks,backend/tests/*,pytest --cov report
 MAINT-004,Performance monitoring,devops,recurring,P1,,Monitor and optimize system performance,monitoring/dashboards/,Weekly performance reports
 MAINT-005,Security updates,devops,recurring,P0,,Critical security patch management,scripts/security_scan.py,Monthly security audits
-MAINT-006,Code quality maintenance,devops,completed,P1,2025-11-09,Automated linting and optimization workflows,scripts/fix_python_lint.py,ruff check --fix across codebase
+MAINT-006,Code quality maintenance,devops,completed,P1,2025-12-18,Automated linting and optimization workflows,scripts/fix_python_lint.py,ruff check --fix across codebase
+
+# PUBLIC PRESENCE & LANDING PAGE
+PUB-001,Finalize public vision copy,product,completed,P1,2025-12-18,,,
+PUB-002,Define landing page goals (trust, clarity, CTA),design,in-progress,P1,,,,
+PUB-003,Landing page wireframe (Figma),design,todo,P1,,,,
+PUB-004,Landing page visual design (Figma),design,todo,P1,,,,
+PUB-005,Implement landing page,frontend,blocked,P1,,,,
+PUB-006,Align Auth -> CapeAI Guide story,product,in-progress,P1,,,,
 
 # PRIORITIES LEGEND
 # P0 = Critical (production blocking)
