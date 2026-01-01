@@ -30,6 +30,8 @@ import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
 import ChatConsole from "./pages/ChatConsole";
 import LogoTestPage from "./pages/LogoTestPage";
 import SunbirdPilotMobile from "./pages/sunbird/SunbirdPilotMobile";
@@ -127,6 +129,8 @@ export default function App() {
           <>
             <Route path="/app/billing" element={<Billing />} />
             <Route path="/app/checkout" element={<Checkout />} />
+            <Route path="/app/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/app/checkout/cancel" element={<CheckoutCancel />} />
           </>
         )}
 

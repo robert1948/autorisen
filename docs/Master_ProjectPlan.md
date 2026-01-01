@@ -195,7 +195,7 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | PAY-002 | Checkout API + ChatKit tool | backend | completed | P0 | 2025-11-10 |
 | PAY-003 | ITN ingestion & audit log | backend | completed | P0 | 2026-01-01 |
 | PAY-004 | Payments DB schema | backend | completed | P0 | 2026-01-01 |
-| PAY-006 | Payments UI entry points | frontend | todo | P1 | PAY-002 |
+| PAY-006 | Payments UI entry points | frontend | completed | P1 | 2026-01-01 |
 | PAY-007 | Security & validation | security | completed | P0 | 2026-01-01 |
 | OPT-001 | Performance monitoring | devops | todo | P1 |  |
 | OPT-002 | Database optimization | backend | todo | P1 |  |

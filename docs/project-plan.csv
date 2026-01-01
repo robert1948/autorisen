@@ -46,7 +46,7 @@ PAY-001,PaymentsAgent service (PayFast),backend,completed,P0,2025-11-10,PayFast 
 PAY-002,Checkout API + ChatKit tool,backend,completed,P0,2025-11-10,Expose /payments/payfast/checkout and ChatKit tool integration,backend/src/modules/payments/*,"curl -sS -X POST localhost:8000/api/payments/payfast/checkout -H 'Content-Type: application/json' -d '{\"amount\":99.99,\"item_name\":\"CapeControl Pilot\",\"customer_email\":\"demo@example.com\"}'"
 PAY-003,ITN ingestion & audit log,backend,completed,P0,2026-01-01,Handle ITN & persist events,backend/src/modules/payments/service.py,make payments-itn-sample
 PAY-004,Payments DB schema,backend,completed,P0,2026-01-01,transactions/invoices tables,backend/migrations/versions/64e4d0a224d9_add_payment_tables.py,alembic upgrade head
-PAY-006,Payments UI entry points,frontend,todo,P1,PAY-002,Buttons + success/cancel pages,client/src/components/payments/*,Manual return flow test
+PAY-006,Payments UI entry points,frontend,completed,P1,2026-01-01,Buttons + success/cancel pages,client/src/components/payments/*,Manual return flow test
 PAY-007,Security & validation,security,completed,P0,2026-01-01,Server-to-server validate,backend/src/modules/payments/service.py,Add PayFast validate POST
 
 # NEXT PHASE - Production Optimization & Scaling
