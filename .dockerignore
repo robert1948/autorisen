@@ -71,9 +71,9 @@ client/.turbo/
 client/coverage/
 node_modules/
 */node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
