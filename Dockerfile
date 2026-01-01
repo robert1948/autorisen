@@ -66,6 +66,7 @@ RUN useradd -m -u 1000 -s /bin/bash app \
 # Copy application code with proper ownership
 COPY --chown=app:app backend/ ./backend/
 COPY --chown=app:app app/ ./app/
+COPY --chown=app:app scripts/ ./scripts/
 COPY --chown=app:app --from=frontend-build /app/dist ./client/dist
 
 # Copy essential configuration files

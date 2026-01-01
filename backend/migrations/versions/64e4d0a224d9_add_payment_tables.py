@@ -134,7 +134,7 @@ def upgrade() -> None:
 
     # Create payment_methods table
     op.create_table(
-        "payment_methods",
+        "billing_payment_methods",
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("user_id", sa.String(length=36), nullable=False),
         sa.Column("provider", sa.String(length=32), nullable=False),
@@ -174,14 +174,17 @@ def upgrade() -> None:
         ),
     )
     op.create_index(
-        "ix_payment_methods_user_id", "payment_methods", ["user_id"], unique=False
+        "ix_payment_methods_user_id",
+        "billing_payment_methods",
+        ["user_id"],
+        unique=False,
     )
 
 
 def downgrade() -> None:
     # Drop payment tables in reverse order
-    op.drop_index("ix_payment_methods_user_id", table_name="payment_methods")
-    op.drop_table("payment_methods")
+    op.drop_index("ix_payment_methods_user_id", table_name="billing_payment_methods")
+    op.drop_table("billing_payment_methods")
 
     op.drop_index("ix_transactions_provider_reference", table_name="transactions")
     op.drop_index("ix_transactions_provider_transaction_id", table_name="transactions")

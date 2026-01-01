@@ -6,7 +6,9 @@ from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import PlainTextResponse
+from sqlalchemy.orm import Session
 
+from backend.src.db.session import get_session
 from .config import PayFastSettings, get_payfast_settings
 from . import schemas, service
 
@@ -38,6 +40,7 @@ def create_checkout_session(
 async def handle_itn(
     request: Request,
     settings: PayFastSettings = Depends(get_payfast_settings),
+    db: Session = Depends(get_session),
 ) -> PlainTextResponse:
     """Handle Instant Transaction Notifications from PayFast."""
 
@@ -60,6 +63,14 @@ async def handle_itn(
             detail="Invalid PayFast signature",
         )
 
-    # TODO(PAY-007): perform server-to-server validation and persist events/audit log.
+    # Server-to-server validation
+    if not await service.validate_itn_with_server(payload, settings=settings):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="PayFast server validation failed",
+        )
+
+    # Process and persist
+    service.process_itn(payload, db)
 
     return PlainTextResponse("OK", status_code=status.HTTP_200_OK)

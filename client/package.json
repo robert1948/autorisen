@@ -1,6 +1,6 @@
 {
   "name": "autorisen-client",
-  "version": "0.2.5",
+  "version": "0.2.10",
   "private": true,
   "description": "CapeControl authentication system with full-width layout, dynamic versioning, and optimized performance",
   "type": "module",
@@ -24,14 +24,17 @@
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
     "@types/node": "^22.7.4",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/react-google-recaptcha": "^2.1.9",
     "@vitejs/plugin-react": "^4.3.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.0.1",
+    "autoprefixer": "^10.4.23",
     "jsdom": "^25.0.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.4.5",
     "vite": "^5.4.1",
     "vitest": "^2.1.4"

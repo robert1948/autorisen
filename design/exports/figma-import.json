@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "project": "CapeControl",
+    "version": "0.2.10",
+    "exportedAt": "2026-01-01"
+  },
+  "colors": {
+    "bg": {
+      "dark": "#0B1120",
+      "light": "#ffffff",
+      "gray": "#f9fafb"
+    },
+    "brand": {
+      "primary": "#667eea",
+      "secondary": "#764ba2",
+      "accent": "#ff6b6b"
+    },
+    "text": {
+      "dark": "#1f2937",
+      "light": "#f8fafc",
+      "muted": "#4b5563",
+      "mutedLight": "#d1d5db"
+    }
+  },
+  "typography": {
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "sizes": {
+      "h1": "text-4xl md:text-6xl",
+      "h2": "text-3xl md:text-4xl",
+      "h3": "text-3xl",
+      "body": "text-xl md:text-2xl"
+    }
+  },
+  "content": {
+    "hero": {
+      "title": "Reframe Your AI Journey: From Overwhelm to Effortless Magic",
+      "description": "In a world of complex integrations and compliance nightmares, CapeControl turns AI into your intuitive ally. No more \"range anxiety\"—just seamless onboarding, secure querying, and compliant agents that feel like a genius whisper in your ear.",
+      "cta": "Start Your Free Magic Trial"
+    },
+    "alchemy": {
+      "title": "Rationality Gets You Bronze. Magic Gets You Gold.",
+      "description": "Inspired by Rory Sutherland's Alchemy, we know engineering alone won't transform your business. It's the psychological spark—the reframing, the surprise—that drives adoption. CapeControl isn't just faster AI; it's AI that feels liberating.",
+      "cards": [
+        {
+          "title": "Tame AI Anxiety",
+          "description": "Like neon-lit charging stations for EVs, our guided onboarding lights up compliance paths—reducing setup dread by 70%."
+        },
+        {
+          "title": "Query with Magic",
+          "description": "Intuitive data chats for energy and finance pros. Turn complex spreadsheets into \"aha!\" moments—no PhD required."
+        },
+        {
+          "title": "Agents That Delight",
+          "description": "Modular, secure AI agents for devs. Build compliant bots that surprise with efficiency, not errors."
+        }
+      ]
+    },
+    "reverseBenchmark": {
+      "title": "We Don't Copy the Best. We Fix the Worst.",
+      "description": "Competitors nail power but flop on joy. We reverse-engineer the letdowns—like Buc-ee's brilliant restrooms in a sea of mediocrity.",
+      "cards": [
+        {
+          "title": "Clunky Onboarding? Nah.",
+          "description": "Our \"Guided Onboarding Theater\" feels like a witty concierge—personalized, playful, and 4x faster adoption."
+        },
+        {
+          "title": "Boring Compliance? Think Again.",
+          "description": "\"Compliance as Comedy\": Videos and tools that make red tape feel like a spy thriller. Secure, but surprisingly fun."
+        },
+        {
+          "title": "Rigid Tools? Playtime Awaits.",
+          "description": "\"Agent Playground\": Free sandbox for wild, compliant creations. Devs build memes from finance data—innovation unlocked."
+        }
+      ]
+    },
+    "explore": {
+      "title": "Balance the Hive: Exploit Efficiency, Explore Surprises",
+      "description": "Like bees scouting new fields, we blend proven ROI with lucky bets. Your AI won't starve in local maxima—it'll thrive on fat-tailed wins.",
+      "stats": [
+        {
+          "value": "80%",
+          "label": "Exploit Efficiency"
+        },
+        {
+          "value": "20%",
+          "label": "Explore Magic"
+        }
+      ],
+      "footer": "Join our AI Alchemist Circles: Share \"magic moments\" with peers in finance and energy. One surprise insight could 4x your processes."
+    },
+    "humanSpark": {
+      "title": "AI Automates. Humans Enchant.",
+      "description": "As algorithms rule, one genuine \"posty\" moment—a trusted chat with our AI Whisperer—creates brand quakes that last.",
+      "cta": "Book a Surprise Discovery Chat"
+    },
+    "finalCta": {
+      "title": "Ignite Your Alchemy",
+      "description": "Perceptions shift. Behaviors follow. Worlds transform.",
+      "button": "Get Started Free – No Card Needed",
+      "footer": "Trusted by 500+ enterprises in finance & energy | © 2025 CapeControl"
+    }
+  }
+}

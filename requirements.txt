@@ -18,3 +18,4 @@ httpx>=0.27
 anyio>=4.4
 semver>=3.0.0
 openai>=1.0.0
+anthropic>=0.20.0

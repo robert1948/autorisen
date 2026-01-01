@@ -200,6 +200,7 @@ const AuthForms = () => {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
+            autoComplete="username"
           />
         </label>
         <label className="auth-password-label">
@@ -212,6 +213,7 @@ const AuthForms = () => {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter your password"
+              autoComplete="current-password"
             />
             <button
               type="button"

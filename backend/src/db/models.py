@@ -675,7 +675,7 @@ class Transaction(Base):
 class PaymentMethod(Base):
     """Stored payment method information for users."""
 
-    __tablename__ = "payment_methods"
+    __tablename__ = "billing_payment_methods"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)

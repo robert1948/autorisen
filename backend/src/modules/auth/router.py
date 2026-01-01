@@ -50,6 +50,7 @@ from backend.src.core.redis import (
     denylist_jti,
 )
 from backend.src.db.session import get_db
+from backend.src.db.models import AnalyticsEvent
 from backend.src.services import recaptcha as recaptcha_service
 from backend.src.services.emailer import (
     send_password_reset_email,
@@ -58,7 +59,7 @@ from backend.src.services.emailer import (
 from backend.src.services.security import decode_jwt
 
 from .csrf import csrf_router, issue_csrf_token, require_csrf_token
-from .schemas import LoginRequest, LoginResponse, MeResponse, ErrorResponse
+from .schemas import LoginRequest, LoginResponse, MeResponse, AnalyticsEventIn
 from .deps import (
     _bearer_from_header,
     _load_user_from_claims,
@@ -501,11 +502,11 @@ def _consume_oauth_state(
 
     try:
         payload = _decode_oauth_state_token(cookie_value)
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
             status_code=400,
             detail="OAuth session verification failed. Please try again.",
-        )
+        ) from exc
 
     if payload.get("provider") != provider:
         raise HTTPException(status_code=400, detail="OAuth provider mismatch.")
@@ -636,9 +637,7 @@ def _oauth_callback(
     return response
 
 
-async def _google_exchange_code(
-    code: str, redirect_uri: str
-) -> Dict[str, Any]:  # noqa: ARG001
+async def _google_exchange_code(_code: str, _redirect_uri: str) -> Dict[str, Any]:
     """Exchange OAuth code for tokens (currently disabled)."""
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
@@ -718,7 +717,7 @@ async def _google_fetch_profile(
     }
 
 
-async def _linkedin_exchange_code(code: str, redirect_uri: str) -> str:  # noqa: ARG001
+async def _linkedin_exchange_code(_code: str, _redirect_uri: str) -> str:
     """Exchange OAuth code for access token (currently disabled)."""
     if not settings.linkedin_client_id or not settings.linkedin_client_secret:
         raise HTTPException(status_code=500, detail="LinkedIn OAuth is not configured.")
@@ -835,10 +834,10 @@ def _adapt_role_for_service(role: str) -> Any:
                 continue
             try:
                 return ServiceUserRole(cand)  # type: ignore[call-arg]
-            except Exception:
+            except (ValueError, KeyError):
                 try:
                     return ServiceUserRole[str(cand).upper()]  # type: ignore[index]
-                except Exception:
+                except (ValueError, KeyError):
                     continue
     return role
 
@@ -948,7 +947,8 @@ def _begin_registration_adapter(
             "Registration function not found in auth.service "
             "(looked for begin_registration_step1 / begin_registration)"
         )
-    params = inspect.signature(_begin_reg).parameters  # type: ignore[arg-type]
+    fn: Callable[..., Any] = _begin_reg  # type: ignore
+    params = inspect.signature(fn).parameters
     kwargs: dict[str, Any] = {
         "db": db,
         "email": email,
@@ -965,7 +965,7 @@ def _begin_registration_adapter(
     else:
         kwargs["password"] = password_plain
 
-    result = _begin_reg(**kwargs)  # type: ignore[misc]
+    result = fn(**kwargs)  # type: ignore
     if isinstance(result, str):
         return result
     if isinstance(result, dict) and "temp_token" in result:
@@ -984,7 +984,8 @@ def _complete_registration_adapter(
             "Completion function not found in auth.service "
             "(looked for complete_registration_step2 / complete_registration)"
         )
-    params = inspect.signature(_complete_reg).parameters  # type: ignore[arg-type]
+    fn: Callable[..., Any] = _complete_reg  # type: ignore
+    params = inspect.signature(fn).parameters
     company_name = None
     if isinstance(company, dict):
         company_name = (
@@ -1006,7 +1007,7 @@ def _complete_registration_adapter(
     elif "profile_data" in params:
         kwargs["profile_data"] = profile
 
-    result = _complete_reg(**kwargs)  # type: ignore[misc]
+    result = fn(**kwargs)  # type: ignore
 
     if isinstance(result, dict):
         return result
@@ -1423,9 +1424,9 @@ async def login(
                 refresh_token=refresh_token,
                 email_verified=True,
             )
-        except ValueError:
+        except ValueError as exc:
             record_login_attempt(ip, email, success=False)
-            raise INVALID_CREDENTIALS
+            raise INVALID_CREDENTIALS from exc
         except HTTPException:
             raise
         except Exception as e:
@@ -1866,3 +1867,22 @@ async def logout(
     if not token:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     return LogoutOut()
+
+
+@router.post("/analytics/track", status_code=204)
+async def track_analytics(
+    event: AnalyticsEventIn,
+    db: Session = Depends(get_db),
+) -> None:
+    """
+    Log lightweight analytics events (step views, submissions, errors, completion).
+    """
+    db_event = AnalyticsEvent(
+        event_type=event.event_type,
+        step=event.step,
+        role=event.role,
+        details=event.details,
+    )
+    db.add(db_event)
+    db.commit()
+    return None

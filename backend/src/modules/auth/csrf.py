@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import secrets
-from typing import Awaitable, Callable, Iterable, Literal, cast
+from typing import Iterable, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from starlette.responses import JSONResponse
@@ -142,7 +142,7 @@ __all__ = [
     "CSRF_COOKIE_CANDIDATES",
     "CSRF_HEADER_CANDIDATES",
     "CSRF_HEADER_NAME",
-    "csrf_middleware",
+    "CSRFMiddleware",
     "csrf_router",
     "issue_csrf_token",
     "require_csrf_token",

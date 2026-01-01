@@ -1,0 +1,72 @@
+[
+  {
+    "section": "Hero",
+    "title": "Reframe Your AI Journey: From Overwhelm to Effortless Magic",
+    "description": "In a world of complex integrations and compliance nightmares, CapeControl turns AI into your intuitive ally. No more \"range anxiety\"—just seamless onboarding, secure querying, and compliant agents that feel like a genius whisper in your ear.",
+    "cta_text": "Start Your Free Magic Trial",
+    "image_url": ""
+  },
+  {
+    "section": "Alchemy - Card 1",
+    "title": "Tame AI Anxiety",
+    "description": "Like neon-lit charging stations for EVs, our guided onboarding lights up compliance paths—reducing setup dread by 70%.",
+    "cta_text": "",
+    "image_url": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    "section": "Alchemy - Card 2",
+    "title": "Query with Magic",
+    "description": "Intuitive data chats for energy and finance pros. Turn complex spreadsheets into \"aha!\" moments—no PhD required.",
+    "cta_text": "",
+    "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    "section": "Alchemy - Card 3",
+    "title": "Agents That Delight",
+    "description": "Modular, secure AI agents for devs. Build compliant bots that surprise with efficiency, not errors.",
+    "cta_text": "",
+    "image_url": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    "section": "Reverse Benchmark - Card 1",
+    "title": "Clunky Onboarding? Nah.",
+    "description": "Our \"Guided Onboarding Theater\" feels like a witty concierge—personalized, playful, and 4x faster adoption.",
+    "cta_text": "",
+    "image_url": ""
+  },
+  {
+    "section": "Reverse Benchmark - Card 2",
+    "title": "Boring Compliance? Think Again.",
+    "description": "\"Compliance as Comedy\": Videos and tools that make red tape feel like a spy thriller. Secure, but surprisingly fun.",
+    "cta_text": "",
+    "image_url": ""
+  },
+  {
+    "section": "Reverse Benchmark - Card 3",
+    "title": "Rigid Tools? Playtime Awaits.",
+    "description": "\"Agent Playground\": Free sandbox for wild, compliant creations. Devs build memes from finance data—innovation unlocked.",
+    "cta_text": "",
+    "image_url": ""
+  },
+  {
+    "section": "Explore",
+    "title": "Balance the Hive: Exploit Efficiency, Explore Surprises",
+    "description": "Like bees scouting new fields, we blend proven ROI with lucky bets. Your AI won't starve in local maxima—it'll thrive on fat-tailed wins.",
+    "cta_text": "",
+    "image_url": ""
+  },
+  {
+    "section": "Human Spark",
+    "title": "AI Automates. Humans Enchant.",
+    "description": "As algorithms rule, one genuine \"posty\" moment—a trusted chat with our AI Whisperer—creates brand quakes that last.",
+    "cta_text": "Book a Surprise Discovery Chat",
+    "image_url": ""
+  },
+  {
+    "section": "Final CTA",
+    "title": "Ignite Your Alchemy",
+    "description": "Perceptions shift. Behaviors follow. Worlds transform.",
+    "cta_text": "Get Started Free – No Card Needed",
+    "image_url": ""
+  }
+]

@@ -46,8 +46,7 @@ const TopNav = ({ onOpenSupport }: Props) => {
         <nav className="top-nav__nav-links">
           <a href="#home" onClick={closeMenu}>Home</a>
           <a href="#features" onClick={closeMenu}>Features</a>
-          <a href="#pricing" onClick={closeMenu}>Pricing</a>
-          <a href="#faq" onClick={closeMenu}>FAQ</a>
+          <a href="#experiences" onClick={closeMenu}>Experiences</a>
         </nav>
         <div className="top-nav__auth">
           <Link className="link" to="/login" onClick={closeMenu}>

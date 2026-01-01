@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
       <TopNav onOpenSupport={handleOpenSupport} />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white text-center py-24 px-5">
+      <section id="home" className="bg-[#0B1120] text-white text-left md:text-center py-12 md:py-24 px-10 md:px-5">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             Reframe Your AI Journey: From Overwhelm to Effortless Magic
@@ -34,53 +34,71 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* The Alchemy of AI */}
-      <section className="py-20 px-5 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Rationality Gets You Bronze. Magic Gets You Gold.</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+      <section id="features" className="bg-[#0B1120] lg:bg-white py-12 md:py-20 px-10 md:px-5 max-w-7xl mx-auto">
+        <div className="text-left lg:text-center mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white lg:text-gray-800 mb-4">Rationality Gets You Bronze. Magic Gets You Gold.</h2>
+          <p className="text-2xl text-gray-300 lg:text-gray-600 max-w-3xl mx-auto">
             Inspired by Rory Sutherland's <em>Alchemy</em>, we know engineering alone won't transform your business. It's the psychological spark—the reframing, the surprise—that drives adoption. CapeControl isn't just faster AI; it's AI that <em>feels</em> liberating.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-10">
-          <div className="text-center">
-            <img src="https://via.placeholder.com/200x200?text=Anxiety+Antidote" alt="AI Anxiety Reframed" className="mx-auto rounded-xl mb-6 shadow-md" />
-            <h3 className="text-2xl font-bold text-[#667eea] mb-3">Tame AI Anxiety</h3>
-            <p className="text-gray-600">Like neon-lit charging stations for EVs, our guided onboarding lights up compliance paths—reducing setup dread by 70%.</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 md:gap-10">
+          <div className="flex flex-col items-center text-left lg:text-center gap-6">
+            <img 
+              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80" 
+              alt="AI Anxiety Reframed" 
+              className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
+            />
+            <div>
+              <h3 className="text-3xl font-bold text-[#667eea] mb-4">Tame AI Anxiety</h3>
+              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Like neon-lit charging stations for EVs, our guided onboarding lights up compliance paths—reducing setup dread by 70%.</p>
+            </div>
           </div>
-          <div className="text-center">
-            <img src="https://via.placeholder.com/200x200?text=Surprise+Insights" alt="Magical Queries" className="mx-auto rounded-xl mb-6 shadow-md" />
-            <h3 className="text-2xl font-bold text-[#764ba2] mb-3">Query with Magic</h3>
-            <p className="text-gray-600">Intuitive data chats for energy and finance pros. Turn complex spreadsheets into "aha!" moments—no PhD required.</p>
+          <div className="flex flex-col items-center text-left lg:text-center gap-6">
+            <img 
+              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80" 
+              alt="Magical Queries" 
+              className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
+            />
+            <div>
+              <h3 className="text-3xl font-bold text-[#764ba2] mb-4">Query with Magic</h3>
+              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Intuitive data chats for energy and finance pros. Turn complex spreadsheets into "aha!" moments—no PhD required.</p>
+            </div>
           </div>
-          <div className="text-center">
-            <img src="https://via.placeholder.com/200x200?text=Secure+Agents" alt="Compliant Agents" className="mx-auto rounded-xl mb-6 shadow-md" />
-            <h3 className="text-2xl font-bold text-[#ff6b6b] mb-3">Agents That Delight</h3>
-            <p className="text-gray-600">Modular, secure AI agents for devs. Build compliant bots that surprise with efficiency, not errors.</p>
+          <div className="flex flex-col items-center text-left lg:text-center gap-6">
+            <img 
+              src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&q=80" 
+              alt="Compliant Agents" 
+              className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
+            />
+            <div>
+              <h3 className="text-3xl font-bold text-[#ff6b6b] mb-4">Agents That Delight</h3>
+              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Modular, secure AI agents for devs. Build compliant bots that surprise with efficiency, not errors.</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Reverse Benchmark */}
-      <section className="bg-gray-50 py-20 px-5">
+      <section id="experiences" className="bg-gray-50 py-12 md:py-20 px-5">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">We Don't Copy the Best. We Fix the Worst.</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-16">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12 md:mb-16">
             Competitors nail power but flop on joy. We reverse-engineer the letdowns—like Buc-ee's brilliant restrooms in a sea of mediocrity.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-8 text-left">
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="text-2xl font-bold text-[#667eea] mb-4">Clunky Onboarding? Nah.</h3>
-              <p className="text-gray-600">Our "Guided Onboarding Theater" feels like a witty concierge—personalized, playful, and 4x faster adoption.</p>
+          <div className="grid md:grid-cols-3 gap-8 md:gap-8 text-left">
+            <div className="bg-white p-8 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl md:text-3xl font-bold text-[#667eea] mb-4">Clunky Onboarding? Nah.</h3>
+              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">Our "Guided Onboarding Theater" feels like a witty concierge—personalized, playful, and 4x faster adoption.</p>
             </div>
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="text-2xl font-bold text-[#764ba2] mb-4">Boring Compliance? Think Again.</h3>
-              <p className="text-gray-600">"Compliance as Comedy": Videos and tools that make red tape feel like a spy thriller. Secure, but surprisingly fun.</p>
+            <div className="bg-white p-8 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl md:text-3xl font-bold text-[#764ba2] mb-4">Boring Compliance? Think Again.</h3>
+              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">"Compliance as Comedy": Videos and tools that make red tape feel like a spy thriller. Secure, but surprisingly fun.</p>
             </div>
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="text-2xl font-bold text-[#ff6b6b] mb-4">Rigid Tools? Playtime Awaits.</h3>
-              <p className="text-gray-600">"Agent Playground": Free sandbox for wild, compliant creations. Devs build memes from finance data—innovation unlocked.</p>
+            <div className="bg-white p-8 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl md:text-3xl font-bold text-[#ff6b6b] mb-4">Rigid Tools? Playtime Awaits.</h3>
+              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">"Agent Playground": Free sandbox for wild, compliant creations. Devs build memes from finance data—innovation unlocked.</p>
             </div>
           </div>
         </div>
@@ -112,7 +130,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* The Human Spark */}
-      <section className="bg-gradient-to-br from-[#ff9a9e] to-[#fecfef] py-20 px-5 text-center">
+      <section className="bg-gradient-to-br from-[#ff6b6b]/20 to-[#ff6b6b]/5 py-20 px-5 text-center">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">AI Automates. Humans Enchant.</h2>
           <p className="text-xl text-gray-800 mb-8">

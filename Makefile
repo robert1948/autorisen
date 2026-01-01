@@ -288,7 +288,17 @@ docker-build: ## Build docker image (IMAGE=$(IMAGE))
 
 docker-run: ## Run docker image locally (exposes $(PORT))
 	@echo "Running docker image $(IMAGE) on port $(PORT)..."
-	docker run --rm -p $(PORT):$(PORT) --env PORT=$(PORT) $(IMAGE)
+	docker run --rm -p $(PORT):$(PORT) \
+		--env PORT=$(PORT) \
+		--env EMAIL_TOKEN_SECRET="$(EMAIL_TOKEN_SECRET)" \
+		--env FROM_EMAIL="$(FROM_EMAIL)" \
+		--env SMTP_USERNAME="$(SMTP_USERNAME)" \
+		--env SMTP_PASSWORD="$(SMTP_PASSWORD)" \
+		--env SMTP_HOST="$(SMTP_HOST)" \
+		--env SMTP_PORT="$(SMTP_PORT)" \
+		--env SMTP_TLS="$(SMTP_TLS)" \
+		--env ENV=dev \
+		$(IMAGE)
 
 docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 	@if [ -z "$(REGISTRY)" ]; then \

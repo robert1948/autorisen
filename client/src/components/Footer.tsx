@@ -21,13 +21,18 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             />
             <div>
               <h3>CapeControl</h3>
-              <p>
-                Workflow-first AI platform that helps small businesses and growing teams run more
-                smoothly, with enterprise-grade security behind the scenes.
+              <div className="footer__legal-desktop">
+                <p>
+                  Workflow-first AI platform that helps small businesses and growing teams run more
+                  smoothly, with enterprise-grade security behind the scenes.
+                </p>
+                <p className="footer__brand-meta">Operated by Cape Craft Projects CC (VAT: 4270105119)</p>
+                <p className="footer__brand-meta">Trading as CapeControl</p>
+                <p className="footer__brand-meta">Empowering AI-driven operations worldwide</p>
+              </div>
+              <p className="footer__legal-mobile">
+                CapeControl • Operated by Cape Craft Projects CC (VAT: 4270105119)
               </p>
-              <p className="footer__brand-meta">Cape Craft Projects CC (VAT: 4270105119)</p>
-              <p className="footer__brand-meta">Trading as Cape Control</p>
-              <p className="footer__brand-meta">Empowering AI-driven operations worldwide</p>
             </div>
           </div>
 
@@ -42,9 +47,6 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
               </li>
               <li>
                 <a href="#features">Workflows</a>
-              </li>
-              <li>
-                <a href="#pricing">Pricing</a>
               </li>
             </ul>
           </div>

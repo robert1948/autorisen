@@ -145,15 +145,19 @@ RegisterStep2Out.model_rebuild()
 TokenResponse.model_rebuild()
 AnalyticsEventIn.model_rebuild()
 
+
 class LoginResponse(BaseModel):
     """Canonical login response."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
     email_verified: bool = True
 
+
 class MeResponse(BaseModel):
     """Canonical user profile response."""
+
     id: str
     email: EmailStr
     first_name: str
@@ -162,9 +166,12 @@ class MeResponse(BaseModel):
     is_active: bool
     email_verified: bool
 
+
 class ErrorResponse(BaseModel):
     """Canonical error response."""
+
     detail: str
+
 
 # Resolve forward references
 LoginResponse.model_rebuild()

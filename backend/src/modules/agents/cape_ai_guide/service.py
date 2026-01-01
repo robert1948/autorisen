@@ -8,6 +8,7 @@ knowledge base searching, and response generation.
 import time
 from typing import Any, Dict, List, Optional
 from openai import AsyncOpenAI
+from anthropic import AsyncAnthropic
 
 from .schemas import CapeAIGuideTaskInput, CapeAIGuideTaskOutput, ResourceLink
 from .knowledge_base import KnowledgeBase
@@ -17,9 +18,19 @@ from .prompts import PromptTemplates
 class CapeAIGuideService:
     """Service class for CapeAI Guide agent operations."""
 
-    def __init__(self, openai_api_key: str, model: str = "gpt-4"):
+    def __init__(
+        self,
+        openai_api_key: Optional[str] = None,
+        anthropic_api_key: Optional[str] = None,
+        model: str = "gpt-4",
+    ):
         """Initialize the CapeAI Guide service."""
-        self.client = AsyncOpenAI(api_key=openai_api_key)
+        self.openai_client = (
+            AsyncOpenAI(api_key=openai_api_key) if openai_api_key else None
+        )
+        self.anthropic_client = (
+            AsyncAnthropic(api_key=anthropic_api_key) if anthropic_api_key else None
+        )
         self.model = model
         self.knowledge_base = KnowledgeBase()
         self.prompts = PromptTemplates()
@@ -130,7 +141,25 @@ class CapeAIGuideService:
         user_prompt = self.prompts.get_user_prompt(query, context, knowledge)
 
         try:
-            response = await self.client.chat.completions.create(
+            if self.model.startswith("claude"):
+                if not self.anthropic_client:
+                    return "Anthropic API key not configured."
+
+                response = await self.anthropic_client.messages.create(
+                    model=self.model,
+                    max_tokens=1000,
+                    temperature=0.7,
+                    system=system_prompt,
+                    messages=[
+                        {"role": "user", "content": user_prompt},
+                    ],
+                )
+                return response.content[0].text
+
+            if not self.openai_client:
+                return "OpenAI API key not configured."
+
+            response = await self.openai_client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},

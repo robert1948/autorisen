@@ -9,6 +9,7 @@ import os
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
+from backend.src.core.config import get_settings
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
 from backend.src.db.models import User
@@ -26,12 +27,12 @@ def get_cape_ai_service() -> CapeAIGuideService:
     """Get or create CapeAI Guide service instance."""
     global _service
     if _service is None:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not openai_api_key:
-            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        settings = get_settings()
+
         _service = CapeAIGuideService(
-            openai_api_key=openai_api_key,
-            model=os.getenv("CAPE_AI_GUIDE_MODEL", "gpt-4"),
+            openai_api_key=settings.openai_api_key,
+            anthropic_api_key=settings.anthropic_api_key,
+            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-sonnet-20240620"),
         )
     return _service
 
@@ -67,7 +68,7 @@ async def cape_ai_guide_health():
         return {
             "status": "healthy",
             "agent": "cape-ai-guide",
-            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "gpt-4"),
+            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-sonnet-20240620"),
             "knowledge_base": "operational",
             "timestamp": "2025-11-11T06:15:00Z",
         }

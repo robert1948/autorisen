@@ -25,6 +25,12 @@ class PayFastSettings:
             return "https://www.payfast.co.za/eng/process"
         return "https://sandbox.payfast.co.za/eng/process"
 
+    @property
+    def validate_url(self) -> str:
+        if self.mode.lower() == "production":
+            return "https://www.payfast.co.za/eng/query/validate"
+        return "https://sandbox.payfast.co.za/eng/query/validate"
+
 
 def _env(key: str, *, required: bool = True) -> str | None:
     value = os.getenv(key)

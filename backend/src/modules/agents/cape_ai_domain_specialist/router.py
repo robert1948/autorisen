@@ -10,6 +10,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from sqlalchemy.orm import Session
 
+from backend.src.core.config import get_settings
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
 from backend.src.db import models
@@ -30,14 +31,12 @@ def get_domain_service() -> DomainSpecialistService:
     """Lazy-init the domain specialist service."""
     global _service
     if _service is None:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not openai_api_key:
-            raise HTTPException(
-                status_code=500, detail="OpenAI API key not configured for domain agent"
-            )
+        settings = get_settings()
+
         _service = DomainSpecialistService(
-            openai_api_key=openai_api_key,
-            model=os.getenv("CAPE_AI_DOMAIN_MODEL", "gpt-4o-mini"),
+            openai_api_key=settings.openai_api_key,
+            anthropic_api_key=settings.anthropic_api_key,
+            model=os.getenv("CAPE_AI_DOMAIN_MODEL", "claude-3-5-sonnet-20240620"),
         )
     return _service
 

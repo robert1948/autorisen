@@ -77,8 +77,8 @@ def _map_redirect_kw(kwargs: Dict[str, Any]) -> Dict[str, Any]:
 class SyncClientAdapter:
     """Expose a requests-like interface backed by Starlette TestClient."""
 
-    def __init__(self, client: TestClient):
-        self._c = client
+    def __init__(self, test_client: TestClient):
+        self._c = test_client
 
     def get(self, url, **kwargs):
         return self._c.get(url, **_map_redirect_kw(kwargs))
@@ -127,8 +127,8 @@ def _prepare_test_db():
     # No teardown required for disposable SQLite file
 
 
-@pytest.fixture(scope="session")
-def app() -> FastAPI:
+@pytest.fixture(scope="session", name="app")
+def _app_fixture() -> FastAPI:
     """Expose a FastAPI app instance, resolving factory patterns if needed."""
     return _ensure_fastapi_app(_app)
 
@@ -138,15 +138,15 @@ def app() -> FastAPI:
 # ------------------------------------------------------------------
 
 
-@pytest.fixture
-def client(app: FastAPI):
+@pytest.fixture(name="client")
+def _client_fixture(app: FastAPI):
     """Synchronous client used by the majority of tests (requests-like API)."""
     with TestClient(app) as tc:
         yield SyncClientAdapter(tc)
 
 
-@pytest.fixture
-async def rate_async_client(app: FastAPI):
+@pytest.fixture(name="rate_async_client")
+async def _rate_async_client_fixture(app: FastAPI):
     """Async httpx client with consistent settings for anyio/async tests."""
     transport = ASGITransport(app=app)
     async with AsyncClient(
@@ -157,8 +157,8 @@ async def rate_async_client(app: FastAPI):
         yield ac
 
 
-@pytest.fixture
-async def async_client(rate_async_client: AsyncClient):
+@pytest.fixture(name="async_client")
+async def _async_client_fixture(rate_async_client: AsyncClient):
     """Alias to maintain backwards compatibility in individual tests."""
     yield rate_async_client
 
@@ -194,14 +194,14 @@ def _email_sink(monkeypatch, app):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-        def starttls(self, *a, **kw):
+        def starttls(self, *_args, **_kwargs):
             pass
 
-        def login(self, *a, **kw):
+        def login(self, *_args, **_kwargs):
             pass
 
         # smtplib may call either .sendmail or .send_message
-        def sendmail(self, from_addr, to_addrs, msg, *a, **kw):
+        def sendmail(self, from_addr, to_addrs, msg, *_args, **_kwargs):
             # normalize to a list for convenience
             if isinstance(to_addrs, str):
                 to_list = [to_addrs]
@@ -209,8 +209,19 @@ def _email_sink(monkeypatch, app):
                 to_list = list(to_addrs)
             sent.append({"from": from_addr, "to": to_list, "msg": msg})
 
-        def send_message(self, msg, from_addr=None, to_addrs=None, *a, **kw):
+        def send_message(self, msg, *args, **kwargs):
             # Fallback if library uses EmailMessage
+            # Extract from/to from args/kwargs to mimic smtplib signature
+            # send_message(msg, from_addr=None, to_addrs=None, ...)
+
+            from_addr = kwargs.get("from_addr")
+            if from_addr is None and len(args) > 0:
+                from_addr = args[0]
+
+            to_addrs = kwargs.get("to_addrs")
+            if to_addrs is None and len(args) > 1:
+                to_addrs = args[1]
+
             from_addr = from_addr or msg.get("From", "")
             to_field = to_addrs or msg.get_all("To", []) or []
             if isinstance(to_field, str):
@@ -218,6 +229,7 @@ def _email_sink(monkeypatch, app):
             else:
                 to_list = list(to_field)
             sent.append({"from": from_addr, "to": to_list, "msg": msg.as_string()})
+            return {}
 
     # Patch smtplib.SMTP to our dummy
     monkeypatch.setattr(smtplib, "SMTP", _DummySMTP, raising=True)

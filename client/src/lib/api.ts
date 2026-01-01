@@ -266,38 +266,32 @@ export type MarketplaceAgent = {
   id: string;
   slug: string;
   name: string;
-  description?: string | null;
-  owner_id: string | null;
+  description: string;
+  category: string;
+  author: string;
+  version: string;
+  rating: number;
+  downloads: number;
+  tags: string[];
+  published_at: string;
   updated_at: string;
-  version: {
-    id: string;
-    version: string;
-    published_at: string | null;
-    manifest?: Record<string, unknown>;
-  };
+  thumbnail_url?: string | null;
 };
 
 export async function fetchMarketplaceAgents(): Promise<MarketplaceAgent[]> {
   return request<MarketplaceAgent[]>("/marketplace/agents", { auth: false });
 }
 
-export type MarketplaceAgentDetail = {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string | null;
-  owner_id: string | null;
-  created_at: string;
-  updated_at: string;
-  published_version: string | null;
-  versions: Array<{
-    id: string;
-    version: string;
-    status: string;
-    created_at: string;
-    published_at: string | null;
-    manifest: Record<string, unknown>;
-  }>;
+export type MarketplaceAgentDetail = MarketplaceAgent & {
+  readme: string;
+  changelog: string;
+  requirements: string[];
+  configuration: Record<string, unknown>;
+  permissions: string[];
+  license: string;
+  repository_url?: string | null;
+  documentation_url?: string | null;
+  support_url?: string | null;
 };
 
 export async function fetchMarketplaceAgentDetail(

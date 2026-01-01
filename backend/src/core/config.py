@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     linkedin_callback_url: Optional[str] = Field(
         default=None, alias="LINKEDIN_CALLBACK_URL"
     )
+
+    # AI Providers
+    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+    anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
+
     session_cookie_secure: bool = Field(default=False, alias="SESSION_COOKIE_SECURE")
     session_cookie_samesite: Literal["lax", "strict", "none"] = Field(
         default="lax", alias="SESSION_COOKIE_SAMESITE"

@@ -13,6 +13,7 @@ import time
 from typing import Dict, List, Optional
 
 from openai import AsyncOpenAI
+from anthropic import AsyncAnthropic
 
 from .knowledge_base import DomainKnowledgeBase, DomainLiteral
 from .schemas import (
@@ -26,8 +27,18 @@ from .schemas import (
 class DomainSpecialistService:
     """Encapsulates LLM prompting, knowledge lookups, and scoring logic."""
 
-    def __init__(self, openai_api_key: str, model: str = "gpt-4o-mini") -> None:
-        self.client = AsyncOpenAI(api_key=openai_api_key)
+    def __init__(
+        self,
+        openai_api_key: Optional[str] = None,
+        anthropic_api_key: Optional[str] = None,
+        model: str = "gpt-4o-mini",
+    ) -> None:
+        self.openai_client = (
+            AsyncOpenAI(api_key=openai_api_key) if openai_api_key else None
+        )
+        self.anthropic_client = (
+            AsyncAnthropic(api_key=anthropic_api_key) if anthropic_api_key else None
+        )
         self.model = model
         self.knowledge_base = DomainKnowledgeBase()
 
@@ -106,7 +117,25 @@ class DomainSpecialistService:
         )
 
         try:
-            completion = await self.client.chat.completions.create(
+            if self.model.startswith("claude"):
+                if not self.anthropic_client:
+                    return "Anthropic API key not configured."
+
+                completion = await self.anthropic_client.messages.create(
+                    model=self.model,
+                    max_tokens=700,
+                    temperature=0.6,
+                    system=system_prompt,
+                    messages=[
+                        {"role": "user", "content": user_prompt},
+                    ],
+                )
+                return completion.content[0].text
+
+            if not self.openai_client:
+                return "OpenAI API key not configured."
+
+            completion = await self.openai_client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},

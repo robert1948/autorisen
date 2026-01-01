@@ -54,8 +54,7 @@ const MarketplaceShowcase = () => {
   useEffect(() => {
     const next = agents.filter((agent) => {
       const matchesSearch = agent.name.toLowerCase().includes(search.toLowerCase());
-      const placement = agent.version.manifest?.placement as string | undefined;
-      const matchesPlacement = placementFilter === "all" || placement === placementFilter;
+      const matchesPlacement = placementFilter === "all" || agent.category === placementFilter;
       return matchesSearch && matchesPlacement;
     });
     setFiltered(next);
@@ -93,46 +92,9 @@ const MarketplaceShowcase = () => {
 
   const handleRunAgent = async () => {
     if (!detail) return;
-    const published = detail.published_version
-      ? detail.versions.find((version) => version.id === detail.published_version)
-      : detail.versions[0];
-    const manifest = published?.manifest ?? {};
-    const tools = Array.isArray(manifest.tools)
-      ? (manifest.tools as string[])
-      : [];
-    const firstTool = tools[0];
-    if (!firstTool) {
-      setRunError("Agent manifest does not declare tools");
-      return;
-    }
-
-    setRunLoading(true);
-    setRunError(null);
-    setRunResult(null);
-    try {
-      const idempotencyKey =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `marketplace-${Date.now()}`;
-      const response = await runFlow({
-        agent_slug: detail.slug,
-        agent_version: published?.version,
-        tool_calls: [
-          {
-            name: firstTool,
-            payload: {},
-          },
-        ],
-        idempotency_key: idempotencyKey,
-        max_attempts: 3,
-      });
-      setRunResult(response);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to run agent";
-      setRunError(message);
-    } finally {
-      setRunLoading(false);
-    }
+    // TODO: Implement run logic with new API structure
+    // For now, we just show an alert or log
+    console.log("Run agent not implemented for new structure yet");
   };
 
   return (
@@ -152,11 +114,10 @@ const MarketplaceShowcase = () => {
             onChange={(event) => setSearch(event.target.value)}
           />
           <select value={placementFilter} onChange={(event) => setPlacementFilter(event.target.value)}>
-            <option value="all">All placements</option>
-            <option value="support">Support</option>
-            <option value="onboarding">Onboarding</option>
-            <option value="energy">Energy</option>
-            <option value="money">Money</option>
+            <option value="all">All Categories</option>
+            <option value="communication">Communication</option>
+            <option value="productivity">Productivity</option>
+            <option value="analytics">Analytics</option>
           </select>
         </div>
       </header>
@@ -178,15 +139,15 @@ const MarketplaceShowcase = () => {
             <p>{agent.description || "No description provided."}</p>
             <ul className="marketplace__meta">
               <li>
-                Version <strong>{agent.version.version}</strong>
+                Version <strong>{agent.version}</strong>
               </li>
-              {agent.version.published_at && (
+              {agent.published_at && (
                 <li>
-                  Published {new Date(agent.version.published_at).toLocaleDateString()}
+                  Published {new Date(agent.published_at).toLocaleDateString()}
                 </li>
               )}
               <li>
-                Placement: <strong>{agent.version.manifest?.placement as string}</strong>
+                Category: <strong>{agent.category}</strong>
               </li>
             </ul>
             <footer>
@@ -224,31 +185,28 @@ const MarketplaceShowcase = () => {
             </header>
             <p>{detail.description || "No description provided."}</p>
             {detailLoading && <p>Refreshing details…</p>}
+            
             <section className="marketplace-modal__versions">
-              <h5>Versions</h5>
-              <ul>
-                {detail.versions.map((version) => (
-                  <li key={version.id}>
-                    <div className="marketplace-modal__version-row">
-                      <strong>{version.version}</strong>
-                      <span className="marketplace-modal__status">{version.status}</span>
-                    </div>
-                    <p className="marketplace-modal__meta">
-                      Created {new Date(version.created_at).toLocaleDateString()}
-                      {version.published_at && (
-                        <>
-                          {" · "}
-                          Published {new Date(version.published_at).toLocaleDateString()}
-                        </>
-                      )}
-                    </p>
-                    <pre className="marketplace-modal__manifest">
-                      {JSON.stringify(version.manifest, null, 2)}
-                    </pre>
-                  </li>
-                ))}
-              </ul>
+              <h5>Details</h5>
+              <p><strong>Author:</strong> {detail.author}</p>
+              <p><strong>License:</strong> {detail.license}</p>
+              <p><strong>Rating:</strong> {detail.rating} ({detail.downloads} downloads)</p>
+              
+              {detail.readme && (
+                <div className="marketplace-modal__readme">
+                  <h5>Readme</h5>
+                  <pre>{detail.readme}</pre>
+                </div>
+              )}
+              
+              {detail.configuration && (
+                 <div className="marketplace-modal__config">
+                   <h5>Configuration</h5>
+                   <pre>{JSON.stringify(detail.configuration, null, 2)}</pre>
+                 </div>
+              )}
             </section>
+
             <div className="marketplace-modal__actions">
               <button type="button" className="btn btn--ghost btn--small" onClick={() => setActiveSlug(null)}>
                 Close
@@ -262,37 +220,6 @@ const MarketplaceShowcase = () => {
                 {runLoading ? "Running…" : "Run with CapeControl"}
               </button>
             </div>
-            {runError && <p className="marketplace-modal__error">{runError}</p>}
-            {runResult && (
-              <section className="marketplace-modal__run">
-                <h5>Last run preview</h5>
-                <p className="marketplace-modal__run-meta">
-                  Status: <strong>{runResult.status}</strong> · Attempt{" "}
-                  {runResult.attempt}/{runResult.max_attempts}
-                  {runResult.error_message && (
-                    <>
-                      {" · "}
-                      <span className="marketplace-modal__error-inline">
-                        {runResult.error_message}
-                      </span>
-                    </>
-                  )}
-                </p>
-                <ul>
-                  {runResult.steps.map((step) => (
-                    <li key={step.event_id}>
-                      <div className="marketplace-modal__version-row">
-                        <strong>{step.tool}</strong>
-                        <span className="marketplace-modal__status">event {step.event_id}</span>
-                      </div>
-                      <pre className="marketplace-modal__manifest">
-                        {JSON.stringify(step.result, null, 2)}
-                      </pre>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
           </div>
         </div>
       )}

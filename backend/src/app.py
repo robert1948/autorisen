@@ -14,7 +14,6 @@ from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import (
     FileResponse,
     HTMLResponse,
@@ -44,15 +43,6 @@ load_dotenv()
 # ------------------------------------------------------------------------------
 # Optional imports should never break app boot
 # ------------------------------------------------------------------------------
-try:
-    from .middleware.bot_hardening import (  # type: ignore
-        BlockProbesMiddleware,
-        SecurityHeadersMiddleware,
-    )
-except Exception:
-    BlockProbesMiddleware = None  # type: ignore[assignment]
-    SecurityHeadersMiddleware = None  # type: ignore[assignment]
-
 try:
     from .core.log_filters import AccessPathSuppressFilter  # type: ignore
 except Exception:
@@ -116,7 +106,6 @@ payments_router = _safe_import(
 # Constants / paths
 # ------------------------------------------------------------------------------
 APP_ORIGIN = os.getenv("APP_ORIGIN", "").strip()
-BOT_HARDEN = os.getenv("BOT_HARDEN", "1").lower() in {"1", "true", "yes"}
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CLIENT_DIST = PROJECT_ROOT / "client" / "dist"
 SPA_INDEX = CLIENT_DIST / "index.html"
@@ -219,7 +208,7 @@ def _is_test_mode() -> bool:
 # App factory
 # ------------------------------------------------------------------------------
 def create_app() -> FastAPI:
-    app = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
+    application = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
     test_mode = _is_test_mode()
 
     # Enforce/relax email settings according to ENV and EMAIL_ENABLED
@@ -239,17 +228,13 @@ def create_app() -> FastAPI:
             log.warning("Optional OAuth configuration %s is not set", name)
 
     # Security middleware (order matters)
-    if BlockProbesMiddleware and BOT_HARDEN:
-        app.add_middleware(BlockProbesMiddleware)  # type: ignore[arg-type]
-    if SecurityHeadersMiddleware:
-        app.add_middleware(SecurityHeadersMiddleware)  # type: ignore[arg-type]
     if DDoSProtectionMiddleware:
-        app.add_middleware(DDoSProtectionMiddleware)  # type: ignore[arg-type]
+        application.add_middleware(DDoSProtectionMiddleware)  # type: ignore[arg-type]
     if InputSanitizationMiddleware:
-        app.add_middleware(InputSanitizationMiddleware)  # type: ignore[arg-type]
+        application.add_middleware(InputSanitizationMiddleware)  # type: ignore[arg-type]
 
     # CSRF middleware (Pure ASGI)
-    app.add_middleware(CSRFMiddleware)
+    application.add_middleware(CSRFMiddleware)
 
     # CORS
     allow_origins = {
@@ -265,7 +250,7 @@ def create_app() -> FastAPI:
         allow_origins.add(APP_ORIGIN.rstrip("/"))
     allow_origins = [o for o in allow_origins if o]
 
-    app.add_middleware(
+    application.add_middleware(
         CORSMiddleware,
         allow_origins=allow_origins,
         allow_credentials=True,
@@ -283,11 +268,11 @@ def create_app() -> FastAPI:
     )
 
     # Cache headers middleware for production cache-correctness (runs LAST to override any defaults)
-    app.add_middleware(CacheHeadersMiddleware)
+    application.add_middleware(CacheHeadersMiddleware)
 
     # Rate limiting (idempotent even if slowapi is absent/falls back)
     try:
-        configure_rate_limit(app)
+        configure_rate_limit(application)
     except Exception:  # pragma: no cover
         log.exception("Failed to configure rate limiting middleware")
 
@@ -323,7 +308,7 @@ def create_app() -> FastAPI:
     spa_index = SPA_INDEX if SPA_INDEX.exists() else None
 
     # ----------------------------- Root/Meta ------------------------------
-    @app.get("/", include_in_schema=False)
+    @application.get("/", include_in_schema=False)
     def root_ok():
         if spa_index:
             return FileResponse(spa_index)
@@ -334,7 +319,7 @@ def create_app() -> FastAPI:
             )
         )
 
-    @app.get("/favicon.ico", include_in_schema=False)
+    @application.get("/favicon.ico", include_in_schema=False)
     def favicon():
         return Response(
             content=b"",
@@ -342,7 +327,7 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "public, max-age=31536000"},
         )
 
-    @app.get("/robots.txt", include_in_schema=False)
+    @application.get("/robots.txt", include_in_schema=False)
     def robots_txt():
         base = os.getenv("PUBLIC_BASE_URL", "https://dev.cape-control.com").rstrip("/")
         body = f"User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n"
@@ -352,7 +337,7 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "public, max-age=86400"},
         )
 
-    @app.get("/sitemap.xml", include_in_schema=False)
+    @application.get("/sitemap.xml", include_in_schema=False)
     def sitemap_xml():
         static_path = CLIENT_DIST / "sitemap.xml"
         if static_path.exists():
@@ -365,19 +350,21 @@ def create_app() -> FastAPI:
         )
 
     # Honeypots / bot probes
-    @app.get("/xmlrpc.php", include_in_schema=False)
+    @application.get("/xmlrpc.php", include_in_schema=False)
     def _bots_xmlrpc():
         return PlainTextResponse(
             "Not found", status_code=404, headers={"Cache-Control": "no-store"}
         )
 
-    @app.get("/{prefix:path}/wp-includes/wlwmanifest.xml", include_in_schema=False)
-    def _bots_wlw(prefix: str):
+    @application.get(
+        "/{prefix:path}/wp-includes/wlwmanifest.xml", include_in_schema=False
+    )
+    def _bots_wlw(_prefix: str):
         return PlainTextResponse(
             "Not found", status_code=404, headers={"Cache-Control": "no-store"}
         )
 
-    @app.get("/config.json", include_in_schema=False)
+    @application.get("/config.json", include_in_schema=False)
     def runtime_config():
         """Serve runtime configuration with no-cache headers"""
         config_data = {
@@ -400,12 +387,12 @@ def create_app() -> FastAPI:
         )
 
     # Simple alias for external uptime checks
-    @app.get("/health")
+    @application.get("/health")
     def health_alias():
         return {"status": "ok"}
 
     # ----------------------------- API: health/version --------------------
-    @app.get("/api/", include_in_schema=False)
+    @application.get("/api/", include_in_schema=False)
     def api_root():
         return {
             "status": "ok",
@@ -413,7 +400,7 @@ def create_app() -> FastAPI:
             "services": ["auth_v1", "auth_v2", "agents", "marketplace"],
         }
 
-    @app.get("/api/health", include_in_schema=False)
+    @application.get("/api/health", include_in_schema=False)
     def api_health():
         version = os.getenv("APP_VERSION", "dev")
         env_name = (
@@ -437,20 +424,20 @@ def create_app() -> FastAPI:
             "input_sanitization": "enabled (Task 1.2.4)",
             "rate_limiting": (
                 "active"
-                if getattr(app.state, "rate_limit_configured", False)
+                if getattr(application.state, "rate_limit_configured", False)
                 else "inactive"
             ),
         }
 
-    @app.get("/api/health/alive", include_in_schema=False)
+    @application.get("/api/health/alive", include_in_schema=False)
     def api_health_alive():
         return {"alive": True}
 
-    @app.get("/api/health/ping", include_in_schema=False)
+    @application.get("/api/health/ping", include_in_schema=False)
     def api_health_ping():
         return {"ping": "pong", "version": os.getenv("APP_VERSION", "dev")}
 
-    @app.get("/api/version", include_in_schema=False)
+    @application.get("/api/version", include_in_schema=False)
     def api_version():
         git_sha = os.getenv("GIT_SHA", "").strip()
         app_version = os.getenv("APP_VERSION", "").strip()
@@ -459,12 +446,12 @@ def create_app() -> FastAPI:
         )
         return {"version": version_value}
 
-    @app.get("/api/security/stats")
+    @application.get("/api/security/stats")
     def api_security_stats():
         now = datetime.utcnow().replace(tzinfo=None).isoformat() + "Z"
         rate_limit_state = (
             "active"
-            if getattr(app.state, "rate_limit_configured", False)
+            if getattr(application.state, "rate_limit_configured", False)
             else "inactive"
         )
         return {
@@ -499,11 +486,11 @@ def create_app() -> FastAPI:
         api.include_router(payments_router)
 
     # Mount all versioned routes under /api
-    app.include_router(api, prefix="/api")
+    application.include_router(api, prefix="/api")
 
     # ----------------------------- Errors --------------------------------
-    @app.exception_handler(Exception)
-    async def _unhandled_error(_, exc: Exception):
+    @application.exception_handler(Exception)
+    async def _unhandled_error(_, _exc: Exception):
         logging.getLogger("uvicorn.error").exception("Unhandled exception")
         return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
@@ -511,7 +498,7 @@ def create_app() -> FastAPI:
     enable_migrations = getattr(settings, "run_db_migrations_on_startup", False)
     if enable_migrations and callable(run_migrations_on_startup):
 
-        @app.on_event("startup")
+        @application.on_event("startup")
         def _apply_db_migrations() -> None:
             try:
                 run_migrations_on_startup()  # type: ignore[misc]
@@ -529,7 +516,7 @@ def create_app() -> FastAPI:
 
     if mcp_host is not None and os.getenv("ENABLE_MCP_HOST", "0") == "1":
 
-        @app.on_event("startup")
+        @application.on_event("startup")
         def _start_mcp_host() -> None:
             host = mcp_host
             if host is None:
@@ -546,11 +533,11 @@ def create_app() -> FastAPI:
 
     # ----------------------------- SPA mount ------------------------------
     if spa_index:
-        app.mount(
+        application.mount(
             "/", StaticFiles(directory=str(CLIENT_DIST), html=True), name="frontend"
         )
 
-        @app.get("/{client_path:path}", include_in_schema=False)
+        @application.get("/{client_path:path}", include_in_schema=False)
         def _spa_fallback(client_path: str):
             # Let API and asset requests fall through normally.
             if client_path.startswith("api/") or client_path.startswith("assets/"):
@@ -559,14 +546,13 @@ def create_app() -> FastAPI:
                 return FileResponse(SPA_INDEX)
             raise HTTPException(status_code=404)
 
-    return app
+    return application
 
 
 app = create_app()
 
 logging.getLogger("uvicorn.error").info(
-    "autorisen boot: origin=%s harden=%s version=%s",
+    "autorisen boot: origin=%s version=%s",
     APP_ORIGIN or "(unset)",
-    BOT_HARDEN,
     os.getenv("APP_VERSION", "dev"),
 )

@@ -37,17 +37,17 @@ CHAT-001,ChatKit backend integration,backend,completed,P0,2025-11-10,POST+GET to
 CHAT-002,Agent registry database schema,backend,completed,P0,2025-11-08,Agent + AgentVersion schema validated with unique constraints and cascade tests,"backend/migrations/versions/dc4ac5c9c3d5_add_agents_registry_tables.py; tests/test_agent_registry_schema.py",pytest tests/test_agent_registry_schema.py
 CHAT-003,Flow orchestration API,backend,completed,P0,2025-11-10,Run orchestration + history endpoints with onboarding checklist sync,"backend/src/modules/flows/*; tests/test_flows_api.py",pytest tests/test_flows_api.py
 CHAT-004,ChatKit frontend components,frontend,completed,P0,2025-11-13,"Chat launcher + modal wired to telemetry indicator, auto token refresh, and ChatKit status copy","client/src/components/chat/*; client/src/index.css",npm run type-check && npm run build
-CHAT-005,Agent marketplace UI,frontend,todo,P1,CHAT-002,Browse and preview agent capabilities,client/src/pages/Marketplace.tsx,Navigate to /marketplace
+CHAT-005,Agent marketplace UI,frontend,completed,P1,2026-01-01,Browse and preview agent capabilities,client/src/features/marketplace/MarketplaceShowcase.tsx,Navigate to /marketplace
 CHAT-006,Developer agent builder,frontend,todo,P1,CHAT-002,Agent creation and manifest editor,client/src/pages/Developer.tsx,Create test agent via UI
 CHAT-007,Onboarding flow integration,frontend,todo,P1,CHAT-003,Progress tracking and checklist UI,client/src/components/onboarding/*,Complete onboarding flow test
 
 # PAYMENTS AGENT (PayFast) - Updated Priority
 PAY-001,PaymentsAgent service (PayFast),backend,completed,P0,2025-11-10,PayFast adapter service + ITN endpoint with sample script,backend/src/modules/payments/*,"make payments-checkout && pytest tests/test_payfast_router.py"
 PAY-002,Checkout API + ChatKit tool,backend,completed,P0,2025-11-10,Expose /payments/payfast/checkout and ChatKit tool integration,backend/src/modules/payments/*,"curl -sS -X POST localhost:8000/api/payments/payfast/checkout -H 'Content-Type: application/json' -d '{\"amount\":99.99,\"item_name\":\"CapeControl Pilot\",\"customer_email\":\"demo@example.com\"}'"
-PAY-003,ITN ingestion & audit log,backend,todo,P0,PAY-001,Handle ITN & persist events,backend/src/modules/payments/webhooks.py,make payments-itn-sample
-PAY-004,Payments DB schema,backend,todo,P0,PAY-001,transactions/invoices tables,backend/migrations/versions/*,alembic upgrade head
+PAY-003,ITN ingestion & audit log,backend,completed,P0,2026-01-01,Handle ITN & persist events,backend/src/modules/payments/service.py,make payments-itn-sample
+PAY-004,Payments DB schema,backend,completed,P0,2026-01-01,transactions/invoices tables,backend/migrations/versions/64e4d0a224d9_add_payment_tables.py,alembic upgrade head
 PAY-006,Payments UI entry points,frontend,todo,P1,PAY-002,Buttons + success/cancel pages,client/src/components/payments/*,Manual return flow test
-PAY-007,Security & validation,security,todo,P0,,Server-to-server validate,docs/security_payments.md,Add PayFast validate POST
+PAY-007,Security & validation,security,completed,P0,2026-01-01,Server-to-server validate,backend/src/modules/payments/service.py,Add PayFast validate POST
 
 # NEXT PHASE - Production Optimization & Scaling
 OPT-001,Performance monitoring,devops,todo,P1,,Application monitoring and alerting setup,monitoring/ scripts/monitor.py,Check metrics dashboard

@@ -181,22 +181,22 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | DEVOPS-035 | Production deployment | devops | completed | P0 | 2025-11-07 |
 | DEVOPS-036 | Static asset optimization | devops | completed | P1 | 2025-11-07 |
 | DEVOPS-006 | Staging deployment automation | devops | completed | P1 | 2025-12-16 |
-| CODE-001 | Python linting & optimization | backend | completed | P1 | 2025-11-09 |
+| CODE-001 | Python linting & optimization | backend | completed | P1 | 2025-12-18 |
 | CODE-002 | Markdown documentation linting | docs | completed | P1 | 2025-11-09 |
 | CODE-003 | Backend performance optimizations | backend | completed | P1 | 2025-11-09 |
 | CHAT-001 | ChatKit backend integration | backend | completed | P0 | 2025-11-10 |
 | CHAT-002 | Agent registry database schema | backend | completed | P0 | 2025-11-08 |
 | CHAT-003 | Flow orchestration API | backend | completed | P0 | 2025-11-10 |
 | CHAT-004 | ChatKit frontend components | frontend | completed | P0 | 2025-11-13 |
-| CHAT-005 | Agent marketplace UI | frontend | todo | P1 | CHAT-002 |
+| CHAT-005 | Agent marketplace UI | frontend | completed | P1 | 2026-01-01 |
 | CHAT-006 | Developer agent builder | frontend | todo | P1 | CHAT-002 |
 | CHAT-007 | Onboarding flow integration | frontend | todo | P1 | CHAT-003 |
 | PAY-001 | PaymentsAgent service (PayFast) | backend | completed | P0 | 2025-11-10 |
 | PAY-002 | Checkout API + ChatKit tool | backend | completed | P0 | 2025-11-10 |
-| PAY-003 | ITN ingestion & audit log | backend | todo | P0 | PAY-001 |
-| PAY-004 | Payments DB schema | backend | todo | P0 | PAY-001 |
+| PAY-003 | ITN ingestion & audit log | backend | completed | P0 | 2026-01-01 |
+| PAY-004 | Payments DB schema | backend | completed | P0 | 2026-01-01 |
 | PAY-006 | Payments UI entry points | frontend | todo | P1 | PAY-002 |
-| PAY-007 | Security & validation | security | todo | P0 |  |
+| PAY-007 | Security & validation | security | completed | P0 | 2026-01-01 |
 | OPT-001 | Performance monitoring | devops | todo | P1 |  |
 | OPT-002 | Database optimization | backend | todo | P1 |  |
 | OPT-003 | Caching layer | backend | todo | P1 |  |
@@ -218,7 +218,13 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | MAINT-003 | Test suite expansion | backend | recurring | P1 |  |
 | MAINT-004 | Performance monitoring | devops | recurring | P1 |  |
 | MAINT-005 | Security updates | devops | recurring | P0 |  |
-| MAINT-006 | Code quality maintenance | devops | completed | P1 | 2025-11-09 |
+| MAINT-006 | Code quality maintenance | devops | completed | P1 | 2025-12-18 |
+| PUB-001 | Finalize public vision copy | product | completed | P1 | 2025-12-18 |
+| PUB-002 | Define landing page goals (trust | clarity | CTA) | design | in-progress |
+| PUB-003 | Landing page wireframe (Figma) | design | todo | P1 |  |
+| PUB-004 | Landing page visual design (Figma) | design | todo | P1 |  |
+| PUB-005 | Implement landing page | frontend | blocked | P1 |  |
+| PUB-006 | Align Auth -> CapeAI Guide story | product | in-progress | P1 |  |
 | BIZ-001 | User dashboard | frontend | todo | P2 |  |
 | BIZ-002 | Admin panel | frontend | todo | P2 |  |
 | BIZ-003 | API documentation | docs | todo | P2 |  |
