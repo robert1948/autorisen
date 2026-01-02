@@ -1,4 +1,5 @@
 id,task,owner,status,priority,completion_date,notes,artifacts,verification_commands
+
 # COMPLETED MILESTONES - Production Ready System (Updated 2025-11-09)
 AUTH-001,Core authentication infrastructure,backend,completed,P0,2025-11-07,JWT-based auth with secure session management,backend/src/modules/auth/*,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
 AUTH-002,Login/Register UI components,frontend,completed,P0,2025-11-07,CapeControl auth UI with LoginPage and form validation,client/src/pages/Login.tsx,Manual test at localhost:3000/auth/login
@@ -6,6 +7,7 @@ AUTH-003,CSRF protection implementation,backend,completed,P0,2025-11-07,Producti
 AUTH-004,MFA system (TOTP),backend,completed,P0,2025-11-07,6-digit TOTP with QR code enrollment,backend/src/modules/auth/mfa.py,Manual test MFA flow on staging
 AUTH-005,Security hardening & tests,backend,completed,P0,2025-11-07,Production security: ENV=prod DEBUG=false DISABLE_RECAPTCHA=false,backend/tests/test_security.py,curl -sS -I https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf
 AUTH-006,Production authentication validation,backend,completed,P0,2025-11-07,Full authentication flow tested in production,docs/Release_Runbook.md,End-to-end auth test on production
+
 FE-001,React SPA foundation,frontend,completed,P1,2025-11-07,Vite + React + TypeScript + Tailwind foundation,client/src/*,npm run dev check
 FE-002,Routing & navigation,frontend,completed,P1,2025-11-07,React Router with protected routes and auth guards,client/src/lib/router.tsx,Navigate to /auth/login and /dashboard
 FE-003,Auth context & state management,frontend,completed,P1,2025-11-07,React Context for auth state with token persistence,client/src/context/AuthContext.tsx,Check localStorage for auth tokens
@@ -18,8 +20,10 @@ FE-009,TypeScript error resolution,frontend,completed,P1,,Fixed 11 TypeScript co
 FE-010,Page content creation,frontend,completed,P1,,Created comprehensive Marketplace/Agents/Settings pages with routing,client/src/pages/{Marketplace,Agents,Settings}.tsx,User flow diagram implementation complete
 FE-011,Feature flag infrastructure,frontend,completed,P1,2025-12-16,Vite env var based feature flags,client/src/config/features.ts,Check client/.env
 FE-012,Route gating & feature protection,frontend,completed,P1,2025-12-16,Protected routes based on feature flags,client/src/App.tsx,Toggle flags in .env
+
 UI-001,Logo component with size variants,frontend,completed,P2,2025-11-07,Smart Logo component serves optimized image sizes,client/src/components/ui/Logo.tsx,Test logo rendering across devices
 UI-002,Responsive logo design system,frontend,completed,P2,2025-11-07,Mobile-first CSS with breakpoints for logo scaling,client/src/index.css,Visual test on mobile/tablet/desktop
+
 DEVOPS-001,Docker containerization,devops,completed,P1,2025-11-07,Multi-stage Dockerfile with frontend build + Python runtime,Dockerfile Dockerfile.production,docker build -t autorisen .
 DEVOPS-002,Heroku deployment pipeline,devops,completed,P0,2025-11-07,Automated deployment with container registry,heroku.yml .github/workflows/deploy-heroku.yml,Check GitHub Actions deploy status
 DEVOPS-003,Environment configuration,devops,completed,P1,2025-11-07,Production ENV vars with secrets management,scripts/deploy.sh,heroku config on production app
@@ -28,88 +32,52 @@ DEVOPS-005,CI/CD GitHub Actions,devops,completed,P1,2025-11-07,Automated testing
 DEVOPS-035,Production deployment,devops,completed,P0,2025-11-07,Live on Heroku with container deployment and security hardening,https://autorisen-dac8e65796e7.herokuapp.com,curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
 DEVOPS-036,Static asset optimization,devops,completed,P1,2025-11-07,Multiple logo sizes for performance optimization,client/public/icons/*,Lighthouse audit for asset loading
 DEVOPS-006,Staging deployment automation,devops,completed,P1,2025-12-16,Makefile target for staging deploy,Makefile,make deploy-autorisen
+
 CODE-001,Python linting & optimization,backend,completed,P1,2025-12-18,Comprehensive Python code quality improvements with ruff,backend/src/modules/user/service.py,ruff check backend/
 CODE-002,Markdown documentation linting,docs,completed,P1,2025-11-09,97 markdown files linted and optimized,docs/MARKDOWN_LINTING_SUMMARY.md,markdownlint docs/
 CODE-003,Backend performance optimizations,backend,completed,P1,2025-11-09,O(n²) to O(n) performance improvements in user service,backend/src/modules/user/service.py,Performance benchmarks
 
-# CURRENT PHASE - ChatKit Integration & Agent Framework (Updated 2025-11-09)
-CHAT-001,ChatKit backend integration,backend,completed,P0,2025-11-10,POST+GET token endpoints with persisted threads + tool registry,"backend/src/modules/chatkit/*; tests/test_chatkit_api.py",pytest tests/test_chatkit_api.py
-CHAT-002,Agent registry database schema,backend,completed,P0,2025-11-08,Agent + AgentVersion schema validated with unique constraints and cascade tests,"backend/migrations/versions/dc4ac5c9c3d5_add_agents_registry_tables.py; tests/test_agent_registry_schema.py",pytest tests/test_agent_registry_schema.py
-CHAT-003,Flow orchestration API,backend,completed,P0,2025-11-10,Run orchestration + history endpoints with onboarding checklist sync,"backend/src/modules/flows/*; tests/test_flows_api.py",pytest tests/test_flows_api.py
-CHAT-004,ChatKit frontend components,frontend,completed,P0,2025-11-13,"Chat launcher + modal wired to telemetry indicator, auto token refresh, and ChatKit status copy","client/src/components/chat/*; client/src/index.css",npm run type-check && npm run build
+# CURRENT PHASE - ChatKit Integration & Agent Framework
+CHAT-001,ChatKit backend integration,backend,completed,P0,2025-11-10,POST+GET token endpoints with persisted threads + tool registry,backend/src/modules/chatkit/*,pytest tests/test_chatkit_api.py
+CHAT-002,Agent registry database schema,backend,completed,P0,2025-11-08,Agent + AgentVersion schema validated,backend/migrations/versions/dc4ac5c9c3d5_add_agents_registry_tables.py,pytest tests/test_agent_registry_schema.py
+CHAT-003,Flow orchestration API,backend,completed,P0,2025-11-10,Run orchestration + history endpoints,backend/src/modules/flows/*,pytest tests/test_flows_api.py
+CHAT-004,ChatKit frontend components,frontend,completed,P0,2025-11-13,Chat launcher + modal wired,client/src/components/chat/*,npm run build
 CHAT-005,Agent marketplace UI,frontend,completed,P1,2026-01-01,Browse and preview agent capabilities,client/src/features/marketplace/MarketplaceShowcase.tsx,Navigate to /marketplace
-CHAT-006,Developer agent builder,frontend,todo,P1,CHAT-002,Agent creation and manifest editor,client/src/pages/Developer.tsx,Create test agent via UI
-CHAT-007,Onboarding flow integration,frontend,todo,P1,CHAT-003,Progress tracking and checklist UI,client/src/components/onboarding/*,Complete onboarding flow test
+CHAT-006,Developer agent builder,frontend,todo,P1,,Agent creation and manifest editor,client/src/pages/Developer.tsx,Create test agent via UI
+CHAT-007,Onboarding flow integration,frontend,todo,P1,,Progress tracking and checklist UI,client/src/components/onboarding/*,Complete onboarding flow test
 
-# PAYMENTS AGENT (PayFast) - Updated Priority
-PAY-001,PaymentsAgent service (PayFast),backend,completed,P0,2025-11-10,PayFast adapter service + ITN endpoint with sample script,backend/src/modules/payments/*,"make payments-checkout && pytest tests/test_payfast_router.py"
-PAY-002,Checkout API + ChatKit tool,backend,completed,P0,2025-11-10,Expose /payments/payfast/checkout and ChatKit tool integration,backend/src/modules/payments/*,"curl -sS -X POST localhost:8000/api/payments/payfast/checkout -H 'Content-Type: application/json' -d '{\"amount\":99.99,\"item_name\":\"CapeControl Pilot\",\"customer_email\":\"demo@example.com\"}'"
+# PAYMENTS AGENT - PayFast
+PAY-001,PaymentsAgent service,backend,completed,P0,2025-11-10,PayFast adapter + ITN endpoint,backend/src/modules/payments/*,pytest tests/test_payfast_router.py
+PAY-002,Checkout API + ChatKit tool,backend,completed,P0,2025-11-10,Expose checkout endpoint + tool integration,backend/src/modules/payments/*,curl checkout test
 PAY-003,ITN ingestion & audit log,backend,completed,P0,2026-01-01,Handle ITN & persist events,backend/src/modules/payments/service.py,make payments-itn-sample
-PAY-004,Payments DB schema,backend,completed,P0,2026-01-01,transactions/invoices tables,backend/migrations/versions/64e4d0a224d9_add_payment_tables.py,alembic upgrade head
+PAY-004,Payments DB schema,backend,completed,P0,2026-01-01,Transactions/invoices tables,backend/migrations/versions/64e4d0a224d9_add_payment_tables.py,alembic upgrade head
 PAY-006,Payments UI entry points,frontend,completed,P1,2026-01-01,Buttons + success/cancel pages,client/src/components/payments/*,Manual return flow test
 PAY-007,Security & validation,security,completed,P0,2026-01-01,Server-to-server validate,backend/src/modules/payments/service.py,Add PayFast validate POST
+PAY-008,Configure production PayFast env,devops,todo,P0,,Set PAYFAST_MODE=production on capecraft,heroku config,heroku config | grep PAYFAST
+PAY-009,Create live test product,product,todo,P0,,Create R5 product for live verification,backend/src/modules/payments/constants.py,Verify product in DB
+PAY-010,Execute live production transaction,qa,todo,P0,,Complete end-to-end payment flow,https://cape-control.com,Verify success page and email
+PAY-011,Verify ITN and Audit Logs,backend,todo,P0,,Confirm ITN callback and audit trail,backend/src/modules/audit/service.py,heroku logs | grep ITN
 
-# NEXT PHASE - Production Optimization & Scaling
-OPT-001,Performance monitoring,devops,todo,P1,,Application monitoring and alerting setup,monitoring/ scripts/monitor.py,Check metrics dashboard
-OPT-002,Database optimization,backend,todo,P1,,Query optimization and connection pooling,backend/src/core/database.py,Performance test suite
-OPT-003,Caching layer,backend,todo,P1,,Redis caching for frequently accessed data,backend/src/core/cache.py,Cache hit rate monitoring
-OPT-004,API rate limiting,backend,todo,P1,,Enhanced rate limiting for production scale,backend/src/middleware/rate_limit.py,Load test API endpoints
-OPT-005,Frontend performance audit,frontend,completed,P2,2025-11-09,Full-width layout optimization and build performance,client/src/index.css,Lighthouse score verification
-OPT-006,Security audit,security,todo,P0,,Third-party security assessment and fixes,docs/security_audit.md,Security scan results
-OPT-007,Backup and disaster recovery,devops,todo,P1,,Automated database backups and restore procedures,scripts/backup.py,Test restore procedure
-OPT-008,Load testing,devops,todo,P2,,Performance testing under load,tests/load_test.py,Document load capacity
+# AI AGENT INTEGRATION
+AI-001,Anthropic API integration,backend,completed,P0,2026-01-02,Claude 3.5 Haiku integration,backend/src/modules/agents/*/service.py,python3 scripts/test_anthropic_api.py
+AI-002,Model configuration update,backend,completed,P0,2026-01-02,Fixed model names,backend/src/modules/agents/*/router.py,curl /api/agents/*/health
+AI-003,API testing infrastructure,devops,completed,P1,2026-01-02,Comprehensive test suite,scripts/test_anthropic_api.py,5/5 tests passing
+AI-004,Anthropic integration documentation,docs,completed,P1,2026-01-02,Complete documentation,docs/ANTHROPIC_INTEGRATION_STATUS.md,Review doc
+AI-005,Streaming response implementation,backend,todo,P1,,Add streaming support,backend/src/modules/agents/*/service.py,Verify streaming in Chat UI
+AI-006,Tool use implementation,backend,todo,P0,,Enable function calling,backend/src/modules/agents/*/service.py,Trigger tool via ChatKit
+AI-007,Vision capability implementation,backend,todo,P2,,Add image analysis,backend/src/modules/agents/*/service.py,Test document upload
+AI-008,Conversation history,backend,todo,P1,,Multi-turn context retention,backend/src/modules/chatkit/,Extended conversation test
 
-# FUTURE ENHANCEMENTS - Business Features
-BIZ-001,User dashboard,frontend,todo,P2,,Comprehensive user dashboard with analytics,client/src/pages/Dashboard.tsx,User acceptance testing
-BIZ-002,Admin panel,frontend,todo,P2,,Administrative interface for user management,client/src/pages/Admin.tsx,Admin workflow testing
-BIZ-003,API documentation,docs,todo,P2,,Interactive API docs with examples,docs/api/*,SwaggerUI functionality test
-BIZ-004,Email notifications,backend,todo,P2,,Transactional email system,backend/src/services/email.py,Send test email verification
-BIZ-005,Analytics integration,backend,todo,P2,,User behavior tracking and insights,backend/src/services/analytics.py,Analytics dashboard validation
-BIZ-006,Mobile responsiveness audit,frontend,todo,P2,,Comprehensive mobile UX optimization,client/src/styles/mobile.css,Cross-device testing
-BIZ-007,Accessibility compliance,frontend,todo,P2,,WCAG 2.1 AA compliance implementation,client/src/lib/accessibility.ts,Accessibility audit
-BIZ-008,Internationalization,frontend,todo,P3,,Multi-language support infrastructure,client/src/i18n/*,Test locale switching
-
-# MAINTENANCE & OPERATIONS - Enhanced
-MAINT-001,Dependency updates,devops,recurring,P2,,Regular security and feature updates,scripts/update_deps.py,Automated dependency scanning
-MAINT-002,Documentation maintenance,docs,recurring,P2,,Keep technical documentation current with linting standards,docs/,markdownlint validation
-MAINT-003,Test suite expansion,backend,recurring,P1,,Maintain >90% test coverage with performance benchmarks,backend/tests/*,pytest --cov report
-MAINT-004,Performance monitoring,devops,recurring,P1,,Monitor and optimize system performance,monitoring/dashboards/,Weekly performance reports
-MAINT-005,Security updates,devops,recurring,P0,,Critical security patch management,scripts/security_scan.py,Monthly security audits
-MAINT-006,Code quality maintenance,devops,completed,P1,2025-12-18,Automated linting and optimization workflows,scripts/fix_python_lint.py,ruff check --fix across codebase
-
-# PUBLIC PRESENCE & LANDING PAGE
-PUB-001,Finalize public vision copy,product,completed,P1,2025-12-18,,,
-PUB-002,Define landing page goals (trust, clarity, CTA),design,in-progress,P1,,,,
-PUB-003,Landing page wireframe (Figma),design,todo,P1,,,,
-PUB-004,Landing page visual design (Figma),design,todo,P1,,,,
-PUB-005,Implement landing page,frontend,blocked,P1,,,,
-PUB-006,Align Auth -> CapeAI Guide story,product,in-progress,P1,,,,
-
-# PRIORITIES LEGEND
-# P0 = Critical (production blocking)
-# P1 = High (major features)  
-# P2 = Medium (improvements)
-# P3 = Low (nice to have)
-
-# FUTURE ENHANCEMENTS - Business Features
-BIZ-001,User dashboard,frontend,todo,P2,,Comprehensive user dashboard with analytics,client/src/pages/Dashboard.tsx,User acceptance testing
-BIZ-002,Admin panel,frontend,todo,P2,,Administrative interface for user management,client/src/pages/Admin.tsx,Admin workflow testing
-BIZ-003,API documentation,docs,todo,P2,,Interactive API docs with examples,docs/api/*,SwaggerUI functionality test
-BIZ-004,Email notifications,backend,todo,P2,,Transactional email system,backend/src/services/email.py,Send test email verification
-BIZ-005,Analytics integration,backend,todo,P3,,User behavior tracking and insights,backend/src/services/analytics.py,Analytics dashboard validation
-BIZ-006,Mobile responsiveness audit,frontend,todo,P2,,Comprehensive mobile UX optimization,client/src/styles/mobile.css,Cross-device testing
-BIZ-007,Accessibility compliance,frontend,todo,P2,,WCAG 2.1 AA compliance implementation,client/src/lib/accessibility.ts,Accessibility audit
-BIZ-008,Internationalization,frontend,todo,P3,,Multi-language support infrastructure,client/src/i18n/*,Test locale switching
-
-# MAINTENANCE & OPERATIONS
-MAINT-001,Dependency updates,devops,recurring,P2,,Regular security and feature updates,scripts/update_deps.py,Automated dependency scanning
-MAINT-002,Documentation maintenance,docs,recurring,P2,,Keep technical documentation current,docs/,Documentation review process
-MAINT-003,Test suite expansion,backend,recurring,P1,,Maintain >90% test coverage,backend/tests/*,pytest --cov report
-MAINT-004,Performance monitoring,devops,recurring,P1,,Monitor and optimize system performance,monitoring/dashboards/,Weekly performance reports
-MAINT-005,Security updates,devops,recurring,P0,,Critical security patch management,scripts/security_scan.py,Monthly security audits
-
-# PRIORITIES
-# P0 = Critical (production blocking)
-# P1 = High (major features)  
-# P2 = Medium (improvements)
-# P3 = Low (nice to have)
+# NEXT ACTIONS - Execution Queue (Added 2026-01-02)
+NEXT-001,Configure PayFast production environment,devops,todo,P0,,Set PAYFAST_MODE=production and real credentials on capecraft,heroku config,heroku config --app capecraft | grep PAYFAST
+NEXT-002,Create live R5 verification product,backend,todo,P0,,Add low-value R5.00 product for live PayFast testing,backend/src/modules/payments/constants.py,Verify product exists via checkout API
+NEXT-003,Execute live PayFast production transaction,qa,todo,P0,,Complete real-money R5 payment on https://cape-control.com,PayFast live checkout,Screenshot success page + record transaction reference
+NEXT-004,Verify PayFast ITN and audit logs,backend,todo,P0,,Confirm ITN callback received and audit trail persisted,backend/src/modules/audit/service.py,heroku logs --tail --app capecraft | grep ITN
+NEXT-005,Remove payment feature flag after verification,frontend,todo,P0,,Enable payments UI for all users post-verification,client/src/config/features.ts,Manual UI test on production
+NEXT-006,Tag production release v0.2.11,devops,todo,P1,,Create release tag after payments verification,Git tags / GitHub Releases,git tag v0.2.11 && git push --tags
+NEXT-007,Implement Developer Agent Builder UI,frontend,todo,P1,,Agent creation + manifest editor + publish flow,client/src/pages/Developer.tsx,Create and publish test agent on staging
+NEXT-008,Integrate onboarding checklist UI,frontend,todo,P1,,Checklist progress UI synced with Flows API,client/src/components/onboarding/*,Complete onboarding flow on staging
+NEXT-009,Enable agent tool/function calling,backend,todo,P0,,Allow agents to execute actions via tools with audit logging,backend/src/modules/agents/*/service.py,Trigger tool call via ChatKit and verify logs
+NEXT-010,Add streaming responses to ChatKit agents,backend,todo,P1,,Implement streaming support for improved UX,backend/src/modules/agents/*/service.py,Verify partial responses in Chat UI
+NEXT-011,Production smoke-test checklist run,qa,todo,P0,,Run full post-release smoke tests on capecraft,docs/Release_Runbook.md,curl -sS https://capecraft.herokuapp.com/api/health
+NEXT-012,Update Release Runbook with payment verification,docs,todo,P1,,Document PayFast live verification and rollback steps,docs/Release_Runbook.md,Manual doc review
