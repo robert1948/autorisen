@@ -21,8 +21,13 @@ CSRF_COOKIE_CANDIDATES: tuple[str, ...] = (
     "XSRF-TOKEN",
 )
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
-EXEMPT_PATHS = {
-    "/api/auth/refresh",
+
+# CSRF is intended to protect browser/cookie flows. Some endpoints are designed for
+# server-to-server POSTs and must not be blocked by CSRF.
+# Keep exemptions as narrow as possible (method + path).
+EXEMPT_ROUTES: set[tuple[str, str]] = {
+    ("POST", "/api/payments/payfast/checkout"),
+    ("POST", "/api/payments/payfast/itn"),
 }
 
 CSRF_COOKIE_NAME = CSRF_COOKIE
@@ -74,7 +79,7 @@ def require_csrf_token(request: Request) -> None:
     if method in SAFE_METHODS:
         return None
 
-    if request.url.path in EXEMPT_PATHS:
+    if (method, request.url.path) in EXEMPT_ROUTES:
         return None
 
     header_token = _extract_token_from_headers(request)
