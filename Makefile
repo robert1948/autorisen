@@ -50,6 +50,13 @@ PY := $(VENV)/bin/python
 PIP := $(PY) -m pip
 REQ := requirements.txt
 
+# App version (source of truth: client/package.json)
+APP_VERSION_RAW := $(shell python3 -c "import json; print(json.load(open('client/package.json'))['version'])" 2>/dev/null)
+APP_VERSION := $(if $(APP_VERSION_RAW),v$(APP_VERSION_RAW),unknown)
+
+# Git SHA embedded into container images (for /api/version + certification)
+GIT_SHA := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+
 IMAGE ?= autorisen:local
 PORT ?= 8000
 
@@ -151,13 +158,13 @@ project-info: ## Show current project version and status information
 	@echo ""
 	@echo "🚀 \033[1mAutoLocal/CapeControl Project Information\033[0m"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "📊 Version: v0.2.5 (November 14, 2025)"
+	@echo "📊 Version: $(APP_VERSION)"
 	@echo "🎯 Focus: Stripe billing, usage metering, ops hardening"
 	@echo ""
 	@echo "🔗 \033[34mKey Links:\033[0m"
-	@echo "   • Staging: https://dev.cape-control.com"
-	@echo "   • Production: https://cape-control.com"
-	@echo "   • Docker Hub: stinkie/autorisen:v0.2.5"
+	@echo "   • Staging (Heroku: $(HEROKU_APP_STG)): $(DEV_BASE_URL)"
+	@echo "   • Production (Heroku: $(HEROKU_APP_PROD)): $(PROD_BASE_URL)"
+	@echo "   • Docker Hub: stinkie/autorisen:$(APP_VERSION)"
 	@echo ""
 	@$(PY) scripts/project_info.py
 	@echo ""
@@ -279,7 +286,7 @@ chatkit-dev: ## Start development mode with WebSocket debugging
 docker-build: ## Build docker image (IMAGE=$(IMAGE))
 	@echo "Building docker image $(IMAGE)..."
 	@for i in 1 2 3; do \
-		if docker build -t $(IMAGE) .; then \
+		if docker build --build-arg GIT_SHA=$(GIT_SHA) -t $(IMAGE) .; then \
 			echo "Docker build succeeded on attempt $$i"; exit 0; \
 		fi; \
 		echo "Docker build failed (attempt $$i). Retrying in 5s..."; sleep 5; \
@@ -361,7 +368,7 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_STG)
+	heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA)
 	heroku container:release web -a $(HEROKU_APP_STG)
 	@echo "✅ Staging deployment complete"
 	heroku open -a $(HEROKU_APP_STG)
@@ -369,7 +376,7 @@ heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD))
 	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_PROD)
+	heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA)
 	heroku container:release web -a $(HEROKU_APP_PROD)
 	@echo "✅ Production deployment complete"
 	heroku open -a $(HEROKU_APP_PROD)
@@ -384,7 +391,7 @@ heroku-shell: ## Open bash shell in Heroku container
 
 heroku-run-migrate: ## Run database migrations on Heroku
 	@echo "🗃️  Running migrations on $(HEROKU_APP_NAME)..."
-	heroku run python -m alembic -c backend/alembic.ini upgrade head --app $(HEROKU_APP_NAME)
+	heroku run --app $(HEROKU_APP_NAME) -- python -m alembic -c backend/alembic.ini upgrade head
 
 heroku-config-push: ## Push local .env to Heroku config (be careful!)
 	@if [ ! -f .env ]; then echo "❌ .env file not found"; exit 1; fi
@@ -434,6 +441,50 @@ migrate-revision: venv ## Create Alembic revision: make migrate-revision message
 	@echo "Creating Alembic revision: $$message"
 	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
 	@$(VENV)/bin/python -m alembic -c backend/alembic.ini revision -m "$$message"
+
+certify-autorisen: ## Enforced: certify staging (autorisen) and write .release/autorisen_certified
+	@set -e; \
+	CERT_DIR=".release"; CERT_FILE="$$CERT_DIR/autorisen_certified"; \
+	APP="$(HEROKU_APP_STG)"; \
+	CERT_SHA="$(GIT_SHA)"; \
+	if [ "$$APP" != "autorisen" ]; then echo "❌ Refusing: HEROKU_APP_STG is not autorisen (got '$$APP')"; exit 2; fi; \
+	echo "== AUTORISEN CERTIFICATION (staging) =="; \
+	echo "1) Migrations (run 1/2)"; \
+	$(MAKE) heroku-run-migrate HEROKU_APP_NAME="$$APP"; \
+	echo "2) Migrations (run 2/2, idempotency)"; \
+	$(MAKE) heroku-run-migrate HEROKU_APP_NAME="$$APP"; \
+	WEB_URL=$$(heroku info -a "$$APP" -s | sed -n 's/^web_url=//p'); \
+	WEB_URL=$${WEB_URL%/}; \
+	if [ -z "$$WEB_URL" ]; then echo "❌ Could not resolve staging web_url"; exit 2; fi; \
+	ALEMBIC_HEAD=$$(heroku run --app "$$APP" -- python -m alembic -c backend/alembic.ini current 2>/dev/null | tail -n 1 | awk '{print $$1}'); \
+	if [ -z "$$ALEMBIC_HEAD" ]; then echo "❌ Could not determine Alembic head from runtime"; exit 2; fi; \
+	echo "3) Health + smoke"; \
+	HC=$$(curl -s -o /tmp/autorisen_cert_health.json -w '%{http_code}' "$$WEB_URL/api/health" || true); \
+	CS=$$(curl -s -o /tmp/autorisen_cert_csrf.json  -w '%{http_code}' "$$WEB_URL/api/auth/csrf" || true); \
+	ME=$$(curl -s -o /tmp/autorisen_cert_me.json    -w '%{http_code}' "$$WEB_URL/api/auth/me" || true); \
+	VER=$$(curl -s "$$WEB_URL/api/version" || true); \
+	[ "$$HC" = "200" ] || (echo "❌ /api/health expected 200, got $$HC"; exit 1); \
+	[ "$$CS" = "200" ] || (echo "❌ /api/auth/csrf expected 200, got $$CS"; exit 1); \
+	if [ "$$ME" != "401" ] && [ "$$ME" != "200" ]; then echo "❌ /api/auth/me expected 200 or 401, got $$ME"; exit 1; fi; \
+	if [ "$$ME" = "200" ]; then \
+		grep -q '"email"' /tmp/autorisen_cert_me.json || (echo "❌ /api/auth/me returned 200 but response missing expected fields"; exit 1); \
+	fi; \
+	if ! echo "$$VER" | grep -Fq "$$CERT_SHA"; then \
+		echo "❌ /api/version does not include certified SHA ($$CERT_SHA). Got: $$VER"; exit 1; \
+	fi; \
+	echo "4) Log scan (traceback/5xx)"; \
+	if heroku logs --app "$$APP" --num 200 | grep -Ei 'traceback|\s5[0-9][0-9]\s|error r' >/dev/null; then \
+		echo "❌ Found traceback/5xx markers in last 200 log lines"; exit 1; \
+	fi; \
+	mkdir -p "$$CERT_DIR"; \
+	CERT_AT=$$(date -u +"%Y-%m-%dT%H:%M:%SZ"); \
+	echo "CERTIFIED_APP=$$APP" > "$$CERT_FILE"; \
+	echo "CERTIFIED_SHA=$$CERT_SHA" >> "$$CERT_FILE"; \
+	echo "CERTIFIED_ALEMBIC_HEAD=$$ALEMBIC_HEAD" >> "$$CERT_FILE"; \
+	echo "CERTIFIED_AT=$$CERT_AT" >> "$$CERT_FILE"; \
+	echo "CERTIFIED_RUNTIME_VERSION=$$VER" >> "$$CERT_FILE"; \
+	echo "CERTIFIED_WEB_URL=$$WEB_URL" >> "$$CERT_FILE"; \
+	echo "✅ Certified: $$CERT_FILE";
 
 # ----------------------------------------------------------------------------- 
 # Sitemap generation & checks
@@ -805,8 +856,8 @@ RAW_APP   := $(APP)
 NS        := $(shell echo '$(RAW_NS)'  | tr -d '[:space:]')
 APPNAME   := $(shell echo '$(RAW_APP)' | tr -d '[:space:]')
 
-# Derive versions/metadata
-GIT_SHA        := $(shell git rev-parse --short HEAD 2>/dev/null || echo "nogit")
+# Derive versions/metadata (Docker Hub tagging)
+DH_GIT_SHA     := $(shell git rev-parse --short HEAD 2>/dev/null || echo "nogit")
 DATE_TAG       := $(shell date +%Y%m%d-%H%M%S)
 GIT_DESCRIBE   := $(shell (git describe --tags --always --dirty 2>/dev/null) || true)
 VERSION        ?= $(if $(GIT_DESCRIBE),$(GIT_DESCRIBE),$(DATE_TAG))
@@ -820,7 +871,7 @@ endif
 # Sanitized values for tags
 SAFE_VERSION := $(shell $(call SANITIZE,$(VERSION)))
 SAFE_ENGINE  := $(shell $(call SANITIZE,$(DOCKER_ENGINE_VERSION)))
-SAFE_SHA     := $(shell $(call SANITIZE,$(GIT_SHA)))
+SAFE_SHA     := $(shell $(call SANITIZE,$(DH_GIT_SHA)))
 
 # Final image path for Docker Hub
 DH_IMAGE := $(NS)/$(APPNAME)

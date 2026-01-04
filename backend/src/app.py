@@ -533,17 +533,35 @@ def create_app() -> FastAPI:
 
     # ----------------------------- SPA mount ------------------------------
     if spa_index:
-        application.mount(
-            "/", StaticFiles(directory=str(CLIENT_DIST), html=True), name="frontend"
-        )
+        # Mount static assets explicitly to avoid root catch-all issues
+        if (CLIENT_DIST / "assets").exists():
+            application.mount(
+                "/assets",
+                StaticFiles(directory=str(CLIENT_DIST / "assets")),
+                name="assets",
+            )
+        if (CLIENT_DIST / "icons").exists():
+            application.mount(
+                "/icons",
+                StaticFiles(directory=str(CLIENT_DIST / "icons")),
+                name="icons",
+            )
 
         @application.get("/{client_path:path}", include_in_schema=False)
         def _spa_fallback(client_path: str):
-            # Let API and asset requests fall through normally.
-            if client_path.startswith("api/") or client_path.startswith("assets/"):
+            # API routes are handled by the router mounted at /api
+            if client_path.startswith("api/"):
                 raise HTTPException(status_code=404)
+
+            # Check for specific root-level files (sw.js, manifest, etc.)
+            file_path = CLIENT_DIST / client_path
+            if file_path.exists() and file_path.is_file():
+                return FileResponse(file_path)
+
+            # Fallback to index.html for SPA routing (e.g. /app/checkout)
             if SPA_INDEX.exists():
                 return FileResponse(SPA_INDEX)
+
             raise HTTPException(status_code=404)
 
     return application

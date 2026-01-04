@@ -32,11 +32,14 @@ RUN npm run build
 # Production Python runtime stage
 FROM python:${PYTHON_VERSION}-slim AS production
 
+ARG GIT_SHA=unknown
+
 # Environment configuration
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     ENV=prod \
     DEBUG=false \
+    GIT_SHA=${GIT_SHA} \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1

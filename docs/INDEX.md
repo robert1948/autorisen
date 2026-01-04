@@ -6,6 +6,7 @@
 - docs/PROJECT_OVERVIEW.md - Project status and progress tracking
 - docs/DEVELOPMENT_CONTEXT.md - Development environment and context
 - docs/MVP_SCOPE.md - MVP scope and requirements
+- docs/ANTHROPIC_INTEGRATION_STATUS.md - **Anthropic Claude AI integration status and roadmap**
 
 ## Planning & Management
 

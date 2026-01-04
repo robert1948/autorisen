@@ -36,7 +36,7 @@ def get_domain_service() -> DomainSpecialistService:
         _service = DomainSpecialistService(
             openai_api_key=settings.openai_api_key,
             anthropic_api_key=settings.anthropic_api_key,
-            model=os.getenv("CAPE_AI_DOMAIN_MODEL", "claude-3-5-sonnet-20240620"),
+            model=os.getenv("CAPE_AI_DOMAIN_MODEL", "claude-3-5-haiku-20241022"),
         )
     return _service
 
@@ -59,7 +59,9 @@ async def ask_domain_specialist(
     executor = AgentExecutor(db)
 
     # Call the service directly before persisting the result
-    result: DomainSpecialistTaskOutput = await service.process_task(input_data)
+    result: DomainSpecialistTaskOutput = await service.process_task(
+        input_data, db=db, user=current_user
+    )
     task_result = await executor.execute_task(task_data)
 
     # Persist real result payload

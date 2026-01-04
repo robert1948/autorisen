@@ -32,7 +32,7 @@ def get_cape_ai_service() -> CapeAIGuideService:
         _service = CapeAIGuideService(
             openai_api_key=settings.openai_api_key,
             anthropic_api_key=settings.anthropic_api_key,
-            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-sonnet-20240620"),
+            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-haiku-20241022"),
         )
     return _service
 
@@ -51,7 +51,7 @@ async def ask_cape_ai_guide(
     """
     try:
         # Process the request directly
-        result = await service.process_query(input_data)
+        result = await service.process_query(input_data, db=db, user=current_user)
         return result
 
     except Exception as e:
@@ -68,7 +68,7 @@ async def cape_ai_guide_health():
         return {
             "status": "healthy",
             "agent": "cape-ai-guide",
-            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-sonnet-20240620"),
+            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-haiku-20241022"),
             "knowledge_base": "operational",
             "timestamp": "2025-11-11T06:15:00Z",
         }

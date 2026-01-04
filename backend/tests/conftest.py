@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import os
 import pathlib
+import sys
 from typing import Any, Dict
 
 import anyio
@@ -35,6 +36,11 @@ os.environ.setdefault("SMTP_USERNAME", "tester")
 os.environ.setdefault("SMTP_PASSWORD", "tester")
 os.environ.setdefault("SMTP_USE_TLS", "0")
 os.environ.setdefault("SMTP_USE_SSL", "0")
+
+# Ensure repository root is importable when running `pytest` from any CWD.
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # Import after env is set
 from backend.src.app import app as _app  # type: ignore  # noqa: E402

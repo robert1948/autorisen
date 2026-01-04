@@ -27,6 +27,7 @@ import OnboardingProfile from "./pages/onboarding/OnboardingProfile";
 import Dashboard from "./pages/Dashboard";
 import Marketplace from "./pages/Marketplace";
 import Agents from "./pages/Agents";
+import Developer from "./pages/Developer";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Checkout from "./pages/Checkout";
@@ -119,6 +120,7 @@ export default function App() {
         {features.agentsShell && (
           <>
             <Route path="/app/agents" element={<Agents />} />
+            <Route path="/app/developer" element={<Developer />} />
             <Route path="/app/chat" element={<ChatConsole />} />
             <Route path="/app/chat/:threadId" element={<ChatConsole />} />
           </>
@@ -140,6 +142,7 @@ export default function App() {
         {/* -------------------- LEGACY APP ALIASES -------------------- */}
         <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/agents" element={<Navigate to="/app/agents" replace />} />
+        <Route path="/developer" element={<Navigate to="/app/developer" replace />} />
         <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />
         <Route path="/checkout" element={<Navigate to="/app/checkout" replace />} />

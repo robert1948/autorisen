@@ -121,6 +121,7 @@ def _invoke_with_retry(
     payload: Dict[str, Any],
     thread_id: Optional[str],
     max_attempts: int,
+    agent_id: str | None = None,
 ) -> Tuple[models.ChatThread, Dict[str, Any], models.ChatEvent]:
     """Execute a tool call with bounded retries for transient failures."""
     attempts = 0
@@ -136,11 +137,12 @@ def _invoke_with_retry(
                 tool_name=tool_name,
                 payload=payload,
                 thread_id=thread_id,
+                agent_id=agent_id,
             )
         except ValueError:
             # Validation/user errors should bubble immediately.
             raise
-        except Exception:
+        except Exception:  # noqa: BLE001
             if attempts >= max_attempts:
                 raise
             time.sleep(delay)
@@ -285,6 +287,7 @@ def execute(
                 payload=call.payload,
                 thread_id=current_thread_id,
                 max_attempts=max_attempts,
+                agent_id=agent.agent.id if agent else None,
             )
         except ValueError as exc:
             _mark_failed(

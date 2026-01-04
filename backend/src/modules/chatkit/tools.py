@@ -32,11 +32,12 @@ class ToolSpec:
 
 
 def _onboarding_brief(
-    db: Session,  # noqa: ARG001 - reserved for future DB-backed logic
+    _db: Session,
     user: models.User,
     thread: models.ChatThread,
     payload: ToolPayload,
 ) -> ToolResult:
+    del _db
     goals = payload.get("goals") or []
     industries = payload.get("industries") or []
     return {
@@ -55,11 +56,12 @@ def _onboarding_brief(
 
 
 def _support_triage(
-    db: Session,
+    _db: Session,
     user: models.User,
     thread: models.ChatThread,
     payload: ToolPayload,
 ) -> ToolResult:
+    del _db
     topic = payload.get("topic", "general")
     urgency = payload.get("urgency", "medium")
     return {
@@ -74,11 +76,12 @@ def _support_triage(
 
 
 def _energy_insights(
-    db: Session,
-    user: models.User,
-    thread: models.ChatThread,
+    _db: Session,
+    _user: models.User,
+    _thread: models.ChatThread,
     payload: ToolPayload,
 ) -> ToolResult:
+    del _db, _user, _thread
     window = payload.get("window", "24h")
     metric = payload.get("metric", "consumption")
     return {
@@ -93,11 +96,12 @@ def _energy_insights(
 
 
 def _money_summary(
-    db: Session,
-    user: models.User,
-    thread: models.ChatThread,
+    _db: Session,
+    _user: models.User,
+    _thread: models.ChatThread,
     payload: ToolPayload,
 ) -> ToolResult:
+    del _db, _user, _thread
     period = payload.get("period", "current_month")
     return {
         "summary": {
@@ -157,11 +161,12 @@ def _onboarding_checklist(
 
 
 def _payments_checkout(
-    db: Session,  # noqa: ARG001 - not used yet
+    _db: Session,
     user: models.User,
-    thread: models.ChatThread,  # noqa: ARG001 - reserved for future linking
+    _thread: models.ChatThread,
     payload: ToolPayload,
 ) -> ToolResult:
+    del _db, _thread
     settings = get_payfast_settings()
     amount = payload.get("amount")
     item_name = payload.get("item_name") or "CapeControl Subscription"
@@ -196,30 +201,68 @@ TOOLS: Dict[str, ToolSpec] = {
         placement="onboarding",
         description="Generate a guided onboarding checklist based on client goals.",
         handler=_onboarding_brief,
+        schema={
+            "type": "object",
+            "properties": {
+                "goals": {"type": "array", "items": {"type": "string"}},
+                "industries": {"type": "array", "items": {"type": "string"}},
+            },
+        },
     ),
     "onboarding.checklist": ToolSpec(
         name="onboarding.checklist",
         placement="onboarding",
         description="Update onboarding checklist progress for the current tenant.",
         handler=_onboarding_checklist,
+        schema={
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string"},
+                "done": {"type": "boolean"},
+                "label": {"type": "string"},
+            },
+        },
     ),
     "support.ticket": ToolSpec(
         name="support.ticket",
         placement="support",
         description="File a structured support ticket from the conversation context.",
         handler=_support_triage,
+        schema={
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string"},
+                "urgency": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high"],
+                },
+            },
+        },
     ),
     "energy.usage": ToolSpec(
         name="energy.usage",
         placement="energy",
         description="Explain recent usage patterns and highlight anomalies.",
         handler=_energy_insights,
+        schema={
+            "type": "object",
+            "properties": {
+                "window": {"type": "string"},
+                "metric": {"type": "string"},
+            },
+        },
     ),
     "money.summary": ToolSpec(
         name="money.summary",
         placement="money",
         description="Summarize financial transactions for a given period.",
         handler=_money_summary,
+        schema={
+            "type": "object",
+            "properties": {
+                "period": {"type": "string"},
+            },
+        },
     ),
     "payments.payfast.checkout": ToolSpec(
         name="payments.payfast.checkout",

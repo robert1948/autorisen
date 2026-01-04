@@ -15,13 +15,39 @@ const initialManifest = {
   tools: ["support.ticket"],
 };
 
+type ManifestValidation = { ok: true; value: Record<string, unknown> } | { ok: false; error: string };
+
+function validateManifest(raw: unknown): ManifestValidation {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { ok: false, error: "Manifest must be a JSON object." };
+  }
+
+  const manifest = raw as Record<string, unknown>;
+  const name = manifest.name;
+  const placement = manifest.placement;
+  const tools = manifest.tools;
+
+  if (typeof name !== "string" || name.trim().length === 0) {
+    return { ok: false, error: "Manifest requires a non-empty 'name' string." };
+  }
+
+  if (typeof placement !== "string" || placement.trim().length === 0) {
+    return { ok: false, error: "Manifest requires a non-empty 'placement' string." };
+  }
+
+  if (!Array.isArray(tools) || tools.length === 0 || tools.some((tool) => typeof tool !== "string" || tool.trim().length === 0)) {
+    return { ok: false, error: "Manifest requires a non-empty 'tools' array of strings." };
+  }
+
+  return { ok: true, value: manifest };
+}
+
 const AgentManifestEditor = ({ agent }: { agent: Agent }) => {
   const [version, setVersion] = useState("v1.0.0");
   const [manifestText, setManifestText] = useState(
     pretty(agent.versions[0]?.manifest ?? initialManifest),
   );
   const [changelog, setChangelog] = useState("");
-  const [status, setStatus] = useState<"draft" | "published">("draft");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState(agent.versions[0]?.manifest ?? initialManifest);
@@ -29,7 +55,12 @@ const AgentManifestEditor = ({ agent }: { agent: Agent }) => {
   const handlePreview = () => {
     try {
       const parsed = JSON.parse(manifestText);
-      setPreview(parsed);
+      const validated = validateManifest(parsed);
+      if (!validated.ok) {
+        setError(validated.error);
+        return;
+      }
+      setPreview(validated.value);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid JSON";
@@ -42,12 +73,17 @@ const AgentManifestEditor = ({ agent }: { agent: Agent }) => {
     setSaving(true);
     setError(null);
     try {
-      const body = JSON.parse(manifestText);
+      const parsed = JSON.parse(manifestText);
+      const validated = validateManifest(parsed);
+      if (!validated.ok) {
+        setError(validated.error);
+        return;
+      }
       await createAgentVersion(agent.id, {
         version,
-        manifest: body,
+        manifest: validated.value,
         changelog,
-        status,
+        status: "draft",
       });
       await fetchAgentDetail(agent.id); // refresh cached data server-side (optional)
     } catch (err) {
@@ -60,8 +96,8 @@ const AgentManifestEditor = ({ agent }: { agent: Agent }) => {
 
   const manifestValid = useMemo(() => {
     try {
-      JSON.parse(manifestText);
-      return true;
+      const parsed = JSON.parse(manifestText);
+      return validateManifest(parsed).ok;
     } catch {
       return false;
     }
@@ -82,16 +118,6 @@ const AgentManifestEditor = ({ agent }: { agent: Agent }) => {
             onChange={(event) => setVersion(event.target.value)}
             placeholder="v1.0.1"
           />
-        </label>
-        <label>
-          Status
-          <select
-            value={status}
-            onChange={(event) => setStatus(event.target.value as "draft" | "published")}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
         </label>
         <label className="manifest-form__full">
           Manifest JSON

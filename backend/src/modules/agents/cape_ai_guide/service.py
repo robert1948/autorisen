@@ -5,10 +5,25 @@ Core business logic for the CapeAI Guide agent including OpenAI integration,
 knowledge base searching, and response generation.
 """
 
+import json
 import time
 from typing import Any, Dict, List, Optional
-from openai import AsyncOpenAI
-from anthropic import AsyncAnthropic
+
+from anthropic import AnthropicError, AsyncAnthropic
+from openai import AsyncOpenAI, OpenAIError
+from sqlalchemy.orm import Session
+
+from backend.src.db import models
+from backend.src.modules.agents.tool_use import (
+    ToolUseContext,
+    anthropic_tools_payload,
+    execute_tool,
+    normalize_anthropic_tool_input,
+    normalize_openai_tool_args,
+    openai_tools_payload,
+    resolve_allowed_tools,
+    tool_result_text,
+)
 
 from .schemas import CapeAIGuideTaskInput, CapeAIGuideTaskOutput, ResourceLink
 from .knowledge_base import KnowledgeBase
@@ -36,7 +51,11 @@ class CapeAIGuideService:
         self.prompts = PromptTemplates()
 
     async def process_query(
-        self, input_data: CapeAIGuideTaskInput
+        self,
+        input_data: CapeAIGuideTaskInput,
+        *,
+        db: Session | None = None,
+        user: models.User | None = None,
     ) -> CapeAIGuideTaskOutput:
         """Process a user query and generate a helpful response."""
         start_time = time.time()
@@ -51,12 +70,33 @@ class CapeAIGuideService:
             )
 
             # Step 3: Generate AI response using OpenAI
+            tool_ctx: ToolUseContext | None = None
+            if db is not None and user is not None:
+                context_payload = input_data.context or {}
+                placement = context_payload.get("placement")
+                thread_id = context_payload.get("thread_id")
+                allowed_tools = context_payload.get("allowed_tools")
+
+                if not isinstance(allowed_tools, list) or not all(
+                    isinstance(item, str) and item for item in allowed_tools
+                ):
+                    allowed_tools = None
+
+                if isinstance(placement, str) and placement:
+                    tool_ctx = ToolUseContext(
+                        placement=placement,
+                        thread_id=thread_id if isinstance(thread_id, str) else None,
+                        allowed_tools=allowed_tools,
+                    )
             ai_response = await self._generate_ai_response(
                 query=input_data.query,
                 context=context_analysis,
                 knowledge=relevant_docs,
                 user_level=input_data.user_level,
                 preferred_format=input_data.preferred_format,
+                db=db,
+                user=user,
+                tool_ctx=tool_ctx,
             )
 
             # Step 4: Extract suggestions and format response
@@ -67,7 +107,6 @@ class CapeAIGuideService:
 
             # Step 6: Calculate confidence score
             confidence = self._calculate_confidence(ai_response, relevant_docs)
-
             processing_time = int((time.time() - start_time) * 1000)
 
             return CapeAIGuideTaskOutput(
@@ -78,7 +117,14 @@ class CapeAIGuideService:
                 processing_time_ms=processing_time,
             )
 
-        except Exception as e:
+        except (
+            AnthropicError,
+            OpenAIError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+            KeyError,
+        ) as e:
             # Fallback response for errors
             processing_time = int((time.time() - start_time) * 1000)
             return CapeAIGuideTaskOutput(
@@ -134,48 +180,233 @@ class CapeAIGuideService:
         knowledge: List[Dict[str, Any]],
         user_level: Optional[str],
         preferred_format: Optional[str],
+        db: Session | None,
+        user: models.User | None,
+        tool_ctx: ToolUseContext | None,
     ) -> str:
-        """Generate AI response using OpenAI API."""
+        """Generate AI response using OpenAI/Anthropic, optionally with tools."""
 
         system_prompt = self.prompts.get_system_prompt(user_level, preferred_format)
         user_prompt = self.prompts.get_user_prompt(query, context, knowledge)
 
+        def _extract_first_text(blocks: Any) -> str:
+            if not blocks:
+                return ""
+            for block in blocks:
+                text = getattr(block, "text", None)
+                if isinstance(text, str) and text.strip():
+                    return text.strip()
+            return ""
+
         try:
+            tool_specs = None
+            if db is not None and user is not None and tool_ctx is not None:
+                tool_specs = resolve_allowed_tools(tool_ctx)
+
             if self.model.startswith("claude"):
                 if not self.anthropic_client:
                     return "Anthropic API key not configured."
 
-                response = await self.anthropic_client.messages.create(
-                    model=self.model,
-                    max_tokens=1000,
-                    temperature=0.7,
-                    system=system_prompt,
-                    messages=[
-                        {"role": "user", "content": user_prompt},
-                    ],
+                messages: List[Dict[str, Any]] = [
+                    {"role": "user", "content": user_prompt},
+                ]
+                tools_payload = (
+                    anthropic_tools_payload(tool_specs) if tool_specs else None
                 )
-                return response.content[0].text
+
+                for _ in range(3):
+                    response = await self.anthropic_client.messages.create(
+                        model=self.model,
+                        max_tokens=1000,
+                        temperature=0.7,
+                        system=system_prompt,
+                        messages=messages,
+                        tools=tools_payload,
+                    )
+
+                    content = getattr(response, "content", None)
+                    tool_uses = [
+                        block
+                        for block in (content or [])
+                        if getattr(block, "type", None) == "tool_use"
+                    ]
+
+                    if (
+                        not tool_uses
+                        or not tool_specs
+                        or db is None
+                        or user is None
+                        or tool_ctx is None
+                    ):
+                        return _extract_first_text(content)
+
+                    # Preserve assistant blocks (including tool_use) in the conversation.
+                    messages.append(
+                        {
+                            "role": "assistant",
+                            "content": [
+                                (
+                                    block.model_dump()
+                                    if hasattr(block, "model_dump")
+                                    else {
+                                        "type": getattr(block, "type", None),
+                                        "id": getattr(block, "id", None),
+                                        "name": getattr(block, "name", None),
+                                        "input": getattr(block, "input", None),
+                                        "text": getattr(block, "text", None),
+                                    }
+                                )
+                                for block in (content or [])
+                            ],
+                        }
+                    )
+
+                    tool_results: List[Dict[str, Any]] = []
+                    for block in tool_uses:
+                        tool_name = getattr(block, "name", None)
+                        tool_input = normalize_anthropic_tool_input(
+                            getattr(block, "input", None)
+                        )
+                        tool_use_id = getattr(block, "id", None)
+
+                        if not isinstance(tool_name, str) or not tool_name:
+                            continue
+                        if not isinstance(tool_use_id, str) or not tool_use_id:
+                            continue
+
+                        try:
+                            tool_result = execute_tool(
+                                db,
+                                user=user,
+                                ctx=tool_ctx,
+                                tool_name=tool_name,
+                                tool_payload=tool_input,
+                            )
+                            tool_results.append(
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_use_id,
+                                    "content": tool_result_text(tool_result["result"]),
+                                }
+                            )
+                        except (RuntimeError, ValueError, TypeError, KeyError) as exc:
+                            tool_results.append(
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_use_id,
+                                    "content": tool_result_text({"error": str(exc)}),
+                                }
+                            )
+
+                    messages.append({"role": "user", "content": tool_results})
+
+                return "Unable to complete tool-enabled response."
 
             if not self.openai_client:
                 return "OpenAI API key not configured."
 
-            response = await self.openai_client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                max_tokens=1000,
-                temperature=0.7,
+            messages: List[Dict[str, Any]] = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+            tools_payload = openai_tools_payload(tool_specs) if tool_specs else None
+
+            for _ in range(3):
+                response = await self.openai_client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    tools=tools_payload,
+                    max_tokens=1000,
+                    temperature=0.7,
+                )
+
+                message = response.choices[0].message
+                tool_calls = getattr(message, "tool_calls", None) or []
+                if (
+                    not tool_calls
+                    or not tool_specs
+                    or db is None
+                    or user is None
+                    or tool_ctx is None
+                ):
+                    content = getattr(message, "content", None)
+                    return content.strip() if isinstance(content, str) else ""
+
+                assistant_tool_calls: List[Dict[str, Any]] = []
+                for call in tool_calls:
+                    call_id = getattr(call, "id", None)
+                    fn = getattr(call, "function", None)
+                    fn_name = getattr(fn, "name", None)
+                    fn_args = getattr(fn, "arguments", None)
+                    if not isinstance(call_id, str) or not isinstance(fn_name, str):
+                        continue
+                    assistant_tool_calls.append(
+                        {
+                            "id": call_id,
+                            "type": "function",
+                            "function": {
+                                "name": fn_name,
+                                "arguments": (
+                                    fn_args
+                                    if isinstance(fn_args, str)
+                                    else json.dumps(fn_args or {})
+                                ),
+                            },
+                        }
+                    )
+
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": getattr(message, "content", "") or "",
+                        "tool_calls": assistant_tool_calls,
+                    }
+                )
+
+                for call in assistant_tool_calls:
+                    tool_name = call["function"]["name"]
+                    args = normalize_openai_tool_args(call["function"].get("arguments"))
+                    try:
+                        tool_result = execute_tool(
+                            db,
+                            user=user,
+                            ctx=tool_ctx,
+                            tool_name=tool_name,
+                            tool_payload=args,
+                        )
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call["id"],
+                                "content": tool_result_text(tool_result["result"]),
+                            }
+                        )
+                    except (RuntimeError, ValueError, TypeError, KeyError) as exc:
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call["id"],
+                                "content": tool_result_text({"error": str(exc)}),
+                            }
+                        )
+
+            return "Unable to complete tool-enabled response."
+
+        except (
+            AnthropicError,
+            OpenAIError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+            KeyError,
+        ) as e:
+            return (
+                "I'm having trouble generating a response right now. "
+                f"Please try again. (Error: {str(e)})"
             )
 
-            return response.choices[0].message.content.strip()
-
-        except Exception as e:
-            return f"I'm having trouble generating a response right now. Please try again. (Error: {str(e)})"
-
     async def _extract_suggestions(
-        self, ai_response: str, input_data: CapeAIGuideTaskInput
+        self, _ai_response: str, input_data: CapeAIGuideTaskInput
     ) -> List[str]:
         """Extract relevant suggestions based on the query and response."""
 

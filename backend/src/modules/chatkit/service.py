@@ -94,6 +94,38 @@ def _record_tool_event(
     return event
 
 
+def _record_tool_audit_event(
+    db: Session,
+    *,
+    user: models.User,
+    thread: models.ChatThread,
+    tool_name: str,
+    payload: tools.ToolPayload,
+    result: tools.ToolResult,
+    chat_event_id: str,
+    agent_id: str | None = None,
+    task_id: str | None = None,
+) -> models.AuditEvent:
+    audit_event = models.AuditEvent(
+        user_id=getattr(user, "id", None),
+        agent_id=agent_id,
+        task_id=task_id,
+        event_type="chatkit_tool_invocation",
+        payload={
+            "thread_id": thread.id,
+            "placement": thread.placement,
+            "tool_name": tool_name,
+            "payload": payload,
+            "result": result,
+            "chat_event_id": chat_event_id,
+        },
+    )
+    db.add(audit_event)
+    db.commit()
+    db.refresh(audit_event)
+    return audit_event
+
+
 def ensure_thread(
     db: Session,
     *,
@@ -171,6 +203,8 @@ def invoke_tool(
     tool_name: str,
     payload: tools.ToolPayload,
     thread_id: str | None = None,
+    agent_id: str | None = None,
+    task_id: str | None = None,
 ) -> tuple[models.ChatThread, tools.ToolResult, models.ChatEvent]:
     thread = ensure_thread(db, user=user, placement=placement, thread_id=thread_id)
     spec = tools.get_tool(placement, tool_name)
@@ -185,5 +219,23 @@ def invoke_tool(
     event = _record_tool_event(
         db, thread=thread, tool_name=spec.name, payload=payload, result=result
     )
+
+    audit_event = _record_tool_audit_event(
+        db,
+        user=user,
+        thread=thread,
+        tool_name=spec.name,
+        payload=payload,
+        result=result,
+        chat_event_id=event.id,
+        agent_id=agent_id,
+        task_id=task_id,
+    )
+    event.event_metadata = {
+        **(event.event_metadata or {}),
+        "audit_event_id": audit_event.id,
+    }
+    db.add(event)
+    db.commit()
 
     return thread, result, event

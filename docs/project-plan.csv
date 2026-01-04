@@ -75,8 +75,8 @@ NEXT-003,Execute live PayFast production transaction,qa,todo,P0,,Complete real-m
 NEXT-004,Verify PayFast ITN and audit logs,backend,todo,P0,,Confirm ITN callback received and audit trail persisted,backend/src/modules/audit/service.py,heroku logs --tail --app capecraft | grep ITN
 NEXT-005,Remove payment feature flag after verification,frontend,todo,P0,,Enable payments UI for all users post-verification,client/src/config/features.ts,Manual UI test on production
 NEXT-006,Tag production release v0.2.11,devops,todo,P1,,Create release tag after payments verification,Git tags / GitHub Releases,git tag v0.2.11 && git push --tags
-NEXT-007,Implement Developer Agent Builder UI,frontend,todo,P1,,Agent creation + manifest editor + publish flow,client/src/pages/Developer.tsx,Create and publish test agent on staging
-NEXT-008,Integrate onboarding checklist UI,frontend,todo,P1,,Checklist progress UI synced with Flows API,client/src/components/onboarding/*,Complete onboarding flow on staging
+NEXT-007,Implement Developer Agent Builder UI,frontend,completed,P1,2026-01-02,Agent creation + manifest editor + publish flow,client/src/pages/Developer.tsx,Create and publish test agent on staging
+NEXT-008,Integrate onboarding checklist UI,frontend,completed,P1,2026-01-02,Checklist progress UI synced with Flows API,client/src/components/onboarding/*,Complete onboarding flow on staging
 NEXT-009,Enable agent tool/function calling,backend,todo,P0,,Allow agents to execute actions via tools with audit logging,backend/src/modules/agents/*/service.py,Trigger tool call via ChatKit and verify logs
 NEXT-010,Add streaming responses to ChatKit agents,backend,todo,P1,,Implement streaming support for improved UX,backend/src/modules/agents/*/service.py,Verify partial responses in Chat UI
 NEXT-011,Production smoke-test checklist run,qa,todo,P0,,Run full post-release smoke tests on capecraft,docs/Release_Runbook.md,curl -sS https://capecraft.herokuapp.com/api/health

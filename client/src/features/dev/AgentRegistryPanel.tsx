@@ -1,8 +1,8 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   Agent,
-  AgentVersion,
   createAgent,
   createAgentVersion,
   fetchAgentDetail,
@@ -21,11 +21,12 @@ type FormState = {
 
 type VersionFormState = {
   version: string;
-  placement: string;
-  tools: string;
   changelog: string;
-  status: "draft" | "published";
 };
+
+type ManifestValidation =
+  | { ok: true; value: Record<string, unknown> }
+  | { ok: false; error: string };
 
 const initialForm: FormState = {
   name: "",
@@ -36,11 +37,56 @@ const initialForm: FormState = {
 
 const initialVersionForm: VersionFormState = {
   version: "",
-  placement: "",
-  tools: "",
   changelog: "",
-  status: "draft",
 };
+
+const pretty = (data: unknown) => JSON.stringify(data, null, 2);
+
+function buildManifestTemplate(agent: Agent) {
+  return {
+    name: agent.name,
+    description: agent.description ?? "",
+    placement: "support",
+    tools: ["support.ticket"],
+  };
+}
+
+function validateManifest(raw: unknown): ManifestValidation {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { ok: false, error: "Manifest must be a JSON object." };
+  }
+
+  const manifest = raw as Record<string, unknown>;
+  const missing: string[] = [];
+  for (const key of ["name", "description", "placement", "tools"]) {
+    if (!(key in manifest)) missing.push(key);
+  }
+  if (missing.length > 0) {
+    return { ok: false, error: `Manifest missing keys: ${missing.join(", ")}.` };
+  }
+
+  const name = manifest.name;
+  const placement = manifest.placement;
+  const tools = manifest.tools;
+
+  if (typeof name !== "string" || name.trim().length === 0) {
+    return { ok: false, error: "Manifest requires a non-empty 'name' string." };
+  }
+
+  if (typeof placement !== "string" || placement.trim().length === 0) {
+    return { ok: false, error: "Manifest requires a non-empty 'placement' string." };
+  }
+
+  if (!Array.isArray(tools) || tools.length === 0) {
+    return { ok: false, error: "Manifest.tools must be a non-empty array." };
+  }
+
+  if (tools.some((tool) => typeof tool !== "string" || tool.trim().length === 0)) {
+    return { ok: false, error: "Manifest.tools entries must be non-empty strings." };
+  }
+
+  return { ok: true, value: manifest };
+}
 
 const AgentRegistryPanel = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -53,8 +99,14 @@ const AgentRegistryPanel = () => {
   const [versionSaving, setVersionSaving] = useState(false);
   const [publishing, setPublishing] = useState<Record<string, boolean>>({});
   const [manifestAgent, setManifestAgent] = useState<Agent | null>(null);
+  const [versionManifestText, setVersionManifestText] = useState("");
+  const [versionError, setVersionError] = useState<string | null>(null);
+  const [publishedMarketplaceSlug, setPublishedMarketplaceSlug] = useState<string | null>(null);
+
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     let mounted = true;
     const fetchAgents = async () => {
       try {
@@ -78,6 +130,7 @@ const AgentRegistryPanel = () => {
     fetchAgents();
     return () => {
       mounted = false;
+      isMountedRef.current = false;
     };
   }, []);
 
@@ -95,27 +148,40 @@ const AgentRegistryPanel = () => {
         visibility: form.visibility,
       };
       const created = await createAgent(payload);
-      setAgents((prev) => [created, ...prev]);
-      resetForm();
-      setError(null);
+      if (isMountedRef.current) {
+        setAgents((prev) => [created, ...prev]);
+        resetForm();
+        setError(null);
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to create agent";
-      setError(message);
+      if (isMountedRef.current) {
+        const message = err instanceof Error ? err.message : "Unable to create agent";
+        setError(message);
+      }
     } finally {
-      setSaving(false);
+      if (isMountedRef.current) {
+        setSaving(false);
+      }
     }
   };
 
   const handleVersionSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!versionTarget) return;
-    const placement = versionForm.placement.trim();
-    const tools = versionForm.tools
-      .split(",")
-      .map((tool) => tool.trim())
-      .filter(Boolean);
-    if (!placement || tools.length === 0) {
-      setError("Placement and at least one tool are required.");
+    setVersionError(null);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(versionManifestText);
+    } catch (jsonErr) {
+      const message = jsonErr instanceof Error ? jsonErr.message : "Invalid JSON";
+      setVersionError(`Invalid JSON: ${message}`);
+      return;
+    }
+
+    const validated = validateManifest(parsed);
+    if (!validated.ok) {
+      setVersionError(validated.error);
       return;
     }
 
@@ -123,32 +189,35 @@ const AgentRegistryPanel = () => {
     try {
       const payload = {
         version: versionForm.version.trim(),
-        manifest: {
-          name: versionTarget.name,
-          description: versionTarget.description ?? "",
-          placement,
-          tools,
-        },
+        manifest: validated.value,
         changelog: versionForm.changelog.trim() || undefined,
-        status: versionForm.status,
+        status: "draft" as const,
       };
       const created = await createAgentVersion(versionTarget.id, payload);
-      setAgents((prev) =>
-        prev.map((agent) =>
-          agent.id === versionTarget.id
-            ? { ...agent, versions: [created, ...agent.versions] }
-            : agent,
-        ),
-      );
-      setError(null);
-      setVersionSaving(false);
-      resetVersionForm();
-      setVersionTarget(null);
+      if (isMountedRef.current) {
+        setAgents((prev) =>
+          prev.map((agent) =>
+            agent.id === versionTarget.id
+              ? { ...agent, versions: [created, ...agent.versions] }
+              : agent,
+          ),
+        );
+        setError(null);
+        setVersionSaving(false);
+        resetVersionForm();
+        setVersionManifestText("");
+        setVersionTarget(null);
+      }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to create agent version";
-      setError(message);
-      setVersionSaving(false);
+      if (isMountedRef.current) {
+        const message = err instanceof Error ? err.message : "Unable to create agent version";
+        setVersionError(message);
+        setVersionSaving(false);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setVersionSaving(false);
+      }
     }
   };
 
@@ -245,6 +314,9 @@ const AgentRegistryPanel = () => {
                   onClick={() => {
                     setVersionTarget(agent);
                     resetVersionForm();
+                    setVersionError(null);
+                    setPublishedMarketplaceSlug(null);
+                    setVersionManifestText(pretty(buildManifestTemplate(agent)));
                   }}
                 >
                   New version
@@ -255,11 +327,15 @@ const AgentRegistryPanel = () => {
                   onClick={async () => {
                     try {
                       const detail = await fetchAgentDetail(agent.id);
-                      setManifestAgent(detail);
+                      if (isMountedRef.current) {
+                        setManifestAgent(detail);
+                      }
                     } catch (err) {
-                      const message =
-                        err instanceof Error ? err.message : "Unable to load agent manifest";
-                      setError(message);
+                      if (isMountedRef.current) {
+                        const message =
+                          err instanceof Error ? err.message : "Unable to load agent manifest";
+                        setError(message);
+                      }
                     }
                   }}
                 >
@@ -285,32 +361,48 @@ const AgentRegistryPanel = () => {
                             setPublishing((prev) => ({ ...prev, [version.id]: true }));
                             try {
                               const updated = await publishAgentVersion(agent.id, version.id);
-                              setAgents((prev) =>
-                                prev.map((current) => {
-                                  if (current.id !== agent.id) return current;
-                                  const updatedVersions = current.versions.map((existing) => {
-                                    if (existing.id === updated.id) {
-                                      return updated;
-                                    }
-                                    if (existing.status === "published") {
-                                      return { ...existing, status: "archived" };
-                                    }
-                                    return existing;
-                                  });
-                                  return { ...current, versions: updatedVersions };
-                                }),
-                              );
+                              if (isMountedRef.current) {
+                                setAgents((prev) =>
+                                  prev.map((current) => {
+                                    if (current.id !== agent.id) return current;
+                                    const updatedVersions = current.versions.map((existing) => {
+                                      if (existing.id === updated.id) {
+                                        return updated;
+                                      }
+                                      if (existing.status === "published") {
+                                        return { ...existing, status: "archived" };
+                                      }
+                                      return existing;
+                                    });
+                                    return { ...current, versions: updatedVersions };
+                                  }),
+                                );
+                                setPublishedMarketplaceSlug(agent.slug);
+                              }
                             } catch (err) {
-                              const message =
-                                err instanceof Error ? err.message : "Unable to publish version";
-                              setError(message);
+                              if (isMountedRef.current) {
+                                const message =
+                                  err instanceof Error ? err.message : "Unable to publish version";
+                                setError(message);
+                              }
                             } finally {
-                              setPublishing((prev) => ({ ...prev, [version.id]: false }));
+                              if (isMountedRef.current) {
+                                setPublishing((prev) => ({ ...prev, [version.id]: false }));
+                              }
                             }
                           }}
                         >
                           {publishing[version.id] ? "Publishing…" : "Publish"}
                         </button>
+                      )}
+                      {version.status === "published" && publishedMarketplaceSlug === agent.slug && (
+                        <Link
+                          to="/marketplace"
+                          className="btn btn--ghost btn--tiny"
+                          style={{ marginLeft: "0.5rem" }}
+                        >
+                          View in Marketplace
+                        </Link>
                       )}
                     </li>
                   ))}
@@ -353,42 +445,14 @@ const AgentRegistryPanel = () => {
                   placeholder="v1.0.0"
                 />
               </label>
-              <label>
-                Placement
-                <input
-                  required
-                  value={versionForm.placement}
-                  onChange={(event) =>
-                    setVersionForm((prev) => ({ ...prev, placement: event.target.value }))
-                  }
-                  placeholder="support"
+              <label className="registry-modal__fullwidth">
+                Manifest (JSON)
+                <textarea
+                  rows={12}
+                  value={versionManifestText}
+                  onChange={(event) => setVersionManifestText(event.target.value)}
+                  placeholder='{"name":"My agent","description":"","placement":"support","tools":["support.ticket"]}'
                 />
-              </label>
-              <label>
-                Tools (comma separated)
-                <input
-                  required
-                  value={versionForm.tools}
-                  onChange={(event) =>
-                    setVersionForm((prev) => ({ ...prev, tools: event.target.value }))
-                  }
-                  placeholder="support.ticket,support.notify"
-                />
-              </label>
-              <label>
-                Status
-                <select
-                  value={versionForm.status}
-                  onChange={(event) =>
-                    setVersionForm((prev) => ({
-                      ...prev,
-                      status: event.target.value as VersionFormState["status"],
-                    }))
-                  }
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
               </label>
               <label className="registry-modal__fullwidth">
                 Changelog (optional)
@@ -401,6 +465,7 @@ const AgentRegistryPanel = () => {
                   placeholder="Describe what changed in this version."
                 />
               </label>
+              {versionError && <p className="registry__error">{versionError}</p>}
               <div className="registry-modal__actions">
                 <button
                   type="button"
@@ -408,6 +473,8 @@ const AgentRegistryPanel = () => {
                   onClick={() => {
                     setVersionTarget(null);
                     resetVersionForm();
+                    setVersionManifestText("");
+                    setVersionError(null);
                   }}
                 >
                   Cancel

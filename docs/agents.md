@@ -22,12 +22,18 @@ If a filename differs in your repo, adjust the **Path** column (see the Quick Ve
 
 | Category | Agent | Purpose | Status | Path |
 |---|---|---|---|---|
-| AI | **CapeAI Guide Agent** | Persistent in-app guide for onboarding/help | 🔄 In progress | `backend/src/modules/agents/capeai_guide.py` |
+| AI | **CapeAI Guide Agent** | Persistent in-app guide for onboarding/help (Claude 3.5 Haiku) | ✅ Active | `backend/src/modules/agents/cape_ai_guide/` |
+| AI | **CapeAI Domain Specialist** | Domain-specific advice (workflows, analytics, security) | ✅ Active | `backend/src/modules/agents/cape_ai_domain_specialist/` |
 | AI | **DevAgent** | Assists developers with build/test/publish of agents | 🔜 Planned (Phase 2) | `backend/src/modules/agents/dev_agent.py` |
 | AI | **CustomerAgent** | Helps customers express goals → suggests workflows | 🧪 Stub | `backend/src/modules/agents/customer_agent.py` |
 | AI | **ChatAgentKit Runtime** | Multi-step chat workflows (ChatKit/Codex layer) | 🔄 In progress | `backend/src/modules/agents/chatkit_runtime.py` |
 | AI | **FinanceAgent** | Connects to Money schema & finance APIs | 📝 Concept | `backend/src/modules/agents/finance_agent.py` |
 | AI | **EnergyAgent** | Tuya smart-meter → usage dashboard | 🧪 Prototype | `backend/src/modules/agents/energy_agent.py` |
+
+**AI Provider:** Anthropic Claude 3.5 Haiku (claude-3-5-haiku-20241022)  
+**Capabilities:** Basic completions, system prompts, temperature/token control  
+**Available but not implemented:** Streaming, tool use, vision, conversation history  
+**Test:** `python3 scripts/test_anthropic_api.py` (5/5 tests passing)
 
 ---
 
