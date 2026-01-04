@@ -77,9 +77,16 @@ client/coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-# package-lock.json
+# Local-only npm lockfiles (repo uses pnpm; avoid committing accidental npm locks)
+package-lock.json
+client/package-lock.json
+client/client/package-lock.json
+CapeControl_React_Starter_Dark/package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# Release protocol artifacts (local)
+.release/
 
 # React/Vite specific
 .vite/
