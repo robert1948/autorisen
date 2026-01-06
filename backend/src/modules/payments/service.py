@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, Mapping, TypedDict
-from urllib.parse import quote
+from urllib.parse import quote_plus
 
 import httpx
 from sqlalchemy.orm import Session
@@ -25,7 +25,7 @@ def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str,
     for key, value in data.items():
         if value is None:
             continue
-        string_value = str(value).strip()
+        string_value = str(value)
         if string_value == "":
             continue
         result[key] = string_value
@@ -35,12 +35,22 @@ def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str,
 def _encode_for_signature(data: Mapping[str, str], passphrase: str | None) -> str:
     segments: list[str] = []
     for key in sorted(data.keys()):
-        encoded_key = quote(key)
-        encoded_value = quote(data[key])
+        if key == "signature":
+            continue
+        value = data.get(key, "")
+        if value is None:
+            continue
+        value_str = str(value)
+        if value_str == "":
+            continue
+        encoded_key = quote_plus(str(key), safe="")
+        encoded_value = quote_plus(value_str, safe="")
         segments.append(f"{encoded_key}={encoded_value}")
+
     payload = "&".join(segments)
-    if passphrase:
-        payload = f"{payload}&passphrase={quote(passphrase)}"
+
+    if passphrase is not None and passphrase != "":
+        payload = f"{payload}&passphrase={quote_plus(str(passphrase), safe='')}"
     return payload
 
 

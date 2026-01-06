@@ -1,5 +1,26 @@
 from __future__ import annotations
 
+import hashlib
+from urllib.parse import quote_plus
+
+
+def _payfast_reference_signature(fields: dict[str, str], passphrase: str | None) -> str:
+    parts: list[str] = []
+    for key in sorted(fields.keys()):
+        if key == "signature":
+            continue
+        value = fields.get(key)
+        if value is None or value == "":
+            continue
+        parts.append(
+            f"{quote_plus(str(key), safe='')}={quote_plus(str(value), safe='')}"
+        )
+
+    payload = "&".join(parts)
+    if passphrase is not None and passphrase != "":
+        payload = f"{payload}&passphrase={quote_plus(str(passphrase), safe='')}"
+    return hashlib.md5(payload.encode("utf-8")).hexdigest()
+
 
 def _set_payfast_env(monkeypatch) -> None:
     monkeypatch.setenv("PAYFAST_MERCHANT_ID", "10000100")
@@ -35,3 +56,6 @@ def test_payfast_checkout_live_verify_r5_returns_redirect_payload(client, monkey
     assert fields["amount"] == "5.00"
     assert fields["item_name"] == "Live Verification (R5)"
     assert "signature" in fields
+
+    computed = _payfast_reference_signature(fields, passphrase="test-passphrase")
+    assert computed == fields["signature"]
