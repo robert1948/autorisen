@@ -343,3 +343,6 @@ archive/local/
 # OS / editor
 .DS_Store
 .vscode/settings.json.tmp
+
+# Local artifacts
+/os
