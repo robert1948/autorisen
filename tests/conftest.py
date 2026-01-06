@@ -264,3 +264,20 @@ def _email_sink(monkeypatch, app):
     yield
 
     # (no teardown needed)
+
+
+@pytest.fixture(autouse=True)
+def _auth_rate_limiter_determinism(monkeypatch):
+    """Make login attempt gating deterministic in tests (no wall-clock dependency)."""
+    try:
+        from backend.src.modules.auth import rate_limiter as auth_rate_limiter
+
+        auth_rate_limiter._attempts.clear()
+        auth_rate_limiter._blocks.clear()
+        monkeypatch.setattr(
+            auth_rate_limiter, "_now", lambda: 1_700_000_000.0, raising=True
+        )
+    except Exception:
+        pass
+
+    yield
