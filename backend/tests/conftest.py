@@ -32,6 +32,7 @@ os.environ.setdefault("ALEMBIC_DATABASE_URL", TEST_DB_URL)
 os.environ.setdefault("DISABLE_RECAPTCHA", "true")
 os.environ.setdefault("RUN_DB_MIGRATIONS_ON_STARTUP", "0")
 os.environ.setdefault("RATE_LIMIT_BACKEND", "memory")
+os.environ.setdefault("DISABLE_RATE_LIMIT", "1")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("JWT_SECRET", "test-secret-key")
 os.environ.setdefault("EMAIL_TOKEN_SECRET", "test-email-token")
@@ -237,9 +238,34 @@ def _email_sink(monkeypatch, app):
     app.state.mailbox = sent
     app.state.outbox = sent
 
+    # Clear the core mailer outbox so tests can reliably assert on "latest".
+    try:
+        from backend.src.core import mailer as mailer_core
+
+        mailer_core.TEST_OUTBOX.clear()
+    except Exception:
+        pass
+
     # Encourage code paths to “send” email in tests
     os.environ.setdefault("EMAILS_ENABLED", "1")
 
     yield
 
     # (no teardown needed)
+
+
+@pytest.fixture(autouse=True)
+def _auth_rate_limiter_determinism(monkeypatch):
+    """Make login attempt gating deterministic in tests (no wall-clock dependency)."""
+    try:
+        from backend.src.modules.auth import rate_limiter as auth_rate_limiter
+
+        auth_rate_limiter._attempts.clear()
+        auth_rate_limiter._blocks.clear()
+        monkeypatch.setattr(
+            auth_rate_limiter, "_now", lambda: 1_700_000_000.0, raising=True
+        )
+    except Exception:
+        pass
+
+    yield
