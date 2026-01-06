@@ -21,7 +21,12 @@ from starlette.testclient import TestClient
 TEST_DB_FILE = pathlib.Path("/tmp/autolocal_test.db")
 TEST_DB_URL = f"sqlite:////{TEST_DB_FILE}"
 
-os.environ.setdefault("ENV", "test")
+# IMPORTANT: do not use setdefault here.
+# If ENV is already set (e.g. ENV=prod), setdefault would preserve it and the
+# app would not run in test mode (breaking TEST_OUTBOX-dependent tests).
+os.environ["ENV"] = "test"
+os.environ.setdefault("APP_ENV", "test")
+os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DATABASE_URL", TEST_DB_URL)
 os.environ.setdefault("ALEMBIC_DATABASE_URL", TEST_DB_URL)
 os.environ.setdefault("DISABLE_RECAPTCHA", "true")

@@ -21,7 +21,12 @@ from starlette.testclient import TestClient
 TEST_DB_FILE = pathlib.Path("/tmp/autolocal_test.db")
 TEST_DB_URL = f"sqlite:////{TEST_DB_FILE}"
 
-os.environ.setdefault("ENV", "test")
+# IMPORTANT: do not use setdefault here.
+# If the developer shell (or CI) already has ENV=prod/dev, setdefault would
+# preserve it and the app would not run in test mode (breaking TEST_OUTBOX).
+os.environ["ENV"] = "test"
+os.environ.setdefault("APP_ENV", "test")
+os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DATABASE_URL", TEST_DB_URL)
 os.environ.setdefault("ALEMBIC_DATABASE_URL", TEST_DB_URL)
 os.environ.setdefault("DISABLE_RECAPTCHA", "true")
@@ -244,6 +249,14 @@ def _email_sink(monkeypatch, app):
     app.state.test_emails = sent
     app.state.mailbox = sent
     app.state.outbox = sent
+
+    # Clear the core mailer outbox so tests can reliably assert on "latest".
+    try:
+        from backend.src.core import mailer as mailer_core
+
+        mailer_core.TEST_OUTBOX.clear()
+    except Exception:
+        pass
 
     # Encourage code paths to “send” email in tests
     os.environ.setdefault("EMAILS_ENABLED", "1")
