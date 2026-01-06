@@ -6,7 +6,6 @@ import uuid
 
 from sqlalchemy import (
     JSON,
-    BigInteger,
     Boolean,
     CheckConstraint,
     Column,

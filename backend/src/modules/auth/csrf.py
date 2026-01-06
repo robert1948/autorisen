@@ -5,6 +5,7 @@ from typing import Iterable, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from starlette.responses import JSONResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from backend.src.core.config import settings
 from backend.src.services.csrf import generate_csrf_token, validate_csrf_token
@@ -103,9 +104,6 @@ def require_csrf_token(request: Request) -> None:
             detail="Invalid CSRF token",
         )
     return None
-
-
-from starlette.types import ASGIApp, Scope, Receive, Send
 
 
 class CSRFMiddleware:

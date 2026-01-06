@@ -3,14 +3,13 @@ DDoS protection middleware using token bucket algorithm.
 Pure ASGI implementation to avoid BaseHTTPMiddleware issues.
 """
 
-import time
 import logging
 import os
+import time
 from collections import defaultdict
 from typing import Dict, Tuple
 
 from starlette.datastructures import MutableHeaders
-from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 

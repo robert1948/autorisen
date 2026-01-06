@@ -1,9 +1,10 @@
-import os
 import json
+import os
 import sys
-from openai import OpenAI
+
 from dotenv import load_dotenv
 from figma_tools import get_file_nodes, get_file_structure, post_comment
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()

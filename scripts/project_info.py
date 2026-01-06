@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-from collections import Counter
+
 import csv
-from pathlib import Path
 import sys
+from collections import Counter
+from pathlib import Path
 
 
 def main():

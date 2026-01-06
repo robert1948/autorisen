@@ -1,12 +1,15 @@
-import pytest
+import uuid
 from datetime import datetime
+
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from backend.src.db import models
-from backend.src.modules.marketplace.service import MarketplaceService
-from backend.src.modules.marketplace.models import AgentInstallRequest, AgentStatus
 from backend.src.db.session import SessionLocal
-from fastapi import HTTPException
+from backend.src.modules.marketplace.models import AgentInstallRequest, AgentStatus
+from backend.src.modules.marketplace.service import MarketplaceService
 
 
 @pytest.fixture
@@ -16,9 +19,6 @@ def db_session():
         yield session
     finally:
         session.close()
-
-
-import uuid
 
 
 @pytest.fixture

@@ -1,5 +1,5 @@
-import pytest
 from backend.src.modules.auth.schemas import LoginResponse, MeResponse
+
 
 def test_login_success_returns_jwt_and_user_info(client):
     # 1. Register a user

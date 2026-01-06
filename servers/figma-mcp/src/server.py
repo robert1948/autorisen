@@ -1,4 +1,5 @@
 from mcp.server.fastmcp import FastMCP
+
 from .figma_tools import get_file_nodes, get_file_structure, post_comment
 
 # Initialize FastMCP server

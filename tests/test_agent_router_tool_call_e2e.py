@@ -13,7 +13,6 @@ from backend.src.db import models
 from backend.src.db.session import SessionLocal
 from backend.src.modules.auth.csrf import CSRF_COOKIE_NAME
 
-
 CSRF_HEADER = "X-CSRF-Token"
 
 
@@ -188,8 +187,9 @@ class _FakeOpenAIClient:
 @pytest.fixture
 def _stubbed_guide_service():
     # Override the app dependency so requests always get our stub.
-    from backend.src.app import app as fastapi_app
     import importlib
+
+    from backend.src.app import app as fastapi_app
 
     guide_router = importlib.import_module(
         "backend.src.modules.agents.cape_ai_guide.router"
@@ -309,8 +309,9 @@ def test_agent_router_tool_call_e2e_allowlisted(client, _stubbed_guide_service):
 
 def test_agent_router_tool_call_e2e_blocks_non_allowlisted(client):
     # Stub service to request a tool call that is NOT allowlisted by request context.
-    from backend.src.app import app as fastapi_app
     import importlib
+
+    from backend.src.app import app as fastapi_app
 
     guide_router = importlib.import_module(
         "backend.src.modules.agents.cape_ai_guide.router"

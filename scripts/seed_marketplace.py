@@ -1,8 +1,9 @@
-import sys
 import os
+import sys
 import uuid
 from datetime import datetime
-from sqlalchemy import create_engine, select
+
+from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 

@@ -7,7 +7,7 @@ Provides HTTP endpoints for interacting with the domain-specific agent.
 import os
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket
+from fastapi import APIRouter, Depends, WebSocket
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import get_settings
