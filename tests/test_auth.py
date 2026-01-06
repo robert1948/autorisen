@@ -257,7 +257,11 @@ def test_register_login_refresh_me_flow(client):
     assert payload.get("company_name") in (None, "Dev LLC") or "company" in payload
 
     # refresh
-    ref = client.post("/api/auth/refresh", json={"refresh_token": refresh_token})
+    ref = client.post(
+        "/api/auth/refresh",
+        json={"refresh_token": refresh_token},
+        headers=_csrf_headers(client),
+    )
     assert ref.status_code == 200, ref.text
     ref_json: Dict[str, Any] = ref.json()
     new_access = ref_json.get("access_token")
@@ -363,7 +367,7 @@ def test_login_refresh_cookie_logout_flow(client):
     assert refresh_cookie, "refresh cookie not issued"
 
     # Refresh without explicit payload should use the cookie
-    refresh = client.post("/api/auth/refresh")
+    refresh = client.post("/api/auth/refresh", headers=_csrf_headers(client))
     assert refresh.status_code == 200, refresh.text
     new_access = refresh.json().get("access_token")
     assert new_access, "refresh did not return access token"
@@ -374,7 +378,10 @@ def test_login_refresh_cookie_logout_flow(client):
     assert logout.status_code == 204, logout.text
 
     # Refresh should now fail because cookie has been cleared/revoked
-    refresh_after_logout = client.post("/api/auth/refresh")
+    refresh_after_logout = client.post(
+        "/api/auth/refresh",
+        headers=_csrf_headers(client),
+    )
     assert refresh_after_logout.status_code == 401
 
 
