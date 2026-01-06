@@ -32,6 +32,26 @@ def _payfast_reference_signature(fields: dict[str, str], passphrase: str | None)
     return hashlib.md5(payload.encode("utf-8")).hexdigest()
 
 
+def _ensure_test_user(email: str) -> None:
+    from backend.src.db import models
+    from backend.src.db.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        existing = db.query(models.User).filter(models.User.email == email).first()
+        if existing:
+            return
+        db.add(
+            models.User(
+                email=email,
+                hashed_password="test",
+            )
+        )
+        db.commit()
+    finally:
+        db.close()
+
+
 def test_payfast_signature_with_passphrase(client, monkeypatch):
     _set_payfast_env(monkeypatch)
     monkeypatch.setenv("PAYFAST_PASSPHRASE", "testpass")
@@ -40,6 +60,8 @@ def test_payfast_signature_with_passphrase(client, monkeypatch):
 
     reset_payfast_settings_cache()
 
+    _ensure_test_user("buyer@example.test")
+
     resp = client.post(
         "/api/payments/payfast/checkout",
         json={"product_code": "LIVE_VERIFY_R5", "customer_email": "buyer@example.test"},
@@ -47,6 +69,8 @@ def test_payfast_signature_with_passphrase(client, monkeypatch):
 
     assert resp.status_code == 200
     fields = resp.json()["fields"]
+
+    assert "m_payment_id" in fields
 
     computed = _payfast_reference_signature(fields, passphrase="testpass")
     assert computed == fields["signature"]
@@ -60,6 +84,8 @@ def test_payfast_signature_without_passphrase(client, monkeypatch):
 
     reset_payfast_settings_cache()
 
+    _ensure_test_user("buyer@example.test")
+
     resp = client.post(
         "/api/payments/payfast/checkout",
         json={"product_code": "LIVE_VERIFY_R5", "customer_email": "buyer@example.test"},
@@ -67,6 +93,8 @@ def test_payfast_signature_without_passphrase(client, monkeypatch):
 
     assert resp.status_code == 200
     fields = resp.json()["fields"]
+
+    assert "m_payment_id" in fields
 
     computed = _payfast_reference_signature(fields, passphrase=None)
     assert computed == fields["signature"]

@@ -32,12 +32,34 @@ def _set_payfast_env(monkeypatch) -> None:
     monkeypatch.setenv("PAYFAST_PASSPHRASE", "test-passphrase")
 
 
+def _ensure_test_user(email: str) -> None:
+    from backend.src.db import models
+    from backend.src.db.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        existing = db.query(models.User).filter(models.User.email == email).first()
+        if existing:
+            return
+        db.add(
+            models.User(
+                email=email,
+                hashed_password="test",
+            )
+        )
+        db.commit()
+    finally:
+        db.close()
+
+
 def test_payfast_checkout_live_verify_r5_returns_redirect_payload(client, monkeypatch):
     _set_payfast_env(monkeypatch)
 
     from backend.src.modules.payments.config import reset_payfast_settings_cache
 
     reset_payfast_settings_cache()
+
+    _ensure_test_user("buyer@example.test")
 
     resp = client.post(
         "/api/payments/payfast/checkout",
@@ -56,6 +78,7 @@ def test_payfast_checkout_live_verify_r5_returns_redirect_payload(client, monkey
     assert fields["amount"] == "5.00"
     assert fields["item_name"] == "Live Verification (R5)"
     assert "signature" in fields
+    assert "m_payment_id" in fields
 
     computed = _payfast_reference_signature(fields, passphrase="test-passphrase")
     assert computed == fields["signature"]

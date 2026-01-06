@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, Mapping, TypedDict
@@ -76,6 +77,7 @@ def build_checkout_fields(
     customer_first_name: str | None = None,
     customer_last_name: str | None = None,
     metadata: Mapping[str, str | int | float | None] | None = None,
+    m_payment_id: str | None = None,
 ) -> Dict[str, str]:
     """Create a signed payload for the PayFast checkout form."""
 
@@ -85,6 +87,7 @@ def build_checkout_fields(
         "return_url": settings.return_url,
         "cancel_url": settings.cancel_url,
         "notify_url": settings.notify_url,
+        "m_payment_id": m_payment_id,
         "amount": _format_amount(amount),
         "item_name": item_name,
         "item_description": item_description,
@@ -94,7 +97,7 @@ def build_checkout_fields(
     }
 
     if metadata:
-        for idx, (key, value) in enumerate(metadata.items(), start=1):
+        for idx, value in enumerate(metadata.values(), start=1):
             if idx > 5:
                 break
             base_fields[f"custom_str{idx}"] = value
@@ -110,9 +113,46 @@ class CheckoutSession(TypedDict):
     fields: Dict[str, str]
 
 
+def _create_checkout_invoice(
+    *,
+    db: Session,
+    amount: Decimal | float | str,
+    item_name: str,
+    item_description: str | None,
+    customer_email: str,
+    customer_first_name: str | None,
+    customer_last_name: str | None,
+    metadata: Mapping[str, str | int | float | None] | None,
+) -> models.Invoice:
+    user = db.query(models.User).filter(models.User.email == customer_email).first()
+    if not user:
+        raise ValueError("No user found for customer_email")
+
+    invoice_id = str(uuid.uuid4())
+    invoice = models.Invoice(
+        id=invoice_id,
+        user_id=user.id,
+        amount=Decimal(_format_amount(amount)),
+        currency="ZAR",
+        status="pending",
+        item_name=item_name,
+        item_description=item_description,
+        customer_email=customer_email,
+        customer_first_name=customer_first_name,
+        customer_last_name=customer_last_name,
+        payment_provider="payfast",
+        external_reference=invoice_id,
+        metadata_json=dict(metadata) if metadata else None,
+    )
+    db.add(invoice)
+    db.commit()
+    return invoice
+
+
 def create_checkout_session(
     *,
     settings: PayFastSettings,
+    db: Session,
     amount: Decimal | float | str,
     item_name: str,
     item_description: str | None,
@@ -121,6 +161,16 @@ def create_checkout_session(
     customer_last_name: str | None,
     metadata: Mapping[str, str | int | float | None] | None = None,
 ) -> CheckoutSession:
+    invoice = _create_checkout_invoice(
+        db=db,
+        amount=amount,
+        item_name=item_name,
+        item_description=item_description,
+        customer_email=customer_email,
+        customer_first_name=customer_first_name,
+        customer_last_name=customer_last_name,
+        metadata=metadata,
+    )
     fields = build_checkout_fields(
         settings=settings,
         amount=amount,
@@ -130,6 +180,7 @@ def create_checkout_session(
         customer_first_name=customer_first_name,
         customer_last_name=customer_last_name,
         metadata=metadata,
+        m_payment_id=invoice.external_reference,
     )
     return {
         "process_url": settings.process_url,

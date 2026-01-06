@@ -20,6 +20,7 @@ router = APIRouter(prefix="/payments/payfast", tags=["payments"])
 def create_checkout_session(
     payload: schemas.PayFastCheckoutRequest,
     settings: PayFastSettings = Depends(get_payfast_settings),
+    db: Session = Depends(get_session),
 ) -> schemas.PayFastCheckoutResponse:
     """Generate a signed set of form fields for the PayFast hosted checkout."""
 
@@ -52,6 +53,7 @@ def create_checkout_session(
 
     session = service.create_checkout_session(
         settings=settings,
+        db=db,
         amount=amount,
         item_name=item_name,  # validated: required unless product_code resolved
         item_description=item_description,
