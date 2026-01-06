@@ -54,7 +54,7 @@ PAY-004,Payments DB schema,backend,completed,P0,2026-01-01,Transactions/invoices
 PAY-006,Payments UI entry points,frontend,completed,P1,2026-01-01,Buttons + success/cancel pages,client/src/components/payments/*,Manual return flow test
 PAY-007,Security & validation,security,completed,P0,2026-01-01,Server-to-server validate,backend/src/modules/payments/service.py,Add PayFast validate POST
 PAY-008,Configure production PayFast env,devops,todo,P0,,Set PAYFAST_MODE=production on capecraft,heroku config,heroku config | grep PAYFAST
-PAY-009,Create live test product,product,completed,P0,2026-01-06,Create R5 product for live verification (LIVE_VERIFY_R5),backend/src/modules/payments/constants.py,Verify product in DB
+PAY-009,Create live test product,product,in_progress,P0,,Preflight YES; passphrase aligned; live payment not executed yet; pending manual payment + backend confirmation.,backend/src/modules/payments/constants.py,Verify product in DB
 PAY-010,Execute live production transaction,qa,todo,P0,,Complete end-to-end payment flow,https://cape-control.com,Verify success page and email
 PAY-011,Verify ITN and Audit Logs,backend,todo,P0,,Confirm ITN callback and audit trail,backend/src/modules/audit/service.py,heroku logs | grep ITN
 
@@ -70,7 +70,7 @@ AI-008,Conversation history,backend,todo,P1,,Multi-turn context retention,backen
 
 # NEXT ACTIONS - Execution Queue (Added 2026-01-02)
 NEXT-001,Configure PayFast production environment,devops,todo,P0,,Set PAYFAST_MODE=production and real credentials on capecraft,heroku config,heroku config --app capecraft | grep PAYFAST
-NEXT-002,Create live R5 verification product,backend,completed,P0,2026-01-06,Add low-value R5.00 product for live PayFast testing (LIVE_VERIFY_R5),backend/src/modules/payments/constants.py,Verify product exists via checkout API
+NEXT-002,Create live R5 verification product,backend,in_progress,P0,,Preflight YES; passphrase aligned; live payment not executed yet; pending manual payment + backend confirmation.,backend/src/modules/payments/constants.py,Verify product exists via checkout API
 NEXT-003,Execute live PayFast production transaction,qa,todo,P0,,Complete real-money R5 payment on https://cape-control.com,PayFast live checkout,Screenshot success page + record transaction reference
 NEXT-004,Verify PayFast ITN and audit logs,backend,todo,P0,,Confirm ITN callback received and audit trail persisted,backend/src/modules/audit/service.py,heroku logs --tail --app capecraft | grep ITN
 NEXT-005,Remove payment feature flag after verification,frontend,todo,P0,,Enable payments UI for all users post-verification,client/src/config/features.ts,Manual UI test on production

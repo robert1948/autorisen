@@ -198,7 +198,7 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | PAY-006 | Payments UI entry points | frontend | completed | P1 | 2026-01-01 |
 | PAY-007 | Security & validation | security | completed | P0 | 2026-01-01 |
 | PAY-008 | Configure production PayFast env | devops | todo | P0 |  |
-| PAY-009 | Create live test product | product | completed | P0 | 2026-01-06 |
+| PAY-009 | Create live test product | product | in_progress | P0 |  |
 | PAY-010 | Execute live production transaction | qa | todo | P0 |  |
 | PAY-011 | Verify ITN and Audit Logs | backend | todo | P0 |  |
 | AI-001 | Anthropic API integration | backend | completed | P0 | 2026-01-02 |
@@ -210,7 +210,7 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | AI-007 | Vision capability implementation | backend | todo | P2 |  |
 | AI-008 | Conversation history | backend | todo | P1 |  |
 | NEXT-001 | Configure PayFast production environment | devops | todo | P0 |  |
-| NEXT-002 | Create live R5 verification product | backend | completed | P0 | 2026-01-06 |
+| NEXT-002 | Create live R5 verification product | backend | in_progress | P0 |  |
 | NEXT-003 | Execute live PayFast production transaction | qa | todo | P0 |  |
 | NEXT-004 | Verify PayFast ITN and audit logs | backend | todo | P0 |  |
 | NEXT-005 | Remove payment feature flag after verification | frontend | todo | P0 |  |
