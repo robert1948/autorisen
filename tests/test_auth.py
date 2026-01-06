@@ -111,6 +111,15 @@ def _headers_for_ip(ip: str) -> Dict[str, str]:
     return {"X-Forwarded-For": ip}
 
 
+def _csrf_headers_for_ip(
+    client, ip: str, extra: Optional[Dict[str, str]] = None
+) -> Dict[str, str]:
+    headers = _headers_for_ip(ip)
+    if extra:
+        headers.update(extra)
+    return _csrf_headers(client, headers)
+
+
 def _csrf_headers(client, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     resp = client.get("/api/auth/csrf")
     assert resp.status_code == 200, resp.text
@@ -130,10 +139,20 @@ def _login(client, email: str, password: str, ip: str = "127.0.0.1"):
     response = client.post(
         "/api/auth/login",
         json={"email": email, "password": password},
-        headers=_csrf_headers(client, _headers_for_ip(ip)),
+        headers=_csrf_headers_for_ip(client, ip),
     )
     assert response.status_code == 200, response.text
     return response
+
+
+def _refresh(client, refresh_token: Optional[str] = None):
+    if refresh_token:
+        return client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": refresh_token},
+            headers=_csrf_headers(client),
+        )
+    return client.post("/api/auth/refresh", headers=_csrf_headers(client))
 
 
 def _complete_registration(
@@ -257,11 +276,7 @@ def test_register_login_refresh_me_flow(client):
     assert payload.get("company_name") in (None, "Dev LLC") or "company" in payload
 
     # refresh
-    ref = client.post(
-        "/api/auth/refresh",
-        json={"refresh_token": refresh_token},
-        headers=_csrf_headers(client),
-    )
+    ref = _refresh(client, refresh_token)
     assert ref.status_code == 200, ref.text
     ref_json: Dict[str, Any] = ref.json()
     new_access = ref_json.get("access_token")
@@ -294,7 +309,7 @@ def test_login_rate_limit(client):
         res = client.post(
             "/api/auth/login",
             json={"email": email, "password": "bad"},
-            headers=_csrf_headers(client, _headers_for_ip(ip)),
+            headers=_csrf_headers_for_ip(client, ip),
         )
         assert res.status_code == 401, res.text
 
@@ -302,7 +317,7 @@ def test_login_rate_limit(client):
     res = client.post(
         "/api/auth/login",
         json={"email": email, "password": "bad"},
-        headers=_csrf_headers(client, _headers_for_ip(ip)),
+        headers=_csrf_headers_for_ip(client, ip),
     )
     assert res.status_code in (401, 429), res.text
     if res.status_code == 429:
@@ -367,7 +382,7 @@ def test_login_refresh_cookie_logout_flow(client):
     assert refresh_cookie, "refresh cookie not issued"
 
     # Refresh without explicit payload should use the cookie
-    refresh = client.post("/api/auth/refresh", headers=_csrf_headers(client))
+    refresh = _refresh(client)
     assert refresh.status_code == 200, refresh.text
     new_access = refresh.json().get("access_token")
     assert new_access, "refresh did not return access token"
@@ -378,10 +393,7 @@ def test_login_refresh_cookie_logout_flow(client):
     assert logout.status_code == 204, logout.text
 
     # Refresh should now fail because cookie has been cleared/revoked
-    refresh_after_logout = client.post(
-        "/api/auth/refresh",
-        headers=_csrf_headers(client),
-    )
+    refresh_after_logout = _refresh(client)
     assert refresh_after_logout.status_code == 401
 
 
