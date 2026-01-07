@@ -3,7 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
 
 /**
- * MVP guest-only guard stub.
+ * MVP guest-only guard (AuthContext-backed).
  * If a user is already authenticated, redirect to /dashboard.
  */
 export default function RequireMvpGuest() {
