@@ -153,73 +153,27 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 
 | Id | Task | Owner | Status | Priority | Completion_date |
 | --- | --- | --- | --- | --- | --- |
-| AUTH-001 | Core authentication infrastructure | backend | completed | P0 | 2025-11-07 |
-| AUTH-002 | Login/Register UI components | frontend | completed | P0 | 2025-11-07 |
-| AUTH-003 | CSRF protection implementation | backend | completed | P0 | 2025-11-07 |
-| AUTH-004 | MFA system (TOTP) | backend | completed | P0 | 2025-11-07 |
-| AUTH-005 | Security hardening & tests | backend | completed | P0 | 2025-11-07 |
-| AUTH-006 | Production authentication validation | backend | completed | P0 | 2025-11-07 |
-| FE-001 | React SPA foundation | frontend | completed | P1 | 2025-11-07 |
-| FE-002 | Routing & navigation | frontend | completed | P1 | 2025-11-07 |
-| FE-003 | Auth context & state management | frontend | completed | P1 | 2025-11-07 |
-| FE-004 | Login page + form | frontend | completed | P0 | 2025-11-07 |
-| FE-005 | Logo integration & favicon system | frontend | completed | P1 | 2025-11-07 |
-| FE-006 | Authentication flow testing | frontend | completed | P0 | 2025-11-07 |
-| FE-007 | Full-width layout optimization | frontend | completed | P1 | 2025-11-09 |
-| FE-008 | Dynamic version display | frontend | completed | P1 | 2025-11-09 |
-| FE-009 | TypeScript error resolution | frontend | completed | P1 |  |
-| FE-010 | Page content creation | frontend | completed | P1 |  |
-| FE-011 | Feature flag infrastructure | frontend | completed | P1 | 2025-12-16 |
-| FE-012 | Route gating & feature protection | frontend | completed | P1 | 2025-12-16 |
-| UI-001 | Logo component with size variants | frontend | completed | P2 | 2025-11-07 |
-| UI-002 | Responsive logo design system | frontend | completed | P2 | 2025-11-07 |
-| DEVOPS-001 | Docker containerization | devops | completed | P1 | 2025-11-07 |
-| DEVOPS-002 | Heroku deployment pipeline | devops | completed | P0 | 2025-11-07 |
-| DEVOPS-003 | Environment configuration | devops | completed | P1 | 2025-11-07 |
-| DEVOPS-004 | Database migrations | devops | completed | P1 | 2025-11-07 |
-| DEVOPS-005 | CI/CD GitHub Actions | devops | completed | P1 | 2025-11-07 |
-| DEVOPS-035 | Production deployment | devops | completed | P0 | 2025-11-07 |
-| DEVOPS-036 | Static asset optimization | devops | completed | P1 | 2025-11-07 |
-| DEVOPS-006 | Staging deployment automation | devops | completed | P1 | 2025-12-16 |
-| CODE-001 | Python linting & optimization | backend | completed | P1 | 2025-12-18 |
-| CODE-002 | Markdown documentation linting | docs | completed | P1 | 2025-11-09 |
-| CODE-003 | Backend performance optimizations | backend | completed | P1 | 2025-11-09 |
-| CHAT-001 | ChatKit backend integration | backend | completed | P0 | 2025-11-10 |
-| CHAT-002 | Agent registry database schema | backend | completed | P0 | 2025-11-08 |
-| CHAT-003 | Flow orchestration API | backend | completed | P0 | 2025-11-10 |
-| CHAT-004 | ChatKit frontend components | frontend | completed | P0 | 2025-11-13 |
-| CHAT-005 | Agent marketplace UI | frontend | completed | P1 | 2026-01-01 |
-| CHAT-006 | Developer agent builder | frontend | todo | P1 |  |
-| CHAT-007 | Onboarding flow integration | frontend | todo | P1 |  |
-| PAY-001 | PaymentsAgent service | backend | completed | P0 | 2025-11-10 |
-| PAY-002 | Checkout API + ChatKit tool | backend | completed | P0 | 2025-11-10 |
-| PAY-003 | ITN ingestion & audit log | backend | completed | P0 | 2026-01-01 |
-| PAY-004 | Payments DB schema | backend | completed | P0 | 2026-01-01 |
-| PAY-006 | Payments UI entry points | frontend | completed | P1 | 2026-01-01 |
-| PAY-007 | Security & validation | security | completed | P0 | 2026-01-01 |
-| PAY-008 | Configure production PayFast env | devops | todo | P0 |  |
-| PAY-009 | Create live test product | product | in_progress | P0 |  |
-| PAY-010 | Execute live production transaction | qa | todo | P0 |  |
-| PAY-011 | Verify ITN and Audit Logs | backend | todo | P0 |  |
-| AI-001 | Anthropic API integration | backend | completed | P0 | 2026-01-02 |
-| AI-002 | Model configuration update | backend | completed | P0 | 2026-01-02 |
-| AI-003 | API testing infrastructure | devops | completed | P1 | 2026-01-02 |
-| AI-004 | Anthropic integration documentation | docs | completed | P1 | 2026-01-02 |
-| AI-005 | Streaming response implementation | backend | todo | P1 |  |
-| AI-006 | Tool use implementation | backend | todo | P0 |  |
-| AI-007 | Vision capability implementation | backend | todo | P2 |  |
-| AI-008 | Conversation history | backend | todo | P1 |  |
-| NEXT-001 | Configure PayFast production environment | devops | todo | P0 |  |
-| NEXT-002 | Create live R5 verification product | backend | in_progress | P0 |  |
-| NEXT-003 | Execute live PayFast production transaction | qa | todo | P0 |  |
-| NEXT-004 | Verify PayFast ITN and audit logs | backend | todo | P0 |  |
-| NEXT-005 | Remove payment feature flag after verification | frontend | todo | P0 |  |
-| NEXT-006 | Tag production release v0.2.11 | devops | todo | P1 |  |
-| NEXT-007 | Implement Developer Agent Builder UI | frontend | completed | P1 | 2026-01-02 |
-| NEXT-008 | Integrate onboarding checklist UI | frontend | completed | P1 | 2026-01-02 |
-| NEXT-009 | Enable agent tool/function calling | backend | todo | P0 |  |
-| NEXT-010 | Add streaming responses to ChatKit agents | backend | todo | P1 |  |
-| NEXT-011 | Production smoke-test checklist run | qa | todo | P0 |  |
-| NEXT-012 | Update Release Runbook with payment verification | docs | todo | P1 |  |
+| DOCS-001 | Derive downstream management artifacts from SYSTEM_SPEC | docs | done | P0 | 2026-01-06 |
+| SPEC-001 | Fill in Auth Flows details (login/refresh/logout) to match implementation | docs | planned | P0 |  |
+| SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | planned | P0 |  |
+| SPEC-003 | Define Session Guarantees and non-guarantees | docs | planned | P1 |  |
+| SPEC-004 | Define Frozen vs Flexible areas in spec | docs | planned | P1 |  |
+| SPEC-005 | Define Testing determinism requirements (time/email/rate-limiting) | docs | planned | P1 |  |
+| SPEC-006 | Define 'green CI' guarantees + mocking boundaries | docs | planned | P1 |  |
+| SPEC-007 | Define development rules (branching/merge/commit discipline) | docs | planned | P2 |  |
+| SPEC-008 | Define deployment rules (approvals/rollback expectations) | docs | planned | P1 |  |
+| SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | planned | P0 |  |
+| SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | planned | P2 |  |
+| SPEC-011 | Define change control process (who may edit/review/versioning) | docs | planned | P1 |  |
+| MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | planned | P0 |  |
+| MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | planned | P0 |  |
+| DB-001 | Establish Postgres MVP data scope as system-of-record | docs | done | P0 | 2026-01-06 |
+| DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | planned | P0 |  |
+| DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | planned | P1 |  |
+| NEXT-003 | Execute PayFast production transaction | management | blocked | P0 |  |
+| PAY-INTENT-001 | Maintain payments intent-only scope (no implementation in MVP) | management | done | P0 | 2026-01-06 |
+| GOV-001 | Publish auth changes playbook (guardrails for auth/csrf edits) | docs | planned | P0 |  |
+| GOV-002 | Publish release & deploy playbook (deploy rules + rollback) | docs | planned | P1 |  |
+| GOV-003 | Perform management freeze review and publish results | management | planned | P0 |  |
 
 <!-- PLAN:END -->
