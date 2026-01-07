@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import './auth.css';
-import Logo from '../Logo';
+import '../../components/Auth/auth.css';
+import Logo from '../../components/Logo';
 
 const i18n = {
   'mfa.title': 'Multi-factor authentication',

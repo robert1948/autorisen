@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import AgentRegistryPanel from "../features/dev/AgentRegistryPanel";
+import AgentRegistryPanel from "../../features/dev/AgentRegistryPanel";
 
 const Developer: React.FC = () => {
   return (

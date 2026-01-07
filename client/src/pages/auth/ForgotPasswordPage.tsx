@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { requestPasswordReset } from "../lib/authApi";
+import { requestPasswordReset } from "../../lib/authApi";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

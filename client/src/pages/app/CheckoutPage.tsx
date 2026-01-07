@@ -5,9 +5,9 @@
 
 import React, { useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import CheckoutFlow from '../components/payments/CheckoutFlow';
-import { PaymentErrorBoundary } from '../components/payments/PaymentErrorBoundary';
-import type { PaymentFormData, PayFastCheckoutResponse } from '../types/payments';
+import CheckoutFlow from '../../components/payments/CheckoutFlow';
+import { PaymentErrorBoundary } from '../../components/payments/PaymentErrorBoundary';
+import type { PaymentFormData, PayFastCheckoutResponse } from '../../types/payments';
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();

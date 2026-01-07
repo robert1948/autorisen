@@ -1,6 +1,6 @@
 import React from 'react';
-import Logo from '../components/Logo';
-import '../components/Auth/auth.css';
+import Logo from '../../components/Logo';
+import '../../components/Auth/auth.css';
 
 const LogoTestPage: React.FC = () => {
   return (

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { PaymentStatus } from "../components/payments/PaymentStatus";
+import { PaymentStatus } from "../../components/payments/PaymentStatus";
 
 export default function CheckoutSuccess() {
   return (

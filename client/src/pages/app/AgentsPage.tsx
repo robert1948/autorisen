@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AgentWorkbench from '../features/dev/AgentWorkbench';
-import AgentRegistryPanel from '../features/dev/AgentRegistryPanel';
+import AgentWorkbench from '../../features/dev/AgentWorkbench';
+import AgentRegistryPanel from '../../features/dev/AgentRegistryPanel';
 
 const Agents: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'manage' | 'workbench'>('manage');

@@ -29,49 +29,49 @@ import {
   MvpSettingsBilling,
   MvpHelp,
   MvpKnowledgeBase,
-} from "./pages/mvp/mvpPages";
+} from "./pages/mvp/MvpPages";
 
 // Public
-import HomePage from "./pages/HomePage";
-import Welcome from "./pages/Welcome";
-import About from "./pages/About";
-import Subscribe from "./pages/Subscribe";
+import HomePage from "./pages/public/HomePage";
+import Welcome from "./pages/public/WelcomePage";
+import About from "./pages/public/AboutPage";
+import Subscribe from "./pages/public/SubscribePage";
 
 // Auth pages / flows
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import SocialCallback from "./pages/SocialCallback";
-import VerifyEmail from "./pages/VerifyEmail";
+import Register from "./pages/auth/RegisterPage";
+import ForgotPassword from "./pages/auth/ForgotPasswordPage";
+import ResetPassword from "./pages/auth/ResetPasswordPage";
+import SocialCallback from "./pages/auth/SocialCallbackPage";
+import VerifyEmail from "./pages/public/VerifyEmailPage";
 
 // Onboarding pages
-import OnboardingCustomer from "./pages/onboarding/Customer";
-import OnboardingDeveloper from "./pages/onboarding/Developer";
-import OnboardingGuide from "./pages/onboarding/OnboardingGuide";
-import OnboardingChecklist from "./pages/onboarding/OnboardingChecklist";
-import OnboardingProfile from "./pages/onboarding/OnboardingProfile";
+import OnboardingCustomer from "./pages/onboarding/OnboardingCustomerPage";
+import OnboardingDeveloper from "./pages/onboarding/OnboardingDeveloperPage";
+import OnboardingGuide from "./pages/onboarding/OnboardingGuidePage";
+import OnboardingChecklist from "./pages/onboarding/OnboardingChecklistPage";
+import OnboardingProfile from "./pages/onboarding/OnboardingProfilePage";
 
 // App pages
-import Dashboard from "./pages/Dashboard";
-import Marketplace from "./pages/Marketplace";
-import Agents from "./pages/Agents";
-import Developer from "./pages/Developer";
-import Settings from "./pages/Settings";
-import Billing from "./pages/Billing";
-import Checkout from "./pages/Checkout";
-import CheckoutSuccess from "./pages/CheckoutSuccess";
-import CheckoutCancel from "./pages/CheckoutCancel";
-import ChatConsole from "./pages/ChatConsole";
-import LogoTestPage from "./pages/LogoTestPage";
-import SunbirdPilotMobile from "./pages/sunbird/SunbirdPilotMobile";
+import Dashboard from "./pages/app/DashboardPage";
+import Marketplace from "./pages/app/MarketplacePage";
+import Agents from "./pages/app/AgentsPage";
+import Developer from "./pages/app/DeveloperPage";
+import Settings from "./pages/app/SettingsPage";
+import Billing from "./pages/app/BillingPage";
+import Checkout from "./pages/app/CheckoutPage";
+import CheckoutSuccess from "./pages/app/CheckoutSuccessPage";
+import CheckoutCancel from "./pages/app/CheckoutCancelPage";
+import ChatConsole from "./pages/app/ChatConsolePage";
+import LogoTestPage from "./pages/help/LogoTestPage";
+import SunbirdPilotMobile from "./pages/app/SunbirdPilotMobilePage";
 
 // CapeControl auth components (production-ready)
-import LoginPage from "./components/Auth/LoginPage";
-import MFAChallenge from "./components/Auth/MFAChallenge";
-import MFAEnroll from "./components/Auth/MFAEnroll";
+import LoginPage from "./pages/auth/LoginPage";
+import MFAChallenge from "./pages/auth/MfaChallengePage";
+import MFAEnroll from "./pages/auth/MfaEnrollPage";
 
 // Canonical app entry redirect
-import AppEntryRedirect from "./routes/AppEntryRedirect";
+import AppEntryRedirect from "./pages/app/AppEntryRedirectPage";
 
 /**
  * Redirect legacy /verify-email/:token → /auth/verify-email/:token

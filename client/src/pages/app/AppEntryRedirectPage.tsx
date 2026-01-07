@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { features } from "../config/features";
+import { features } from "../../config/features";
 
 function isOnboardingComplete(): boolean {
   return localStorage.getItem("onboarding_complete") === "true";

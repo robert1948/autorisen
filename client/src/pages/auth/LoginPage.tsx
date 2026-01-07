@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import '../Auth/auth.css';
-import MFAChallenge from './MFAChallenge';
-import Logo from '../Logo';
+import '../../components/Auth/auth.css';
+import MFAChallenge from './MfaChallengePage';
+import Logo from '../../components/Logo';
 
 const i18n = {
   'login.title': 'Log in to CapeControl',

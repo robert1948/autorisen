@@ -5,19 +5,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { PaymentStateProvider, usePaymentMethods, useInvoices, usePaymentUI } from '../context/PaymentStateContext';
-import { PaymentErrorBoundary } from '../components/payments/PaymentErrorBoundary';
-import { PaymentSecurityProvider, PaymentSecurityGuard } from '../components/payments/PaymentSecurityProvider';
+import { PaymentStateProvider, usePaymentMethods, useInvoices, usePaymentUI } from '../../context/PaymentStateContext';
+import { PaymentErrorBoundary } from '../../components/payments/PaymentErrorBoundary';
+import { PaymentSecurityProvider, PaymentSecurityGuard } from '../../components/payments/PaymentSecurityProvider';
 import { 
   PaymentDashboardSummary, 
   RecentPaymentsWidget, 
   PaymentStatusIndicator, 
   QuickPaymentButton,
   paymentUtils 
-} from '../components/payments/PaymentIntegration';
-import PaymentMethodManager from '../components/payments/PaymentMethodManager';
-import InvoiceHistory from '../components/payments/InvoiceHistory';
-import type { PaymentMethod } from '../types/payments';
+} from '../../components/payments/PaymentIntegration';
+import PaymentMethodManager from '../../components/payments/PaymentMethodManager';
+import InvoiceHistory from '../../components/payments/InvoiceHistory';
+import type { PaymentMethod } from '../../types/payments';
 
 // Tab navigation for billing sections
 type BillingTab = 'overview' | 'methods' | 'invoices' | 'subscriptions';

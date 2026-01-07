@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { api, DashboardStats, ActivityItem } from '../services/api';
-import { PaymentDashboardSummary, RecentPaymentsWidget, QuickPaymentButton } from '../components/payments/PaymentIntegration';
-import { PaymentStateProvider } from '../context/PaymentStateContext';
-import { PaymentErrorBoundary } from '../components/payments/PaymentErrorBoundary';
-import { features } from '../config/features';
+import { api, DashboardStats, ActivityItem } from '../../services/api';
+import { PaymentDashboardSummary, RecentPaymentsWidget, QuickPaymentButton } from '../../components/payments/PaymentIntegration';
+import { PaymentStateProvider } from '../../context/PaymentStateContext';
+import { PaymentErrorBoundary } from '../../components/payments/PaymentErrorBoundary';
+import { features } from '../../config/features';
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);

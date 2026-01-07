@@ -5,11 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 
-import FormInput from "../components/FormInput";
-import PasswordMeter from "../components/PasswordMeter";
-import Recaptcha from "../components/Recaptcha";
-import RoleCard from "../components/RoleCard";
-import SkillMultiSelect from "../components/SkillMultiSelect";
+import FormInput from "../../components/FormInput";
+import PasswordMeter from "../../components/PasswordMeter";
+import Recaptcha from "../../components/Recaptcha";
+import RoleCard from "../../components/RoleCard";
+import SkillMultiSelect from "../../components/SkillMultiSelect";
 import {
   registerStep1,
   registerStep2,
@@ -18,8 +18,8 @@ import {
   type RegisterStep2Payload,
   type RegisterStep2Response,
   type UserRole,
-} from "../lib/authApi";
-import { useAuth } from "../features/auth/AuthContext";
+} from "../../lib/authApi";
+import { useAuth } from "../../features/auth/AuthContext";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/;
 const PASSWORD_ERROR =
