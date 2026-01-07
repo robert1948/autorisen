@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "name": "Landing — Desktop (v1)",
+    "version": 1
+  },
+  "hero": {
+    "eyebrow": "CapeControl • AI Agents",
+    "headline": "Transform complexity into opportunity with intelligent AI.",
+    "subhead": "CapeControl makes AI accessible, practical, and personal — for everyone. Start with a guided AI that learns your context and grows with your work.",
+    "primaryCta": {
+      "label": "Join Early Access",
+      "href": "/register"
+    },
+    "secondaryCta": {
+      "label": "Learn more",
+      "href": "/about"
+    }
+  },
+  "trustbar": {
+    "items": [
+      "Context-aware",
+      "Always-on",
+      "Private"
+    ]
+  },
+  "benefits": {
+    "headline": "What you get",
+    "items": [
+      {
+        "title": "Guided onboarding",
+        "description": "Start with a clear, step-by-step setup that matches your goals."
+      },
+      {
+        "title": "Practical workflows",
+        "description": "Turn ideas into repeatable tasks with agent-assisted execution."
+      },
+      {
+        "title": "Built for focus",
+        "description": "Keep your workspace organized while your AI handles the busywork."
+      }
+    ]
+  },
+  "finalCTA": {
+    "headline": "Ready to start?",
+    "subhead": "Get early access and build your first workflow in minutes.",
+    "primaryCta": {
+      "label": "Create an account",
+      "href": "/register"
+    }
+  }
+}
