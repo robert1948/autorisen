@@ -3,6 +3,34 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 
 import { features } from "./config/features";
 
+// MVP scaffold routes (Spec-driven)
+import RequireMvpAuth from "./routes/guards/RequireMvpAuth";
+import RequireMvpGuest from "./routes/guards/RequireMvpGuest";
+import {
+  MvpLanding,
+  MvpAbout,
+  MvpDocs,
+  MvpLogin,
+  MvpRegister,
+  MvpResetPassword,
+  MvpResetPasswordConfirm,
+  MvpRegisterStep1,
+  MvpRegisterStep2,
+  MvpVerifyEmail,
+  MvpLogout,
+  MvpOnboardingWelcome,
+  MvpOnboardingProfile,
+  MvpOnboardingChecklist,
+  MvpOnboardingGuide,
+  MvpDashboard,
+  MvpSettings,
+  MvpSettingsProfile,
+  MvpSettingsSecurity,
+  MvpSettingsBilling,
+  MvpHelp,
+  MvpKnowledgeBase,
+} from "./pages/mvp/mvpPages";
+
 // Public
 import HomePage from "./pages/HomePage";
 import Welcome from "./pages/Welcome";
@@ -65,11 +93,50 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
+        {/* Public pages */}
+        <Route path="/" element={<MvpLanding />} />
+        <Route path="/about" element={<MvpAbout />} />
+        <Route path="/docs" element={<MvpDocs />} />
+
+        {/* Auth flow pages (guest-only stub) */}
+        <Route element={<RequireMvpGuest />}>
+          <Route path="/login" element={<MvpLogin />} />
+          <Route path="/register" element={<MvpRegister />} />
+          <Route path="/reset-password" element={<MvpResetPassword />} />
+          <Route path="/reset-password/confirm" element={<MvpResetPasswordConfirm />} />
+          <Route path="/register/step-1" element={<MvpRegisterStep1 />} />
+          <Route path="/register/step-2" element={<MvpRegisterStep2 />} />
+          <Route path="/verify-email/:token" element={<MvpVerifyEmail />} />
+        </Route>
+
+        {/* Onboarding + App pages (require auth stub) */}
+        <Route element={<RequireMvpAuth />}>
+          {/* Onboarding */}
+          <Route path="/onboarding/welcome" element={<MvpOnboardingWelcome />} />
+          <Route path="/onboarding/profile" element={<MvpOnboardingProfile />} />
+          <Route path="/onboarding/checklist" element={<MvpOnboardingChecklist />} />
+          <Route path="/onboarding/guide" element={<MvpOnboardingGuide />} />
+
+          {/* App core */}
+          <Route path="/dashboard" element={<MvpDashboard />} />
+          <Route path="/settings" element={<MvpSettings />} />
+          <Route path="/settings/profile" element={<MvpSettingsProfile />} />
+          <Route path="/settings/security" element={<MvpSettingsSecurity />} />
+          <Route path="/settings/billing" element={<MvpSettingsBilling />} />
+
+          {/* Logout (action route; placeholder only) */}
+          <Route path="/logout" element={<MvpLogout />} />
+        </Route>
+
+        {/* Help pages (read-only; public accessible) */}
+        <Route path="/help" element={<MvpHelp />} />
+        <Route path="/help/knowledge-base" element={<MvpKnowledgeBase />} />
+
         {/* -------------------- PUBLIC -------------------- */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/demo" element={<Welcome />} />
         <Route path="/how-it-works" element={<About />} />
-        <Route path="/about" element={<About />} />
         <Route path="/subscribe" element={<Subscribe />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
@@ -88,12 +155,8 @@ export default function App() {
         <Route path="/account/mfa-enroll" element={<MFAEnroll />} />
 
         {/* -------------------- LEGACY AUTH ALIASES -------------------- */}
-        <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-        <Route path="/signup" element={<Navigate to="/auth/register" replace />} />
-        <Route path="/register" element={<Navigate to="/auth/register" replace />} />
-        <Route path="/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
-        <Route path="/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
-        <Route path="/verify-email/:token" element={<VerifyEmailRedirect />} />
+        <Route path="/signup" element={<Navigate to="/register" replace />} />
+        <Route path="/forgot-password" element={<Navigate to="/reset-password" replace />} />
 
         {/* -------------------- APP (CANONICAL) -------------------- */}
         <Route path="/app" element={<AppEntryRedirect />} />
@@ -140,10 +203,8 @@ export default function App() {
         <Route path="/app/marketplace" element={<Marketplace />} />
 
         {/* -------------------- LEGACY APP ALIASES -------------------- */}
-        <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/agents" element={<Navigate to="/app/agents" replace />} />
         <Route path="/developer" element={<Navigate to="/app/developer" replace />} />
-        <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />
         <Route path="/checkout" element={<Navigate to="/app/checkout" replace />} />
         <Route path="/chat" element={<Navigate to="/app/chat" replace />} />
