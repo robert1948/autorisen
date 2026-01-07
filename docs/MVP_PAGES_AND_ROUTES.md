@@ -20,9 +20,9 @@ Columns:
 | `/register` | public | write | planned |
 | `/reset-password` | public | write | planned |
 | `/reset-password/confirm` | public | write | planned |
-| `/register/step-1` | auth | write | planned |
-| `/register/step-2` | auth | write | planned |
-| `/verify-email/:token` | auth | write | planned |
+| `/register/step-1` | public | write | planned |
+| `/register/step-2` | public | write | planned |
+| `/verify-email/:token` | public | write | planned |
 | `/logout` | auth | write | planned |
 | `/onboarding/welcome` | onboarding | write | planned |
 | `/onboarding/profile` | onboarding | write | planned |
@@ -40,3 +40,4 @@ Columns:
 - Navigation is strictly linear: Public → Auth → Onboarding → App (SYSTEM_SPEC §2.5.7).
 - Billing is display-only for MVP (SYSTEM_SPEC §2.5.4).
 - Help is read-only (SYSTEM_SPEC §2.5.5).
+- Registration step routes and email verification are unauthenticated entry points (SYSTEM_SPEC §2.5.2).
