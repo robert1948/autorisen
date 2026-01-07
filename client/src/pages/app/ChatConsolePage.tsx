@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import ChatThread from "../components/chat/ChatThread";
-import type { ChatPlacement } from "../components/chat/ChatModal";
-import { useChatSession } from "../hooks/useChatSession";
+import ChatThread from "../../components/chat/ChatThread";
+import type { ChatPlacement } from "../../components/chat/ChatModal";
+import { useChatSession } from "../../hooks/useChatSession";
 
 const PLACEMENTS: ChatPlacement[] = ["support", "onboarding", "developer", "energy", "money", "admin"];
 

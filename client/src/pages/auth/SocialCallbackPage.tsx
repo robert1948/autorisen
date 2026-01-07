@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../features/auth/AuthContext";
+import { useAuth } from "../../features/auth/AuthContext";
 
 const SOCIAL_PROVIDERS = ["google", "linkedin"] as const;
 type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];

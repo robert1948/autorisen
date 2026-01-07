@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import MarketplaceShowcase from '../features/marketplace/MarketplaceShowcase';
+import MarketplaceShowcase from '../../features/marketplace/MarketplaceShowcase';
 
 const Marketplace: React.FC = () => {
   return (

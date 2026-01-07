@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { resendVerification, verifyEmail } from "../lib/authApi";
-import { useAuth } from "../features/auth/AuthContext";
+import { resendVerification, verifyEmail } from "../../lib/authApi";
+import { useAuth } from "../../features/auth/AuthContext";
 
 type Status = "loading" | "success" | "error" | "idle";
 

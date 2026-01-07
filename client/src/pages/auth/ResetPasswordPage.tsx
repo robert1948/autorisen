@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import PasswordMeter from "../components/PasswordMeter";
-import { completePasswordReset } from "../lib/authApi";
+import PasswordMeter from "../../components/PasswordMeter";
+import { completePasswordReset } from "../../lib/authApi";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();

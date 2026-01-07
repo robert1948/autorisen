@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import ProfileSettings from './profile/ProfileSettings';
-import Security from './profile/Security';
-import ApiTokens from './profile/ApiTokens';
-import { features } from '../config/features';
+import ProfileSettings from '../profile/ProfileSettings';
+import Security from '../profile/Security';
+import ApiTokens from '../profile/ApiTokens';
+import { features } from '../../config/features';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'api' | 'billing'>('profile');
