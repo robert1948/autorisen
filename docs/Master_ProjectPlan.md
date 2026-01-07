@@ -2,6 +2,12 @@
 
 Snapshot: 2025-11-14
 
+Canonical plan notice
+
+- Canonical plan: `docs/project-plan.csv`.
+- The PLAN block in this document is auto-synced by `scripts/plan_sync.py`.
+- Legacy narrative in this document may be historical/outdated; follow `docs/SYSTEM_SPEC.md` and `docs/project-plan.csv` for authoritative scope and status.
+
 See also: `docs/senior_devops.md`
 
 <!-- markdownlint-disable MD013 -->
@@ -70,6 +76,7 @@ How to use and update
 - Edit `docs/project-plan.csv` for day-to-day task changes (status, owner, estimates). Follow the CSV schema:
   - Required header: id,phase,task,owner,status,priority,dependencies,estimated_hours,completion_date,artifacts,verification,notes,codex_hints
   - `status` must be one of: todo, in-progress, completed, blocked, deferred
+  - Legacy status vocabulary note: the canonical statuses are `planned`, `in_progress`, `blocked`, `done` (see `docs/project-plan.csv`).
   - `completion_date` values (when present) use ISO 8601 (YYYY-MM-DD)
 - Commit message convention: `docs(plan): <short description>` (e.g., `docs(plan): mark PAY-001 in-progress`)
 - When milestones or high-level narrative shift, update this Markdown to capture context and decisions; link to PRs or Action runs in the CSV `notes` column for traceability.
