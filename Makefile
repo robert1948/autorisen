@@ -46,9 +46,11 @@ SHELL := /bin/bash
 # Core vars
 # -----------------------------------------------------------------------------
 VENV := .venv
-PY := $(VENV)/bin/python
+PY := $(VENV)/bin/python3
 PIP := $(PY) -m pip
 REQ := requirements.txt
+
+ALEMBIC := $(PY) -m alembic -c backend/alembic.ini
 
 # App version (source of truth: client/package.json)
 APP_VERSION_RAW := $(shell python3 -c "import json; print(json.load(open('client/package.json'))['version'])" 2>/dev/null)
@@ -105,7 +107,29 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push dockerhub-build-push \
 	dockerhub-release dockerhub-update-description dockerhub-clean \
 	playbooks-overview playbook-overview playbook-open playbook-badge playbook-new playbooks-check \
-	design-sync design-validate
+	design-sync design-validate \
+	alembic-version alembic-heads alembic-current alembic-sql-head
+
+alembic-version: ## Show Alembic version (venv-safe)
+	@$(PY) -m alembic --version
+
+alembic-heads: ## Show Alembic heads (venv-safe)
+	@$(ALEMBIC) heads -v
+
+alembic-current: ## Show Alembic current revision (requires reachable DB)
+	@$(ALEMBIC) current
+
+alembic-sql-head: ## Generate offline SQL for latest upgrade to head (parent->head, sqlite in-memory)
+	@tmpfile=$$(mktemp); \
+	parent=$$($(ALEMBIC) heads -v | sed -n 's/.*Parent: \([0-9a-z]\+\).*/\1/p' | head -n 1); \
+	if [ -z "$$parent" ]; then \
+		echo "Could not determine parent revision from 'alembic heads -v'" >&2; \
+		rm -f $$tmpfile; \
+		exit 1; \
+	fi; \
+	ALEMBIC_DATABASE_URL=sqlite:///:memory: $(ALEMBIC) upgrade $$parent:head --sql > $$tmpfile; \
+	head -n 80 $$tmpfile; \
+	rm -f $$tmpfile
 
 # ----------------------------------------------------------------------------- 
 # Help (auto-docs)
