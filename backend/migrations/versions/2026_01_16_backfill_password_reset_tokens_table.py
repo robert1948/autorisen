@@ -1,6 +1,6 @@
 """backfill password_reset_tokens table if missing
 
-Revision ID: 20260116_backfill_password_reset_tokens_table
+Revision ID: 20260116_pwreset_backfill
 Revises: 05e485f00315
 Create Date: 2026-01-16
 
@@ -19,7 +19,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "20260116_backfill_password_reset_tokens_table"
+revision: str = "20260116_pwreset_backfill"
 down_revision: Union[str, None] = "05e485f00315"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -61,7 +61,9 @@ def upgrade() -> None:
     if not inspector.has_table("password_reset_tokens"):
         return
 
-    existing_indexes = {ix["name"] for ix in inspector.get_indexes("password_reset_tokens")}
+    existing_indexes = {
+        ix["name"] for ix in inspector.get_indexes("password_reset_tokens")
+    }
 
     if "ix_password_reset_tokens_user_id" not in existing_indexes:
         op.create_index(
