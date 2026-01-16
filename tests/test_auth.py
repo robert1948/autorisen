@@ -557,7 +557,7 @@ def test_password_reset_flow(client, monkeypatch):
         json={"email": email},
         headers=_csrf_headers(client),
     )
-    assert forgot.status_code == 202, forgot.text
+    assert forgot.status_code == 200, forgot.text
     assert captured["email"] == email.lower()
     reset_url = captured["reset_url"]
     token_list = parse_qs(urlparse(reset_url).query).get("token", [])
@@ -619,5 +619,5 @@ def test_password_reset_unknown_email_is_noop(client, monkeypatch):
         json={"email": "unknown@example.com"},
         headers=_csrf_headers(client),
     )
-    assert forgot.status_code == 202, forgot.text
+    assert forgot.status_code == 200, forgot.text
     assert not captured, "email should not be sent for unknown accounts"

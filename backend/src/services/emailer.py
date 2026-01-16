@@ -74,21 +74,13 @@ def send_password_reset_email(email: str, reset_url: str, expires_at: datetime) 
     except MailerError:
         logger.exception(
             "Password reset email failed",
-            extra={
-                "email": email,
-                "reset_url": reset_url,
-                "expires_at": expires_at.isoformat(),
-            },
+            extra={"expires_at": expires_at.isoformat()},
         )
         raise
     else:
         logger.info(
             "Password reset email dispatched",
-            extra={
-                "email": email,
-                "reset_url": reset_url,
-                "expires_at": expires_at.isoformat(),
-            },
+            extra={"expires_at": expires_at.isoformat()},
         )
 
 

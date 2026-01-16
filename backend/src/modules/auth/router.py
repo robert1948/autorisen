@@ -1658,7 +1658,7 @@ async def oauth_linkedin_callback(
     )
 
 
-@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=202)
+@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=200)
 async def forgot_password(
     payload: ForgotPasswordIn,
     background_tasks: BackgroundTasks,
@@ -1669,12 +1669,12 @@ async def forgot_password(
 
     if not _init_password_reset_service:
         log.error("password_reset_initiate_missing")
-        raise HTTPException(status_code=500, detail="Password reset unavailable")
+        return ForgotPasswordOut()
 
     try:
         result = _init_password_reset_service(db=db, email=email)  # type: ignore[misc]
     except Exception as e:
-        log.exception("password_reset_initiate_error email=%s err=%s", email, e)
+        log.exception("password_reset_initiate_error err=%s", e)
         return ForgotPasswordOut()
 
     if result:
@@ -1687,13 +1687,12 @@ async def forgot_password(
             expires_at,
         )
         log.info(
-            "password_reset_token_issued user_id=%s email=%s expires_at=%s",
+            "password_reset_token_issued user_id=%s expires_at=%s",
             getattr(user, "id", None),
-            user.email,
             expires_at.isoformat(),
         )
     else:
-        log.info("password_reset_initiate_no_user email=%s", email)
+        log.info("password_reset_initiate")
 
     return ForgotPasswordOut()
 
@@ -1708,8 +1707,6 @@ async def reset_password(
         log.error("password_reset_complete_missing")
         raise HTTPException(status_code=500, detail="Password reset unavailable")
 
-    token_preview = (payload.token or "")[:6] + "***"
-
     try:
         user = _complete_password_reset_service(  # type: ignore[misc]
             db=db,
@@ -1717,12 +1714,12 @@ async def reset_password(
             new_password=payload.password,
         )
     except ValueError as ve:
-        log.warning("password_reset_invalid token=%s err=%s", token_preview, ve)
+        log.warning("password_reset_invalid err=%s", ve)
         raise HTTPException(
             status_code=400, detail="Invalid or expired reset token"
         ) from ve
     except Exception as e:
-        log.exception("password_reset_error token=%s err=%s", token_preview, e)
+        log.exception("password_reset_error err=%s", e)
         raise HTTPException(status_code=500, detail="Unable to reset password") from e
 
     clear_user_token_version_cache(getattr(user, "id", ""))

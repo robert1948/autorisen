@@ -35,6 +35,7 @@ class Settings(BaseSettings):
         default=False, alias="RUN_DB_MIGRATIONS_ON_STARTUP"
     )
     email_token_secret: Optional[str] = Field(default=None, alias="EMAIL_TOKEN_SECRET")
+    reset_token_secret: Optional[str] = Field(default=None, alias="RESET_TOKEN_SECRET")
     from_email: Optional[str] = Field(default=None, alias="FROM_EMAIL")
     smtp_host: Optional[str] = Field(default=None, alias="SMTP_HOST")
     smtp_port: int = Field(default=587, alias="SMTP_PORT")
@@ -96,6 +97,16 @@ class Settings(BaseSettings):
         object.__setattr__(self, "session_cookie_samesite", cookie_value)
         if cookie_value == "none":
             object.__setattr__(self, "session_cookie_secure", True)
+
+        app_name = (os.getenv("HEROKU_APP_NAME") or os.getenv("APP_NAME") or "").lower()
+        requires_reset_secret = self.env in {"staging", "prod"} or app_name in {
+            "autorisen",
+            "capecraft",
+        }
+        if requires_reset_secret and not self.reset_token_secret:
+            raise ValueError(
+                "RESET_TOKEN_SECRET is required when running in staging/prod (or on autorisen/capecraft)."
+            )
         return self
 
 

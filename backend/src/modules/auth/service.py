@@ -5,15 +5,18 @@ from __future__ import annotations
 import base64
 import hashlib
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple, cast
 from uuid import uuid4
 
+import sqlalchemy as sa
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import settings
 from backend.src.db import models
+from backend.src.modules.auth.reset_tokens import hmac_sha256_hex
 from backend.src.modules.auth.schemas import UserRole
 from backend.src.services.security import (
     create_jwt,
@@ -356,8 +359,8 @@ def initiate_password_reset(
         setattr(token, "used_at", now)
         db.add(token)
 
-    raw_token = base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip("=")
-    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hmac_sha256_hex(raw_token)
 
     record = models.PasswordResetToken(
         user=user,
@@ -384,70 +387,53 @@ def complete_password_reset(
     if not normalized_token:
         raise ValueError("Invalid reset token")
 
-    token_hash = hashlib.sha256(normalized_token.encode()).hexdigest()
-    record = db.scalar(
-        select(models.PasswordResetToken).where(
-            models.PasswordResetToken.token_hash == token_hash
-        )
-    )
-
-    if not record:
-        raise ValueError("Invalid reset token")
-
     now = datetime.now(timezone.utc)
-    expires_at = cast(Optional[datetime], getattr(record, "expires_at", None))
-    if expires_at is None:
-        raise ValueError("Invalid reset token")
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    token_hash = hmac_sha256_hex(normalized_token)
 
-    used_at = cast(Optional[datetime], getattr(record, "used_at", None))
-    if used_at is not None and used_at.tzinfo is None:
-        used_at = used_at.replace(tzinfo=timezone.utc)
-
-    if used_at is not None or expires_at <= now:
-        raise ValueError("Reset token expired")
-
-    user = record.user
-    if user is None:
-        raise ValueError("Invalid reset token")
-    if not _bool_attr(getattr(user, "is_active", True), default=False):
-        raise ValueError("Invalid reset token")
-
-    current_version = _token_version_for(user)
-    password_hash = hash_password(new_password)
-    setattr(user, "hashed_password", password_hash)
-    setattr(user, "password_changed_at", now)
-    setattr(user, "token_version", current_version + 1)
-
-    # Keep Credential table in sync when present.
-    credential = db.scalar(
-        select(models.Credential).where(
-            models.Credential.user_id == user.id,
-            models.Credential.provider == "password",
+    with db.begin():
+        consume_stmt = (
+            sa.update(models.PasswordResetToken)
+            .where(
+                models.PasswordResetToken.token_hash == token_hash,
+                models.PasswordResetToken.used_at.is_(None),
+                models.PasswordResetToken.expires_at > now,
+            )
+            .values(used_at=now)
+            .returning(models.PasswordResetToken.user_id)
         )
-    )
-    if credential:
-        setattr(credential, "secret_hash", password_hash)
-        setattr(credential, "last_used_at", now)
-        db.add(credential)
+        user_id = db.execute(consume_stmt).scalar_one_or_none()
+        if not user_id:
+            raise ValueError("Invalid or expired reset token")
 
-    # Revoke outstanding sessions for safety.
-    sessions = list(
-        db.scalars(
-            select(models.Session).where(
-                models.Session.user_id == user.id, models.Session.revoked_at.is_(None)
+        user = db.get(models.User, user_id)
+        if user is None:
+            raise ValueError("Invalid or expired reset token")
+        if not _bool_attr(getattr(user, "is_active", True), default=False):
+            raise ValueError("Invalid or expired reset token")
+
+        current_version = _token_version_for(user)
+        password_hash = hash_password(new_password)
+        setattr(user, "hashed_password", password_hash)
+        setattr(user, "password_changed_at", now)
+        setattr(user, "token_version", current_version + 1)
+
+        credential = db.scalar(
+            select(models.Credential).where(
+                models.Credential.user_id == user.id,
+                models.Credential.provider == "password",
             )
         )
-    )
-    for session in sessions:
-        setattr(session, "revoked_at", now)
-        db.add(session)
+        if credential:
+            setattr(credential, "secret_hash", password_hash)
+            setattr(credential, "last_used_at", now)
+            db.add(credential)
 
-    setattr(record, "used_at", now)
-    db.add(user)
-    db.add(record)
-    db.commit()
+        # Invalidate all sessions for the user.
+        db.execute(sa.delete(models.Session).where(models.Session.user_id == user.id))
+
+        db.add(user)
+        db.flush()
+
     return user
 
 
