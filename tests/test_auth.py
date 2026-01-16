@@ -560,7 +560,10 @@ def test_password_reset_flow(client, monkeypatch):
     assert forgot.status_code == 200, forgot.text
     assert captured["email"] == email.lower()
     reset_url = captured["reset_url"]
-    token_list = parse_qs(urlparse(reset_url).query).get("token", [])
+    parsed = urlparse(reset_url)
+    assert "reset-password" in parsed.path
+    assert parsed.query == "", "reset token must not be in querystring"
+    token_list = parse_qs(parsed.fragment).get("token", [])
     assert token_list, "reset token not provided"
     token = token_list[0]
 

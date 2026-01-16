@@ -1679,7 +1679,7 @@ async def forgot_password(
 
     if result:
         user, raw_token, expires_at = result
-        reset_url = f"{str(settings.frontend_origin).rstrip('/')}/reset-password?token={raw_token}"
+        reset_url = f"{str(settings.frontend_origin).rstrip('/')}/reset-password#token={raw_token}"
         background_tasks.add_task(
             send_password_reset_email,
             user.email,
