@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -20,6 +21,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table("password_reset_tokens"):
+        return
+
+    existing_indexes = {
+        ix["name"] for ix in inspector.get_indexes("password_reset_tokens")
+    }
+    if "ix_password_reset_tokens_expires_at" in existing_indexes:
+        return
+
     op.create_index(
         "ix_password_reset_tokens_expires_at",
         "password_reset_tokens",
@@ -29,6 +41,17 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table("password_reset_tokens"):
+        return
+
+    existing_indexes = {
+        ix["name"] for ix in inspector.get_indexes("password_reset_tokens")
+    }
+    if "ix_password_reset_tokens_expires_at" not in existing_indexes:
+        return
+
     op.drop_index(
         "ix_password_reset_tokens_expires_at",
         table_name="password_reset_tokens",
