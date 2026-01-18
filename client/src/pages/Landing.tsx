@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const LandingPage: React.FC = () => {
   return (
@@ -40,19 +41,18 @@ const LandingPage: React.FC = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                <a
-                  href="/register"
+                <Link
+                  to="/auth/login"
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-slate-100 text-slate-950 hover:bg-white transition"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/auth/register"
                   className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition"
                 >
-                  Join Early Access
-                </a>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-sky-400 hover:text-sky-300"
-                >
-                  <span>Learn more</span>
-                  <span aria-hidden="true">→</span>
-                </button>
+                  Register
+                </Link>
               </div>
             </div>
 

@@ -37,6 +37,9 @@ import Welcome from "./pages/public/WelcomePage";
 import About from "./pages/public/AboutPage";
 import Subscribe from "./pages/public/SubscribePage";
 
+// Landing
+import LandingPage from "./pages/Landing";
+
 // Auth pages / flows
 import Register from "./pages/auth/RegisterPage";
 import ForgotPassword from "./pages/auth/ForgotPasswordPage";
@@ -95,7 +98,7 @@ export default function App() {
       <Routes>
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
-        <Route path="/" element={<MvpLanding />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/docs" element={<MvpDocs />} />
 
