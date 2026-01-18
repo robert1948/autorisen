@@ -49,6 +49,7 @@ from backend.src.core.redis import (
     clear_user_token_version_cache,
     denylist_jti,
 )
+from backend.src.db import models
 from backend.src.db.session import get_db
 from backend.src.db.models import AnalyticsEvent
 from backend.src.services import recaptcha as recaptcha_service
@@ -1658,27 +1659,39 @@ async def oauth_linkedin_callback(
     )
 
 
-@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=202)
+@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=200)
 async def forgot_password(
     payload: ForgotPasswordIn,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
+    user_agent: Optional[str] = Header(default=None),
     _: None = Depends(require_csrf_token),
 ) -> ForgotPasswordOut:
     email = _normalize_email(payload.email)
+    ip = request.client.host if request.client else "unknown"
 
     if not _init_password_reset_service:
         log.error("password_reset_initiate_missing")
         raise HTTPException(status_code=500, detail="Password reset unavailable")
 
+    outcome = "error"
+    user_id: Optional[str] = None
     try:
         result = _init_password_reset_service(db=db, email=email)  # type: ignore[misc]
     except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
         log.exception("password_reset_initiate_error email=%s err=%s", email, e)
-        return ForgotPasswordOut()
+        result = None
+        outcome = "error"
 
     if result:
         user, raw_token, expires_at = result
+        user_id = getattr(user, "id", None)
+        outcome = "issued"
         reset_url = f"{str(settings.frontend_origin).rstrip('/')}/reset-password?token={raw_token}"
         background_tasks.add_task(
             send_password_reset_email,
@@ -1693,7 +1706,28 @@ async def forgot_password(
             expires_at.isoformat(),
         )
     else:
+        outcome = "no_user"
         log.info("password_reset_initiate_no_user email=%s", email)
+
+    try:
+        db.add(
+            models.AuditEvent(
+                user_id=user_id,
+                event_type="auth_password_reset_requested",
+                payload={
+                    "email": email,
+                    "outcome": outcome,
+                },
+                ip_address=ip,
+                user_agent=user_agent,
+            )
+        )
+        db.commit()
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
 
     return ForgotPasswordOut()
 
@@ -1701,7 +1735,9 @@ async def forgot_password(
 @router.post("/password/reset", response_model=ResetPasswordOut, status_code=200)
 async def reset_password(
     payload: ResetPasswordIn,
+    request: Request,
     db: Session = Depends(get_db),
+    user_agent: Optional[str] = Header(default=None),
     _: None = Depends(require_csrf_token),
 ) -> ResetPasswordOut:
     if not _complete_password_reset_service:
@@ -1709,6 +1745,7 @@ async def reset_password(
         raise HTTPException(status_code=500, detail="Password reset unavailable")
 
     token_preview = (payload.token or "")[:6] + "***"
+    ip = request.client.host if request.client else "unknown"
 
     try:
         user = _complete_password_reset_service(  # type: ignore[misc]
@@ -1718,6 +1755,46 @@ async def reset_password(
         )
     except ValueError as ve:
         log.warning("password_reset_invalid token=%s err=%s", token_preview, ve)
+
+        audit_user_id: Optional[str] = None
+        try:
+            normalized_token = (payload.token or "").strip()
+            if normalized_token:
+                token_hash = hashlib.sha256(normalized_token.encode()).hexdigest()
+                record = (
+                    db.query(models.PasswordResetToken)
+                    .filter(models.PasswordResetToken.token_hash == token_hash)
+                    .one_or_none()
+                )
+                if record is not None:
+                    audit_user_id = getattr(record, "user_id", None)
+        except Exception:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+
+        try:
+            db.add(
+                models.AuditEvent(
+                    user_id=audit_user_id,
+                    event_type="auth_password_reset_completed",
+                    payload={
+                        "success": False,
+                        "reason": "invalid_or_expired",
+                        "token_preview": token_preview,
+                    },
+                    ip_address=ip,
+                    user_agent=user_agent,
+                )
+            )
+            db.commit()
+        except Exception:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+
         raise HTTPException(
             status_code=400, detail="Invalid or expired reset token"
         ) from ve
@@ -1726,6 +1803,24 @@ async def reset_password(
         raise HTTPException(status_code=500, detail="Unable to reset password") from e
 
     clear_user_token_version_cache(getattr(user, "id", ""))
+    try:
+        db.add(
+            models.AuditEvent(
+                user_id=getattr(user, "id", None),
+                event_type="auth_password_reset_completed",
+                payload={
+                    "success": True,
+                },
+                ip_address=ip,
+                user_agent=user_agent,
+            )
+        )
+        db.commit()
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
     log.info("password_reset_success user_id=%s", getattr(user, "id", None))
     return ResetPasswordOut()
 

@@ -32,6 +32,16 @@ def _latest_verification_token() -> str:
     return match.group(1)
 
 
+def _latest_password_reset_token() -> str:
+    assert mailer_core.TEST_OUTBOX, "expected password reset email to be sent"
+    message = mailer_core.TEST_OUTBOX[-1]
+    body = message.get_body(preferencelist=("html", "plain"))
+    content = body.get_content() if body is not None else message.get_content()
+    match = re.search(r"/reset-password\?token=([A-Za-z0-9_\-]+)", content)
+    assert match, "reset token not found in email content"
+    return match.group(1)
+
+
 def _post_json_or_query_payload(
     client, url: str, body: Dict[str, Any], *, headers: Optional[Dict[str, str]] = None
 ):
@@ -54,6 +64,7 @@ def _clean_auth_state():
     # DB reset
     tables = [
         "analytics_events",
+        "audit_events",
         "role_permissions",
         "user_roles",
         "password_reset_tokens",
@@ -220,6 +231,87 @@ def _complete_registration(
         assert verify.status_code == 307, verify.text
 
     return body["access_token"], body["refresh_token"], body["user"]
+
+
+def test_password_reset_flow_non_leaking_and_resets_password(client):
+    email = f"reset_{uuid.uuid4().hex[:8]}@example.com"
+    old_password = "OldPassword123!"
+    new_password = "NewPassword123!"
+
+    _complete_registration(client, email, old_password, auto_verify=True)
+
+    before_outbox = len(mailer_core.TEST_OUTBOX)
+    r_known = client.post(
+        "/api/auth/password/forgot",
+        json={"email": email},
+        headers=_csrf_headers(client),
+    )
+    assert r_known.status_code == 200, r_known.text
+
+    r_unknown = client.post(
+        "/api/auth/password/forgot",
+        json={"email": f"missing_{uuid.uuid4().hex[:8]}@example.com"},
+        headers=_csrf_headers(client),
+    )
+    assert r_unknown.status_code == 200, r_unknown.text
+    assert r_unknown.json()["message"] == r_known.json()["message"]
+
+    assert len(mailer_core.TEST_OUTBOX) == before_outbox + 1
+    token = _latest_password_reset_token()
+
+    r_reset = client.post(
+        "/api/auth/password/reset",
+        json={
+            "token": token,
+            "password": new_password,
+            "confirm_password": new_password,
+        },
+        headers=_csrf_headers(client),
+    )
+    assert r_reset.status_code == 200, r_reset.text
+
+    r_old = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": old_password},
+        headers=_csrf_headers(client),
+    )
+    assert r_old.status_code == 401, r_old.text
+    assert r_old.json().get("detail") == "Invalid credentials"
+
+    r_new = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": new_password},
+        headers=_csrf_headers(client),
+    )
+    assert r_new.status_code == 200, r_new.text
+
+    with SessionLocal() as db:
+        requested = (
+            db.query(models.AuditEvent)
+            .filter(models.AuditEvent.event_type == "auth_password_reset_requested")
+            .count()
+        )
+        completed = (
+            db.query(models.AuditEvent)
+            .filter(models.AuditEvent.event_type == "auth_password_reset_completed")
+            .count()
+        )
+        assert requested >= 2
+        assert completed >= 1
+
+
+def test_password_reset_rejects_invalid_token(client):
+    r = client.post(
+        "/api/auth/password/reset",
+        json={
+            "token": "invalidtokenvalue123",
+            "password": "NewPassword123!",
+            "confirm_password": "NewPassword123!",
+        },
+        headers=_csrf_headers(client),
+    )
+    assert r.status_code == 400, r.text
+    assert r.json().get("detail") == "Invalid or expired reset token"
 
 
 def test_register_login_refresh_me_flow(client):
@@ -557,7 +649,7 @@ def test_password_reset_flow(client, monkeypatch):
         json={"email": email},
         headers=_csrf_headers(client),
     )
-    assert forgot.status_code == 202, forgot.text
+    assert forgot.status_code == 200, forgot.text
     assert captured["email"] == email.lower()
     reset_url = captured["reset_url"]
     token_list = parse_qs(urlparse(reset_url).query).get("token", [])
@@ -619,5 +711,5 @@ def test_password_reset_unknown_email_is_noop(client, monkeypatch):
         json={"email": "unknown@example.com"},
         headers=_csrf_headers(client),
     )
-    assert forgot.status_code == 202, forgot.text
+    assert forgot.status_code == 200, forgot.text
     assert not captured, "email should not be sent for unknown accounts"
