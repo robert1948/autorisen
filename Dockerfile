@@ -17,6 +17,7 @@ RUN npm install
 # Copy frontend source files and configuration
 COPY client/src ./src
 COPY client/public ./public
+COPY client/scripts ./scripts
 COPY client/index.html ./
 COPY client/vite.config.ts ./
 COPY client/tsconfig*.json ./

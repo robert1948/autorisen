@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "route:guard": "node scripts/route_guard.cjs",
+    "prebuild": "node scripts/route_guard.cjs",
     "build": "vite build",
     "build:production": "../scripts/build-frontend.sh",
     "preview": "vite preview",
