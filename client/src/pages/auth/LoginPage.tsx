@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import '../../components/Auth/auth.css';
-import MFAChallenge from './MfaChallengePage';
 import Logo from '../../components/Logo';
+
+import { useAuth } from "../../features/auth/AuthContext";
 
 const i18n = {
   'login.title': 'Log in to CapeControl',
@@ -14,38 +16,15 @@ const i18n = {
   'mfa.bypass_note': 'reCAPTCHA is not configured. Set VITE_RECAPTCHA_SITE_KEY when you are ready to enforce verification. A temporary bypass token has been supplied for local testing.'
 };
 
-type ApiResponse = {
-  ok: boolean;
-  mfa_required?: boolean;
-  message?: string;
-};
-
-const simulateLoginApi = (email: string, password: string): Promise<ApiResponse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulated conditions:
-      // if email contains "mfa" then require MFA
-      if (email.includes('mfa')) {
-        resolve({ ok: true, mfa_required: true });
-        return;
-      }
-      if (email === 'user@example.com' && password === 'password') {
-        resolve({ ok: true });
-        return;
-      }
-      resolve({ ok: false, message: 'Invalid credentials' });
-    }, 900);
-  });
-};
-
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { loginUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?:string, password?:string }>({});
-  const [showMfa, setShowMfa] = useState(false);
 
   const validate = () => {
     const errs: { email?:string, password?:string } = {};
@@ -62,23 +41,15 @@ const LoginPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res = await simulateLoginApi(email.trim(), password);
-      if (!res.ok) {
-        setError(res.message || 'Network error');
-      } else if (res.mfa_required) {
-        setShowMfa(true);
-      } else {
-        // Simulate successful login
-        alert('Login successful (simulated)');
-      }
+      await loginUser(email.trim(), password, null);
+      navigate("/app", { replace: true });
     } catch (err) {
-      setError('Network error');
+      const message = err instanceof Error ? err.message : "Invalid credentials";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
-
-  if (showMfa) return <MFAChallenge onSuccess={() => alert('MFA Verified - login complete (simulated)')} onCancel={() => setShowMfa(false)} />;
 
   return (
     <div className="cc-auth-wrapper">
@@ -132,8 +103,8 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="cc-links" style={{marginTop:14}}>
-          <a href="#" onClick={(e)=>{e.preventDefault(); alert('Reset password flow placeholder')}}>{i18n['login.forgot']}</a>
-          <a href="#" onClick={(e)=>{e.preventDefault(); alert('Forgot email flow placeholder')}}>{i18n['login.forgotEmail']}</a>
+          <Link to="/auth/forgot-password">{i18n['login.forgot']}</Link>
+          <a href="mailto:support@capecontrol.ai">{i18n['login.forgotEmail']}</a>
         </div>
 
         <p className="cc-agree" style={{marginTop:16}}>
@@ -141,7 +112,7 @@ const LoginPage: React.FC = () => {
         </p>
 
         <div style={{textAlign:'center',marginTop:12}}>
-          <a href="#" onClick={(e)=>{e.preventDefault(); alert('Start signup flow')}}>{i18n['login.signup']}</a>
+          <Link to="/auth/register">{i18n['login.signup']}</Link>
         </div>
       </main>
     </div>
