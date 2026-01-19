@@ -1,13 +1,18 @@
-import { FormEvent, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import PasswordMeter from "../../components/PasswordMeter";
 import { completePasswordReset } from "../../lib/authApi";
 
 const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
-  const initialToken = searchParams.get("token") ?? "";
-  const [token, setToken] = useState(initialToken);
+  const { token: tokenParam } = useParams<{ token?: string }>();
+  const { search } = useLocation();
+  const tokenFromUrl = useMemo(() => {
+    const qs = new URLSearchParams(search);
+    return (qs.get("token") || qs.get("reset_token") || tokenParam || "").trim();
+  }, [search, tokenParam]);
+
+  const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,8 +21,8 @@ const ResetPassword = () => {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setToken(initialToken);
-  }, [initialToken]);
+    if (tokenFromUrl) setToken(tokenFromUrl);
+  }, [tokenFromUrl]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -50,6 +55,7 @@ const ResetPassword = () => {
   };
 
   const disableInputs = status === "loading" || status === "success";
+  const tokenAutoFilled = Boolean(tokenFromUrl);
 
   return (
     <main className="auth-page">
@@ -71,6 +77,7 @@ const ResetPassword = () => {
               onChange={(event) => setToken(event.target.value)}
               placeholder="Paste the token from your email"
               autoComplete="one-time-code"
+              readOnly={tokenAutoFilled}
               disabled={disableInputs}
             />
           </label>
@@ -130,8 +137,8 @@ const ResetPassword = () => {
           <Link className="auth-footer__link" to="/">
             Return to login
           </Link>
-            <Link className="auth-footer__link" to="/auth/forgot-password">
-            Didn&apos;t get a token?
+          <Link className="auth-footer__link" to="/auth/forgot-password">
+            Use the button in the email — the token is in the link.
           </Link>
         </footer>
       </section>
