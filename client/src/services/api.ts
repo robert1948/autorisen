@@ -4,6 +4,8 @@
 
 import { getConfig } from "../config";
 
+const AUTH_STORAGE_KEY = "autorisen-auth";
+
 function getApiBaseUrl(): string {
   const config = getConfig();
   return config.API_BASE_URL || "/api";
@@ -85,6 +87,43 @@ export class APIError extends Error {
 }
 
 // Helper function for API calls
+function getAccessToken(): string | null {
+  if (typeof window === "undefined" || !("localStorage" in window)) {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { accessToken?: string | null };
+    return parsed.accessToken ?? null;
+  } catch (err) {
+    console.warn("Failed to read auth state", err);
+    return null;
+  }
+}
+
+function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
+  if (!headers) return {};
+
+  const out: Record<string, string> = {};
+  if (headers instanceof Headers) {
+    headers.forEach((value, key) => {
+      out[key] = value;
+    });
+    return out;
+  }
+
+  if (Array.isArray(headers)) {
+    headers.forEach(([key, value]) => {
+      out[key] = value;
+    });
+    return out;
+  }
+
+  return { ...headers };
+}
+
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${getApiBaseUrl()}${endpoint}`;
   
@@ -92,12 +131,25 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     'Content-Type': 'application/json',
   };
 
+  const requestHeaders: Record<string, string> = {
+    ...defaultHeaders,
+    ...normalizeHeaders(options.headers),
+  };
+
+  const hasAuthorization = Object.keys(requestHeaders).some(
+    (key) => key.toLowerCase() === "authorization",
+  );
+
+  if (!hasAuthorization) {
+    const token = getAccessToken();
+    if (token) {
+      requestHeaders.Authorization = `Bearer ${token}`;
+    }
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
+    headers: requestHeaders,
     credentials: 'include', // Include cookies for authentication
   });
 
