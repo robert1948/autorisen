@@ -106,11 +106,6 @@ export default function App() {
         <Route element={<RequireMvpGuest />}>
           <Route path="/login" element={<MvpLogin />} />
           <Route path="/register" element={<MvpRegister />} />
-          <Route path="/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
-          <Route
-            path="/reset-password/confirm"
-            element={<Navigate to="/auth/reset-password" replace />}
-          />
           <Route path="/register/step-1" element={<MvpRegisterStep1 />} />
           <Route path="/register/step-2" element={<MvpRegisterStep2 />} />
           <Route path="/verify-email/:token" element={<MvpVerifyEmail />} />
@@ -163,6 +158,8 @@ export default function App() {
         {/* -------------------- LEGACY AUTH ALIASES -------------------- */}
         <Route path="/signup" element={<Navigate to="/register" replace />} />
         <Route path="/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
+        <Route path="/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
+        <Route path="/reset-password/confirm" element={<Navigate to="/auth/reset-password" replace />} />
 
         {/* -------------------- APP (CANONICAL) -------------------- */}
         <Route path="/app" element={<AppEntryRedirect />} />
