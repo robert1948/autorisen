@@ -4,6 +4,7 @@ import '../../components/Auth/auth.css';
 import Logo from '../../components/Logo';
 
 import { useAuth } from "../../features/auth/AuthContext";
+import { resendVerification } from "../../lib/authApi";
 
 const i18n = {
   'login.title': 'Log in to CapeControl',
@@ -25,6 +26,10 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?:string, password?:string }>({});
+  const [errorCode, setErrorCode] = useState<"EMAIL_NOT_VERIFIED" | null>(null);
+  const [emailForResend, setEmailForResend] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   const validate = () => {
     const errs: { email?:string, password?:string } = {};
@@ -38,6 +43,10 @@ const LoginPage: React.FC = () => {
   const onSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError(null);
+    setErrorCode(null);
+    setEmailForResend(null);
+    setResendStatus("idle");
+    setResendMessage(null);
     if (!validate()) return;
     setLoading(true);
     try {
@@ -45,9 +54,30 @@ const LoginPage: React.FC = () => {
       navigate("/app", { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid credentials";
-      setError(message);
+      const normalizedMessage = message.toLowerCase();
+      if (normalizedMessage.includes("not verified")) {
+        setErrorCode("EMAIL_NOT_VERIFIED");
+        setEmailForResend(email.trim());
+        setError("Email not verified. Check your inbox or resend.");
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onResendVerification = async () => {
+    if (!emailForResend) return;
+    setResendStatus("loading");
+    setResendMessage(null);
+    try {
+      await resendVerification(emailForResend);
+      setResendStatus("success");
+      setResendMessage("Verification email sent");
+    } catch (_err) {
+      setResendStatus("error");
+      setResendMessage("Could not resend, try again");
     }
   };
 
@@ -81,6 +111,27 @@ const LoginPage: React.FC = () => {
           )}
 
           {error && <div className="cc-error" role="alert">{error}</div>}
+          {errorCode === "EMAIL_NOT_VERIFIED" && (
+            <div style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                className={`cc-primary-btn ${resendStatus === "loading" ? "loading" : ""}`}
+                onClick={onResendVerification}
+                disabled={resendStatus === "loading"}
+                aria-disabled={resendStatus === "loading"}
+              >
+                {resendStatus === "loading" ? "Sending..." : "Resend verification email"}
+              </button>
+              {resendMessage && (
+                <div
+                  className={resendStatus === "success" ? "auth-status auth-status--success" : "auth-status auth-status--error"}
+                  style={{ marginTop: 8 }}
+                >
+                  {resendMessage}
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{marginTop:12}}>
             <button className={`cc-primary-btn ${loading ? 'loading' : ''}`} type="submit" disabled={loading} aria-disabled={loading}>
