@@ -130,7 +130,7 @@ const ResetPassword = () => {
           <Link className="auth-footer__link" to="/">
             Return to login
           </Link>
-          <Link className="auth-footer__link" to="/forgot-password">
+            <Link className="auth-footer__link" to="/auth/forgot-password">
             Didn&apos;t get a token?
           </Link>
         </footer>
