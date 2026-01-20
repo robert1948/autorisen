@@ -900,6 +900,39 @@ def _dispatch_verification_email(user: Any) -> str:
     return token
 
 
+def _send_password_reset_email_with_logging(
+    email: str, reset_url: str, expires_at: datetime
+) -> None:
+    """Background task wrapper.
+
+    Keep the API response privacy-safe and stable, but log provider
+    success/failure explicitly for staging diagnosis.
+    """
+
+    provider = "smtp"
+    log.info(
+        "password_reset_email_send_attempt provider=%s email=%s expires_at=%s",
+        provider,
+        email,
+        expires_at.isoformat(),
+    )
+    try:
+        send_password_reset_email(email, reset_url, expires_at)
+    except Exception as exc:
+        log.exception(
+            "password_reset_email_send_failed provider=%s email=%s err=%s",
+            provider,
+            email,
+            exc,
+        )
+    else:
+        log.info(
+            "password_reset_email_send_success provider=%s email=%s",
+            provider,
+            email,
+        )
+
+
 # ---- Registration function shims (relative import; support both namings) ----
 _begin_reg: Optional[Callable[..., Any]] = None
 _complete_reg: Optional[Callable[..., Any]] = None
@@ -1329,22 +1362,47 @@ async def resend_verification(
 
 @router.get("/verify")
 async def verify_email(token: str, db: Session = Depends(get_db)):
+    token_prefix = (token or "")[:12]
+    log.info("email_verify_received token_prefix=%s", token_prefix)
+
     try:
         payload = parse_email_token(token)
     except EmailTokenError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        log.info(
+            "email_verify_failed token_prefix=%s reason=%s",
+            token_prefix,
+            str(exc),
+        )
+        return RedirectResponse(
+            url="/auth/verify-email?reason=invalid",
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        )
 
     if User is None:
         raise HTTPException(status_code=500, detail="Configuration error")
 
     user = db.query(User).filter(User.id == str(payload.get("sub"))).one_or_none()
     if not user:
-        raise HTTPException(status_code=400, detail="Verification link is invalid")
+        log.info("email_verify_failed token_prefix=%s reason=no_user", token_prefix)
+        return RedirectResponse(
+            url="/auth/verify-email?reason=invalid",
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        )
 
     expected_version = int(payload.get("v", -1))
     current_version = int(getattr(user, "token_version", 0))
     if current_version != expected_version:
-        raise HTTPException(status_code=400, detail="Verification link has expired")
+        log.info(
+            "email_verify_failed token_prefix=%s user_id=%s reason=version_mismatch expected=%s current=%s",
+            token_prefix,
+            getattr(user, "id", None),
+            expected_version,
+            current_version,
+        )
+        return RedirectResponse(
+            url="/auth/verify-email?reason=invalid",
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        )
 
     if not getattr(user, "is_email_verified", False):
         user.is_email_verified = True
@@ -1355,11 +1413,22 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         db.commit()
         clear_user_token_version_cache(getattr(user, "id", ""))
         cache_user_token_version(getattr(user, "id", ""), new_version)
-        log.info("email_verified user_id=%s", getattr(user, "id", None))
+        log.info(
+            "email_verify_success token_prefix=%s user_id=%s",
+            token_prefix,
+            getattr(user, "id", None),
+        )
     else:
-        log.info("email_verify_redundant user_id=%s", getattr(user, "id", None))
+        log.info(
+            "email_verify_redundant token_prefix=%s user_id=%s",
+            token_prefix,
+            getattr(user, "id", None),
+        )
 
-    return RedirectResponse(url="/welcome?email_verified=1", status_code=307)
+    return RedirectResponse(
+        url="/auth/login?verified=1",
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    )
 
 
 # -----------
@@ -1702,6 +1771,8 @@ async def forgot_password(
     email = _normalize_email(payload.email)
     ip = request.client.host if request.client else "unknown"
 
+    log.info("password_forgot_requested email=%s ip=%s", email, ip)
+
     if not _init_password_reset_service:
         log.error("password_reset_initiate_missing")
         raise HTTPException(status_code=500, detail="Password reset unavailable")
@@ -1723,9 +1794,11 @@ async def forgot_password(
         user, raw_token, expires_at = result
         user_id = getattr(user, "id", None)
         outcome = "issued"
-        reset_url = f"{str(settings.frontend_origin).rstrip('/')}/reset-password?token={raw_token}"
+        reset_url = (
+            f"{str(settings.frontend_origin).rstrip('/')}/auth/reset-password?token={raw_token}"
+        )
         background_tasks.add_task(
-            send_password_reset_email,
+            _send_password_reset_email_with_logging,
             user.email,
             reset_url,
             expires_at,
