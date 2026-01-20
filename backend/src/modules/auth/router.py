@@ -1404,7 +1404,7 @@ async def login(
         record_login_attempt(ip, email, success=False)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email not verified. Check your inbox or resend.",
+            detail="Email not verified",
         )
 
     if _login_service:

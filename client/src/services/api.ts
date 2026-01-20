@@ -5,6 +5,24 @@
 import { getConfig } from "../config";
 
 const AUTH_STORAGE_KEY = "autorisen-auth";
+const REFRESH_TOKEN_KEY = "autorisen-refresh-token";
+const EMAIL_NOT_VERIFIED_MESSAGE = "Email not verified";
+
+function handleEmailNotVerified(): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // ignore storage issues
+  }
+
+  const path = window.location?.pathname || "";
+  if (!path.startsWith("/auth/verify-email")) {
+    window.location.assign("/auth/verify-email");
+  }
+}
 
 function getApiBaseUrl(): string {
   const config = getConfig();
@@ -155,6 +173,15 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   if (!response.ok) {
     const errorText = await response.text();
+
+    if (
+      response.status === 403 &&
+      typeof errorText === "string" &&
+      errorText.toLowerCase().includes(EMAIL_NOT_VERIFIED_MESSAGE.toLowerCase())
+    ) {
+      handleEmailNotVerified();
+    }
+
     throw new APIError(response.status, errorText || `HTTP ${response.status}`);
   }
 

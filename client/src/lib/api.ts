@@ -6,6 +6,22 @@ function getApiBase(): string {
 }
 
 const AUTH_STORAGE_KEY = "autorisen-auth";
+const REFRESH_TOKEN_KEY = "autorisen-refresh-token";
+const EMAIL_NOT_VERIFIED_MESSAGE = "Email not verified";
+
+function handleEmailNotVerified(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+  const path = window.location?.pathname || "";
+  if (!path.startsWith("/auth/verify-email")) {
+    window.location.assign("/auth/verify-email");
+  }
+}
 
 const defaultHeaders: Record<string, string> = {
   "Content-Type": "application/json",
@@ -77,15 +93,33 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   let message = `Request failed with status ${response.status}`;
+  let rawErrorText = "";
   try {
-    const data = await response.json();
+    rawErrorText = await response.text();
+  } catch (err) {
+    console.warn("Failed to read error response", err);
+  }
+
+  if (
+    response.status === 403 &&
+    rawErrorText.toLowerCase().includes(EMAIL_NOT_VERIFIED_MESSAGE.toLowerCase())
+  ) {
+    handleEmailNotVerified();
+  }
+
+  try {
+    const data = rawErrorText ? (JSON.parse(rawErrorText) as any) : null;
     if (typeof data?.detail === "string") {
       message = data.detail;
     } else if (data?.detail) {
       message = JSON.stringify(data.detail);
+    } else if (rawErrorText) {
+      message = rawErrorText;
     }
-  } catch (err) {
-    console.warn("Failed to parse error response", err);
+  } catch {
+    if (rawErrorText) {
+      message = rawErrorText;
+    }
   }
 
   throw new Error(message);

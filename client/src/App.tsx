@@ -46,6 +46,7 @@ import ForgotPassword from "./pages/auth/ForgotPasswordPage";
 import ResetPassword from "./pages/auth/ResetPasswordPage";
 import SocialCallback from "./pages/auth/SocialCallbackPage";
 import VerifyEmail from "./pages/public/VerifyEmailPage";
+import VerifyEmailPendingPage from "./pages/auth/VerifyEmailPendingPage";
 
 // Onboarding pages
 import OnboardingCustomer from "./pages/onboarding/OnboardingCustomerPage";
@@ -145,6 +146,7 @@ export default function App() {
         <Route path="/auth/register" element={<Register />} />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/verify-email" element={<VerifyEmailPendingPage />} />
         <Route path="/auth/callback" element={<SocialCallback />} />
         <Route path="/auth/verify-email/:token" element={<VerifyEmail />} />
 

@@ -160,6 +160,11 @@ async def get_current_user(
     authorization: Optional[str] = Header(default=None, convert_underscores=False),
 ) -> Any:
     user, _, _ = await get_current_user_with_claims(request, db, authorization)
+    if not getattr(user, "is_email_verified", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified",
+        )
     return user
 
 
@@ -168,13 +173,7 @@ async def get_verified_user(
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(default=None, convert_underscores=False),
 ) -> Any:
-    user, _, _ = await get_current_user_with_claims(request, db, authorization)
-    if not getattr(user, "is_email_verified", False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email not verified. Check your inbox or resend.",
-        )
-    return user
+    return await get_current_user(request, db, authorization)
 
 
 def require_roles(*allowed_roles: str) -> Callable:
