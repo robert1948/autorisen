@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 type StageKey = "spark" | "touch" | "trail" | "forYou" | "invite";
@@ -82,7 +82,7 @@ function RevealCard({
   return (
     <div
       className={classNames(
-        "rounded-2xl border border-slate-800/80 bg-slate-900/50 backdrop-blur-sm p-4 sm:p-5 transition",
+        "rounded-3xl sm:rounded-2xl border border-slate-800/80 bg-slate-900/50 backdrop-blur-sm p-5 sm:p-5 transition",
         "hover:border-slate-700 hover:bg-slate-900/65"
       )}
     >
@@ -97,7 +97,7 @@ function RevealCard({
             <div className="text-sm font-semibold tracking-tight text-slate-50">
               {title}
             </div>
-            <div className="mt-1 text-xs sm:text-sm text-slate-400">
+            <div className="mt-2 sm:mt-1 text-xs sm:text-sm text-slate-400">
               {teaser}
             </div>
           </div>
@@ -119,7 +119,7 @@ function RevealCard({
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-3 rounded-xl bg-slate-950/40 border border-slate-800/60 p-3 text-xs sm:text-sm text-slate-200">
+          <div className="mt-3 rounded-2xl sm:rounded-xl bg-slate-950/40 border border-slate-800/60 p-4 sm:p-3 text-xs sm:text-sm text-slate-200">
             {reveal}
           </div>
         </div>
@@ -131,6 +131,8 @@ function RevealCard({
 const LandingPage: React.FC = () => {
   const [activeStage, setActiveStage] = useState(0);
   const [maxUnlockedStage, setMaxUnlockedStage] = useState(0);
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [openClue, setOpenClue] = useState<string | null>(null);
   const [trailStep, setTrailStep] = useState<"signal" | "shift" | "control" | null>(null);
@@ -154,6 +156,23 @@ const LandingPage: React.FC = () => {
 
   const stageKey = STAGES[activeStage]?.key;
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMobileMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isMobileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
       <header className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
@@ -173,8 +192,80 @@ const LandingPage: React.FC = () => {
           >
             Log in
           </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-950/40 hover:bg-slate-900/60 transition"
+            aria-label="Open menu"
+            aria-haspopup="dialog"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <span className="sr-only">Open menu</span>
+            <span className="block h-0.5 w-5 rounded-full bg-slate-200" />
+            <span className="block h-0.5 w-5 rounded-full bg-slate-200 mt-1.5" />
+            <span className="block h-0.5 w-5 rounded-full bg-slate-200 mt-1.5" />
+          </button>
         </div>
       </header>
+
+      {isMobileMenuOpen && (
+        <div className="sm:hidden fixed inset-0 z-50">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+            aria-label="Close menu"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          <div className="absolute right-0 top-0 h-full w-[86%] max-w-sm border-l border-slate-800/80 bg-slate-950/90 shadow-2xl">
+            <div className="pt-[calc(env(safe-area-inset-top)+1rem)] px-5 pb-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-slate-50">Menu</div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-950/40 hover:bg-slate-900/60 transition"
+                  aria-label="Close menu"
+                >
+                  <span className="text-xl leading-none">×</span>
+                </button>
+              </div>
+
+              <nav className="mt-6 grid gap-3">
+                <Link
+                  to="/docs"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="inline-flex min-h-12 items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-900/40 px-4 py-3 text-sm font-medium text-slate-100"
+                >
+                  <span>Docs</span>
+                  <span className="text-slate-500">›</span>
+                </Link>
+                <Link
+                  to="/subscribe"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="inline-flex min-h-12 items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-900/40 px-4 py-3 text-sm font-medium text-slate-100"
+                >
+                  <span>Early access</span>
+                  <span className="text-slate-500">›</span>
+                </Link>
+                <Link
+                  to="/auth/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="inline-flex min-h-12 items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-900/40 px-4 py-3 text-sm font-medium text-slate-100"
+                >
+                  <span>Log in</span>
+                  <span className="text-slate-500">›</span>
+                </Link>
+              </nav>
+
+              <div className="mt-6 text-[11px] text-slate-500">
+                Tip: Tap outside the sheet to close.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1">
         <div className="relative w-full">
@@ -207,9 +298,9 @@ const LandingPage: React.FC = () => {
               />
 
               {/* Stage content */}
-              <div className="mt-2 rounded-3xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-sm p-5 sm:p-7">
+              <div className="mt-2 rounded-3xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-sm p-6 sm:p-7">
                 {stageKey === "spark" && (
-                  <div className="grid gap-5">
+                  <div className="grid gap-6 sm:gap-5">
                     <div className="text-sm sm:text-base text-slate-200">
                       You already have the tools. You might even have the models.
                       <span className="text-slate-400"> The missing piece is the feeling of control.</span>
@@ -223,13 +314,13 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => unlockAndGo(1)}
-                        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition"
                       >
                         Show me one clue
                       </button>
                       <Link
                         to="/docs"
-                        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
                       >
                         Browse quietly (no account)
                       </Link>
@@ -278,7 +369,7 @@ const LandingPage: React.FC = () => {
                         onClick={() => unlockAndGo(2)}
                         disabled={!canAdvance}
                         className={classNames(
-                          "inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition",
+                          "inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition",
                           canAdvance
                             ? "bg-slate-100 text-slate-950 hover:bg-white"
                             : "bg-slate-800/60 text-slate-500 cursor-not-allowed"
@@ -289,7 +380,7 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => unlockAndGo(0)}
-                        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
                       >
                         Go back
                       </button>
@@ -338,7 +429,7 @@ const LandingPage: React.FC = () => {
                         onClick={() => unlockAndGo(3)}
                         disabled={!canAdvance}
                         className={classNames(
-                          "inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition",
+                          "inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition",
                           canAdvance
                             ? "bg-slate-100 text-slate-950 hover:bg-white"
                             : "bg-slate-800/60 text-slate-500 cursor-not-allowed"
@@ -349,7 +440,7 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setActiveStage(1)}
-                        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
                       >
                         Go back
                       </button>
@@ -385,7 +476,7 @@ const LandingPage: React.FC = () => {
                             type="button"
                             onClick={() => setPersona(p.key)}
                             className={classNames(
-                              "rounded-2xl border px-4 py-3 text-left transition",
+                              "rounded-2xl border px-5 py-4 sm:px-4 sm:py-3 text-left transition",
                               isSelected
                                 ? "border-sky-500/40 bg-slate-900/70"
                                 : "border-slate-800/80 bg-slate-900/45 hover:border-slate-700 hover:bg-slate-900/60"
@@ -428,7 +519,7 @@ const LandingPage: React.FC = () => {
                         onClick={() => unlockAndGo(4)}
                         disabled={!canAdvance}
                         className={classNames(
-                          "inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition",
+                          "inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition",
                           canAdvance
                             ? "bg-slate-100 text-slate-950 hover:bg-white"
                             : "bg-slate-800/60 text-slate-500 cursor-not-allowed"
@@ -439,7 +530,7 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setActiveStage(2)}
-                        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
                       >
                         Go back
                       </button>
@@ -461,7 +552,7 @@ const LandingPage: React.FC = () => {
                     <div className="grid md:grid-cols-3 gap-4">
                       <Link
                         to="/docs"
-                        className="rounded-2xl border border-slate-800/80 bg-slate-900/45 hover:bg-slate-900/60 hover:border-slate-700 transition p-5"
+                        className="rounded-3xl sm:rounded-2xl border border-slate-800/80 bg-slate-900/45 hover:bg-slate-900/60 hover:border-slate-700 transition p-6 sm:p-5"
                       >
                         <div className="text-sm font-semibold text-slate-50">Take the quiet tour</div>
                         <div className="mt-1 text-xs sm:text-sm text-slate-400">
@@ -470,7 +561,7 @@ const LandingPage: React.FC = () => {
                       </Link>
                       <Link
                         to="/subscribe"
-                        className="rounded-2xl border border-sky-500/30 bg-gradient-to-br from-slate-900/40 via-slate-900/40 to-sky-900/20 hover:border-sky-500/45 transition p-5"
+                        className="rounded-3xl sm:rounded-2xl border border-sky-500/30 bg-gradient-to-br from-slate-900/40 via-slate-900/40 to-sky-900/20 hover:border-sky-500/45 transition p-6 sm:p-5"
                       >
                         <div className="text-sm font-semibold text-slate-50">Join early access</div>
                         <div className="mt-1 text-xs sm:text-sm text-slate-400">
@@ -479,7 +570,7 @@ const LandingPage: React.FC = () => {
                       </Link>
                       <Link
                         to="/auth/login"
-                        className="rounded-2xl border border-slate-800/80 bg-slate-900/45 hover:bg-slate-900/60 hover:border-slate-700 transition p-5"
+                        className="rounded-3xl sm:rounded-2xl border border-slate-800/80 bg-slate-900/45 hover:bg-slate-900/60 hover:border-slate-700 transition p-6 sm:p-5"
                       >
                         <div className="text-sm font-semibold text-slate-50">I already have access</div>
                         <div className="mt-1 text-xs sm:text-sm text-slate-400">
@@ -492,7 +583,7 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setActiveStage(3)}
-                        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
                       >
                         Go back
                       </button>
