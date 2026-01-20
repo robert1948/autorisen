@@ -68,6 +68,7 @@ from .deps import (
     get_current_user,
     get_current_user_with_claims,
 )
+from .audit import log_login_attempt
 from .rate_limiter import allow_login, record_login_attempt
 from .security import create_access_refresh_tokens, verify_password
 
@@ -1419,6 +1420,14 @@ async def login(
                 "login_success email=%s user_id=%s", email, getattr(user, "id", None)
             )
             record_login_attempt(ip, email, success=True)
+            log_login_attempt(
+                db,
+                email=email,
+                success=True,
+                ip_address=ip,
+                user_agent=user_agent,
+                details="login_success",
+            )
             _set_refresh_cookie(response, refresh_token, expires_at=expires_at)
             return LoginResponse(
                 access_token=access_token,
@@ -1476,6 +1485,14 @@ async def login(
         )
         log.info("login_success email=%s user_id=%s", email, user.id)
         record_login_attempt(ip, email, success=True)
+        log_login_attempt(
+            db,
+            email=email,
+            success=True,
+            ip_address=ip,
+            user_agent=user_agent,
+            details="login_success",
+        )
         fallback_expiry = datetime.now(timezone.utc) + timedelta(days=7)
         _set_refresh_cookie(response, refresh_token, expires_at=fallback_expiry)
         return LoginResponse(
@@ -1523,6 +1540,14 @@ async def login_google(
             ip=ip,
         )
         record_login_attempt(ip, email, success=True)
+        log_login_attempt(
+            db,
+            email=email,
+            success=True,
+            ip_address=ip,
+            user_agent=request.headers.get("user-agent"),
+            details="login_success_google",
+        )
         return tokens
     except HTTPException:
         record_login_attempt(ip, email, success=False)
@@ -1566,6 +1591,14 @@ async def login_linkedin(
             ip=ip,
         )
         record_login_attempt(ip, email, success=True)
+        log_login_attempt(
+            db,
+            email=email,
+            success=True,
+            ip_address=ip,
+            user_agent=request.headers.get("user-agent"),
+            details="login_success_linkedin",
+        )
         return tokens
     except HTTPException:
         record_login_attempt(ip, email, success=False)
