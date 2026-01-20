@@ -243,6 +243,7 @@ def create_app() -> FastAPI:
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         getattr(settings, "frontend_origin", "").rstrip("/"),
+        "https://autorisen-dac8e65796e7.herokuapp.com",
         "https://dev.cape-control.com",
         "https://cape-control.com",
     }
