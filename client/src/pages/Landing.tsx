@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
+import logoUrl from "../assets/CapeControl_Logo_Transparent.png";
+
 type StageKey = "spark" | "touch" | "trail" | "forYou" | "invite";
 
 const STAGES: Array<{ key: StageKey; label: string; hint: string }> = [
@@ -176,12 +178,10 @@ const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
       <header className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-sky-500 flex items-center justify-center text-xs font-bold">
-            CC
-          </div>
-          <span className="font-semibold tracking-tight">CapeControl</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2" aria-label="CapeControl">
+          <img src={logoUrl} alt="CapeControl" className="h-9 w-auto" loading="lazy" />
+          <span className="sr-only">CapeControl</span>
+        </Link>
         <div className="flex items-center gap-3">
           <span className="hidden sm:inline text-[11px] text-slate-500">
             Explore quietly. Decide later.

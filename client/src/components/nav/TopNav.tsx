@@ -1,12 +1,9 @@
-import logoUrl from "../../assets/capecontrol-logo.png";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
-type Props = {
-  onOpenSupport: () => void;
-};
+import logoUrl from "../../assets/CapeControl_Logo_Transparent.png";
 
-const TopNav = ({ onOpenSupport }: Props) => {
+const TopNav = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -19,17 +16,20 @@ const TopNav = ({ onOpenSupport }: Props) => {
 
   return (
     <header className="top-nav" id="top">
-      <div className="top-nav__brand">
+      <Link
+        to="/"
+        className="top-nav__brand"
+        onClick={closeMenu}
+        aria-label="CapeControl"
+      >
         <img
           className="top-nav__logo"
           src={logoUrl}
-          alt="CapeControl logo"
-          width={48}
-          height={48}
+          alt="CapeControl"
           loading="lazy"
+          style={{ height: 34, width: "auto" }}
         />
-        <span className="top-nav__title">CapeControl</span>
-      </div>
+      </Link>
       
       <button 
         className="top-nav__hamburger"
@@ -49,15 +49,9 @@ const TopNav = ({ onOpenSupport }: Props) => {
           <a href="#experiences" onClick={closeMenu}>Experiences</a>
         </nav>
         <div className="top-nav__auth">
-          <Link className="link" to="/login" onClick={closeMenu}>
-            Login
+          <Link className="link" to="/auth/login" onClick={closeMenu}>
+            Log in
           </Link>
-          <Link className="btn btn--ghost" to="/register" onClick={closeMenu}>
-            Register
-          </Link>
-          <button type="button" onClick={() => { onOpenSupport(); closeMenu(); }} className="btn btn--primary">
-            Support
-          </button>
         </div>
       </div>
     </header>

@@ -129,6 +129,10 @@
 .cc-mfa-input{width:48px;height:56px;border-radius:8px;text-align:center;font-size:20px}
 .cc-small{font-size:13px;color:var(--muted)}
 
+.cc-register-microcopy{font-size:13px;color:var(--muted)}
+.cc-muted-link{color:rgba(255,255,255,0.70);text-decoration:none;}
+.cc-muted-link:hover,.cc-muted-link:focus{color:rgba(255,255,255,0.92);text-decoration:underline;}
+
 /* focus styles for accessibility */
 .cc-input:focus,.cc-social-btn:focus,.cc-primary-btn:focus,.cc-pass-toggle:focus{outline:3px solid rgba(0,123,255,0.12);outline-offset:2px}
 

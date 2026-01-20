@@ -138,6 +138,11 @@ const LoginPage: React.FC = () => {
               {loading ? (<><span className="spinner" aria-hidden>⏳</span> {i18n['login.button']}</>) : i18n['login.button']}
             </button>
           </div>
+
+          <div className="cc-register-microcopy" style={{ marginTop: 10, textAlign: 'center' }}>
+            <span>New here? </span>
+            <Link className="cc-muted-link" to="/auth/register">Create an account when you’re ready.</Link>
+          </div>
         </form>
 
         <div className="cc-divider">{i18n['login.or']}</div>
@@ -162,9 +167,6 @@ const LoginPage: React.FC = () => {
           By clicking Log in, you agree to CapeControl's <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>, <a href="/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>, and <a href="/cookies" target="_blank" rel="noopener noreferrer">cookie policy</a>.
         </p>
 
-        <div style={{textAlign:'center',marginTop:12}}>
-          <Link to="/auth/register">{i18n['login.signup']}</Link>
-        </div>
       </main>
     </div>
   );

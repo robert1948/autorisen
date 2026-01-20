@@ -11,7 +11,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-gray-800">
-      <TopNav onOpenSupport={handleOpenSupport} />
+      <TopNav />
 
       {/* Hero Section */}
       <section id="home" className="bg-[#0B1120] text-white text-left md:text-center py-12 md:py-24 px-10 md:px-5">

@@ -102,7 +102,7 @@ const Home = () => {
 
   return (
     <div className="landing">
-      <TopNav onOpenSupport={() => launchChat("support")} />
+      <TopNav />
       <main className="landing__main">
         {/* HERO */}
         <section className="hero" id="home">
