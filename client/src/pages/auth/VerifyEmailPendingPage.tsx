@@ -11,6 +11,10 @@ const VerifyEmailPendingPage: React.FC = () => {
   const [email, setEmail] = useState<string>(state.userEmail ?? "");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+
+  const cooldownActive =
+    typeof cooldownUntil === "number" && Date.now() < cooldownUntil;
 
   const onResend = async (event: FormEvent) => {
     event.preventDefault();
@@ -26,6 +30,7 @@ const VerifyEmailPendingPage: React.FC = () => {
       await resendVerification(email.trim());
       setStatus("success");
       setMessage("Verification email sent. Check your inbox.");
+      setCooldownUntil(Date.now() + 10_000);
     } catch (err) {
       const text = err instanceof Error ? err.message : "Unable to resend verification email.";
       setStatus("error");
@@ -52,8 +57,12 @@ const VerifyEmailPendingPage: React.FC = () => {
               required
             />
           </label>
-          <button type="submit" disabled={status === "loading"}>
-            {status === "loading" ? "Resending…" : "Resend verification email"}
+          <button type="submit" disabled={status === "loading" || cooldownActive}>
+            {status === "loading"
+              ? "Resending…"
+              : cooldownActive
+              ? "Please wait…"
+              : "Resend verification email"}
           </button>
           {message && (
             <p

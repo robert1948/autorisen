@@ -616,7 +616,7 @@ def test_verification_resend_throttle(client):
         json={"email": email},
         headers=_csrf_headers(client),
     )
-    assert first.status_code == 202, first.text
+        assert first.status_code == 200, first.text
 
     second = client.post(
         "/api/auth/verify/resend",

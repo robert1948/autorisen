@@ -885,7 +885,7 @@ _verify_resend_cache: Dict[str, float] = {}
 
 def _verification_url(token: str) -> str:
     origin = str(settings.frontend_origin).rstrip("/")
-    return f"{origin}/verify-email/{token}"
+    return f"{origin}/auth/verify-email/{token}"
 
 
 def _dispatch_verification_email(user: Any) -> str:
@@ -1296,7 +1296,7 @@ async def register_single(
     )
 
 
-@router.post("/verify/resend", status_code=202)
+@router.post("/verify/resend", status_code=200)
 async def resend_verification(
     payload: VerificationResendIn,
     request: Request,
@@ -1324,9 +1324,7 @@ async def resend_verification(
             ) from exc
 
     _verify_resend_cache[cache_key] = now
-    return {
-        "message": "If an account exists for that email, a verification link has been sent."
-    }
+    return {"message": "Verification email sent"}
 
 
 @router.get("/verify")
