@@ -240,6 +240,7 @@ class LoginAudit(Base):
     success = Column(Boolean, nullable=False)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(255), nullable=True)
+    reason = Column(String(64), nullable=True)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

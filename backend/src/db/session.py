@@ -11,8 +11,12 @@ from sqlalchemy.orm import Session, sessionmaker
 
 
 def _determine_database_url() -> str:
+    # Under pytest, prefer an explicitly configured DATABASE_URL (set by tests/conftest.py)
+    # so the test harness can reliably reset/recreate the SQLite file schema.
     if "pytest" in sys.modules:
-        return "sqlite:///" + os.path.join("/tmp", "autolocal_test_pytest.db")
+        return os.getenv("DATABASE_URL") or "sqlite:///" + os.path.join(
+            "/tmp", "autolocal_test_pytest.db"
+        )
 
     configured = None
 

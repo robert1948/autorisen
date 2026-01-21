@@ -53,6 +53,11 @@ from backend.src.common.security.auth_rate_limit import (
     enforce_auth_rate_limit,
     get_client_ip,
 )
+from backend.src.common.security.auth_lockout import (
+    check_lockout,
+    clear_lockout,
+    record_failure,
+)
 from backend.src.db import models
 from backend.src.db.session import get_db
 from backend.src.db.models import AnalyticsEvent
@@ -73,6 +78,7 @@ from .deps import (
     get_current_user_with_claims,
 )
 from .audit import log_login_attempt
+from .rate_limiter import record_login_attempt
 from .security import create_access_refresh_tokens, verify_password
 
 log = logging.getLogger("auth")
@@ -1450,9 +1456,42 @@ async def login(
 ):
     email = _normalize_email(payload.email)
 
-    enforce_auth_rate_limit(request, endpoint="login", email=email)
-
     ip = get_client_ip(request)
+
+    locked, locked_until, _fail_count = check_lockout(email)
+    if locked:
+        retry_after = 0
+        if locked_until:
+            retry_after = max(int(locked_until - time.time()), 1)
+        log_login_attempt(
+            db,
+            email=email,
+            success=False,
+            ip_address=ip,
+            user_agent=user_agent,
+            reason="LOCKED_OUT",
+            details="locked_out",
+        )
+        raise HTTPException(
+            status_code=423,
+            detail="Authentication failed",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    try:
+        enforce_auth_rate_limit(request, endpoint="login", email=email)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+            log_login_attempt(
+                db,
+                email=email,
+                success=False,
+                ip_address=ip,
+                user_agent=user_agent,
+                reason="RATE_LIMITED",
+                details="rate_limited",
+            )
+        raise
 
     await _verify_recaptcha_token(payload.recaptcha_token, request)
 
@@ -1463,6 +1502,15 @@ async def login(
     )
 
     if user and not getattr(user, "is_email_verified", False):
+        log_login_attempt(
+            db,
+            email=email,
+            success=False,
+            ip_address=ip,
+            user_agent=user_agent,
+            reason="INVALID_CREDENTIALS",
+            details="email_not_verified",
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email not verified",
@@ -1486,8 +1534,10 @@ async def login(
                 success=True,
                 ip_address=ip,
                 user_agent=user_agent,
+                reason="SUCCESS",
                 details="login_success",
             )
+            clear_lockout(email)
             _set_refresh_cookie(response, refresh_token, expires_at=expires_at)
             return LoginResponse(
                 access_token=access_token,
@@ -1495,6 +1545,16 @@ async def login(
                 email_verified=True,
             )
         except ValueError as exc:
+            record_failure(email)
+            log_login_attempt(
+                db,
+                email=email,
+                success=False,
+                ip_address=ip,
+                user_agent=user_agent,
+                reason="INVALID_CREDENTIALS",
+                details="invalid_credentials",
+            )
             raise INVALID_CREDENTIALS from exc
         except HTTPException:
             raise
@@ -1512,7 +1572,16 @@ async def login(
             )
         except Exception:
             pass
-        record_login_attempt(ip, email, success=False)
+        record_failure(email)
+        log_login_attempt(
+            db,
+            email=email,
+            success=False,
+            ip_address=ip,
+            user_agent=user_agent,
+            reason="INVALID_CREDENTIALS",
+            details="invalid_credentials",
+        )
         raise INVALID_CREDENTIALS
 
     ok = False
@@ -1532,7 +1601,16 @@ async def login(
     )
 
     if not ok or not getattr(user, "is_active", True):
-        record_login_attempt(ip, email, success=False)
+        record_failure(email)
+        log_login_attempt(
+            db,
+            email=email,
+            success=False,
+            ip_address=ip,
+            user_agent=user_agent,
+            reason="INVALID_CREDENTIALS",
+            details="invalid_credentials",
+        )
         raise INVALID_CREDENTIALS
 
     try:
@@ -1543,6 +1621,7 @@ async def login(
             token_version=getattr(user, "token_version", 1),
         )
         log.info("login_success email=%s user_id=%s", email, user.id)
+        clear_lockout(email)
         record_login_attempt(ip, email, success=True)
         log_login_attempt(
             db,
@@ -1550,6 +1629,7 @@ async def login(
             success=True,
             ip_address=ip,
             user_agent=user_agent,
+            reason="SUCCESS",
             details="login_success",
         )
         fallback_expiry = datetime.now(timezone.utc) + timedelta(days=7)

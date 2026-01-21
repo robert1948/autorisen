@@ -105,6 +105,11 @@ def incr_with_ttl(key: str, ttl_seconds: int) -> int:
     return current
 
 
+def get_store():
+    """Return the Redis client or the in-memory fallback store."""
+    return _get_store()
+
+
 @lru_cache
 def _get_store():
     url = settings.redis_url

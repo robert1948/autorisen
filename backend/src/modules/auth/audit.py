@@ -16,6 +16,7 @@ def log_login_attempt(
     success: bool,
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
+    reason: Optional[str] = None,
     details: Optional[str] = None,
 ) -> None:
     audit = models.LoginAudit(
@@ -23,6 +24,7 @@ def log_login_attempt(
         success=success,
         ip_address=ip_address,
         user_agent=user_agent,
+        reason=reason,
         details=details,
     )
     db.add(audit)
