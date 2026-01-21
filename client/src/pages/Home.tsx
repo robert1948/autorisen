@@ -10,6 +10,7 @@ import AgentRegistryPanel from "../features/dev/AgentRegistryPanel";
 import MarketplaceShowcase from "../features/marketplace/MarketplaceShowcase";
 import AuthGate from "../features/auth/AuthGate";
 import logoUrl from "../assets/capecontrol-logo.png";
+import { APP_VERSION } from "../version";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 
@@ -497,7 +498,7 @@ const Home = () => {
             <p>© {new Date().getFullYear()} CapeControl. All rights reserved.</p>
             <div className="footer__bottom-meta">
               <span>Built with ❤️ for operators and their teams.</span>
-              <span>v{__APP_VERSION__}</span>
+              <span>v{APP_VERSION}</span>
               <span className="footer__status">
                 <span className="footer__status-dot" aria-hidden="true" />
                 All systems operational
