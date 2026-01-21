@@ -195,16 +195,25 @@ const LandingPage: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => setIsMobileMenuOpen(true)}
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-950/40 hover:bg-slate-900/60 transition"
-            aria-label="Open menu"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             aria-haspopup="dialog"
             aria-expanded={isMobileMenuOpen}
           >
-            <span className="sr-only">Open menu</span>
-            <span className="block h-0.5 w-5 rounded-full bg-slate-200" />
-            <span className="block h-0.5 w-5 rounded-full bg-slate-200 mt-1.5" />
-            <span className="block h-0.5 w-5 rounded-full bg-slate-200 mt-1.5" />
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              aria-hidden="true"
+              focusable="false"
+              className="text-slate-200"
+            >
+              <path
+                fill="currentColor"
+                d="M4 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5A1 1 0 0 1 4 6Zm0 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Zm1 5a1 1 0 1 0 0 2h14a1 1 0 1 0 0-2H5Z"
+              />
+            </svg>
           </button>
         </div>
       </header>
@@ -213,12 +222,12 @@ const LandingPage: React.FC = () => {
         <div className="sm:hidden fixed inset-0 z-50">
           <button
             type="button"
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+            className="absolute inset-0 z-50 bg-slate-950/70 backdrop-blur-sm transition-opacity"
             aria-label="Close menu"
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          <div className="absolute right-0 top-0 h-full w-[86%] max-w-sm border-l border-slate-800/80 bg-slate-950/90 shadow-2xl">
+          <div className="absolute right-0 top-0 z-[60] h-full w-[86%] max-w-sm border-l border-slate-800/80 bg-slate-950/90 shadow-2xl">
             <div className="pt-[calc(env(safe-area-inset-top)+1rem)] px-5 pb-6">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-slate-50">Menu</div>
@@ -319,7 +328,7 @@ const LandingPage: React.FC = () => {
                         Show me one clue
                       </button>
                       <Link
-                        to="/docs"
+                        to="/explore"
                         className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
                       >
                         Browse quietly (no account)
@@ -551,7 +560,7 @@ const LandingPage: React.FC = () => {
 
                     <div className="grid md:grid-cols-3 gap-4">
                       <Link
-                        to="/docs"
+                        to="/explore"
                         className="rounded-3xl sm:rounded-2xl border border-slate-800/80 bg-slate-900/45 hover:bg-slate-900/60 hover:border-slate-700 transition p-6 sm:p-5"
                       >
                         <div className="text-sm font-semibold text-slate-50">Take the quiet tour</div>
