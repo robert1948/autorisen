@@ -49,6 +49,10 @@ from backend.src.core.redis import (
     clear_user_token_version_cache,
     denylist_jti,
 )
+from backend.src.common.security.auth_rate_limit import (
+    enforce_auth_rate_limit,
+    get_client_ip,
+)
 from backend.src.db import models
 from backend.src.db.session import get_db
 from backend.src.db.models import AnalyticsEvent
@@ -69,7 +73,6 @@ from .deps import (
     get_current_user_with_claims,
 )
 from .audit import log_login_attempt
-from .rate_limiter import allow_login, record_login_attempt
 from .security import create_access_refresh_tokens, verify_password
 
 log = logging.getLogger("auth")
@@ -1447,19 +1450,11 @@ async def login(
 ):
     email = _normalize_email(payload.email)
 
-    await _verify_recaptcha_token(payload.recaptcha_token, request)
+    enforce_auth_rate_limit(request, endpoint="login", email=email)
 
-    ip = request.client.host if request.client else "unknown"
-    allowed, retry_after = allow_login(ip, email)
-    if not allowed:
-        log.warning(
-            "login_rate_limited email=%s ip=%s retry=%s", email, ip, retry_after
-        )
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many login attempts",
-            headers={"Retry-After": str(retry_after)},
-        )
+    ip = get_client_ip(request)
+
+    await _verify_recaptcha_token(payload.recaptcha_token, request)
 
     user = _get_user_by_email(db, email)
     user_found = bool(user)
@@ -1468,7 +1463,6 @@ async def login(
     )
 
     if user and not getattr(user, "is_email_verified", False):
-        record_login_attempt(ip, email, success=False)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email not verified",
@@ -1486,7 +1480,6 @@ async def login(
             log.info(
                 "login_success email=%s user_id=%s", email, getattr(user, "id", None)
             )
-            record_login_attempt(ip, email, success=True)
             log_login_attempt(
                 db,
                 email=email,
@@ -1502,7 +1495,6 @@ async def login(
                 email_verified=True,
             )
         except ValueError as exc:
-            record_login_attempt(ip, email, success=False)
             raise INVALID_CREDENTIALS from exc
         except HTTPException:
             raise
@@ -1769,7 +1761,8 @@ async def forgot_password(
     _: None = Depends(require_csrf_token),
 ) -> ForgotPasswordOut:
     email = _normalize_email(payload.email)
-    ip = request.client.host if request.client else "unknown"
+    enforce_auth_rate_limit(request, endpoint="forgot_password", email=email)
+    ip = get_client_ip(request)
 
     log.info("password_forgot_requested email=%s ip=%s", email, ip)
 
@@ -1794,9 +1787,7 @@ async def forgot_password(
         user, raw_token, expires_at = result
         user_id = getattr(user, "id", None)
         outcome = "issued"
-        reset_url = (
-            f"{str(settings.frontend_origin).rstrip('/')}/auth/reset-password?token={raw_token}"
-        )
+        reset_url = f"{str(settings.frontend_origin).rstrip('/')}/auth/reset-password?token={raw_token}"
         background_tasks.add_task(
             _send_password_reset_email_with_logging,
             user.email,
@@ -1849,7 +1840,8 @@ async def reset_password(
         raise HTTPException(status_code=500, detail="Password reset unavailable")
 
     token_preview = (payload.token or "")[:6] + "***"
-    ip = request.client.host if request.client else "unknown"
+    enforce_auth_rate_limit(request, endpoint="reset_password")
+    ip = get_client_ip(request)
 
     try:
         user = _complete_password_reset_service(  # type: ignore[misc]

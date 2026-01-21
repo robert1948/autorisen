@@ -38,6 +38,73 @@ class _MemoryStore:
         self._store.pop(key, None)
 
 
+_INCR_EXPIRE_LUA = """
+local v = redis.call('INCR', KEYS[1])
+if v == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return v
+""".strip()
+
+
+def incr_with_ttl(key: str, ttl_seconds: int) -> int:
+    """
+    Atomically increment a counter and ensure it expires after ``ttl_seconds``.
+
+    - Redis: uses a Lua script (INCR + EXPIRE only when first created).
+    - Memory fallback: keeps a fixed expiry from first increment; does not extend TTL.
+    """
+    ttl = max(int(ttl_seconds), 1)
+    store = _get_store()
+
+    # Redis client path
+    if redis is not None and hasattr(store, "eval"):
+        try:
+            value = store.eval(_INCR_EXPIRE_LUA, 1, key, ttl)
+            return int(value)
+        except Exception:
+            # Fall through to memory-like logic below
+            pass
+
+    # In-memory fallback path
+    now = time.time()
+    if isinstance(store, _MemoryStore):
+        existing = store._store.get(key)
+        if existing is None:
+            store._store[key] = ("1", now + ttl)
+            return 1
+
+        raw_value, expires = existing
+        if expires and expires < now:
+            store._store[key] = ("1", now + ttl)
+            return 1
+
+        try:
+            current = int(raw_value)
+        except (TypeError, ValueError):
+            current = 0
+        current += 1
+        store._store[key] = (str(current), expires)
+        return current
+
+    # Generic fallback (if store implements get/setex but isn't our _MemoryStore)
+    raw = None
+    try:
+        raw = store.get(key)
+    except Exception:
+        raw = None
+    try:
+        current = int(raw) if raw is not None else 0
+    except (TypeError, ValueError):
+        current = 0
+    current += 1
+    try:
+        store.setex(key, ttl, str(current))
+    except Exception:
+        pass
+    return current
+
+
 @lru_cache
 def _get_store():
     url = settings.redis_url
