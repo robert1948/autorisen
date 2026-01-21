@@ -73,10 +73,6 @@ client/coverage/
 node_modules/
 */node_modules/
 # Local-only npm lockfiles (repo uses pnpm; keep accidental npm locks out of images)
-package-lock.json
-client/package-lock.json
-client/client/package-lock.json
-CapeControl_React_Starter_Dark/package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 npm-debug.log*
