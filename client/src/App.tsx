@@ -42,6 +42,10 @@ import Subscribe from "./pages/public/SubscribePage";
 import LandingPage from "./pages/Landing";
 import ExplorePage from "./pages/ExplorePage";
 
+// Docs
+import DocsHomePage from "./pages/docs/DocsHomePage";
+import DocReaderPage from "./pages/docs/DocReaderPage";
+
 // Auth pages / flows
 import Register from "./pages/auth/RegisterPage";
 import ForgotPassword from "./pages/auth/ForgotPasswordPage";
@@ -104,7 +108,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/docs" element={<MvpDocs />} />
+        <Route path="/docs" element={<DocsHomePage />} />
+        <Route path="/docs/:slug" element={<DocReaderPage />} />
 
         {/* Auth flow pages (guest-only stub) */}
         <Route element={<RequireMvpGuest />}>
