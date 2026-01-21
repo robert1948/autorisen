@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import logoUrl from "../assets/CapeControl_Logo_Transparent.png";
-import { APP_VERSION } from "../version";
+import Footer from "../components/Footer";
 
 type StageKey = "spark" | "touch" | "trail" | "forYou" | "invite";
 
@@ -610,13 +610,7 @@ const LandingPage: React.FC = () => {
         </div>
       </main>
 
-      <footer className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-slate-500">
-        <span>© {new Date().getFullYear()} CapeControl. All rights reserved.</span>
-        <span>Curiosity first. Commitment later.</span>
-        <span data-testid="app-version" className="font-mono text-slate-200/90">
-          v{APP_VERSION}
-        </span>
-      </footer>
+      <Footer onOpenSupport={() => {}} />
     </div>
   );
 };
