@@ -329,7 +329,7 @@ const LandingPage: React.FC = () => {
                       </button>
                       <Link
                         to="/explore"
-                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-800/80 text-slate-200 hover:border-slate-700 hover:text-white transition"
+                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-500/60 bg-slate-100/5 text-slate-200 hover:bg-slate-100/10 hover:border-slate-400/70 hover:text-slate-100 active:bg-slate-100/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition"
                       >
                         Browse quietly (no account)
                       </Link>
