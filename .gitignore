@@ -82,6 +82,7 @@ package-lock.json
 client/package-lock.json
 client/client/package-lock.json
 CapeControl_React_Starter_Dark/package-lock.json
+!client/package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 
