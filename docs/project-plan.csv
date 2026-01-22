@@ -10,14 +10,14 @@ DOCS-001,Derive downstream management artifacts from SYSTEM_SPEC,docs,done,P0,20
 
 # SYSTEM SPEC COMPLETION (spec has placeholders that must match implementation)
 SPEC-001,Fill in Auth Flows details (login/refresh/logout) to match implementation,docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §3.1. Replace placeholders with authoritative behavior (no code changes). Ref: b7c2d48d.",docs/SYSTEM_SPEC.md,"Doc review: confirm matches current behavior"
-SPEC-002,Fill in CSRF policy details (token source/cookie/header/protected endpoints),docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §3.2 (see SECURITY_CSRF). Must be canonical + precise. Ref: 27bc09f1.",docs/SECURITY_CSRF.md,"Doc review: validate against SECURITY_CSRF.md"
+SPEC-002,Fill in CSRF policy details (token source/cookie/header/protected endpoints),docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §3.2 (see SECURITY_CSRF). Must be canonical + precise. Ref: 27bc09f1.",docs/SYSTEM_SPEC.md,"Doc review: validate against SECURITY_CSRF.md"
 SPEC-003,Define Session Guarantees and non-guarantees,docs,planned,P1,,"Spec: SYSTEM_SPEC §3.3. Document guarantees only; avoid implying durability beyond implementation.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-004,Define Frozen vs Flexible areas in spec,docs,planned,P1,,"Spec: SYSTEM_SPEC §3.4 and §8. Establish governance markers without expanding scope.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-005,Define Testing determinism requirements (time/email/rate-limiting),docs,planned,P1,,"Spec: SYSTEM_SPEC §5.1. Specify deterministic test rules; no external calls in tests.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-006,Define 'green CI' guarantees + mocking boundaries,docs,planned,P1,,"Spec: SYSTEM_SPEC §5.2. Document what tests may/must not mock.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-007,Define development rules (branching/merge/commit discipline),docs,planned,P2,,"Spec: SYSTEM_SPEC §6.1. Document workflow rules only.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-008,Define deployment rules (approvals/rollback expectations),docs,planned,P1,,"Spec: SYSTEM_SPEC §6.2. Document guardrails; deploy/migrate separation preserved.",docs/SYSTEM_SPEC.md,"Doc review"
-SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations. Ref: dfdd7277.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-010,Define roadmap unlock criteria (NEXT-003 + production launch),docs,planned,P2,,"Spec: SYSTEM_SPEC §7.2 and §4.4. Clarify what unlocks future work without implementing it.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-011,Define change control process (who may edit/review/versioning),docs,planned,P1,,"Spec: SYSTEM_SPEC §8.1. Define update authority and review requirements.",docs/SYSTEM_SPEC.md,"Doc review"
 
@@ -39,3 +39,6 @@ GOV-001,Publish auth changes playbook (guardrails for auth/csrf edits),docs,plan
 GOV-002,Publish release & deploy playbook (deploy rules + rollback),docs,planned,P1,,"Spec: SYSTEM_SPEC §6.2 and §6.3. Deploy/migrate separate; approvals required.",docs/playbooks/PLAYBOOK_RELEASE_AND_DEPLOY.md,"Doc review"
 GOV-003,Perform management freeze review and publish results,management,planned,P0,,"Spec: SYSTEM_SPEC §3.4, §2.5, §2.6, §4.4. Record what is frozen/flexible/deferred.",docs/FREEZE_REVIEW.md,"Doc review: confirmations present"
 GOV-SPOT-001,Formalize Single Point of Truth (SPoT) invariant,docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §8.1. Establish plan primacy and clarify that all artifacts are constrained by the plan. Ref: 7d0ad28c.",docs/PLAYBOOK_OVERVIEW.md,"Doc review: SPoT section present with canonical wording"
+WO-GOV-010,Enforce migration governance across autonomy documents,docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §6.3. Bind migration governance into autonomy constraints. Ref: 0b47bc3a.",AUTONOMY_PLAYBOOK.md,"Doc review"
+WO-GOV-011,Define migration work order template (normative governance),docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §6.3. Define mandatory evidence, approvals, rollback requirements for human migration requests. Ref: 6bc19eed.",docs/templates/WO-MIGRATION.md,"Doc review"
+WO-GOV-012,VS_Chat execution scope refinement (low-risk tasks),docs,done,P1,2026-01-22,"Spec: SYSTEM_SPEC §8.1. Explicitly limit VS_Chat direct execution to doc/planning/bookkeeping with one-file/one-commit constraints. Ref: 51659f0e.",AUTONOMY_PLAYBOOK.md,"Doc review"
