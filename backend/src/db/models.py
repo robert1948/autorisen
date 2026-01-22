@@ -508,6 +508,36 @@ class FlowRun(Base):
     )
 
 
+class EmailJob(Base):
+    """Durable outbox for email sends processed by a worker with retries."""
+
+    __tablename__ = "email_jobs"
+    __table_args__ = (
+        UniqueConstraint("idempotency_key", name="uq_email_jobs_idempotency_key"),
+    )
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    job_type = Column(String(64), nullable=False, index=True)
+    payload = Column(JSON, nullable=False)
+    status = Column(String(16), nullable=False, server_default="queued", index=True)
+    attempts = Column(Integer, nullable=False, server_default="0")
+    max_attempts = Column(Integer, nullable=False, server_default="8")
+    run_after = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    last_error = Column(Text, nullable=True)
+    idempotency_key = Column(String(128), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
 class OnboardingChecklist(Base):
     """Per-user onboarding checklist state."""
 

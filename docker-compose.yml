@@ -32,6 +32,19 @@ services:
       - db
       - redis
 
+  worker:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    command: python -m backend.src.worker.email_worker
+    volumes:
+      - .:/workspaces/autorisen
+      - backend_uploads:/workspaces/autorisen/backend/uploads
+    working_dir: /workspaces/autorisen
+    depends_on:
+      - db
+      - redis
+
   frontend:
     image: node:20-alpine
     working_dir: /app

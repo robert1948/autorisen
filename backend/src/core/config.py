@@ -57,6 +57,11 @@ class Settings(BaseSettings):
         default=None, alias="LINKEDIN_CALLBACK_URL"
     )
 
+    # admin notifications
+    admin_registration_notify_email: Optional[str] = Field(
+        default=None, alias="ADMIN_REGISTRATION_NOTIFY_EMAIL"
+    )
+
     # AI Providers
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
@@ -79,6 +84,9 @@ class Settings(BaseSettings):
 
     # environment name
     env: Literal["dev", "test", "staging", "prod"] = Field("dev", alias="ENV")
+
+    # optional human-friendly environment label (e.g. "autorisen")
+    env_name: Optional[str] = Field(default=None, alias="ENV_NAME")
 
     @model_validator(mode="after")
     def _apply_legacy_names(self) -> "Settings":

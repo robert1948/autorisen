@@ -66,6 +66,7 @@ from backend.src.services.emailer import (
     send_password_reset_email,
     send_verification_email,
 )
+from backend.src.services.email_queue import enqueue_admin_registration_notify
 from backend.src.services.security import decode_jwt
 
 from .csrf import csrf_router, issue_csrf_token, require_csrf_token
@@ -1226,6 +1227,8 @@ async def register_step2(
                         user_obj, "is_email_verified", False
                     ):
                         _dispatch_verification_email(user_obj)
+                    if user_obj is not None:
+                        enqueue_admin_registration_notify(user=user_obj)
                 except Exception as exc:  # pragma: no cover - SMTP issues
                     log.exception("verification_email_failed email=%s", user_email)
                     raise HTTPException(
@@ -1330,6 +1333,8 @@ async def register_single(
             user_obj.email_verified_at = datetime.now(timezone.utc)
             db.add(user_obj)
             db.commit()
+        if user_obj:
+            enqueue_admin_registration_notify(user=user_obj)
     except Exception as exc:  # pragma: no cover
         log.exception("register_single_finalize email=%s err=%s", email, exc)
 
