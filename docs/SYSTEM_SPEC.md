@@ -435,8 +435,44 @@ NEXT-003 may only resume when:
 
 ### 6.3 Migration Rules
 
-- When migrations are allowed
-- Approval requirements
+This section defines the authoritative governance rules for database/schema migrations.
+These rules complement §2.6.3 (Migration & Schema Management) and are binding for all environments.
+
+#### Approval (Required)
+
+- Every migration MUST be explicitly approved before execution.
+- “Approved” means a recorded, intentional decision by the designated authority for the target environment (see Environment Boundaries).
+- Migrations MUST NOT be executed on an “assumed safe” basis.
+
+#### No Implicit / Automatic Migrations
+
+- The application MUST NOT run migrations automatically on startup.
+- Deploy and migrate MUST be separate, explicit steps (never implicit).
+
+#### Environment Boundaries
+
+- **Local/dev:** migrations MAY be executed after review/approval in the local dev workflow.
+- **Staging (autorisen):** migrations MAY be executed only after explicit approval and with a rollback plan.
+- **Production (capecraft):** migrations MUST NOT be executed without explicit Robert approval.
+
+#### Allowed Change Mechanism
+
+- Schema changes MUST be performed only via versioned migrations committed to version control.
+- Manual/ad-hoc schema edits MUST NOT be used in any shared environment (staging/production).
+
+#### Rollback Policy
+
+- Every migration MUST include downgrade guidance where feasible.
+- Rollbacks in staging MAY be executed when needed and approved.
+- Rollbacks in production are high-risk and MUST be treated as an exceptional action requiring explicit Robert approval.
+
+#### Hard Stop Conditions
+
+Migration execution MUST STOP immediately if any of the following are true:
+- Approval for the target environment is missing.
+- The migration is not present in version control (i.e., not a reviewed, versioned migration).
+- The migration implies automatic execution during deploy/startup.
+- The environment target is ambiguous (local vs autorisen vs capecraft).
 
 ---
 
