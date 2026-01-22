@@ -368,16 +368,32 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA)
-	heroku container:release web -a $(HEROKU_APP_STG)
+	@if [ -f Dockerfile.worker ]; then \
+		echo "🧰 Detected Dockerfile.worker; deploying web + worker..."; \
+		heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:push worker -a $(HEROKU_APP_STG) --recursive --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:release web -a $(HEROKU_APP_STG); \
+		heroku container:release worker -a $(HEROKU_APP_STG); \
+	else \
+		heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:release web -a $(HEROKU_APP_STG); \
+	fi
 	@echo "✅ Staging deployment complete"
 	heroku open -a $(HEROKU_APP_STG)
 
 heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD))
 	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA)
-	heroku container:release web -a $(HEROKU_APP_PROD)
+	@if [ -f Dockerfile.worker ]; then \
+		echo "🧰 Detected Dockerfile.worker; deploying web + worker..."; \
+		heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:push worker -a $(HEROKU_APP_PROD) --recursive --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:release web -a $(HEROKU_APP_PROD); \
+		heroku container:release worker -a $(HEROKU_APP_PROD); \
+	else \
+		heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:release web -a $(HEROKU_APP_PROD); \
+	fi
 	@echo "✅ Production deployment complete"
 	heroku open -a $(HEROKU_APP_PROD)
 
