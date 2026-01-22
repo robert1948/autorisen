@@ -37,6 +37,11 @@ import HomePage from "./pages/public/HomePage";
 import Welcome from "./pages/public/WelcomePage";
 import About from "./pages/public/AboutPage";
 import Subscribe from "./pages/public/SubscribePage";
+import PrivacyPage from "./pages/public/PrivacyPage";
+import TermsPage from "./pages/public/TermsPage";
+import ContactPage from "./pages/public/ContactPage";
+import DeveloperHubPage from "./pages/public/DeveloperHubPage";
+import ApiDocsPage from "./pages/public/ApiDocsPage";
 
 // Landing
 import LandingPage from "./pages/Landing";
@@ -147,6 +152,11 @@ export default function App() {
         <Route path="/demo" element={<Welcome />} />
         <Route path="/how-it-works" element={<About />} />
         <Route path="/subscribe" element={<Subscribe />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/developer-hub" element={<DeveloperHubPage />} />
+        <Route path="/api-docs" element={<ApiDocsPage />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
         <Route path="/auth/login" element={<LoginPage />} />

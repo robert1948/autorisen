@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "react-router-dom";
 import logoUrl from "../assets/capecontrol-logo.png";
 import { APP_VERSION } from "../version";
 
@@ -41,13 +42,13 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             <h4>Platform</h4>
             <ul className="footer__links-list">
               <li>
-                <a href="#home">Overview</a>
+                <Link to="/">Overview</Link>
               </li>
               <li>
-                <a href="#experiences">How It Works</a>
+                <Link to="/how-it-works">How It Works</Link>
               </li>
               <li>
-                <a href="#features">Workflows</a>
+                <Link to="/explore">Workflows</Link>
               </li>
             </ul>
           </div>
@@ -56,13 +57,13 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             <h4>Developers</h4>
             <ul className="footer__links-list">
               <li>
-                <a href="#developers">Developer Hub</a>
+                <Link to="/developer-hub">Developer Hub</Link>
               </li>
               <li>
-                <a href="#experiences">Join as Developer</a>
+                <Link to="/developer-hub">Join as Developer</Link>
               </li>
               <li>
-                <a href="#developers">API Documentation</a>
+                <Link to="/api-docs">API Documentation</Link>
               </li>
             </ul>
           </div>
@@ -71,22 +72,18 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             <h4>Company</h4>
             <ul className="footer__links-list">
               <li>
-                <a href="#about">About Us</a>
+                <Link to="/how-it-works">About Us</Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  className="footer__link-button"
-                  onClick={onOpenSupport}
-                >
+                <Link to="/contact" className="footer__link-button" onClick={onOpenSupport}>
                   Contact
-                </button>
+                </Link>
               </li>
               <li>
-                <a href="#privacy">Privacy Policy</a>
+                <Link to="/privacy">Privacy Policy</Link>
               </li>
               <li>
-                <a href="#terms">Terms of Service</a>
+                <Link to="/terms">Terms of Service</Link>
               </li>
             </ul>
           </div>

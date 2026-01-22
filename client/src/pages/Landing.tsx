@@ -180,7 +180,12 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
       <header className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2" aria-label="CapeControl">
-          <img src={logoUrl} alt="CapeControl" className="h-9 w-auto" loading="lazy" />
+          <img
+            src={logoUrl}
+            alt="CapeControl"
+            className="h-10 sm:h-11 md:h-12 w-auto"
+            loading="lazy"
+          />
           <span className="sr-only">CapeControl</span>
         </Link>
         <div className="flex items-center gap-3">
