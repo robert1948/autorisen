@@ -5,7 +5,7 @@
 build:
   docker:
     web: Dockerfile
-    worker: Dockerfile
+    worker: Dockerfile.worker
   config:
     NODE_ENV: production
     ENV: prod
