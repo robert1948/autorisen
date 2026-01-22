@@ -323,10 +323,44 @@ The implementation MUST conform to these flows without adding implicit behaviors
 
 ### 3.2 CSRF Policy
 
-- Token source
-- Cookie name(s)
-- Required headers
-- Protected endpoints
+This section defines the authoritative CSRF policy for browser + cookie-based requests.
+
+#### Token Sources and Matching Rule
+
+- CSRF validation MUST require two copies of the same token:
+  - **Cookie:** `csrftoken`
+  - **Header:** `X-CSRF-Token`
+- The backend MUST reject requests if either value is missing.
+- The backend MUST reject requests if the cookie and header values do not match.
+- The backend MUST validate token integrity (e.g., signed/validated token format) and reject invalid tokens.
+
+#### Token Issuance and Refresh
+
+- **Issuance endpoint:** `GET /api/auth/csrf`
+- The backend MUST set the CSRF token as a non-HttpOnly cookie (`csrftoken`) and MUST also return the token to the client (response body and/or response header).
+- Clients MAY call `GET /api/auth/csrf` at any time to obtain/refresh a token (e.g., on app load, before the first `POST`, or after a `403` CSRF failure).
+
+#### Protected Methods
+
+- CSRF protection MUST apply to all non-safe HTTP methods:
+  - Protected: `POST`, `PUT`, `PATCH`, `DELETE`
+  - Not protected: `GET`, `HEAD`, `OPTIONS`, `TRACE`
+
+#### Protected Endpoints
+
+- Unless explicitly exempted below, CSRF protection MUST apply to all protected methods for all paths (including authentication routes).
+- As a result, the following auth flows defined in §3.1 MUST be CSRF-protected because they are `POST` requests:
+  - `POST /api/auth/login`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
+
+#### Explicit Exemptions (Narrow, Justified)
+
+Some endpoints are designed for server-to-server callbacks and MUST NOT be blocked by browser CSRF enforcement.
+Exemptions MUST remain narrowly scoped by **method + path**.
+
+- `POST /api/payments/payfast/checkout` (server-to-server initiation)
+- `POST /api/payments/payfast/itn` (PayFast Instant Transaction Notification callback)
 
 > Canonical reference: [SECURITY_CSRF.md](SECURITY_CSRF.md)
 
