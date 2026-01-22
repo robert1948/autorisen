@@ -265,11 +265,61 @@ Optional (post-MVP):
 
 ### 3.1 Auth Flows
 
-- Login
-- Token refresh
-- Logout
+This section defines the authoritative behavior for authentication and session establishment.
+The implementation MUST conform to these flows without adding implicit behaviors.
 
-(Details to be added; behavior must match implementation.)
+#### Shared Requirements (All Flows)
+
+- **Endpoints (backend):** authentication routes are served under `/api/auth/*`.
+- **CSRF:** All non-`GET`/non-safe requests MUST satisfy the CSRF checks defined in §3.2.
+  - Clients MUST obtain a CSRF token via `GET /api/auth/csrf` prior to calling any `POST /api/auth/*` endpoint.
+  - The CSRF token MUST be presented in both a cookie (`csrftoken`) and a request header (`X-CSRF-Token`); the values MUST match.
+- **Access token usage:** The backend issues an access token (JWT). Clients MUST treat it as a bearer token and send it in `Authorization: Bearer <access_token>` for authenticated API calls.
+- **Refresh token usage:** The backend issues a refresh token and sets it as an HttpOnly cookie named `refresh_token` scoped to the `/api/auth` path.
+- **reCAPTCHA (when enabled):** If reCAPTCHA verification is enabled, login MUST include a valid `recaptcha_token` or the request fails.
+
+#### Login Flow
+
+- **Endpoint:** `POST /api/auth/login`
+- **Input:** `email`, `password`, and (when enabled) `recaptcha_token`.
+- **Behavior (MUST):**
+  - Normalize the email address (trim + lowercase) before lookup.
+  - Enforce auth lockout and rate limiting prior to password verification.
+  - If reCAPTCHA verification is enabled, verify `recaptcha_token`.
+  - Reject unverified email accounts.
+  - Verify credentials; on success issue a new access token and refresh token.
+  - Set the `refresh_token` cookie (HttpOnly; `/api/auth` path).
+  - Return the access token and refresh token in the response payload.
+- **Failure outcomes (MUST):**
+  - Locked-out accounts are rejected (with a `Retry-After` hint).
+  - Invalid credentials are rejected.
+  - Email-not-verified accounts are rejected.
+
+#### Token Refresh Flow
+
+- **Endpoint:** `POST /api/auth/refresh`
+- **Input:** refresh token provided either:
+  - via request body (`refresh_token`), or
+  - via cookie (`refresh_token`).
+- **Behavior (MUST):**
+  - Validate the presented refresh token.
+  - Issue a new access token.
+  - Rotate/refresh the refresh token and re-set the `refresh_token` cookie.
+  - Return the new access token and refresh token in the response payload.
+- **Failure outcomes (MUST):**
+  - Missing/invalid refresh tokens are rejected.
+
+#### Logout Flow
+
+- **Endpoint:** `POST /api/auth/logout`
+- **Input:** optional JSON payload `{ "all_devices": boolean }`.
+- **Behavior (MUST):**
+  - Clear the `refresh_token` cookie.
+  - If a refresh token cookie is present and server-side revocation is available, revoke it on a best-effort basis.
+  - If an access token is available (typically via `Authorization`), the backend MUST denylist that token identifier until expiry (best-effort).
+  - If `all_devices=true` and a user can be resolved, the backend MUST invalidate all outstanding tokens for that user by advancing the user token version.
+- **Client behavior (MUST):**
+  - After logout, the client MUST treat the session as ended (discard any stored access token) and return the user to `/login`.
 
 ### 3.2 CSRF Policy
 
