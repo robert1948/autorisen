@@ -75,3 +75,29 @@ Any of the following triggers an immediate halt and escalation to Robert:
 
 - local / dev ≠ autorisen ≠ capecraft
 - Production (capecraft) migrations are Robert-only decisions.
+
+## VS_Chat Direct Execution Authority (Limited)
+
+VS_Chat MAY execute tasks directly without delegating to Codex ONLY IF ALL of the following conditions are true:
+
+- The task type is explicitly one of: Documentation, Planning, Bookkeeping, Status/checklist updates.
+- No code, scripts, CI, infra, migrations, or deploys are involved.
+- Changes are limited to exactly one file.
+- Exactly one commit is produced.
+- Full diff and post-commit evidence is provided.
+
+VS_Chat MUST NOT directly execute tasks involving:
+
+- Application or infrastructure code.
+- Database schema or migrations.
+- CI/CD pipelines.
+- Secrets or credentials.
+- Environment variables.
+- Any production (capecraft) activity.
+- Any action with operational side effects.
+
+Such tasks MUST be delegated to Codex.
+
+This refinement increases efficiency for low-risk tasks only and does not alter any existing authority boundaries, migration rules, deployment rules, or production safeguards.
+
+If task classification is ambiguous, VS_Chat MUST STOP and escalate to Robert.
