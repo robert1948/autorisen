@@ -320,14 +320,26 @@ const LandingPage: React.FC = () => {
                       <div>Then choose whether to follow the trail.</div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                      <button
-                        type="button"
-                        onClick={() => unlockAndGo(1)}
-                        className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition"
-                      >
-                        Show me one clue
-                      </button>
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-start">
+                      <div className="flex flex-col">
+                        <button
+                          type="button"
+                          onClick={() => unlockAndGo(1)}
+                          className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition"
+                        >
+                          Show me one clue
+                        </button>
+                        <div className="mt-2 text-[11px] sm:text-xs text-slate-400">
+                          No credit card. No lock-in. You stay in control.
+                        </div>
+                        <Link
+                          to="/explore"
+                          className="mt-2 text-[11px] sm:text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 decoration-slate-600/70 transition"
+                        >
+                          Explore quietly →
+                        </Link>
+                      </div>
+
                       <Link
                         to="/explore"
                         className="inline-flex w-full sm:w-auto min-h-12 items-center justify-center rounded-full px-6 py-3 text-sm font-medium border border-slate-500/60 bg-slate-100/5 text-slate-200 hover:bg-slate-100/10 hover:border-slate-400/70 hover:text-slate-100 active:bg-slate-100/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 transition"
