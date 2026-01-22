@@ -1,0 +1,45 @@
+# Worker image for AutoLocal/CapeControl
+# Runs the DB-backed email outbox worker (no web server).
+
+ARG PYTHON_VERSION=3.12
+
+FROM python:${PYTHON_VERSION}-slim
+
+ARG GIT_SHA=unknown
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    ENV=prod \
+    DEBUG=false \
+    GIT_SHA=${GIT_SHA} \
+    PYTHONPATH=/app \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    libpq5 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip check
+
+RUN useradd -m -u 1000 -s /bin/bash app \
+    && mkdir -p /app/logs /app/tmp \
+    && chown -R app:app /app
+
+COPY --chown=app:app backend/ ./backend/
+COPY --chown=app:app app/ ./app/
+COPY --chown=app:app scripts/ ./scripts/
+COPY --chown=app:app backend/alembic.ini ./backend/
+
+USER app
+
+CMD ["sh", "-c", "python -m backend.src.worker.email_worker"]
