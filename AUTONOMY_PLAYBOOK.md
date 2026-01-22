@@ -101,3 +101,49 @@ Such tasks MUST be delegated to Codex.
 This refinement increases efficiency for low-risk tasks only and does not alter any existing authority boundaries, migration rules, deployment rules, or production safeguards.
 
 If task classification is ambiguous, VS_Chat MUST STOP and escalate to Robert.
+
+## Standard Evidence Pack (All Work Orders)
+
+Every Work Order MUST include the following evidence items unless explicitly waived by Robert.
+
+### Mandatory Evidence (Core)
+
+```bash
+git status --porcelain
+git diff --name-only
+git diff -- <scoped file(s)>
+git show --name-only --oneline -1
+```
+
+- `git status --porcelain`: proves the working tree is clean at closure (no uncommitted changes).
+- `git diff --name-only`: proves scope discipline by listing exactly which files changed.
+- `git diff -- <scoped file(s)>`: proves the exact content changes in the allowed file(s).
+- `git show --name-only --oneline -1`: proves what was actually committed and which files are in the last commit.
+
+### Clean-Tree Requirement
+
+- `git status --porcelain` MUST be empty at Work Order closure.
+- Any uncommitted change is a hard STOP.
+
+### Scope Discipline Rule
+
+- Evidence MUST prove that only allowed files were modified.
+- Any unexpected file change (including implicit or transitive changes) is Work Order rejection.
+
+### Work-Order-Specific Evidence (Conditional)
+
+Additional evidence may be required depending on Work Order class, but never instead of the Mandatory Evidence (Core):
+
+- Docs / Governance: file diffs only.
+- UI / Frontend: build output (e.g., `npm run build`).
+- Backend: tests and/or migration dry-run output as specified by the Work Order.
+- Deploy / Migration: explicit environment confirmation plus relevant logs/output as specified by the Work Order.
+
+### Authority Statement
+
+No Work Order may be accepted or closed without a complete Evidence Pack. Evidence is authoritative over narrative description.
+
+### Waiver Rule
+
+- Evidence requirements may be waived only by Robert.
+- Any waiver MUST be explicit and recorded in the Work Order.
