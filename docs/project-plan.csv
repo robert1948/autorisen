@@ -27,7 +27,7 @@ MVP-ROUTES-001,Publish MVP pages & routes checklist (no code scaffolding),docs,p
 MVP-ROUTES-002,Define onboarding gate rules (cannot skip onboarding),docs,planned,P0,,"Spec: SYSTEM_SPEC §2.5.8. Document gating expectations; do not implement.",docs/SYSTEM_SPEC.md,"Doc review"
 
 # UX WORK ORDERS (implementation work; execution gated by status)
-WO-UX-REG-INTEREST-001,Registration interest capture (UI-only),frontend,planned,P1,,"Spec: SYSTEM_SPEC §2.5.3 and §2.5.2. Implement interest-triggered registration prompts and an interest selection step in the registration flow UI; explicitly no persistence/backend changes in this WO.",docs/project-plan.csv,"Post-implementation manual check: prompts only after interest signal; interest selector visible in /register flow; no new persistence/API calls"
+WO-UX-REG-INTEREST-001,Registration interest capture (UI-only),frontend,in_progress,P0,,"Spec: SYSTEM_SPEC §2.5.3 and §2.5.2. Implement interest-triggered registration prompts and an interest selection step in the registration flow UI; explicitly no persistence/backend changes in this WO.",docs/project-plan.csv,"Post-implementation manual check: prompts only after interest signal; interest selector visible in /register flow; no new persistence/API calls"
 
 # DATA & POSTGRESQL (authoritative scope + governance)
 DB-001,Establish Postgres MVP data scope as system-of-record,docs,done,P0,2026-01-06,"Spec: SYSTEM_SPEC §2.6. Scope and exclusions are authoritative.",docs/SYSTEM_SPEC.md,"Doc review"
