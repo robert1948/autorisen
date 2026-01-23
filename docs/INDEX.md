@@ -60,3 +60,7 @@
 - docs/registration.md
 - docs/senior_devops.md
 - docs/USAGE_TEMPLATES.md
+
+## Governance
+
+- Work Order Closure Index: WO_INDEX.md
