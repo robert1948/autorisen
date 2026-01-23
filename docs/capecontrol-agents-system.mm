@@ -11,6 +11,10 @@
       <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Naming normalized: ChatKit Runtime"/>
       <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Roles made explicit (public/owner/developer/admin/org_admin optional)"/>
     </node>
+    <node CREATED="1699747200000" MODIFIED="1699747200000" POSITION="right" TEXT="Legend / Tags">
+      <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Legend: Core / Optional / Roadmap"/>
+      <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Tags: API / Runtime / UX / Governance"/>
+    </node>
     <node CREATED="1699747200000" MODIFIED="1699747200000" POSITION="right" TEXT="Agent Registry API">
       <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="CRUD Operations">
         <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="List Agents">
@@ -23,7 +27,7 @@
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="POST /agents"/>
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Auto-generate slug"/>
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Set owner_id from token"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Validate manifest"/>
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Validate Manifest"/>
         </node>
         <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Update Agent">
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="PUT /agents/{agent_id}"/>
@@ -41,13 +45,13 @@
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="POST /agents/{agent_id}/versions"/>
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Auto-increment version"/>
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Draft status by default"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Validate manifest schema"/>
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Validate Manifest schema"/>
         </node>
         <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Publish Version">
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="POST /agents/{agent_id}/versions/{version_id}/publish"/>
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Set published_at timestamp"/>
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Make available in marketplace"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Validate manifest completeness"/>
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Validate Manifest completeness"/>
         </node>
         <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Archive Version">
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="POST /agents/{agent_id}/versions/{version_id}/archive"/>
@@ -134,17 +138,35 @@
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Never trust client-supplied version numbers"/>
         </node>
       </node>
-      <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Manifest Validation">
-        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Required Fields">
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="name: Agent display name"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="description: Agent purpose"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="placement: UI placement hint"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="tools: Available tool list"/>
+      <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="✅ Validation Lifecycle">
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Authoring (builder/IDE)">
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Required Fields">
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="name: Agent display name"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="description: Agent purpose"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="placement: UI placement hint"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="tools: Available tool list"/>
+          </node>
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Optional Fields">
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="category: Agent classification"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="config: Runtime configuration"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="permissions: Access requirements"/>
+          </node>
         </node>
-        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Optional Fields">
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="category: Agent classification"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="config: Runtime configuration"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="permissions: Access requirements"/>
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Submission (API)">
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Create/Update: validate Manifest schema"/>
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Publish: validate Manifest completeness"/>
+        </node>
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Runtime (execution guard)">
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Security Checks">
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Tool permission validation"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Resource access limits"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Malicious code detection"/>
+          </node>
+          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Content Moderation">
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Inappropriate content filtering"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Spam prevention"/>
+            <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Quality standards enforcement"/>
+          </node>
         </node>
       </node>
     </node>
@@ -392,17 +414,11 @@
           <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Remove violating content"/>
         </node>
       </node>
-      <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Manifest Validation">
-        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Security Checks">
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Tool permission validation"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Resource access limits"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Malicious code detection"/>
-        </node>
-        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Content Moderation">
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Inappropriate content filtering"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Spam prevention"/>
-          <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Quality standards enforcement"/>
-        </node>
+      <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Security enforced via shared middleware">
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="RateLimiting"/>
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="DDoSProtection"/>
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="AuditLogging"/>
+        <node CREATED="1699747200000" MODIFIED="1699747200000" TEXT="Monitoring"/>
       </node>
     </node>
 
