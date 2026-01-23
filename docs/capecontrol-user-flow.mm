@@ -110,7 +110,17 @@
     <node CREATED="1699459200" ID="dashboard" MODIFIED="1699459200" POSITION="left" TEXT="🟠 Main Application">
       <edge COLOR="#f57c00" STYLE="sharp_bezier" WIDTH="2"/>
       <font NAME="SansSerif" SIZE="12"/>
-      <node CREATED="1699459200" ID="dashboard-main" MODIFIED="1699459200" TEXT="📊 Dashboard '/dashboard'">
+      <node CREATED="1699459200" ID="access-control" MODIFIED="1699459200" TEXT="🔒 Access Control (RequireAuth)">
+        <font NAME="SansSerif" SIZE="10"/>
+        <node CREATED="1699459200" ID="access-control-unauthenticated" MODIFIED="1699459200" TEXT="Unauthenticated → SoftGateInterstitial (Login + Create free account)">
+          <font NAME="SansSerif" SIZE="9"/>
+        </node>
+        <node CREATED="1699459200" ID="access-control-authenticated" MODIFIED="1699459200" TEXT="Authenticated → Outlet (protected pages)">
+          <font NAME="SansSerif" SIZE="9"/>
+        </node>
+      </node>
+
+      <node CREATED="1699459200" ID="dashboard-main" MODIFIED="1699459200" TEXT="📊 Dashboard '/app/dashboard' (legacy: /dashboard)">
         <font NAME="SansSerif" SIZE="10"/>
         <node CREATED="1699459200" ID="stats" MODIFIED="1699459200" TEXT="📈 Stats Overview">
           <font NAME="SansSerif" SIZE="9"/>
@@ -140,7 +150,7 @@
           </node>
         </node>
       </node>
-      <node CREATED="1699459200" ID="agents" MODIFIED="1699459200" TEXT="🤖 Agents Management">
+      <node CREATED="1699459200" ID="agents" MODIFIED="1699459200" TEXT="🤖 Agents Management '/app/agents' (legacy: /agents)">
         <font NAME="SansSerif" SIZE="10"/>
       </node>
       <node CREATED="1699459200" ID="marketplace" MODIFIED="1699459200" TEXT="🛒 Marketplace">
@@ -149,7 +159,7 @@
       <node CREATED="1699459200" ID="user-profile" MODIFIED="1699459200" TEXT="👤 User Profile">
         <font NAME="SansSerif" SIZE="10"/>
       </node>
-      <node CREATED="1699459200" ID="settings" MODIFIED="1699459200" TEXT="⚙️ Settings">
+      <node CREATED="1699459200" ID="settings" MODIFIED="1699459200" TEXT="⚙️ Settings '/app/settings' (legacy: /settings)">
         <font NAME="SansSerif" SIZE="10"/>
       </node>
     </node>
