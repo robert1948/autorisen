@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
+import SoftGateInterstitial from "./SoftGateInterstitial";
 
 export default function RequireAuth() {
   const { state, loading } = useAuth();
@@ -13,13 +14,7 @@ export default function RequireAuth() {
   const authed = Boolean(state.accessToken);
 
   if (!authed) {
-    return (
-      <Navigate
-        to="/auth/login"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
+    return <SoftGateInterstitial fromPath={location.pathname} />;
   }
 
   // If we don't yet know the email verification state (or it's false), validate once
