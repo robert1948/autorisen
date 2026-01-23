@@ -72,6 +72,9 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             <h4>Company</h4>
             <ul className="footer__links-list">
               <li>
+                <Link to="/auth/register">Create free account</Link>
+              </li>
+              <li>
                 <Link to="/how-it-works">About Us</Link>
               </li>
               <li>

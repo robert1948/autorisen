@@ -139,6 +139,18 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
 
+          <div style={{ marginTop: 10 }}>
+            <Link
+              to="/auth/register"
+              className="cc-primary-btn"
+              role="button"
+              aria-label="Create free account"
+              style={{ display: 'block', textAlign: 'center' }}
+            >
+              Create free account
+            </Link>
+          </div>
+
           <div className="cc-register-microcopy" style={{ marginTop: 10, textAlign: 'center' }}>
             <span>New here? </span>
             <Link className="cc-muted-link" to="/auth/register">Create an account when you’re ready.</Link>

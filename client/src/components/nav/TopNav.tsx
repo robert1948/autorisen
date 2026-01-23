@@ -49,6 +49,9 @@ const TopNav = () => {
           <a href="#experiences" onClick={closeMenu}>Experiences</a>
         </nav>
         <div className="top-nav__auth">
+          <Link className="link" to="/auth/register" onClick={closeMenu}>
+            Create free account
+          </Link>
           <Link className="link" to="/auth/login" onClick={closeMenu}>
             Log in
           </Link>
