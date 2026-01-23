@@ -1,7 +1,7 @@
 # CapeControl — System Specification
 
 > Status: DRAFT  
-> Last updated: 2026-01-06  
+> Last updated: 2026-01-23  
 > Owners: CapeControl Management Team  
 > Scope: MVP → First Production Release
 
@@ -109,7 +109,55 @@ Notes:
 
 ---
 
-### 2.5.3 Onboarding Pages (Post-Auth, Pre-App)
+### 2.5.3 Interest-Triggered Registration UX Policy (Normative)
+
+Purpose: Define mandatory UX policy governing how and when registration may be presented to unauthenticated users.
+
+Definitions:
+
+**Unauthenticated user**
+A visitor without a valid authenticated session (e.g., no JWT or session token).
+
+**Interest signal**
+An observable, client-side action by an unauthenticated user that reasonably indicates engagement or intent.
+Recognized interest signals include (non-exhaustive):
+- Clicking “Learn more”, “Explore”, “Try”, or “Preview” CTAs
+- Viewing agent detail pages
+- Visiting pricing or plan comparison pages
+- Scrolling beyond 50% of page viewport
+- Remaining on a page for more than 20 seconds
+- Navigating to a second page within the session
+- Attempting login with an unknown email address
+- Accessing a protected route or feature
+
+The interest signal taxonomy is extensible and does not require backend coordination.
+
+Mandatory UX rules (non-negotiable):
+1. **Interest → Invitation rule**: registration prompts must only appear after at least one interest signal has been detected for an unauthenticated user.
+1. **Invitation, not barrier rule**: all registration prompts must be optional, clearly dismissible, and include a “Continue browsing” (or equivalent) option.
+1. **No first-interaction friction rule**: first-time unauthenticated users must never encounter forced registration, mandatory login, or UX dead ends that block initial exploration.
+1. **Soft-gate requirement for protected routes**: access to authenticated features may display an explanatory interstitial, but must not hard-redirect without user choice.
+1. **Global reachability rule**: a registration entry point must remain reachable from any screen or UX context.
+1. **Accessibility requirement**: all registration CTAs, prompts, and interstitials must meet WCAG 2.1 AA accessibility standards, including keyboard navigation and screen-reader compatibility.
+
+Governance & compliance:
+- Applies to all frontend UX work involving authentication, onboarding, or gated features.
+- Any UI implementation touching registration or login must comply by default.
+- Deviations require explicit approval from Robert (final authority).
+- Violations are classified as critical UX defects.
+
+Prohibited behaviors:
+- Mandatory registration prior to content access
+- Login walls on first interaction
+- Modal registration prompts on initial page load
+- UX flows that trap unauthenticated users
+
+Auditability:
+- Compliance must be verified during pull request reviews, UX audits, and Work Order evidence checks.
+
+---
+
+### 2.5.4 Onboarding Pages (Post-Auth, Pre-App)
 
 Purpose: Profile completion and guided activation.
 
@@ -124,7 +172,7 @@ Notes:
 
 ---
 
-### 2.5.4 App Pages (Authenticated Core)
+### 2.5.5 App Pages (Authenticated Core)
 
 Purpose: Primary product interaction.
 
@@ -140,7 +188,7 @@ Notes:
 
 ---
 
-### 2.5.5 Help & Support Pages
+### 2.5.6 Help & Support Pages
 
 Purpose: Self-service assistance.
 
@@ -153,7 +201,7 @@ Notes:
 
 ---
 
-### 2.5.6 Explicitly Out of Scope (MVP)
+### 2.5.7 Explicitly Out of Scope (MVP)
 
 - Admin console
 - Multi-tenant org management
@@ -163,7 +211,7 @@ Notes:
 
 ---
 
-### 2.5.7 Navigation Rules
+### 2.5.8 Navigation Rules
 
 - Public → Auth → Onboarding → App is strictly linear
 - Users may not skip onboarding

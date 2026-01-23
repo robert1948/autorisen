@@ -38,7 +38,9 @@ Columns:
 | `/help/knowledge-base` | help | read-only | `client/src/pages/mvp/MvpPages.tsx` (MvpKnowledgeBase) | planned |
 
 ## Notes (from SYSTEM_SPEC)
-- Navigation is strictly linear: Public → Auth → Onboarding → App (SYSTEM_SPEC §2.5.7).
-- Billing is display-only for MVP (SYSTEM_SPEC §2.5.4).
-- Help is read-only (SYSTEM_SPEC §2.5.5).
+
+- Navigation is strictly linear: Public → Auth → Onboarding → App (SYSTEM_SPEC §2.5.8).
+- Registration prompts must follow the interest-triggered policy (SYSTEM_SPEC §2.5.3).
+- Billing is display-only for MVP (SYSTEM_SPEC §2.5.5).
+- Help is read-only (SYSTEM_SPEC §2.5.6).
 - Registration step routes and email verification are unauthenticated entry points (SYSTEM_SPEC §2.5.2).

@@ -20,10 +20,14 @@ SPEC-008,Define deployment rules (approvals/rollback expectations),docs,planned,
 SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations. Ref: dfdd7277.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-010,Define roadmap unlock criteria (NEXT-003 + production launch),docs,planned,P2,,"Spec: SYSTEM_SPEC §7.2 and §4.4. Clarify what unlocks future work without implementing it.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-011,Define change control process (who may edit/review/versioning),docs,planned,P1,,"Spec: SYSTEM_SPEC §8.1. Define update authority and review requirements.",docs/SYSTEM_SPEC.md,"Doc review"
+SPEC-012,Add interest-triggered registration UX policy (normative),docs,done,P0,2026-01-23,"Spec: SYSTEM_SPEC §2.5.3. Add normative policy governing registration prompts; no code changes.",docs/SYSTEM_SPEC.md,"Doc review: confirm §2.5.3 present and references updated"
 
 # MVP PAGES & NAVIGATION (authoritative route list)
 MVP-ROUTES-001,Publish MVP pages & routes checklist (no code scaffolding),docs,planned,P0,,"Spec: SYSTEM_SPEC §2.5. Derive checklist per route with auth class + data dependency.",docs/MVP_PAGES_AND_ROUTES.md,"Doc review: checklist matches §2.5 exactly"
-MVP-ROUTES-002,Define onboarding gate rules (cannot skip onboarding),docs,planned,P0,,"Spec: SYSTEM_SPEC §2.5.7. Document gating expectations; do not implement.",docs/SYSTEM_SPEC.md,"Doc review"
+MVP-ROUTES-002,Define onboarding gate rules (cannot skip onboarding),docs,planned,P0,,"Spec: SYSTEM_SPEC §2.5.8. Document gating expectations; do not implement.",docs/SYSTEM_SPEC.md,"Doc review"
+
+# UX WORK ORDERS (implementation work; execution gated by status)
+WO-UX-REG-INTEREST-001,Registration interest capture (UI-only),frontend,planned,P1,,"Spec: SYSTEM_SPEC §2.5.3 and §2.5.2. Implement interest-triggered registration prompts and an interest selection step in the registration flow UI; explicitly no persistence/backend changes in this WO.",docs/project-plan.csv,"Post-implementation manual check: prompts only after interest signal; interest selector visible in /register flow; no new persistence/API calls"
 
 # DATA & POSTGRESQL (authoritative scope + governance)
 DB-001,Establish Postgres MVP data scope as system-of-record,docs,done,P0,2026-01-06,"Spec: SYSTEM_SPEC §2.6. Scope and exclusions are authoritative.",docs/SYSTEM_SPEC.md,"Doc review"
@@ -43,3 +47,4 @@ WO-GOV-010,Enforce migration governance across autonomy documents,docs,done,P0,2
 WO-GOV-011,Define migration work order template (normative governance),docs,done,P0,2026-01-22,"Spec: SYSTEM_SPEC §6.3. Define mandatory evidence, approvals, rollback requirements for human migration requests. Ref: 6bc19eed.",docs/templates/WO-MIGRATION.md,"Doc review"
 WO-GOV-012,VS_Chat execution scope refinement (low-risk tasks),docs,done,P1,2026-01-22,"Spec: SYSTEM_SPEC §8.1. Explicitly limit VS_Chat direct execution to doc/planning/bookkeeping with one-file/one-commit constraints. Ref: 51659f0e.",AUTONOMY_PLAYBOOK.md,"Doc review"
 WO-GOV-013,Define standard Evidence Pack for all Work Orders,docs,done,P1,2026-01-22,"Spec: SYSTEM_SPEC §8.1. Define mandatory evidence commands, clean-tree requirement, scope discipline rule, conditional evidence by WO class, and Robert-only waiver. Ref: 188c67a6.",AUTONOMY_PLAYBOOK.md,"Doc review"
+WO-GOV-014,Enforce interest-triggered registration policy in autonomy governance,docs,done,P1,2026-01-23,"Spec: SYSTEM_SPEC §2.5.3 and §8.1. Bind the interest-triggered registration policy into autonomy stop conditions and escalation path.",AUTONOMY_PLAYBOOK.md,"Doc review: confirm §4.7 present and references §2.5.3"

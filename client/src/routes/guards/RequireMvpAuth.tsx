@@ -4,7 +4,7 @@ import { useAuth } from "../../features/auth/AuthContext";
 
 /**
  * MVP route guard (AuthContext-backed).
- * Enforces the SYSTEM_SPEC §2.5.7 linear flow using a minimal localStorage stub for onboarding completion.
+ * Enforces the SYSTEM_SPEC §2.5.8 linear flow using a minimal localStorage stub for onboarding completion.
  * TODO: replace onboarding completion stub with authoritative onboarding state when available.
  */
 export default function RequireMvpAuth() {

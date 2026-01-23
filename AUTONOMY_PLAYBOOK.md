@@ -102,6 +102,54 @@ This refinement increases efficiency for low-risk tasks only and does not alter 
 
 If task classification is ambiguous, VS_Chat MUST STOP and escalate to Robert.
 
+## 4.7 Interest-Triggered Registration Policy Enforcement
+
+Policy source: docs/SYSTEM_SPEC.md §2.5.3 (Interest-Triggered Registration UX Policy).
+
+This section enforces SYSTEM_SPEC §2.5.3 as a binding governance constraint for all autonomous and semi-autonomous execution.
+
+### Execution Constraints (Hard)
+
+Autonomous agents, VS_Chat orchestration, and Codex execution MUST NOT:
+- introduce forced registration flows
+- add mandatory login gates on first interaction
+- surface registration prompts without a prior interest signal
+
+Any ambiguity MUST result in STOP and escalation, not assumption.
+
+### Allowed Autonomy Scope
+
+Agents MAY:
+- document the UX policy and definitions
+- audit existing flows for compliance
+- refactor UX logic only when explicitly authorized by an approved Work Order
+
+Agents MUST NOT:
+- invent new interest signals
+- alter registration timing heuristics
+- change onboarding behavior outside an approved execution Work Order
+
+### Enforcement Rules
+
+1. Policy-before-execution rule: no registration UX implementation may begin unless the policy exists in SYSTEM_SPEC and the execution Work Order explicitly references it.
+1. WO separation rule: policy definition and UX implementation must be separate Work Orders.
+1. STOP conditions: autonomous execution must halt immediately if registration becomes mandatory, first-time access is blocked, accessibility violations are detected, or scope exceeds the active Work Order.
+
+### Escalation Path
+
+All violations, ambiguities, or scope conflicts MUST be escalated to:
+
+Robert → CapeAI → VS_Chat
+
+No corrective action may be taken unilaterally by an agent.
+
+### Audit Trail Requirement
+
+All changes related to registration UX MUST:
+- reference the governing SYSTEM_SPEC section
+- include evidence of compliance
+- be traceable to an approved Work Order
+
 ## Standard Evidence Pack (All Work Orders)
 
 Every Work Order MUST include the following evidence items unless explicitly waived by Robert.
