@@ -120,6 +120,58 @@
         </node>
       </node>
 
+      <node CREATED="1699459200" ID="agent-interaction-flow" MODIFIED="1699459200" TEXT="🧩 Agent Interaction Flow">
+        <font NAME="SansSerif" SIZE="10"/>
+        <node CREATED="1699459200" ID="agent-discover" MODIFIED="1699459200" TEXT="Discover Agent">
+          <font NAME="SansSerif" SIZE="9"/>
+          <node CREATED="1699459200" ID="agent-discover-marketplace" MODIFIED="1699459200" TEXT="Marketplace / Browse">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-discover-recommendations" MODIFIED="1699459200" TEXT="Recommendations (CapeAI)">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-discover-trust" MODIFIED="1699459200" TEXT="Trust Signals (ratings, verified publisher, usage)">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+        </node>
+        <node CREATED="1699459200" ID="agent-detail" MODIFIED="1699459200" TEXT="Agent Detail View">
+          <font NAME="SansSerif" SIZE="9"/>
+          <node CREATED="1699459200" ID="agent-detail-manifest" MODIFIED="1699459200" TEXT="Public Manifest (redacted)">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-detail-capabilities" MODIFIED="1699459200" TEXT="Capabilities &amp; Limits">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-detail-permissions" MODIFIED="1699459200" TEXT="Permissions Requested">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+        </node>
+        <node CREATED="1699459200" ID="agent-use" MODIFIED="1699459200" TEXT="Use Agent">
+          <font NAME="SansSerif" SIZE="9"/>
+          <node CREATED="1699459200" ID="agent-use-soft-gate" MODIFIED="1699459200" TEXT="Soft Gate if unauthenticated">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-use-permission-prompt" MODIFIED="1699459200" TEXT="Permission Prompt (first use)">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-use-runtime" MODIFIED="1699459200" TEXT="Execution via Agent Runtime">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+        </node>
+        <node CREATED="1699459200" ID="agent-feedback" MODIFIED="1699459200" TEXT="Post-Use Feedback">
+          <font NAME="SansSerif" SIZE="9"/>
+          <node CREATED="1699459200" ID="agent-feedback-summary" MODIFIED="1699459200" TEXT="Result Summary">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-feedback-review" MODIFIED="1699459200" TEXT="Rate / Review">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+          <node CREATED="1699459200" ID="agent-feedback-save" MODIFIED="1699459200" TEXT="Save / Reuse / Automate">
+            <font NAME="SansSerif" SIZE="8"/>
+          </node>
+        </node>
+      </node>
+
       <node CREATED="1699459200" ID="dashboard-main" MODIFIED="1699459200" TEXT="📊 Dashboard '/app/dashboard' (legacy: /dashboard)">
         <font NAME="SansSerif" SIZE="10"/>
         <node CREATED="1699459200" ID="stats" MODIFIED="1699459200" TEXT="📈 Stats Overview">
