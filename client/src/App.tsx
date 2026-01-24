@@ -42,6 +42,7 @@ import TermsPage from "./pages/public/TermsPage";
 import ContactPage from "./pages/public/ContactPage";
 import DeveloperHubPage from "./pages/public/DeveloperHubPage";
 import ApiDocsPage from "./pages/public/ApiDocsPage";
+import EarlyAccessPage from "./pages/public/EarlyAccessPage";
 
 // Landing
 import LandingPage from "./pages/Landing";
@@ -157,6 +158,7 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/developer-hub" element={<DeveloperHubPage />} />
         <Route path="/api-docs" element={<ApiDocsPage />} />
+        <Route path="/early-access" element={<EarlyAccessPage />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
         <Route path="/auth/login" element={<LoginPage />} />

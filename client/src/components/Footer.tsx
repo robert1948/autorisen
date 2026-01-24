@@ -88,6 +88,9 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
               <li>
                 <Link to="/terms">Terms of Service</Link>
               </li>
+              <li>
+                <Link to="/early-access">Early access principles</Link>
+              </li>
             </ul>
           </div>
         </div>
