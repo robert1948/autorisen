@@ -7,6 +7,7 @@ This document is the authoritative audit trail for all Work Orders.
 | WO ID | Title | Status | Scope | Files | Commit | Closed By | Date |
 |------|-------|--------|-------|-------|--------|-----------|------|
 | WO-DOCS-FLOW-MM-001 | Additive update to CapeControl user flow mindmap | CLOSED | Docs only | docs/capecontrol-user-flow.mm | c6e64771 | Robert | 2026-01-23 |
+| WO-DEPLOY-WORKER-DOCKERFILE-001 | Deploy autorisen worker from Dockerfile.worker via Makefile | CLOSED | Deploy tooling (Makefile only) | Makefile | 676bf9a7ff42cbdb11cfebb9e5f929721b3c1e13 | Robert | 2026-01-24 |
 
 ## SSOT Alignment
 
