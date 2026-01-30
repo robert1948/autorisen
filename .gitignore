@@ -163,6 +163,9 @@ docs/playbooks/design/temp/
 
 # Figma integration artifacts (completely removed from project)
 docs/figma/
+!docs/figma/
+docs/figma/*
+!docs/figma/DASHBOARD_V1_FIGMA_TO_CODE_MAP.md
 figma_*/
 *.figma
 figma-cache/
