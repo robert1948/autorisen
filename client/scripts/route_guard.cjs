@@ -26,7 +26,7 @@ try {
 // Hard invariants:
 // - Must have a root route entry.
 // - Must *not* wire root to MvpLanding.
-// - Must wire root to LandingPage (branded landing component).
+// - Must wire root to a branded landing component.
 const hasRootRoute = /<Route\s+path=\"\/\"/m.test(appSource);
 if (!hasRootRoute) {
   fail('Missing root route "/" in App.tsx');
@@ -38,9 +38,10 @@ if (rootToMvpLanding) {
 }
 
 const rootToLandingPage = /<Route\s+path=\"\/\"\s+element=\{<LandingPage\s*\/>\}\s*\/>/m.test(appSource);
-if (!rootToLandingPage) {
-  fail('Root route "/" is not wired to <LandingPage />.');
+const rootToLandingMinimal = /<Route\s+path=\"\/\"\s+element=\{<LandingMinimal\s*\/>\}\s*\/>/m.test(appSource);
+if (!rootToLandingPage && !rootToLandingMinimal) {
+  fail('Root route "/" is not wired to a branded landing component.');
 }
 
 // eslint-disable-next-line no-console
-console.log('route_guard: OK ("/" -> <LandingPage />)');
+console.log('route_guard: OK ("/" -> branded landing)');

@@ -43,9 +43,12 @@ import ContactPage from "./pages/public/ContactPage";
 import DeveloperHubPage from "./pages/public/DeveloperHubPage";
 import ApiDocsPage from "./pages/public/ApiDocsPage";
 import EarlyAccessPage from "./pages/public/EarlyAccessPage";
+import PricingPage from "./pages/public/PricingPage";
+import FaqPage from "./pages/public/FaqPage";
 
 // Landing
 import LandingPage from "./pages/Landing";
+import LandingMinimal from "./pages/LandingMinimal";
 import ExplorePage from "./pages/ExplorePage";
 
 // Docs
@@ -111,7 +114,8 @@ export default function App() {
       <Routes>
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingMinimal />} />
+        <Route path="/trail" element={<LandingPage />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/docs" element={<DocsHomePage />} />
@@ -155,6 +159,8 @@ export default function App() {
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/faq" element={<FaqPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/developer-hub" element={<DeveloperHubPage />} />
         <Route path="/api-docs" element={<ApiDocsPage />} />
