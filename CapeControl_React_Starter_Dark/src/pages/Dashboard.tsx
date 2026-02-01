@@ -263,7 +263,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-[calc(100vh-0px)] px-4 py-6 md:px-8">
       <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white/90">Dashboard</h1>
             <p className="mt-1 text-sm text-white/60">
@@ -271,7 +271,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
             <span
               className={classNames(
                 "inline-flex items-center rounded-full border px-3 py-1 text-xs",
@@ -307,9 +307,10 @@ export default function Dashboard() {
           <>
             {error ? (
               <div className="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-                <div className="font-medium">Backend unavailable</div>
-                <div className="mt-1 text-amber-200/80">{error}</div>
-                <div className="mt-2 text-xs text-amber-200/70">Showing mock data so UI can be validated.</div>
+                <div className="font-medium">Using fallback data</div>
+                <div className="mt-2 text-xs text-amber-200/70">
+                  Live dashboard data is temporarily unavailable. Details: {error}
+                </div>
               </div>
             ) : null}
 
