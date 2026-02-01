@@ -1,15 +1,16 @@
 import { Link } from "react-router-dom";
 
+import PublicTopNav from "../../components/nav/PublicTopNav";
+import Footer from "../../components/Footer";
+
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white px-6 py-10">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans">
+      <PublicTopNav />
+
+      <main className="flex-1 px-6 py-10">
+        <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-semibold">Pricing</h1>
-          <Link className="text-sm text-white/70 hover:text-white" to="/">
-            Back to landing
-          </Link>
-        </div>
 
         <p className="mt-4 text-white/70">
           Pricing is being finalised for the current beta. If you&apos;d like early access pricing,
@@ -47,7 +48,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap gap-3">
+          <div className="mt-10 flex flex-wrap gap-3">
           <Link
             to="/register"
             className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold hover:bg-white/90"
@@ -60,7 +61,12 @@ export default function PricingPage() {
           >
             Talk to sales
           </Link>
+          </div>
         </div>
+      </main>
+
+      <div className="px-6 py-6">
+        <Footer onOpenSupport={() => {}} />
       </div>
     </div>
   );

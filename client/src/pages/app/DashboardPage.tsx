@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
           <nav className="flex space-x-4">
             {features.onboarding && (
               <Link 
-                to="/onboarding/guide" 
+                to="/app/onboarding" 
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
                 Getting Started
@@ -102,14 +102,14 @@ const Dashboard: React.FC = () => {
             )}
             {features.payments && (
               <Link 
-                to="/billing" 
+                to="/app/billing" 
                 className="text-gray-600 hover:text-gray-700"
               >
                 Billing
               </Link>
             )}
             <Link 
-              to="/onboarding/profile" 
+              to="/app/onboarding/profile" 
               className="text-gray-600 hover:text-gray-700"
             >
               Profile

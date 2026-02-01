@@ -2,113 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import Footer from "../components/Footer";
-import logoUrl from "../assets/CapeControl_Logo_Transparent.png";
+import PublicTopNav from "../components/nav/PublicTopNav";
 
 export default function LandingMinimal() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans">
-      <header className="px-6 py-6">
-        <div className="relative">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img
-                src={logoUrl}
-                alt="CapeControl"
-                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 p-1"
-              />
-              <span className="text-xl font-bold tracking-tight">CapeControl</span>
-            </div>
-
-            <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
-              <Link className="hover:text-white" to="/dashboard">
-                Dashboard
-              </Link>
-              <Link className="hover:text-white" to="/marketplace">
-                Marketplace
-              </Link>
-              <Link className="hover:text-white" to="/pricing">
-                Pricing
-              </Link>
-              <Link className="hover:text-white" to="/faq">
-                FAQ
-              </Link>
-            </nav>
-
-            <button
-              type="button"
-              className="md:hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              ☰
-            </button>
-          </div>
-
-          {menuOpen && (
-            <>
-              <button
-                type="button"
-                className="fixed inset-0 z-40 bg-black/30 md:hidden"
-                aria-label="Close menu"
-                onClick={() => setMenuOpen(false)}
-              />
-              <div
-                id="mobile-menu"
-                className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-neutral-900/95 border border-white/10 shadow-xl z-50 md:hidden"
-              >
-                <nav className="flex flex-col p-2 text-sm">
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/dashboard"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/marketplace"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Marketplace
-                  </Link>
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/pricing"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Pricing
-                  </Link>
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/faq"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    FAQ
-                  </Link>
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/trail"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Curiosity Trail
-                  </Link>
-                </nav>
-              </div>
-            </>
-          )}
-        </div>
-      </header>
+      <PublicTopNav />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-md mx-auto mt-4">
         <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#1e1b4b] border border-blue-900/50 text-blue-200 text-xs font-medium mb-8 shadow-sm">

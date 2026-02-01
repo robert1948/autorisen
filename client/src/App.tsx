@@ -45,6 +45,8 @@ import ApiDocsPage from "./pages/public/ApiDocsPage";
 import EarlyAccessPage from "./pages/public/EarlyAccessPage";
 import PricingPage from "./pages/public/PricingPage";
 import FaqPage from "./pages/public/FaqPage";
+import OverviewPage from "./pages/public/OverviewPage";
+import MarketplacePublicPage from "./pages/public/MarketplacePublicPage";
 
 // Landing
 import LandingPage from "./pages/Landing";
@@ -159,6 +161,8 @@ export default function App() {
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/marketplace" element={<MarketplacePublicPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/faq" element={<FaqPage />} />
         <Route path="/contact" element={<ContactPage />} />
@@ -244,7 +248,7 @@ export default function App() {
         <Route path="/checkout" element={<Navigate to="/app/checkout" replace />} />
         <Route path="/chat" element={<Navigate to="/app/chat" replace />} />
         <Route path="/chat/:threadId" element={<ChatThreadRedirect />} />
-        <Route path="/marketplace" element={<Navigate to="/app/marketplace" replace />} />
+        {/* /marketplace is a public marketing page; keep app marketplace at /app/marketplace */}
         <Route path="/welcome" element={<Navigate to="/demo" replace />} />
 
         {/* Legacy onboarding aliases */}

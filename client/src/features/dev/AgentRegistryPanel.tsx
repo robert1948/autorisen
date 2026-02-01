@@ -397,7 +397,7 @@ const AgentRegistryPanel = () => {
                       )}
                       {version.status === "published" && publishedMarketplaceSlug === agent.slug && (
                         <Link
-                          to="/marketplace"
+                          to="/app/marketplace"
                           className="btn btn--ghost btn--tiny"
                           style={{ marginLeft: "0.5rem" }}
                         >
