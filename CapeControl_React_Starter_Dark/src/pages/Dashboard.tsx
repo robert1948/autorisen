@@ -36,6 +36,24 @@ type DashboardSummary = {
 const DEFAULT_API_URL = ""; // same-origin
 const ENDPOINT = "/api/dashboard/summary";
 
+const normalizeOrigin = (u: string) => u.replace(/\/+$/, "");
+const isAbsoluteHttpUrl = (u: string) => /^https?:\/\//i.test(u);
+
+function shouldFetchSummaryInDev(apiUrlRaw: string | undefined): boolean {
+  if (!import.meta.env.DEV) return true;
+
+  const apiUrl = (apiUrlRaw ?? "").trim();
+  if (!isAbsoluteHttpUrl(apiUrl)) return false;
+
+  try {
+    const apiOrigin = normalizeOrigin(new URL(apiUrl).origin);
+    const curOrigin = normalizeOrigin(window.location.origin);
+    return apiOrigin !== curOrigin;
+  } catch {
+    return false;
+  }
+}
+
 const mockData: DashboardSummary = {
   kpis: [
     { id: "requests_7d", label: "Requests (7d)", value: 1240, deltaPct: 10.2 },
@@ -212,12 +230,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBaseEnv = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
-  const apiBase = apiBaseEnv ?? DEFAULT_API_URL;
-  const isDev = Boolean((import.meta as any)?.env?.DEV);
-  const shouldAttemptFetch = !isDev
-    ? true
-    : Boolean(apiBaseEnv) && apiBaseEnv !== window.location.origin;
+  const apiBaseRaw = import.meta.env.VITE_API_URL;
+  const apiBase = (apiBaseRaw ?? DEFAULT_API_URL).trim();
 
   useEffect(() => {
     let alive = true;
@@ -226,19 +240,20 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
-      // Frontend-only dev: avoid expected 404 spam when no backend is configured.
-      // Only attempt the API request in dev if VITE_API_URL is explicitly provided.
-      if (!shouldAttemptFetch) {
-        if (alive) {
-          setError("Backend not configured; using fallback data");
-          setData(mockData);
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
-        const res = await fetch(`${apiBase}${ENDPOINT}`, {
+        if (import.meta.env.DEV && !shouldFetchSummaryInDev(apiBaseRaw)) {
+          if (alive) {
+            setError("Backend not configured; using fallback data");
+            setData(mockData);
+          }
+          return;
+        }
+
+        const url = import.meta.env.DEV
+          ? new URL(ENDPOINT, apiBase).toString()
+          : `${apiBase}${ENDPOINT}`;
+
+        const res = await fetch(url, {
           method: "GET",
           headers: { Accept: "application/json" },
           credentials: "include",
