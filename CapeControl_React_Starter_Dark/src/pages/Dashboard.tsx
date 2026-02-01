@@ -221,6 +221,17 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
+      // Frontend-only dev: if no API base is configured, skip the request entirely
+      // to avoid expected 404s when the backend isn't running.
+      if ((import.meta as any)?.env?.DEV && !apiBase) {
+        if (alive) {
+          setError("Backend not configured; using fallback data");
+          setData(mockData);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const res = await fetch(`${apiBase}${ENDPOINT}`, {
           method: "GET",

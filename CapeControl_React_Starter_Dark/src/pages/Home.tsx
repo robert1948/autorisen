@@ -20,6 +20,13 @@ export default function Home() {
                             <span className="text-xl font-bold tracking-tight">CapeControl</span>
                         </div>
 
+                        <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
+                            <Link className="hover:text-white" to="/dashboard">Dashboard</Link>
+                            <Link className="hover:text-white" to="/marketplace">Marketplace</Link>
+                            <Link className="hover:text-white" to="/pricing">Pricing</Link>
+                            <Link className="hover:text-white" to="/faq">FAQ</Link>
+                        </nav>
+
                         <button
                             type="button"
                             className="md:hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2"
