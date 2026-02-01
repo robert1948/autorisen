@@ -132,6 +132,43 @@ export interface DashboardStats {
   success_rate: number;
 }
 
+export interface DashboardKpi {
+  id: string;
+  label: string;
+  value: number;
+  unit?: string;
+  deltaPct?: number;
+}
+
+export interface DashboardTrendPoint {
+  date: string;
+  value: number;
+}
+
+export interface DashboardSummaryActivityItem {
+  id: string;
+  ts: string;
+  type: string;
+  summary: string;
+  status: "ok" | "warn" | "error";
+}
+
+export interface DashboardSummary {
+  kpis: DashboardKpi[];
+  trend: DashboardTrendPoint[];
+  recent: DashboardSummaryActivityItem[];
+}
+
+export interface DashboardSummaryMeta {
+  isFallback: boolean;
+  message?: string;
+}
+
+export interface DashboardSummaryResponse {
+  data: DashboardSummary;
+  meta: DashboardSummaryMeta;
+}
+
 export interface ActivityItem {
   id: string;
   type: string;
@@ -321,6 +358,82 @@ export const dashboardAPI = {
       {},
       apiBase,
     );
+  },
+
+  /**
+   * Canonical dashboard payload used by the deployable UI.
+   * - If the endpoint is missing (404/501), return fixture data with a clean message.
+   * - Never surface raw "HTTP 404 Not Found" text to the user.
+   */
+  async getSummary(): Promise<DashboardSummaryResponse> {
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+
+    const fixture: DashboardSummary = {
+      kpis: [
+        { id: "requests_7d", label: "Requests (7d)", value: 1240, deltaPct: 10.2 },
+        { id: "evidence_7d", label: "Evidence Packs (7d)", value: 86, deltaPct: 4.4 },
+        { id: "blocks_7d", label: "Policy Blocks (7d)", value: 7, deltaPct: -12.5 },
+        { id: "latency_ms", label: "Avg Latency", value: 420, unit: "ms", deltaPct: -3.1 },
+      ],
+      trend: [
+        { date: "2026-01-20", value: 120 },
+        { date: "2026-01-21", value: 180 },
+        { date: "2026-01-22", value: 140 },
+        { date: "2026-01-23", value: 220 },
+        { date: "2026-01-24", value: 200 },
+        { date: "2026-01-25", value: 260 },
+        { date: "2026-01-26", value: 240 },
+      ],
+      recent: [
+        {
+          id: "evt_1",
+          ts: "2026-01-26T10:32:00Z",
+          type: "agent.run",
+          summary: "CapeAI created an evidence-grade output for WO validation",
+          status: "ok",
+        },
+        {
+          id: "evt_2",
+          ts: "2026-01-26T09:58:00Z",
+          type: "auth.login",
+          summary: "Developer login succeeded",
+          status: "ok",
+        },
+        {
+          id: "evt_3",
+          ts: "2026-01-26T09:42:00Z",
+          type: "policy.block",
+          summary: "Content moderation blocked a request (policy)",
+          status: "warn",
+        },
+      ],
+    };
+
+    if (import.meta.env.DEV && !shouldFetchSummaryInDev(apiBase)) {
+      return {
+        data: fixture,
+        meta: {
+          isFallback: true,
+          message: "Using fallback data — live dashboard feed isn’t enabled yet.",
+        },
+      };
+    }
+
+    try {
+      const data = await apiCall<DashboardSummary>("/dashboard/summary", {}, apiBase);
+      return { data, meta: { isFallback: false } };
+    } catch (err) {
+      const status = err instanceof APIError ? err.status : undefined;
+      const message =
+        status === 404 || status === 501
+          ? "Using fallback data — live dashboard feed isn’t enabled yet."
+          : "Using fallback data — temporary service issue.";
+
+      return {
+        data: fixture,
+        meta: { isFallback: true, message },
+      };
+    }
   },
 };
 
