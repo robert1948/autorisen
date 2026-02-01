@@ -1,9 +1,23 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 
 export default function App(){
   const loc = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    // Always close the mobile menu when navigating.
+    setMenuOpen(false)
+  }, [loc.pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [menuOpen])
 
   const navLinks = useMemo(() => (
     [
@@ -18,7 +32,7 @@ export default function App(){
   return (
     <div className="min-h-screen bg-bg text-text">
       <header className="sticky top-0 z-10 border-b border-border bg-surface/80 backdrop-blur">
-        <div className="container-cc relative flex h-14 items-center justify-between">
+        <div className="container-cc flex h-14 items-center justify-between">
           <Link to="/" className="font-bold tracking-tight">CapeControl</Link>
 
           {/* Desktop nav */}
@@ -42,30 +56,27 @@ export default function App(){
             <span className="sr-only">Menu</span>
             <span className="font-medium">☰</span>
           </button>
+        </div>
 
-          {/* Mobile dropdown */}
-          {menuOpen ? (
-            <div
-              id="mobile-nav"
-              className="md:hidden absolute left-0 right-0 top-14 border-b border-border bg-surface/95 backdrop-blur"
-            >
-              <div className="container-cc py-3">
-                <div className="grid gap-2 text-sm">
-                  {navLinks.map((l) => (
-                    <Link
-                      key={l.to}
-                      to={l.to}
-                      className="rounded-lg px-3 py-2 text-text-muted hover:bg-bg hover:text-text"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {l.label}
-                    </Link>
-                  ))}
-                </div>
+        {/* Mobile menu panel (stacked; reserves space; never overlaps page header) */}
+        {menuOpen ? (
+          <div id="mobile-nav" className="md:hidden border-t border-border bg-surface shadow-lg">
+            <div className="container-cc py-3">
+              <div className="grid gap-2 text-sm">
+                {navLinks.map((l) => (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    className="rounded-lg px-3 py-2 text-text-muted hover:bg-bg hover:text-text"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {l.label}
+                  </Link>
+                ))}
               </div>
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </header>
       <main className="container-cc py-8"><Outlet/></main>
       <footer className="container-cc pb-8 pt-6 text-xs text-text-muted">
