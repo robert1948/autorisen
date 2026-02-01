@@ -42,7 +42,7 @@ export default function LandingMinimal() {
         </div>
 
         <Link
-          to="/trail"
+          to="/docs/curiosity-trail"
           className="mt-10 text-blue-400 text-sm font-medium hover:text-blue-300 transition-colors flex items-center gap-1"
         >
           See a real workflow <span aria-hidden="true">→</span>

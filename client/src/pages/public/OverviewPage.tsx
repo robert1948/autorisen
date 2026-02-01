@@ -59,10 +59,10 @@ export default function OverviewPage() {
               Talk to our team
             </Link>
             <Link
-              to="/trail"
+              to="/docs/curiosity-trail"
               className="rounded-full border border-white/15 px-5 py-2 text-sm font-semibold text-white hover:bg-white/5"
             >
-              See the curiosity trail
+              See a real workflow
             </Link>
           </div>
         </div>

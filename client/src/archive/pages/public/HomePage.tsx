@@ -1,3 +1,8 @@
+/**
+ * ARCHIVED: Legacy /home route component.
+ * Do not import or route to this page.
+ */
+
 import React from 'react';
 import Homepage from '../../components/HomePage';
 

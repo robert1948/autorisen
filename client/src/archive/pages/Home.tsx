@@ -1,3 +1,8 @@
+/**
+ * ARCHIVED: Legacy combined marketing/app home variant.
+ * Do not import or route to this page.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 

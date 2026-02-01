@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "route:guard": "node scripts/route_guard.cjs",
-    "prebuild": "node scripts/route_guard.cjs",
+    "archive:guard": "node scripts/archive_guard.cjs",
+    "prebuild": "node scripts/route_guard.cjs && node scripts/archive_guard.cjs",
     "build": "vite build",
     "build:production": "../scripts/build-frontend.sh",
     "preview": "vite preview",

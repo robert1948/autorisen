@@ -3,11 +3,7 @@ import { Link } from "react-router-dom";
 
 import logoUrl from "../../assets/CapeControl_Logo_Transparent.png";
 
-type Props = {
-  showTrailLink?: boolean;
-};
-
-export default function PublicTopNav({ showTrailLink = true }: Props) {
+export default function PublicTopNav() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
@@ -100,15 +96,6 @@ export default function PublicTopNav({ showTrailLink = true }: Props) {
                 >
                   FAQ
                 </Link>
-                {showTrailLink && (
-                  <Link
-                    className="rounded-lg px-3 py-2 hover:bg-white/10"
-                    to="/trail"
-                    onClick={closeMenu}
-                  >
-                    Curiosity Trail
-                  </Link>
-                )}
               </nav>
             </div>
           </>

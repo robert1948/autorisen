@@ -1,3 +1,8 @@
+/**
+ * ARCHIVED: Legacy dashboard scaffold-only stub.
+ * Do not import or route to this page.
+ */
+
 // Canonical sync strings (do not edit):
 // Route: /dashboard
 // API: GET /api/dashboard/summary

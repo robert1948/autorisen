@@ -33,7 +33,6 @@ import {
 } from "./pages/mvp/MvpPages";
 
 // Public
-import HomePage from "./pages/public/HomePage";
 import Welcome from "./pages/public/WelcomePage";
 import About from "./pages/public/AboutPage";
 import Subscribe from "./pages/public/SubscribePage";
@@ -49,7 +48,6 @@ import OverviewPage from "./pages/public/OverviewPage";
 import MarketplacePublicPage from "./pages/public/MarketplacePublicPage";
 
 // Landing
-import LandingPage from "./pages/Landing";
 import LandingMinimal from "./pages/LandingMinimal";
 import ExplorePage from "./pages/ExplorePage";
 
@@ -117,7 +115,6 @@ export default function App() {
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
         <Route path="/" element={<LandingMinimal />} />
-        <Route path="/trail" element={<LandingPage />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/docs" element={<DocsHomePage />} />
@@ -140,7 +137,6 @@ export default function App() {
           <Route path="/onboarding/guide" element={<MvpOnboardingGuide />} />
 
           {/* App core */}
-          <Route path="/dashboard" element={<MvpDashboard />} />
           <Route path="/settings" element={<MvpSettings />} />
           <Route path="/settings/profile" element={<MvpSettingsProfile />} />
           <Route path="/settings/security" element={<MvpSettingsSecurity />} />
@@ -155,7 +151,6 @@ export default function App() {
         <Route path="/help/knowledge-base" element={<MvpKnowledgeBase />} />
 
         {/* -------------------- PUBLIC -------------------- */}
-        <Route path="/home" element={<HomePage />} />
         <Route path="/demo" element={<Welcome />} />
         <Route path="/how-it-works" element={<About />} />
         <Route path="/subscribe" element={<Subscribe />} />
@@ -242,6 +237,7 @@ export default function App() {
         </Route>
 
         {/* -------------------- LEGACY APP ALIASES -------------------- */}
+        <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/agents" element={<Navigate to="/app/agents" replace />} />
         <Route path="/developer" element={<Navigate to="/app/developer" replace />} />
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />

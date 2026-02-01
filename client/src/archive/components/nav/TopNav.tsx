@@ -1,3 +1,8 @@
+/**
+ * ARCHIVED: Legacy top navigation (anchor-link marketing shell).
+ * Do not import or route to this component.
+ */
+
 import { Link } from "react-router-dom";
 import { useState } from "react";
 

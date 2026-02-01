@@ -1,3 +1,8 @@
+/**
+ * ARCHIVED: Legacy landing / curiosity trail variant.
+ * Do not import or route to this page.
+ */
+
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
