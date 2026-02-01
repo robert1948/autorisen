@@ -212,7 +212,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBase = (import.meta as any)?.env?.VITE_API_URL ?? DEFAULT_API_URL;
+  const apiBaseEnv = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+  const apiBase = apiBaseEnv ?? DEFAULT_API_URL;
+  const isDev = Boolean((import.meta as any)?.env?.DEV);
+  const shouldAttemptFetch = !isDev
+    ? true
+    : Boolean(apiBaseEnv) && apiBaseEnv !== window.location.origin;
 
   useEffect(() => {
     let alive = true;
@@ -221,9 +226,9 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
-      // Frontend-only dev: if no API base is configured, skip the request entirely
-      // to avoid expected 404s when the backend isn't running.
-      if ((import.meta as any)?.env?.DEV && !apiBase) {
+      // Frontend-only dev: avoid expected 404 spam when no backend is configured.
+      // Only attempt the API request in dev if VITE_API_URL is explicitly provided.
+      if (!shouldAttemptFetch) {
         if (alive) {
           setError("Backend not configured; using fallback data");
           setData(mockData);
