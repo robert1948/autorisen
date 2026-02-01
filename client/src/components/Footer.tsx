@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logoUrl from "../assets/capecontrol-logo.png";
 import { APP_VERSION } from "../version";
@@ -8,6 +8,28 @@ type Props = {
 };
 
 const Footer: React.FC<Props> = ({ onOpenSupport }) => {
+  const [backendVersion, setBackendVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/version", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const value = typeof data?.version === "string" ? data.version.trim() : "";
+        if (!isMounted) return;
+        setBackendVersion(value.length > 0 ? value : null);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBackendVersion(null);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <footer className="footer">
       <div className="footer__content">
@@ -105,6 +127,15 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             >
               v{APP_VERSION}
             </span>
+            {backendVersion && (
+              <span
+                data-testid="backend-version"
+                title={backendVersion}
+                className="ml-3 font-mono text-xs text-slate-200/90"
+              >
+                backend:{backendVersion.slice(0, 12)}
+              </span>
+            )}
             <span className="footer__status">
               <span className="footer__status-dot" aria-hidden="true" />
               All systems operational

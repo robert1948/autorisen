@@ -9,6 +9,8 @@ ARG PYTHON_VERSION=3.12
 FROM node:${NODE_VERSION}-alpine AS frontend-build
 WORKDIR /app
 
+ARG GIT_SHA=unknown
+
 # Copy package files for dependency installation
 COPY client/package*.json ./
 # Install dependencies including devDependencies for build tools
@@ -27,8 +29,11 @@ RUN touch tailwind.config.js postcss.config.js
 COPY client/tailwind.config.js* ./
 COPY client/postcss.config.js* ./
 
+# Stamp service-worker version so PWAs reliably update after deploy
+RUN node -e "const fs=require('fs'); const p='public/sw.js'; const sha=(process.env.GIT_SHA||'unknown').trim(); const short=(sha && sha!=='unknown')?sha.slice(0,12):'unknown'; const s=fs.readFileSync(p,'utf8'); fs.writeFileSync(p, s.replaceAll('__SW_VERSION__', short));"
+
 # Build frontend with npm
-RUN npm run build
+RUN VITE_APP_VERSION=$(node -e "const sha=(process.env.GIT_SHA||'unknown').trim(); process.stdout.write((sha && sha!=='unknown')?sha.slice(0,12):'dev');") npm run build
 
 # Production Python runtime stage
 FROM python:${PYTHON_VERSION}-slim AS production

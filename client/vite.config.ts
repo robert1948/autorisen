@@ -12,11 +12,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const apiBase = (env.VITE_API_BASE || "").trim(); // empty => unset
   const useProxy = mode === "development" && apiBase.length === 0;
+  const appVersion = (env.VITE_APP_VERSION || "").trim() || packageJson.version;
 
   return {
     plugins: [react()],
     define: {
-      __APP_VERSION__: JSON.stringify(packageJson.version),
+      __APP_VERSION__: JSON.stringify(appVersion),
     },
     server: {
       host: true, // allow LAN / Codespaces access

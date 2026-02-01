@@ -1,6 +1,7 @@
 // Service Worker for CapeControl
 // Version: bump this on every deploy for automatic updates
-const SW_VERSION = "cc-v0.2.5-1";
+// NOTE: This placeholder is stamped during Docker builds using the GIT_SHA build-arg.
+const SW_VERSION = "__SW_VERSION__";
 const CACHE_NAME = `autorisen-cache-${SW_VERSION}`;
 
 // Assets to cache (adjust based on your needs)
