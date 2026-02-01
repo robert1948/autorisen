@@ -1,26 +1,60 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Home() {
+    const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-3">
-            {/* Logo Placeholder */}
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-            </div>
-            <span className="text-xl font-bold tracking-tight">CapeControl</span>
-        </div>
-        <button className="p-2 hover:bg-white/10 rounded-md transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
+            <header className="px-6 py-6">
+                <div className="relative">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {/* Logo Placeholder */}
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <span className="text-xl font-bold tracking-tight">CapeControl</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="md:hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                            aria-label="Open menu"
+                            aria-expanded={menuOpen}
+                            aria-controls="mobile-menu"
+                            onClick={() => setMenuOpen((v) => !v)}
+                        >
+                            ☰
+                        </button>
+                    </div>
+
+                    {menuOpen && (
+                        <>
+                            <button
+                                type="button"
+                                className="fixed inset-0 z-40 bg-black/30 md:hidden"
+                                aria-label="Close menu"
+                                onClick={() => setMenuOpen(false)}
+                            />
+                            <div
+                                id="mobile-menu"
+                                className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-neutral-900/95 border border-white/10 shadow-xl z-50 md:hidden"
+                            >
+                                <nav className="flex flex-col p-2 text-sm">
+                                    <Link className="rounded-lg px-3 py-2 hover:bg-white/10" to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+                                    <Link className="rounded-lg px-3 py-2 hover:bg-white/10" to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                                    <Link className="rounded-lg px-3 py-2 hover:bg-white/10" to="/marketplace" onClick={() => setMenuOpen(false)}>Marketplace</Link>
+                                    <Link className="rounded-lg px-3 py-2 hover:bg-white/10" to="/pricing" onClick={() => setMenuOpen(false)}>Pricing</Link>
+                                    <Link className="rounded-lg px-3 py-2 hover:bg-white/10" to="/faq" onClick={() => setMenuOpen(false)}>FAQ</Link>
+                                </nav>
+                            </div>
+                        </>
+                    )}
+                </div>
       </header>
 
       {/* Main Content */}
