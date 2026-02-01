@@ -359,3 +359,8 @@ archive/local/
 
 # Local artifacts
 /os
+
+# verification artifacts
+/tmp/verification/
+/tmp/*.har
+/tmp/*.png
