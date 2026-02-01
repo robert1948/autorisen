@@ -8,6 +8,52 @@ const AUTH_STORAGE_KEY = "autorisen-auth";
 const REFRESH_TOKEN_KEY = "autorisen-refresh-token";
 const EMAIL_NOT_VERIFIED_MESSAGE = "Email not verified";
 
+const normalizeOrigin = (u: string) => u.replace(/\/+$/, "");
+const isAbsoluteHttpUrl = (u: string) => /^https?:\/\//i.test(u);
+
+function shouldFetchSummaryInDev(apiUrlRaw: string | undefined): boolean {
+  if (!import.meta.env.DEV) return true;
+
+  const apiUrl = (apiUrlRaw ?? "").trim();
+  if (!isAbsoluteHttpUrl(apiUrl)) return false;
+
+  try {
+    const apiOrigin = normalizeOrigin(new URL(apiUrl).origin);
+    const curOrigin = normalizeOrigin(window.location.origin);
+    return apiOrigin !== curOrigin;
+  } catch {
+    return false;
+  }
+}
+
+const DASHBOARD_STATS_DEV_FIXTURE: DashboardStats = {
+  active_agents: 3,
+  tasks_complete: 42,
+  system_status: "operational",
+  agents_deployed: 5,
+  total_runs: 127,
+  success_rate: 94.2,
+};
+
+const DASHBOARD_ACTIVITY_DEV_FIXTURE: ActivityItem[] = [
+  {
+    id: "1",
+    type: "agent_deploy",
+    title: "Agent Deployed",
+    description: "Email automation agent deployed successfully",
+    timestamp: new Date().toISOString(),
+    status: "success",
+  },
+  {
+    id: "2",
+    type: "task_complete",
+    title: "Task Completed",
+    description: "Data analysis workflow completed",
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    status: "success",
+  },
+];
+
 function handleEmailNotVerified(): void {
   if (typeof window === "undefined") return;
 
@@ -142,8 +188,25 @@ function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
   return { ...headers };
 }
 
-async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${getApiBaseUrl()}${endpoint}`;
+function buildApiUrl(endpoint: string, baseOverride?: string): string {
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  if (import.meta.env.DEV && baseOverride) {
+    const apiBase = baseOverride.trim();
+    if (shouldFetchSummaryInDev(apiBase)) {
+      return new URL(`/api${normalizedEndpoint}`, apiBase).toString();
+    }
+  }
+
+  return `${getApiBaseUrl()}${normalizedEndpoint}`;
+}
+
+async function apiCall<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  baseOverride?: string,
+): Promise<T> {
+  const url = buildApiUrl(endpoint, baseOverride);
   
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -236,14 +299,28 @@ export const dashboardAPI = {
    * Get dashboard statistics
    */
   async getStats(): Promise<DashboardStats> {
-    return apiCall<DashboardStats>('/user/dashboard/stats');
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+    if (import.meta.env.DEV && !shouldFetchSummaryInDev(apiBase)) {
+      return DASHBOARD_STATS_DEV_FIXTURE;
+    }
+
+    return apiCall<DashboardStats>("/user/dashboard/stats", {}, apiBase);
   },
 
   /**
    * Get recent activity
    */
   async getRecentActivity(limit: number = 10): Promise<ActivityItem[]> {
-    return apiCall<ActivityItem[]>(`/user/dashboard/recent-activity?limit=${limit}`);
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+    if (import.meta.env.DEV && !shouldFetchSummaryInDev(apiBase)) {
+      return DASHBOARD_ACTIVITY_DEV_FIXTURE.slice(0, Math.max(0, limit));
+    }
+
+    return apiCall<ActivityItem[]>(
+      `/user/dashboard/recent-activity?limit=${limit}`,
+      {},
+      apiBase,
+    );
   },
 };
 
