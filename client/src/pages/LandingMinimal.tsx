@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import Footer from "../components/Footer";
 import PublicTopNav from "../components/nav/PublicTopNav";
 
 export default function LandingMinimal() {
@@ -48,10 +46,6 @@ export default function LandingMinimal() {
           See a real workflow <span aria-hidden="true">→</span>
         </Link>
       </main>
-
-      <div className="px-6 py-6">
-        <Footer onOpenSupport={() => {}} />
-      </div>
     </div>
   );
 }

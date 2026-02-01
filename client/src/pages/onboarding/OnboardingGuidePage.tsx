@@ -149,7 +149,7 @@ const OnboardingGuide: React.FC = () => {
           )}
           
           <Link
-            to="/dashboard"
+            to="/app/dashboard"
             className="px-6 py-2 text-gray-500 hover:text-gray-700"
           >
             Skip Guide

@@ -22,9 +22,6 @@ export default function PublicTopNav() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
-            <Link className="hover:text-white" to="/overview">
-              Overview
-            </Link>
             <Link className="hover:text-white" to="/marketplace">
               Marketplace
             </Link>
@@ -70,13 +67,6 @@ export default function PublicTopNav() {
                 </Link>
                 <Link
                   className="rounded-lg px-3 py-2 hover:bg-white/10"
-                  to="/overview"
-                  onClick={closeMenu}
-                >
-                  Overview
-                </Link>
-                <Link
-                  className="rounded-lg px-3 py-2 hover:bg-white/10"
                   to="/marketplace"
                   onClick={closeMenu}
                 >
@@ -104,3 +94,4 @@ export default function PublicTopNav() {
     </header>
   );
 }
+

@@ -44,7 +44,6 @@ import ApiDocsPage from "./pages/public/ApiDocsPage";
 import EarlyAccessPage from "./pages/public/EarlyAccessPage";
 import PricingPage from "./pages/public/PricingPage";
 import FaqPage from "./pages/public/FaqPage";
-import OverviewPage from "./pages/public/OverviewPage";
 import MarketplacePublicPage from "./pages/public/MarketplacePublicPage";
 
 // Landing
@@ -156,7 +155,7 @@ export default function App() {
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
-        <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/overview" element={<Navigate to="/marketplace" replace />} />
         <Route path="/marketplace" element={<MarketplacePublicPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/faq" element={<FaqPage />} />
@@ -238,6 +237,8 @@ export default function App() {
 
         {/* -------------------- LEGACY APP ALIASES -------------------- */}
         <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+        <Route path="/home" element={<Navigate to="/" replace />} />
+        <Route path="/trail" element={<Navigate to="/" replace />} />
         <Route path="/agents" element={<Navigate to="/app/agents" replace />} />
         <Route path="/developer" element={<Navigate to="/app/developer" replace />} />
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />

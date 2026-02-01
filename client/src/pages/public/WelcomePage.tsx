@@ -45,7 +45,7 @@ const Welcome: React.FC = () => {
                   Start Developer Onboarding
                 </Link>
                 <Link
-                  to="/dashboard"
+                  to="/app/dashboard"
                   className="block w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Go to Dashboard
@@ -60,7 +60,7 @@ const Welcome: React.FC = () => {
                   Start User Onboarding
                 </Link>
                 <Link
-                  to="/dashboard"
+                  to="/app/dashboard"
                   className="block w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Go to Dashboard

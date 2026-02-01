@@ -11,7 +11,7 @@ const Agents: React.FC = () => {
   const handleLaunchChat = () => {
     setChatLaunched(true);
     setActiveTab('workbench');
-    navigate('/chat?placement=developer');
+    navigate('/app/chat?placement=developer');
   };
 
   return (
@@ -20,7 +20,7 @@ const Agents: React.FC = () => {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="text-blue-600 hover:text-blue-700">
+            <Link to="/app/dashboard" className="text-blue-600 hover:text-blue-700">
               ← Back to Dashboard
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">My Agents</h1>
@@ -33,7 +33,7 @@ const Agents: React.FC = () => {
               Browse Marketplace
             </Link>
             <Link 
-              to="/dashboard" 
+              to="/app/dashboard" 
               className="text-gray-600 hover:text-gray-700"
             >
               Dashboard

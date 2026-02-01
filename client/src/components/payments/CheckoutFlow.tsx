@@ -270,7 +270,7 @@ function CheckoutFlowCore({ onComplete, onCancel, initialData, className }: Chec
     if (onCancel) {
       onCancel();
     } else {
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     }
   }, [onCancel, navigate]);
   
@@ -340,7 +340,7 @@ function CheckoutFlowCore({ onComplete, onCancel, initialData, className }: Chec
         return (
           <CheckoutSuccessStep
             checkoutData={checkoutData}
-            onContinue={() => navigate('/dashboard')}
+            onContinue={() => navigate('/app/dashboard')}
           />
         );
         

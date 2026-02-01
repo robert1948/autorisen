@@ -23,7 +23,7 @@ const SocialCallback = () => {
     const stateParam = params.get("state");
     const nextParam = params.get("next");
     const targetPath =
-      nextParam && nextParam.startsWith("/") ? nextParam : "/dashboard";
+      nextParam && nextParam.startsWith("/") ? nextParam : "/app/dashboard";
 
     if (errorParam) {
       setStatus("error");

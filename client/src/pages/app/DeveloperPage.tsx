@@ -9,7 +9,7 @@ const Developer: React.FC = () => {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="text-blue-600 hover:text-blue-700">
+            <Link to="/app/dashboard" className="text-blue-600 hover:text-blue-700">
               ← Back to Dashboard
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">Developer Agent Builder</h1>

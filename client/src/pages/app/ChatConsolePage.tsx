@@ -65,7 +65,7 @@ const ChatConsole = () => {
               </option>
             ))}
           </select>
-          <Link to="/dashboard" className="btn btn--ghost">
+          <Link to="/app/dashboard" className="btn btn--ghost">
             Back to dashboard
           </Link>
         </div>

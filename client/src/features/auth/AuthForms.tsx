@@ -55,7 +55,7 @@ const AuthForms = () => {
     sessionStorage.setItem(oauthRecaptchaKey(provider), recaptchaToken);
     const oauthBase = `${API_BASE}/api/auth/oauth/${provider}/start`;
     const params = new URLSearchParams({
-      next: "/dashboard",
+      next: "/app/dashboard",
       format: "json",
     });
     const stateKey = oauthStateKey(provider);
@@ -98,7 +98,7 @@ const AuthForms = () => {
 
     // Fallback to legacy redirect if JSON negotiation failed.
     sessionStorage.removeItem(stateKey);
-    const fallbackParams = new URLSearchParams({ next: "/dashboard" });
+    const fallbackParams = new URLSearchParams({ next: "/app/dashboard" });
     window.location.href = `${oauthBase}?${fallbackParams.toString()}`;
   };
 
