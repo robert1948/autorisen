@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /home/robert/Development/capecontrol
+
+REPO="/home/robert/Development/capecontrol"
+BASE_BRANCH="wo/db-003"   # autopilot SSOT authority branch
+cd "$REPO"
+
 source scripts/guardrails.sh
 
 pick_next_id() {
@@ -35,19 +39,6 @@ print("NO_ELIGIBLE_WORK" if not next_item else next_item["id"])
 PY
 }
 
-checkout_branch() {
-  local id="$1"
-  local br="wo/${id,,}"
-  if git show-ref --verify --quiet "refs/heads/$br"; then
-    safe_run "git checkout $br"; return
-  fi
-  if git ls-remote --exit-code --heads origin "$br" >/dev/null 2>&1; then
-    safe_run "git fetch origin $br:$br"
-    safe_run "git checkout $br"; return
-  fi
-  safe_run "git checkout -b $br"
-}
-
 print_ssot_row() {
   local id="$1"
   python3 - <<PY
@@ -57,15 +48,102 @@ p="docs/project-plan.csv"
 with open(p, newline="", encoding="utf-8") as f:
     rows=list(csv.DictReader(f))
 row=[r for r in rows if r.get("id")==ID]
-if not row: raise SystemExit(f"STOP: SSOT row not found for {ID}")
+if not row:
+    raise SystemExit(f"STOP: SSOT row not found for {ID}")
 row=row[0]
 for k in ("id","task","owner","status","priority","notes","artifacts","verification_commands"):
     print(f"{k}: {row.get(k)}")
 PY
 }
 
+is_gated_item() {
+  local id="$1"
+  python3 - <<PY
+import csv
+ID="$id"
+p="docs/project-plan.csv"
+with open(p, newline="", encoding="utf-8") as f:
+    rows=list(csv.DictReader(f))
+row=[r for r in rows if r.get("id")==ID][0]
+blob=" ".join([row.get("task",""), row.get("notes",""), row.get("artifacts","")]).lower()
+
+# Gate keywords (auto-block)
+keywords = [
+  "backend", "security", "payments", "stripe", "payfast", "auth",
+  "jwt", "csrf", "cookie", "secrets", "token", "key",
+  "migration", "alembic", "database schema", "ddl"
+]
+
+if any(k in blob for k in keywords):
+    print("GATED")
+else:
+    print("OK")
+PY
+}
+
+block_ssot() {
+  local id="$1"
+  local reason="$2"
+
+  python3 - <<PY
+import csv
+from pathlib import Path
+ID="$id"
+REASON="$reason"
+p=Path("docs/project-plan.csv")
+rows=[]
+with p.open(newline="", encoding="utf-8") as f:
+    r=csv.DictReader(f)
+    fieldnames=r.fieldnames
+    for row in r:
+        if row.get("id")==ID:
+            row["status"]="blocked"
+            notes=(row.get("notes") or "").strip()
+            tag=f"blocked: {REASON}"
+            row["notes"]= (notes + ("; " if notes else "") + tag) if tag.lower() not in notes.lower() else notes
+        rows.append(row)
+
+if not any(r.get("id")==ID for r in rows):
+    raise SystemExit(f"SSOT row not found: {ID}")
+
+out=[]
+out.append(",".join(fieldnames))
+for row in rows:
+    out.append(",".join((row.get(k,"") or "").replace("\n"," ").replace("\r"," ") for k in fieldnames))
+p.write_text("\n".join(out) + "\n", encoding="utf-8")
+PY
+
+  safe_run "git add docs/project-plan.csv"
+  safe_run "git diff --cached --name-only"
+  safe_run "git commit -m \"chore(ssot): auto-block $id ($reason)\""
+  safe_run "git push -u origin $(git branch --show-current)"
+}
+
+checkout_base() {
+  safe_run "git checkout $BASE_BRANCH"
+  safe_run "git pull --rebase"
+}
+
+checkout_wo_branch_from_base() {
+  local id="$1"
+  local br="wo/${id,,}"
+
+  # If exists, resume. If not, create from BASE_BRANCH.
+  if git show-ref --verify --quiet "refs/heads/$br"; then
+    safe_run "git checkout $br"
+    return
+  fi
+  if git ls-remote --exit-code --heads origin "$br" >/dev/null 2>&1; then
+    safe_run "git fetch origin $br:$br"
+    safe_run "git checkout $br"
+    return
+  fi
+  safe_run "git checkout -b $br $BASE_BRANCH"
+}
+
 while true; do
-  echo "=== PREFLIGHT ==="
+  echo "=== BASE PREFLIGHT ==="
+  checkout_base
   safe_run "git status --porcelain"
   safe_run "git branch --show-current"
   safe_run "git --no-pager log -1 --oneline"
@@ -76,16 +154,26 @@ while true; do
   fi
 
   echo "=== NEXT: $id ==="
-  checkout_branch "$id"
-  safe_run "git branch --show-current"
-  safe_run "git --no-pager log -1 --oneline"
   print_ssot_row "$id"
+
+  gate="$(is_gated_item "$id")"
+  if [[ "$gate" == "GATED" ]]; then
+    echo "AUTO-BLOCK (gated): $id"
+    block_ssot "$id" "gated item (backend/auth/payments/security/migrations/secrets)"
+    continue
+  fi
 
   runbook="scripts/runbooks/$id.sh"
   if [[ ! -f "$runbook" ]]; then
-    echo "STOP: missing runbook: $runbook" >&2
-    exit 92
+    echo "AUTO-BLOCK (missing runbook): $id"
+    block_ssot "$id" "missing runbook: $runbook"
+    continue
   fi
+
+  echo "=== WO BRANCH ==="
+  checkout_wo_branch_from_base "$id"
+  safe_run "git branch --show-current"
+  safe_run "git --no-pager log -1 --oneline"
 
   log="logs/${id}_$(date +%Y%m%d_%H%M%S).log"
   echo "=== RUN: $runbook (log: $log) ==="
