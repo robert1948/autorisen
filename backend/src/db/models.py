@@ -306,6 +306,7 @@ class Agent(Base):
     __tablename__ = "agents"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), nullable=True, index=True)
     owner_id = Column(
         String(36),
         ForeignKey("users.id", ondelete="SET NULL"),
@@ -315,7 +316,14 @@ class Agent(Base):
     slug = Column(String(100), unique=True, nullable=False)
     name = Column(String(160), nullable=False)
     description = Column(Text, nullable=True)
+    category = Column(String(64), nullable=True)
     visibility = Column(String(32), nullable=False, server_default="private")
+    current_version_id = Column(
+        String(36),
+        ForeignKey("agent_versions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -332,6 +340,12 @@ class Agent(Base):
         back_populates="agent",
         cascade="all, delete-orphan",
         order_by="AgentVersion.created_at.desc()",
+        foreign_keys="AgentVersion.agent_id",
+    )
+    current_version = relationship(
+        "AgentVersion",
+        foreign_keys=[current_version_id],
+        post_update=True,
     )
     tasks = relationship("Task", back_populates="agent")
     audit_events = relationship("AuditEvent", back_populates="agent")
@@ -343,6 +357,7 @@ class AgentVersion(Base):
     __tablename__ = "agent_versions"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), nullable=True, index=True)
     agent_id = Column(
         String(36),
         ForeignKey("agents.id", ondelete="CASCADE"),
@@ -362,7 +377,11 @@ class AgentVersion(Base):
         UniqueConstraint("agent_id", "version", name="uq_agent_versions_version"),
     )
 
-    agent = relationship("Agent", back_populates="versions")
+    agent = relationship(
+        "Agent",
+        back_populates="versions",
+        foreign_keys=[agent_id],
+    )
 
 
 class AgentInstallation(Base):
@@ -411,6 +430,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), nullable=True, index=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     agent_id = Column(String(36), ForeignKey("agents.id"), nullable=False, index=True)
     goal = Column(Text, nullable=True)
@@ -435,6 +455,7 @@ class Run(Base):
     __table_args__ = (UniqueConstraint("task_id", "step", name="uq_runs_task_step"),)
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), nullable=True, index=True)
     task_id = Column(
         String(36),
         ForeignKey("tasks.id", ondelete="CASCADE"),
@@ -457,6 +478,7 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), nullable=True, index=True)
     task_id = Column(
         String(36), ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
     )

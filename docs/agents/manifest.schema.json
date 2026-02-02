@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://capecontrol.com/schemas/agent-manifest.schema.json",
+  "title": "CapeControl Agent Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "version",
+    "description",
+    "category",
+    "placement",
+    "tools",
+    "permissions",
+    "limits"
+  ],
+  "properties": {
+    "name": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "category": {
+      "type": "string",
+      "enum": ["ai-assisted", "domain-specific", "middleware", "utility"]
+    },
+    "placement": {
+      "type": "string",
+      "enum": ["chat", "dashboard", "workflow", "background"]
+    },
+    "tools": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 0
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopes", "required_roles"],
+      "properties": {
+        "scopes": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "required_roles": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timeout_seconds", "max_steps", "concurrent_tasks"],
+      "properties": {
+        "timeout_seconds": {"type": "integer", "minimum": 1},
+        "max_steps": {"type": "integer", "minimum": 1},
+        "concurrent_tasks": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

@@ -13,6 +13,7 @@ from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
 
 from . import schemas
+from .manifest_validator import validate_manifest
 from .executor import AgentExecutor, TaskCreate, TaskResponse
 
 # Import CapeAI Guide router
@@ -51,6 +52,11 @@ def _get_agent(db: Session, agent_id: str, owner: models.User) -> models.Agent:
     return agent
 
 
+def _resolve_tenant_id(_owner: models.User) -> str | None:
+    # TODO(TENANT): wire tenant resolution once tenancy is implemented.
+    return None
+
+
 @router.get("", response_model=list[schemas.AgentResponse])
 def list_agents(
     owner: models.User = Depends(get_current_user),
@@ -77,10 +83,12 @@ def create_agent(
         )
 
     agent = models.Agent(
+        tenant_id=_resolve_tenant_id(owner),
         owner_id=owner.id,
         slug=payload.slug,
         name=payload.name,
         description=payload.description,
+        category=payload.category,
         visibility=payload.visibility,
     )
     db.add(agent)
@@ -124,6 +132,20 @@ def create_version(
 ) -> schemas.AgentVersionResponse:
     agent = _get_agent(db, agent_id, owner)
 
+    if payload.status != "draft":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="version status must be 'draft'; use publish endpoint",
+        )
+
+    try:
+        validate_manifest(payload.manifest)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
     existing = db.scalar(
         select(models.AgentVersion).where(
             models.AgentVersion.agent_id == agent.id,
@@ -136,14 +158,13 @@ def create_version(
         )
 
     version = models.AgentVersion(
+        tenant_id=agent.tenant_id,
         agent_id=agent.id,
         version=payload.version,
         manifest=payload.manifest,
         changelog=payload.changelog,
         status=payload.status,
     )
-    if payload.status == "published":
-        version.published_at = models.func.now()
 
     db.add(version)
     db.commit()
@@ -173,6 +194,14 @@ def publish_version(
             status_code=status.HTTP_404_NOT_FOUND, detail="version not found"
         )
 
+    try:
+        validate_manifest(version.manifest)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
     # Demote currently published versions for this agent.
     db.execute(
         update(models.AgentVersion)
@@ -185,6 +214,41 @@ def publish_version(
 
     version.status = "published"
     version.published_at = datetime.now()
+    agent.current_version_id = version.id
+    db.add(version)
+    db.add(agent)
+    db.commit()
+    db.refresh(version)
+    return version
+
+
+@router.post(
+    "/{agent_id}/versions/{version_id}/archive",
+    response_model=schemas.AgentVersionResponse,
+)
+def archive_version(
+    agent_id: str,
+    version_id: str,
+    owner: models.User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.AgentVersionResponse:
+    agent = _get_agent(db, agent_id, owner)
+    version = db.scalar(
+        select(models.AgentVersion).where(
+            models.AgentVersion.id == version_id,
+            models.AgentVersion.agent_id == agent.id,
+        )
+    )
+    if version is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="version not found"
+        )
+
+    version.status = "archived"
+    if agent.current_version_id == version.id:
+        agent.current_version_id = None
+        db.add(agent)
+
     db.add(version)
     db.commit()
     db.refresh(version)
