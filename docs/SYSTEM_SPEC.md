@@ -217,6 +217,12 @@ Notes:
 - Users may not skip onboarding
 - Logout returns user to `/login`
 
+Onboarding gate expectations (normative):
+- Users who have not completed onboarding MUST be routed to onboarding pages before any App pages.
+- Direct navigation to App routes MUST redirect to the next required onboarding step.
+- Onboarding completion is the only condition that unlocks App pages (no bypasses for MVP).
+- The gate applies to all App routes, including deep links (e.g., `/settings/*`).
+
 ---
 
 ## 2.6 Data & PostgreSQL (Authoritative)
