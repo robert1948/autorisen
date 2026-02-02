@@ -67,51 +67,25 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
                 <Link to="/">Overview</Link>
               </li>
               <li>
-                <Link to="/how-it-works">How It Works</Link>
+                <Link to="/marketplace">Marketplace</Link>
               </li>
               <li>
-                <Link to="/explore">Workflows</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="footer__column">
-            <h4>Developers</h4>
-            <ul className="footer__links-list">
-              <li>
-                <Link to="/developer-hub">Developer Hub</Link>
+                <Link to="/pricing">Pricing</Link>
               </li>
               <li>
-                <Link to="/developer-hub">Join as Developer</Link>
-              </li>
-              <li>
-                <Link to="/api-docs">API Documentation</Link>
+                <Link to="/faq">FAQ</Link>
               </li>
             </ul>
           </div>
 
           <div className="footer__column">
-            <h4>Company</h4>
+            <h4>Account</h4>
             <ul className="footer__links-list">
               <li>
-                <Link to="/auth/register">Create free account</Link>
+                <Link to="/login">Log in</Link>
               </li>
               <li>
-                <Link to="/how-it-works">About Us</Link>
-              </li>
-              <li>
-                <Link to="/contact" className="footer__link-button" onClick={onOpenSupport}>
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy">Privacy Policy</Link>
-              </li>
-              <li>
-                <Link to="/terms">Terms of Service</Link>
-              </li>
-              <li>
-                <Link to="/early-access">Early access principles</Link>
+                <Link to="/register">Create free account</Link>
               </li>
             </ul>
           </div>

@@ -46,10 +46,10 @@ export default function MarketplacePublicPage() {
               Get early access
             </Link>
             <Link
-              to="/app/marketplace"
+              to="/login"
               className="rounded-full border border-white/15 px-5 py-2 text-sm font-semibold text-white hover:bg-white/5"
             >
-              Go to in-app marketplace
+              Log in to the in-app marketplace
             </Link>
           </div>
 

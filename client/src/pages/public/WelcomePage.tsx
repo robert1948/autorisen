@@ -45,10 +45,10 @@ const Welcome: React.FC = () => {
                   Start Developer Onboarding
                 </Link>
                 <Link
-                  to="/app/dashboard"
+                  to="/login"
                   className="block w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Go to Dashboard
+                  Log in to Dashboard
                 </Link>
               </>
             ) : (
@@ -60,10 +60,10 @@ const Welcome: React.FC = () => {
                   Start User Onboarding
                 </Link>
                 <Link
-                  to="/app/dashboard"
+                  to="/login"
                   className="block w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Go to Dashboard
+                  Log in to Dashboard
                 </Link>
               </>
             )}
