@@ -161,19 +161,32 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | Id | Task | Owner | Status | Priority | Completion_date |
 | --- | --- | --- | --- | --- | --- |
 | DOCS-001 | Derive downstream management artifacts from SYSTEM_SPEC | docs | done | P0 | 2026-01-06 |
-| SPEC-001 | Fill in Auth Flows details (login/refresh/logout) to match implementation | docs | planned | P0 |  |
-| SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | planned | P0 |  |
+| SPEC-001 | Fill in Auth Flows details (login/refresh/logout) to match implementation | docs | done | P0 | 2026-01-22 |
+| SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | done | P0 | 2026-01-22 |
 | SPEC-003 | Define Session Guarantees and non-guarantees | docs | planned | P1 |  |
 | SPEC-004 | Define Frozen vs Flexible areas in spec | docs | planned | P1 |  |
 | SPEC-005 | Define Testing determinism requirements (time/email/rate-limiting) | docs | planned | P1 |  |
 | SPEC-006 | Define 'green CI' guarantees + mocking boundaries | docs | planned | P1 |  |
 | SPEC-007 | Define development rules (branching/merge/commit discipline) | docs | planned | P2 |  |
 | SPEC-008 | Define deployment rules (approvals/rollback expectations) | docs | planned | P1 |  |
-| SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | planned | P0 |  |
+| SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | done | P0 | 2026-01-22 |
 | SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | planned | P2 |  |
 | SPEC-011 | Define change control process (who may edit/review/versioning) | docs | planned | P1 |  |
+| SPEC-012 | Add interest-triggered registration UX policy (normative) | docs | done | P0 | 2026-01-23 |
 | MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | planned | P0 |  |
 | MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | planned | P0 |  |
+| WO-UX-REG-INTEREST-001 | Registration interest capture (UI-only) | frontend | in_progress | P0 |  |
+| WO-FE-DASH-DEV-GATE-001 | Dashboard DEV gating verified (no same-origin /api) | frontend | done | P1 | 2026-02-01 |
+| WO-NAV-TRUST-ALIGN-001 | Align all navigation and footer links to trust states and accessibility standards | frontend | blocked | P0 |  |
+| WO-DOCS-FLOW-MM-001 | Update canonical user-flow mindmap to match current MVP routes and gates | docs | planned | P1 |  |
+| WO-LANDING-ALCHEMY-001 | Landing Alchemy narrative refinement (trust + desire without scope creep) | docs | planned | P1 |  |
+| WO-LANDING-CTA-HIERARCHY-003 | Landing page CTA hierarchy (clarify primary vs secondary) | frontend | blocked | P1 |  |
+| WO-LANDING-PROGRESSIVE-REG-002 | Progressive registration (interest-first, minimize friction) | frontend | blocked | P0 |  |
+| WO-LANDING-INTEREST-BAND-004 | Landing interest band (capture interest signal above fold) | frontend | blocked | P1 |  |
+| WO-LANDING-DESIRE-PROOF-005 | Landing desire-proof section (trust and outcomes) | frontend | blocked | P2 |  |
+| WO-LANDING-FOOTER-SCOPE-001 | Landing footer scope (links aligned to trust states) | frontend | blocked | P0 |  |
+| WO-NAV-LANDING-FOOTER-FIX-001 | Remove landing footer; canonicalize public/app nav; legacy redirects | frontend | done | P0 | 2026-02-02 |
+| WO-DEPLOY-AUTORISEN-CACHEBUST-003 | Autorisen deploy cache-bust + cache headers for sw.js/html | devops | done | P1 | 2026-02-02 |
 | DB-001 | Establish Postgres MVP data scope as system-of-record | docs | done | P0 | 2026-01-06 |
 | DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | planned | P0 |  |
 | DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | planned | P1 |  |
@@ -182,5 +195,24 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | GOV-001 | Publish auth changes playbook (guardrails for auth/csrf edits) | docs | planned | P0 |  |
 | GOV-002 | Publish release & deploy playbook (deploy rules + rollback) | docs | planned | P1 |  |
 | GOV-003 | Perform management freeze review and publish results | management | planned | P0 |  |
+| GOV-SPOT-001 | Formalize Single Point of Truth (SPoT) invariant | docs | done | P0 | 2026-01-22 |
+| WO-GOV-010 | Enforce migration governance across autonomy documents | docs | done | P0 | 2026-01-22 |
+| WO-GOV-011 | Define migration work order template (normative governance) | docs | done | P0 | 2026-01-22 |
+| WO-GOV-012 | VS_Chat execution scope refinement (low-risk tasks) | docs | done | P1 | 2026-01-22 |
+| WO-GOV-013 | Define standard Evidence Pack for all Work Orders | docs | done | P1 | 2026-01-22 |
+| WO-GOV-014 | Enforce interest-triggered registration policy in autonomy governance | docs | done | P1 | 2026-01-23 |
+| WO-UX-FLOW-VERIFY-003 | Validate UI navigation matches clarified user-flow | docs | planned | P1 |  |
+| WO-DEPLOY-WORKER-DOCKERFILE-001 | Deploy autorisen worker from Dockerfile.worker via Makefile | Robert | done | P1 | 2026-01-24 |
+| WO-DEPLOY-AUTORISEN-REDEPLOY-002 | Redeploy autorisen (web+worker) + release proof + HTTP smoke check | Robert | done | P1 | 2026-01-24 |
+| AUTH-005 | Security hardening & tests | backend | planned | P1 |  |
+| AUTH-006 | Production authentication validation | backend | planned | P1 |  |
+| PROD-001 | Production readiness verification | devops | planned | P1 |  |
+| FE-004 | Login page + form | frontend | planned | P1 |  |
+| FE-005 | Logo integration & favicon system | frontend | planned | P2 |  |
+| FE-006 | Authentication flow testing | frontend | planned | P1 |  |
+| UI-001 | Logo component with size variants | frontend | planned | P2 |  |
+| UI-002 | Responsive logo design system | frontend | planned | P2 |  |
+| DEVOPS-035 | Prod deploy / Capecraft | devops | planned | P1 |  |
+| DEVOPS-036 | Static asset optimization | devops | planned | P2 |  |
 
 <!-- PLAN:END -->
