@@ -81,7 +81,7 @@ const EXPERIENCE_LEVELS = ["Junior", "Mid-level", "Senior", "Principal"];
 const AVAILABILITY_OPTIONS = ["Less than 10 hours/week", "10-20 hours/week", "Full-time"];
 
 const Register = () => {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -150,14 +150,30 @@ const Register = () => {
   };
 
   useEffect(() => {
-    sendAnalytics({ event_type: "step_view", step: "step1", role: step1Role });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (step === 0) {
+      sendAnalytics({ event_type: "step_view", step: "interest", role: step1Role });
+      return;
+    }
+    if (step === 1) {
+      sendAnalytics({ event_type: "step_view", step: "step1", role: step1Role });
+    }
+  }, [sendAnalytics, step, step1Role]);
 
   useEffect(() => {
     if (step === 2) {
       sendAnalytics({ event_type: "step_view", step: "step2", role: step2Role });
     }
   }, [sendAnalytics, step, step2Role]);
+
+  const handleInterestSelect = (role: UserRole) => {
+    step1Form.setValue("role", role, { shouldValidate: true });
+    sendAnalytics({ event_type: "interest_selected", step: "interest", role });
+    setStep(1);
+  };
+
+  const handleContinueBrowsing = () => {
+    navigate("/");
+  };
 
   const step1Mutation = useMutation({
     mutationFn: (payload: RegisterStep1Payload) => registerStep1(payload),
@@ -265,23 +281,54 @@ const Register = () => {
     }
   };
 
-  const progress = useMemo(() => (step === 1 ? 50 : 100), [step]);
+  const totalSteps = 3;
+  const stepLabel = step === 0 ? 1 : step === 1 ? 2 : 3;
+  const progress = useMemo(() => (step === 0 ? 20 : step === 1 ? 60 : 100), [step]);
 
   return (
     <main className="register-page">
       <section className="register-card">
         <header className="register-card__header">
           <h1>Create your CapeControl account</h1>
-          <p>Two quick steps to tailor the experience for customers and developers.</p>
+          <p>Start with a quick interest check, then two steps to tailor the experience.</p>
           <div className="register-card__progress" aria-label={`Progress ${progress}%`}>
             <div className="register-card__progress-fill" style={{ width: `${progress}%` }} />
           </div>
-          <p className="register-card__step">Step {step} of 2</p>
+          <p className="register-card__step">Step {stepLabel} of {totalSteps}</p>
         </header>
 
         {apiError && <div className="register-card__error">{apiError}</div>}
 
-        {step === 1 ? (
+        {step === 0 ? (
+          <div className="register-form">
+            <p className="register-card__intro">
+              Tell us what brings you here so we can tailor the next step.
+            </p>
+            <div className="register-role-grid">
+              <RoleCard
+                role="Customer"
+                title="I&apos;m a Customer"
+                description="Explore workflows and match with trusted developers."
+                selected={step1Role === "Customer"}
+                onSelect={handleInterestSelect}
+              />
+              <RoleCard
+                role="Developer"
+                title="I&apos;m a Developer"
+                description="Showcase skills and discover customer needs."
+                selected={step1Role === "Developer"}
+                onSelect={handleInterestSelect}
+              />
+            </div>
+            <button
+              className="register-form__submit"
+              type="button"
+              onClick={handleContinueBrowsing}
+            >
+              Continue browsing
+            </button>
+          </div>
+        ) : step === 1 ? (
           <form className="register-form" onSubmit={step1Form.handleSubmit(onStep1Submit)}>
             <div className="register-role-grid">
               <RoleCard
