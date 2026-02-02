@@ -187,4 +187,11 @@ while true; do
     echo "STOP: runbook left uncommitted changes (must commit/push inside runbook)." >&2
     exit 93
   fi
+
+  # === MERGE WO -> BASE (advance SSOT + history) ===
+  wo_branch="$(git branch --show-current)"
+  echo "=== MERGE BACK INTO BASE: $wo_branch -> $BASE_BRANCH ==="
+  checkout_base
+  safe_run "git merge --ff-only $wo_branch" || { echo "STOP: cannot ff-merge $wo_branch into $BASE_BRANCH"; exit 94; }
+  safe_run "git push -u origin $BASE_BRANCH"
 done
