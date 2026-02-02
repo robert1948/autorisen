@@ -296,10 +296,16 @@ Production:
 ### 2.6.5 Observability & Maintenance (MVP)
 
 Required:
-- Connection health checks
-- Basic query error logging
-- Backup/restore procedure documented
-- Simple DB reset procedure for local dev
+- Connection health checks (DB connectivity + pool availability).
+- Basic query error logging (no sensitive payloads in logs).
+- Backup/restore procedure documented (who/when/how; no ad-hoc prod edits).
+- Simple DB reset procedure for local dev (documented, non-destructive to shared envs).
+- Minimal alerting thresholds (errors/timeouts) for staging visibility.
+
+Maintenance expectations:
+- Scheduled verification of backups in non-prod.
+- Routine log review for persistent errors.
+- Local reset guidance must never touch staging/prod databases.
 
 Optional (post-MVP):
 - Advanced metrics, query profiling, partitioning, read replicas
