@@ -1,7 +1,7 @@
 # CapeControl — Management Freeze Review
 
 Derived strictly from SYSTEM_SPEC.
-Date: 2026-01-06
+Date: 2026-02-02
 
 ## Section Statuses
 
@@ -24,6 +24,12 @@ Date: 2026-01-06
 - PostgreSQL scope is FROZEN.
 - Payments implementation is DEFERRED.
 - NEXT-003 remains BLOCKED.
+
+## Review Summary (2026-02-02)
+- Frozen: §2, §2.5, §2.6, §3, §6, §8
+- Flexible: §1, §5
+- Deferred: §4, §7
+- Explicitly blocked: NEXT-003 until §4.4 preconditions are met
 
 ## NEXT-003 Status
 - NEXT-003 is BLOCKED by SYSTEM_SPEC §2.4 and may only resume when SYSTEM_SPEC §4.4 preconditions are satisfied.
