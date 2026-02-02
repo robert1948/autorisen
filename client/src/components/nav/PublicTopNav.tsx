@@ -31,10 +31,10 @@ export default function PublicTopNav() {
             <Link className="hover:text-white" to="/faq">
               FAQ
             </Link>
-            <Link className="hover:text-white" to="/login">
+            <Link className="hover:text-white" to="/auth/login">
               Log in
             </Link>
-            <Link className="hover:text-white" to="/register">
+            <Link className="hover:text-white" to="/auth/register">
               Register
             </Link>
           </nav>
@@ -94,14 +94,14 @@ export default function PublicTopNav() {
                 </Link>
                 <Link
                   className="rounded-lg px-3 py-2 hover:bg-white/10"
-                  to="/login"
+                  to="/auth/login"
                   onClick={closeMenu}
                 >
                   Log in
                 </Link>
                 <Link
                   className="rounded-lg px-3 py-2 hover:bg-white/10"
-                  to="/register"
+                  to="/auth/register"
                   onClick={closeMenu}
                 >
                   Register

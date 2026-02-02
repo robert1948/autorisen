@@ -82,10 +82,10 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
             <h4>Account</h4>
             <ul className="footer__links-list">
               <li>
-                <Link to="/login">Log in</Link>
+                <Link to="/auth/login">Log in</Link>
               </li>
               <li>
-                <Link to="/register">Create free account</Link>
+                <Link to="/auth/register">Create free account</Link>
               </li>
             </ul>
           </div>

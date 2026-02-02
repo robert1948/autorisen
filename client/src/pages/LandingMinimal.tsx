@@ -25,7 +25,7 @@ export default function LandingMinimal() {
 
         <div className="w-full space-y-4">
           <Link
-            to="/register"
+            to="/auth/register"
             className="block w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#4f46e5] to-[#7c3aed] hover:from-[#4338ca] hover:to-[#6d28d9] text-white font-semibold shadow-lg shadow-indigo-900/30 transition-all transform hover:scale-[1.02]"
           >
             Start a workflow-mapping session
