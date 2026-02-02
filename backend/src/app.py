@@ -557,11 +557,29 @@ def create_app() -> FastAPI:
             # Check for specific root-level files (sw.js, manifest, etc.)
             file_path = CLIENT_DIST / client_path
             if file_path.exists() and file_path.is_file():
+                # Service worker should always be revalidated to ensure updates propagate.
+                if client_path == "sw.js":
+                    return FileResponse(
+                        file_path,
+                        headers={"Cache-Control": "no-cache"},
+                    )
+
+                # For other root-level files, prefer revalidation over long-lived caching.
+                if client_path.endswith(".html"):
+                    return FileResponse(
+                        file_path,
+                        headers={"Cache-Control": "no-cache"},
+                    )
+
                 return FileResponse(file_path)
 
             # Fallback to index.html for SPA routing (e.g. /app/checkout)
             if SPA_INDEX.exists():
-                return FileResponse(SPA_INDEX)
+                # Revalidate HTML so users don't get stuck on an old shell after deploys.
+                return FileResponse(
+                    SPA_INDEX,
+                    headers={"Cache-Control": "no-cache"},
+                )
 
             raise HTTPException(status_code=404)
 

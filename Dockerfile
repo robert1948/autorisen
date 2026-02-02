@@ -10,6 +10,7 @@ FROM node:${NODE_VERSION}-alpine AS frontend-build
 WORKDIR /app
 
 ARG GIT_SHA=unknown
+ARG BUILD_EPOCH=0
 
 # Copy package files for dependency installation
 COPY client/package*.json ./
@@ -29,6 +30,12 @@ RUN touch tailwind.config.js postcss.config.js
 COPY client/tailwind.config.js* ./
 COPY client/postcss.config.js* ./
 
+# Force cache busting per deploy SHA so frontend assets + sw.js always rebuild
+ENV GIT_SHA=${GIT_SHA}
+ENV BUILD_EPOCH=${BUILD_EPOCH}
+RUN echo "${GIT_SHA}" > /app/.gitsha
+RUN echo "${BUILD_EPOCH}" > /app/.build_epoch
+
 # Stamp service-worker version so PWAs reliably update after deploy
 RUN node -e "const fs=require('fs'); const p='public/sw.js'; const sha=(process.env.GIT_SHA||'unknown').trim(); const short=(sha && sha!=='unknown')?sha.slice(0,12):'unknown'; const s=fs.readFileSync(p,'utf8'); fs.writeFileSync(p, s.replaceAll('__SW_VERSION__', short));"
 
@@ -39,6 +46,7 @@ RUN VITE_APP_VERSION=$(node -e "const sha=(process.env.GIT_SHA||'unknown').trim(
 FROM python:${PYTHON_VERSION}-slim AS production
 
 ARG GIT_SHA=unknown
+ARG BUILD_EPOCH=0
 
 # Environment configuration
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -46,6 +54,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     ENV=prod \
     DEBUG=false \
     GIT_SHA=${GIT_SHA} \
+    BUILD_EPOCH=${BUILD_EPOCH} \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1

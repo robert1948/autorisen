@@ -57,6 +57,9 @@ APP_VERSION := $(if $(APP_VERSION_RAW),v$(APP_VERSION_RAW),unknown)
 # Git SHA embedded into container images (for /api/version + certification)
 GIT_SHA := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
 
+# Cache-bust for container builds (ensures new image digest on deploy)
+BUILD_EPOCH := $(shell date +%s)
+
 IMAGE ?= autorisen:local
 PORT ?= 8000
 
@@ -370,12 +373,12 @@ heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	heroku container:login
 	@if [ -f Dockerfile.worker ]; then \
 		echo "🧰 Detected Dockerfile.worker; deploying web + worker..."; \
-		heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA); \
-		heroku container:push worker -a $(HEROKU_APP_STG) --recursive --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA),BUILD_EPOCH=$(BUILD_EPOCH); \
+		heroku container:push worker -a $(HEROKU_APP_STG) --recursive --arg GIT_SHA=$(GIT_SHA),BUILD_EPOCH=$(BUILD_EPOCH); \
 		heroku container:release web -a $(HEROKU_APP_STG); \
 		heroku container:release worker -a $(HEROKU_APP_STG); \
 	else \
-		heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA),BUILD_EPOCH=$(BUILD_EPOCH); \
 		heroku container:release web -a $(HEROKU_APP_STG); \
 	fi
 	@echo "✅ Staging deployment complete"
@@ -386,12 +389,12 @@ heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD)
 	heroku container:login
 	@if [ -f Dockerfile.worker ]; then \
 		echo "🧰 Detected Dockerfile.worker; deploying web + worker..."; \
-		heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA); \
-		heroku container:push worker -a $(HEROKU_APP_PROD) --recursive --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA),BUILD_EPOCH=$(BUILD_EPOCH); \
+		heroku container:push worker -a $(HEROKU_APP_PROD) --recursive --arg GIT_SHA=$(GIT_SHA),BUILD_EPOCH=$(BUILD_EPOCH); \
 		heroku container:release web -a $(HEROKU_APP_PROD); \
 		heroku container:release worker -a $(HEROKU_APP_PROD); \
 	else \
-		heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA); \
+		heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA),BUILD_EPOCH=$(BUILD_EPOCH); \
 		heroku container:release web -a $(HEROKU_APP_PROD); \
 	fi
 	@echo "✅ Production deployment complete"
