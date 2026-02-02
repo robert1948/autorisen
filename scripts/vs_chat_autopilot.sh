@@ -150,7 +150,10 @@ while true; do
 
   id="$(pick_next_id)"
   if [[ "$id" == "NO_ELIGIBLE_WORK" ]]; then
-    echo "PIPELINE_EMPTY"; exit 0
+    echo "PIPELINE_EMPTY"
+    echo "SLEEPING 60s (idle)"
+    sleep 60
+    continue
   fi
 
   echo "=== NEXT: $id ==="
