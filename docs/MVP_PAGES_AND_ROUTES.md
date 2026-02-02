@@ -3,6 +3,8 @@
 Derived strictly from SYSTEM_SPEC §2.5.
 This is a checklist only (no UI details, no code scaffolding).
 
+Checklist is mapped directly to SYSTEM_SPEC §2.5.1–§2.5.6.
+
 ## Checklist
 
 Columns:
@@ -44,3 +46,4 @@ Columns:
 - Billing is display-only for MVP (SYSTEM_SPEC §2.5.5).
 - Help is read-only (SYSTEM_SPEC §2.5.6).
 - Registration step routes and email verification are unauthenticated entry points (SYSTEM_SPEC §2.5.2).
+- `/logout` is an action route (not a full page) per SYSTEM_SPEC §2.5.2.
