@@ -9,6 +9,7 @@ def test_login_success_returns_jwt_and_user_info(client):
         "email": "canonical@example.com",
         "password": "Password123!@#",
         "confirm_password": "Password123!@#",
+        "terms_accepted": True,
         "role": "Customer",
         "company_name": "Canonical Corp",
         "recaptcha_token": "dummy"
@@ -52,6 +53,7 @@ def test_me_returns_profile_with_token(client):
         "email": "me@example.com",
         "password": "Password123!@#",
         "confirm_password": "Password123!@#",
+        "terms_accepted": True,
         "role": "Customer",
         "company_name": "Me Corp",
         "recaptcha_token": "dummy"

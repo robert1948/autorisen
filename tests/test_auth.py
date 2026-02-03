@@ -174,6 +174,7 @@ def _complete_registration(
         "email": email,
         "password": password,
         "confirm_password": password,
+        "terms_accepted": True,
         "role": role,
         "recaptcha_token": "dev-bypass-token",
     }
@@ -339,6 +340,7 @@ def test_register_duplicate_email(client):
             "email": email,
             "password": password,
             "confirm_password": password,
+            "terms_accepted": True,
             "role": "Customer",
             "recaptcha_token": "dev-bypass-token",
         },
@@ -357,6 +359,7 @@ def test_password_policy_enforced(client):
             "email": f"policy_{uuid.uuid4().hex[:8]}@example.com",
             "password": "short",
             "confirm_password": "short",
+            "terms_accepted": True,
             "role": "Customer",
             "recaptcha_token": "dev-bypass-token",
         },
@@ -498,6 +501,7 @@ def test_register_requires_csrf(client):
         "email": email,
         "password": "NoCsrfPass123!",
         "confirm_password": "NoCsrfPass123!",
+        "terms_accepted": True,
         "role": "Customer",
         "recaptcha_token": "dev-bypass-token",
     }

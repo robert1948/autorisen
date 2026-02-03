@@ -20,6 +20,7 @@ def test_register_login_me_smoke(client):
         "email": email,
         "password": password,
         "confirm_password": password,
+        "terms_accepted": True,
         "role": "Customer",
     }
 
