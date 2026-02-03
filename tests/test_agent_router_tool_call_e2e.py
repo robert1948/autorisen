@@ -54,6 +54,7 @@ def _register_verified_user_and_get_token(client) -> tuple[str, str]:
         "email": email,
         "password": password,
         "confirm_password": password,
+        "terms_accepted": True,
         "role": "Developer",
         "recaptcha_token": "dev-bypass-token",
     }

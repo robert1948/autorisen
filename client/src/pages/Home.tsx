@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import ChatModal, { type ChatPlacement } from "../components/chat/ChatModal";
 import TopNav from "../components/nav/TopNav";
@@ -61,6 +61,8 @@ const chatConfig: Record<Exclude<ActiveChat, null>, ChatView> = {
 };
 
 const Home = () => {
+  const { search } = useLocation();
+  const registerHref = `/auth/register${search}`;
   const [state, setState] = useState<HealthState>({ loading: true });
   const [activeChat, setActiveChat] = useState<ActiveChat>(null);
 
@@ -261,7 +263,7 @@ const Home = () => {
                 <li>CapeAI assistant for a single process</li>
                 <li>Basic reporting and history</li>
               </ul>
-              <Link to="/register" className="btn btn--ghost">
+              <Link to={registerHref} className="btn btn--ghost">
                 Get Started Free
               </Link>
             </article>

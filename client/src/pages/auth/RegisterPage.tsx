@@ -3,7 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import FormInput from "../../components/FormInput";
 import PasswordMeter from "../../components/PasswordMeter";
@@ -17,6 +17,7 @@ import {
   type RegisterStep1Payload,
   type RegisterStep2Payload,
   type RegisterStep2Response,
+  type RegisterApiError,
   type UserRole,
 } from "../../lib/authApi";
 import { useAuth } from "../../features/auth/AuthContext";
@@ -25,6 +26,18 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$
 const PASSWORD_ERROR =
   "Password must be at least 12 characters and include uppercase, lowercase, digit, and special character.";
 
+const CONTEXT_KEYS = [
+  "ref",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "interest",
+  "plan",
+  "role",
+];
+
 const step1Schema = z
   .object({
     first_name: z.string().min(1, "First name is required").max(50),
@@ -32,6 +45,9 @@ const step1Schema = z
     email: z.string().email("Enter a valid email address"),
     password: z.string().regex(PASSWORD_REGEX, PASSWORD_ERROR),
     confirm_password: z.string(),
+    terms_accepted: z.boolean().refine((value) => value, {
+      message: "You must accept the terms and privacy policy.",
+    }),
     role: z.enum(["Customer", "Developer"]),
     recaptcha_token: z.string().min(1, "Complete the reCAPTCHA"),
   })
@@ -86,7 +102,9 @@ const Register = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAcceptedAt, setTermsAcceptedAt] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { search } = useLocation();
   const { setAuthFromTokens } = useAuth();
 
   const sendAnalytics = useCallback(async (payload: { event_type: string; step?: string; role?: UserRole | null; details?: Record<string, unknown> }) => {
@@ -104,6 +122,23 @@ const Register = () => {
 
   const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
+  const registrationContext = useMemo(() => {
+    const params = new URLSearchParams(search);
+    const context: Record<string, string> = {};
+    CONTEXT_KEYS.forEach((key) => {
+      const value = params.get(key);
+      if (value) {
+        context[key] = value;
+      }
+    });
+    return context;
+  }, [search]);
+
+  const defaultRole = useMemo<UserRole>(() => {
+    const raw = (registrationContext.role ?? "").toLowerCase();
+    return raw === "developer" ? "Developer" : "Customer";
+  }, [registrationContext.role]);
+
   const step1Form = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -112,7 +147,8 @@ const Register = () => {
       email: "",
       password: "",
       confirm_password: "",
-      role: "Customer",
+      terms_accepted: false,
+      role: defaultRole,
       recaptcha_token: recaptchaSiteKey ? "" : "dev-bypass-token",
     },
   });
@@ -179,9 +215,23 @@ const Register = () => {
     sendAnalytics({ event_type: "role_selected", step: "step1", role });
   };
 
+  const applyFieldErrors = (
+    errors: Record<string, string> | undefined,
+    form: typeof step1Form | typeof step2Form,
+  ) => {
+    if (!errors) return false;
+    Object.entries(errors).forEach(([field, message]) => {
+      form.setError(field as never, { type: "server", message } as never);
+    });
+    return Object.keys(errors).length > 0;
+  };
+
   const onStep1Submit = async (values: Step1Values) => {
     setApiError(null);
     try {
+      if (values.terms_accepted) {
+        setTermsAcceptedAt(new Date().toISOString());
+      }
       const response = await step1Mutation.mutateAsync(values);
       setTempToken(response.temp_token);
       setStep(2);
@@ -207,8 +257,10 @@ const Register = () => {
       }
       await sendAnalytics({ event_type: "step_submit", step: "step1", role });
     } catch (err) {
+      const registerError = err as RegisterApiError;
+      const hasFieldErrors = applyFieldErrors(registerError.fieldErrors, step1Form);
       const message = err instanceof Error ? err.message : "Unable to start registration";
-      setApiError(message);
+      setApiError(hasFieldErrors ? null : message);
       await sendAnalytics({ event_type: "error", step: "step1", role: values.role, details: { message } });
     }
   };
@@ -221,9 +273,8 @@ const Register = () => {
     }
 
     setApiError(null);
-    const payload: RegisterStep2Payload = {
-      company_name: values.company_name,
-      profile: values.role === "Customer"
+    const baseProfile =
+      values.role === "Customer"
         ? {
             industry: values.industry,
             company_size: values.company_size,
@@ -235,7 +286,21 @@ const Register = () => {
             experience_level: values.experience_level,
             portfolio_link: values.portfolio_link,
             availability: values.availability,
-          },
+          };
+
+    const registrationMeta: Record<string, unknown> = {
+      registration_context: registrationContext,
+    };
+    if (termsAcceptedAt) {
+      registrationMeta.terms_accepted_at = termsAcceptedAt;
+    }
+
+    const payload: RegisterStep2Payload = {
+      company_name: values.company_name,
+      profile: {
+        ...baseProfile,
+        ...registrationMeta,
+      },
     };
 
     try {
@@ -259,8 +324,10 @@ const Register = () => {
         navigate("/onboarding/developer", { replace: true });
       }
     } catch (err) {
+      const registerError = err as RegisterApiError;
+      const hasFieldErrors = applyFieldErrors(registerError.fieldErrors, step2Form);
       const message = err instanceof Error ? err.message : "Unable to complete registration";
-      setApiError(message);
+      setApiError(hasFieldErrors ? null : message);
       await sendAnalytics({ event_type: "error", step: "step2", role: values.role, details: { message } });
     }
   };
@@ -351,6 +418,17 @@ const Register = () => {
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
               </div>
+            </FormInput>
+
+            <FormInput label="Terms" error={step1Form.formState.errors.terms_accepted?.message}>
+              <label className="auth-terms">
+                <input type="checkbox" {...step1Form.register("terms_accepted")} />
+                <span>
+                  I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>,
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer"> privacy policy</a>, and
+                  <a href="/cookies" target="_blank" rel="noopener noreferrer"> cookie policy</a>.
+                </span>
+              </label>
             </FormInput>
 
             <input type="hidden" {...step1Form.register("role")}

@@ -9,7 +9,7 @@ export const MvpLanding = () => (
     data="none"
     links={[
       { to: "/login", label: "Login" },
-      { to: "/register", label: "Register" },
+      { to: "/auth/register", label: "Register" },
     ]}
   />
 );
@@ -28,7 +28,7 @@ export const MvpLogin = () => (
     route="/login"
     access="public"
     data="write"
-    links={[{ to: "/", label: "Back to Landing" }, { to: "/register", label: "Register" }]}
+    links={[{ to: "/", label: "Back to Landing" }, { to: "/auth/register", label: "Register" }]}
   />
 );
 

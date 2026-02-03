@@ -154,7 +154,7 @@ const SubscribePage: React.FC = () => {
                 <div className="mt-8">
                   {tier.name === 'Free' ? (
                     <Link
-                      to="/register"
+                      to="/auth/register"
                       className={`block w-full text-center px-6 py-3 border border-transparent rounded-md font-medium ${
                         tier.popular
                           ? 'text-white bg-blue-600 hover:bg-blue-700'
@@ -169,7 +169,7 @@ const SubscribePage: React.FC = () => {
                     </button>
                   ) : (
                     <Link
-                      to="/register?plan=pro"
+                      to="/auth/register?plan=pro"
                       className="block w-full text-center px-6 py-3 border border-transparent rounded-md font-medium text-white bg-blue-600 hover:bg-blue-700"
                     >
                       {tier.cta}

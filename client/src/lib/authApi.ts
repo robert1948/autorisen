@@ -58,6 +58,73 @@ async function parseError(response: Response): Promise<never> {
   throw new Error(message);
 }
 
+type FieldErrorMap = Record<string, string>;
+
+export type RegisterApiError = Error & {
+  status?: number;
+  fieldErrors?: FieldErrorMap;
+};
+
+function extractFieldErrors(detail: unknown): FieldErrorMap | undefined {
+  if (Array.isArray(detail)) {
+    return detail.reduce<FieldErrorMap>((acc, item) => {
+      if (!item || typeof item !== "object") return acc;
+      const loc = (item as { loc?: unknown }).loc;
+      const msg = (item as { msg?: string }).msg;
+      if (Array.isArray(loc) && loc.length > 0 && typeof msg === "string") {
+        const locParts = loc.filter((part) => typeof part === "string") as string[];
+        const field = locParts[locParts.length - 1];
+        if (field) {
+          acc[field] = msg;
+        }
+      }
+      return acc;
+    }, {});
+  }
+
+  if (typeof detail === "string") {
+    if (detail.toLowerCase().includes("passwords do not match")) {
+      return { confirm_password: detail };
+    }
+    if (detail.toLowerCase().includes("terms") && detail.toLowerCase().includes("accept")) {
+      return { terms_accepted: detail };
+    }
+    if (detail.toLowerCase().includes("company name")) {
+      return { company_name: detail };
+    }
+  }
+
+  return undefined;
+}
+
+async function parseRegisterError(response: Response): Promise<never> {
+  let data: { detail?: unknown } | undefined;
+  try {
+    data = (await response.json()) as { detail?: unknown };
+  } catch (err) {
+    console.warn("Failed to parse register error response", err);
+  }
+
+  const status = response.status;
+  const detail = data?.detail;
+  let message = `Request failed with status ${status}`;
+  if (status === 409) {
+    message = "An account with this email already exists.";
+  } else if (status === 429) {
+    message = "Too many registration attempts. Please try again later.";
+  } else if (status === 400 || status === 422) {
+    message = "Please correct the highlighted fields.";
+  } else if (typeof detail === "string") {
+    message = detail;
+  }
+
+  const error = new Error(message) as RegisterApiError;
+  error.status = status;
+  error.fieldErrors = extractFieldErrors(detail);
+  invalidateCsrfToken();
+  throw error;
+}
+
 async function handleJson<T>(response: Response): Promise<T> {
   if (response.ok) {
     if (response.status === 204) {
@@ -75,6 +142,7 @@ export type RegisterStep1Payload = {
   email: string;
   password: string;
   confirm_password: string;
+  terms_accepted: boolean;
   role: UserRole;
   recaptcha_token: string;
 };
@@ -166,8 +234,11 @@ export async function registerStep1(
     body: JSON.stringify(payload),
   });
 
-  const data = await handleJson<RegisterStep1Response>(response);
-  return data;
+  if (!response.ok) {
+    return parseRegisterError(response);
+  }
+
+  return handleJson<RegisterStep1Response>(response);
 }
 
 export async function registerStep2(
@@ -185,6 +256,10 @@ export async function registerStep2(
     ...defaultFetchOptions,
     body: JSON.stringify(payload),
   });
+
+  if (!response.ok) {
+    return parseRegisterError(response);
+  }
 
   return handleJson<RegisterStep2Response>(response);
 }

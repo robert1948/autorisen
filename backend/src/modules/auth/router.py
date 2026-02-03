@@ -59,7 +59,14 @@ from backend.src.services.emailer import (
 from backend.src.services.security import decode_jwt
 
 from .csrf import csrf_router, issue_csrf_token, require_csrf_token
-from .schemas import LoginRequest, LoginResponse, MeResponse, AnalyticsEventIn
+from .schemas import (
+    AnalyticsEventIn,
+    LoginRequest,
+    LoginResponse,
+    MeResponse,
+    PASSWORD_ERROR,
+    PASSWORD_PATTERN,
+)
 from .deps import (
     _bearer_from_header,
     _load_user_from_claims,
@@ -67,7 +74,7 @@ from .deps import (
     get_current_user,
     get_current_user_with_claims,
 )
-from .rate_limiter import allow_login, record_login_attempt
+from .rate_limiter import allow_login, auth_rate_limit, record_login_attempt
 from .security import create_access_refresh_tokens, verify_password
 
 log = logging.getLogger("auth")
@@ -143,8 +150,8 @@ class ResetPasswordIn(BaseModel):
     @field_validator("password", "confirm_password")
     @classmethod
     def _password_policy(cls, value: str) -> str:
-        if len(value or "") < 12:
-            raise ValueError("Password must be at least 12 characters long")
+        if not PASSWORD_PATTERN.match(value or ""):
+            raise ValueError(PASSWORD_ERROR)
         return value
 
     @model_validator(mode="after")
@@ -165,6 +172,7 @@ class RegisterStep1In(BaseModel):
     password: PasswordStr
     confirm_password: PasswordStr
     role: RoleStr
+    terms_accepted: Optional[bool] = None
     recaptcha_token: Optional[str] = None
 
     @field_validator("password", "confirm_password")
@@ -205,6 +213,13 @@ class RegisterIn(BaseModel):
     company_name: CompanyNameStr = ""
     profile: Profile = Field(default_factory=Profile)
     recaptcha_token: Optional[str] = None
+
+    @field_validator("password", "confirm_password")
+    @classmethod
+    def _password_policy(cls, value: str) -> str:
+        if not PASSWORD_PATTERN.match(value or ""):
+            raise ValueError(PASSWORD_ERROR)
+        return value
 
     @model_validator(mode="after")
     def _passwords_match(self) -> "RegisterIn":
@@ -1108,6 +1123,7 @@ async def csrf_token(response: Response):
 
 
 @router.post("/register/step1", response_model=RegisterStep1Out, status_code=201)
+@auth_rate_limit()
 async def register_step1(
     payload: RegisterStep1In,
     request: Request,
@@ -1118,6 +1134,9 @@ async def register_step1(
     role = _normalize_role(payload.role)
 
     await _verify_recaptcha_token(payload.recaptcha_token, request)
+
+    if payload.terms_accepted is not True:
+        raise HTTPException(status_code=400, detail="Terms must be accepted")
 
     if payload.password != payload.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
@@ -1232,6 +1251,7 @@ async def register_step2(
 
 
 @router.post("/register", response_model=LoginResponse, status_code=201)
+@auth_rate_limit()
 async def register_single(
     payload: RegisterIn,
     request: Request,

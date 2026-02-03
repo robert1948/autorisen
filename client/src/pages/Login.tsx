@@ -22,7 +22,7 @@ const Login = () => {
           />
           <span className="auth-page__brand-name">CapeControl</span>
         </Link>
-        <Link to="/register" className="auth-page__brand-cta">
+        <Link to="/auth/register" className="auth-page__brand-cta">
           Create account
         </Link>
       </header>

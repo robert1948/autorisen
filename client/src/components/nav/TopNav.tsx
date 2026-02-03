@@ -1,5 +1,5 @@
 import logoUrl from "../../assets/capecontrol-logo.png";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 type Props = {
@@ -8,6 +8,8 @@ type Props = {
 
 const TopNav = ({ onOpenSupport }: Props) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { search } = useLocation();
+  const registerHref = `/auth/register${search}`;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -52,7 +54,7 @@ const TopNav = ({ onOpenSupport }: Props) => {
           <Link className="link" to="/login" onClick={closeMenu}>
             Login
           </Link>
-          <Link className="btn btn--ghost" to="/register" onClick={closeMenu}>
+          <Link className="btn btn--ghost" to={registerHref} onClick={closeMenu}>
             Register
           </Link>
           <button type="button" onClick={() => { onOpenSupport(); closeMenu(); }} className="btn btn--primary">

@@ -263,7 +263,7 @@ const AuthForms = () => {
         <a className="auth-footer__link" href="mailto:support@capecontrol.ai">
           Forgot your email?
         </a>
-        <a className="auth-footer__link" href="/register">
+        <a className="auth-footer__link" href="/auth/register">
           Need an account? Start the signup flow
         </a>
       </footer>
