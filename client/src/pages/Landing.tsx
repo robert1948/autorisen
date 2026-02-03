@@ -1,6 +1,9 @@
 import React from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const LandingPage: React.FC = () => {
+  const { search } = useLocation();
+  const registerHref = `/auth/register${search}`;
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
       {/* Header */}
@@ -40,12 +43,12 @@ const LandingPage: React.FC = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                <a
-                  href="/register"
+                <Link
+                  to={registerHref}
                   className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition"
                 >
-                  Join Early Access
-                </a>
+                  Create free account
+                </Link>
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 text-sm font-medium text-sky-400 hover:text-sky-300"

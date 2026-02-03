@@ -115,7 +115,7 @@ const AboutPage: React.FC = () => {
             </p>
             <div className="space-x-4">
               <Link
-                to="/register"
+                to="/auth/register"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 Get Started Free

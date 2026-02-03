@@ -1,9 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import TopNav from './nav/TopNav';
 import Footer from './Footer';
 
 const HomePage: React.FC = () => {
+  const { search } = useLocation();
+  const registerHref = `/auth/register${search}`;
   const handleOpenSupport = () => {
     console.log("Open support chat");
     // In a full implementation, this would toggle the chat modal
@@ -24,7 +26,7 @@ const HomePage: React.FC = () => {
           </p>
           <div className="inline-block bg-white/10 p-2 rounded-xl backdrop-blur-sm">
             <Link 
-              to="/register" 
+              to={registerHref} 
               className="block bg-[#ff6b6b] hover:bg-[#ff5252] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg"
             >
               Start Your Free Magic Trial
@@ -150,7 +152,7 @@ const HomePage: React.FC = () => {
         <p className="text-xl text-gray-600 mb-10">Perceptions shift. Behaviors follow. Worlds transform.</p>
         
         <Link 
-          to="/register" 
+          to={registerHref} 
           className="inline-block bg-[#667eea] hover:bg-[#5a6fd6] text-white px-10 py-4 rounded-lg font-bold text-lg shadow-lg transition-all transform hover:-translate-y-1"
         >
           Get Started Free – No Card Needed

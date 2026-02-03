@@ -155,7 +155,7 @@ export default function App() {
         <Route path="/account/mfa-enroll" element={<MFAEnroll />} />
 
         {/* -------------------- LEGACY AUTH ALIASES -------------------- */}
-        <Route path="/signup" element={<Navigate to="/register" replace />} />
+        <Route path="/signup" element={<Navigate to="/auth/register" replace />} />
         <Route path="/forgot-password" element={<Navigate to="/reset-password" replace />} />
 
         {/* -------------------- APP (CANONICAL) -------------------- */}
