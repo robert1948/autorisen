@@ -363,11 +363,60 @@ NEXT-003 may only resume when:
 - Auth stability
 - Security policy locked
 
-### 7.2 Unlock Conditions
+### 7.2 Roadmap Unlock Criteria (Normative)
 
-- What enables NEXT-003
-- What enables onboarding expansion
-- What enables production launch
+This section defines the **objective criteria** that MUST be met to “unlock” the next roadmap stage. Unlocks are designed to prevent scope drift and ensure that each stage is **stable, auditable, and supportable** before progressing.
+
+#### 7.2.1 Global prerequisites (apply to every unlock)
+An unlock MUST NOT be granted unless all of the following are true:
+
+1. **Plan + traceability**
+   - The work is represented in the SSOT plan (project-plan.csv) and is not marked **blocked** or **done**.
+   - The change is linked to a single Work Order / plan item, and the PR description includes verification evidence.
+
+2. **No P0/P1 unresolved**
+   - There are no known unresolved P0/P1 issues affecting user access, data integrity, authentication, or safety controls.
+
+3. **Security baseline is intact**
+   - Authentication flows behave as specified (login/refresh/logout/me as applicable).
+   - CSRF/session protections remain consistent with the security policy already defined in this spec.
+
+4. **Observability + version trace**
+   - The running system exposes a reliable build identifier (e.g., `/api/version` or equivalent) and the UI displays it where required (e.g., footer).
+   - Logs/monitoring are sufficient to diagnose user-impacting errors (minimum viable observability).
+
+5. **Rollback/containment is defined**
+   - There is a clear rollback path for the release (container rollback/release rollback procedure), and it is feasible without data migrations.
+
+#### 7.2.2 Stage gates
+Roadmap progression is unlocked only when the current stage gate is satisfied.
+
+**Stage A — Internal Release Candidate (autorisen/staging)**
+- Core journeys work end-to-end on staging:
+  - Public pages load reliably (no broken routes).
+  - Auth journey functions (register/login/logout/refresh/me as applicable).
+  - Onboarding flow is coherent and does not dead-end.
+- A smoke-check is documented in the PR evidence (manual checks are acceptable during docs-only work; implementation WOs MUST include commands/screens).
+- A stability window is observed on staging (no repeatable P0/P1 regressions after deployment).
+
+**Stage B — Private Beta**
+- Access is controlled (invite-only or equivalent) and support contact/triage path is defined.
+- The top friction points from early testers are captured and are addressable without redesigning the system architecture.
+- Support load is within capacity, and issues are not repeatedly re-opened due to missing observability.
+
+**Stage C — Public Soft Launch**
+- The product can be used by the public without direct operator intervention for normal flows.
+- Support load remains manageable and does not compromise system stability.
+- Trust basics are present (clear user messaging, stable navigation, and no “surprise” behavior).
+
+**Stage D — General Availability**
+- The system is operationally supportable with defined incident severity handling (P0–P2) and a viable rollback plan.
+- Monitoring is sufficient to detect and respond to user-impacting failures quickly.
+- The MVP promise is consistently delivered under expected usage without frequent P0/P1 incidents.
+
+#### 7.2.3 Unlock discipline
+- Unlock criteria are **necessary conditions**. Meeting them authorizes progression; it does not force it.
+- If an unlock would introduce new scope, migrations, or production release requirements, it MUST be handled under a separate approved Work Order and gate review.
 
 ---
 
