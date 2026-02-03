@@ -339,9 +339,11 @@ NEXT-003 may only resume when:
 
 ### 6.1 Development Rules
 
-- Branching strategy
-- Merge rules
-- Commit discipline
+- **Branching:** every change ships from a work branch named `wo/<plan-id>-<topic>-<nnn>` created off the default base branch (e.g., `main`). Keep scope to one plan item per branch.
+- **Commits:** one topic per commit; use Conventional Commits (`docs:`, `feat:`, `fix:`, `chore:`). Include the plan ID in the subject or body (e.g., `(SPEC-007)`), and avoid committing generated artifacts unless explicitly required.
+- **Sync discipline:** prefer `git pull --rebase` to keep history linear; avoid merge commits unless explicitly required by governance.
+- **PR/merge gate:** merge only after a clean working tree (`git status --porcelain` empty), diff review (`git diff --stat` + `git diff`), and verification run appropriate to scope.
+- **Safety gate:** autorisen-only for deploys in scope; no capecraft deploys/releases unless Robert explicitly instructs.
 
 ### 6.2 Deployment Rules
 
