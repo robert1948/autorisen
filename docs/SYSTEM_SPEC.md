@@ -343,6 +343,30 @@ NEXT-003 may only resume when:
 - Merge rules
 - Commit discipline
 
+#### 6.1.1 Operating Policy: Plan vs WO (Effective Immediately)
+
+- Default mode is **plan-driven execution**.
+  - VS_Chat **MAY** act on any planned item in `docs/project-plan.csv` using the **Plan ID** as the primary handle.
+  - Traceability **MUST** include:
+    - branch name: `wo/<plan-id>-<topic>-<nnn>`
+    - commit message includes `(PLAN_ID)`
+    - PR description includes Plan ID, scope, files changed, and verification evidence
+- Work Order (WO) documents are **REQUIRED** only when any hard-gate condition applies:
+  - migrations / schema changes / data moves
+  - dependency additions or updates
+  - deployments or pipeline changes (including autorisen) or anything that could touch capecraft/prod
+  - security / auth / payments changes
+  - broad refactors or multi-module changes beyond a single, bounded plan item
+- If a WO is required, VS_Chat **MUST** create it as step 1 of the task (do not wait for pre-existing files):
+  - create `docs/work_orders/WO-<YYYYMMDD>-<short-title>.md`
+  - include goal, constraints, scope, steps, verification, rollback, evidence commands
+  - record the artifact path in the relevant plan row (notes/artifacts) when present
+- Reporting standard (**always**):
+  - preflight evidence: `git status --porcelain`, `git status -uall`, `git branch --show-current`, `git --no-pager log -1 --oneline`
+  - base alignment: work branches **MUST** be based on `origin/<default-base>` (no local diverged base)
+  - minimal diffs + verification commands included
+  - final evidence pack is pasted back
+
 ### 6.2 Deployment Rules
 
 - When deploys are allowed
