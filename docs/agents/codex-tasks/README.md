@@ -2,6 +2,8 @@
 
 Each task file should include:
 
+Start from `task-000-template.md`.
+
 1) Goal (single sentence)
 2) Constraints / safety gates (autorisen-only; no capecraft unless explicit)
 3) Preflight commands (git status/branch/log)
