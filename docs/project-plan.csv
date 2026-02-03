@@ -18,7 +18,7 @@ SPEC-006,Define 'green CI' guarantees + mocking boundaries,docs,planned,P1,,"Spe
 SPEC-007,Define development rules (branching/merge/commit discipline),docs,planned,P2,,"Spec: SYSTEM_SPEC §6.1. Document workflow rules only.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-008,Define deployment rules (approvals/rollback expectations),docs,planned,P1,,"Spec: SYSTEM_SPEC §6.2. Document guardrails; deploy/migrate separation preserved.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
-SPEC-010,Define roadmap unlock criteria (NEXT-003 + production launch),docs,planned,P2,,"Spec: SYSTEM_SPEC §7.2 and §4.4. Clarify what unlocks future work without implementing it.",docs/SYSTEM_SPEC.md,"Doc review"
+SPEC-010,Define roadmap unlock criteria (NEXT-003 + production launch),docs,done,P2,2026-02-03,"Spec: SYSTEM_SPEC §7.2 and §4.4. Clarify what unlocks future work without implementing it.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-011,Define change control process (who may edit/review/versioning),docs,planned,P1,,"Spec: SYSTEM_SPEC §8.1. Define update authority and review requirements.",docs/SYSTEM_SPEC.md,"Doc review"
 
 # MVP PAGES & NAVIGATION (authoritative route list)
