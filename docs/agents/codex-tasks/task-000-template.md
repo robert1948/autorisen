@@ -24,7 +24,7 @@ cd /home/robert/Development/capecontrol
 git status --porcelain
 git branch --show-current
 git --no-pager log -1 --oneline
-````
+```
 
 ## Plan (Chat mode only)
 
