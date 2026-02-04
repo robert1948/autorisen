@@ -54,8 +54,13 @@ REQ := requirements.txt
 APP_VERSION_RAW := $(shell python3 -c "import json; print(json.load(open('client/package.json'))['version'])" 2>/dev/null)
 APP_VERSION := $(if $(APP_VERSION_RAW),v$(APP_VERSION_RAW),unknown)
 
+
 # Git SHA embedded into container images (for /api/version + certification)
 GIT_SHA := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+
+# Build metadata (for /api/version)
+BUILD_EPOCH := $(shell date +%s)
+APP_BUILD_VERSION := $(shell cat VERSION 2>/dev/null || echo $(GIT_SHA))
 
 IMAGE ?= autorisen:local
 PORT ?= 8000
@@ -368,7 +373,7 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA)
+	heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
 	heroku container:release web -a $(HEROKU_APP_STG)
 	@echo "✅ Staging deployment complete"
 	heroku open -a $(HEROKU_APP_STG)
@@ -376,7 +381,7 @@ heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD))
 	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
 	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA)
+	heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
 	heroku container:release web -a $(HEROKU_APP_PROD)
 	@echo "✅ Production deployment complete"
 	heroku open -a $(HEROKU_APP_PROD)
@@ -1123,7 +1128,7 @@ heroku-config-prod:
 # Build & release container to staging
 deploy-staging: heroku-login
 	@docker build -t $(HEROKU_APP_STG):local .
-	@heroku container:push web -a $(HEROKU_APP_STG)
+	@heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
 	@heroku container:release web -a $(HEROKU_APP_STG)
 	@heroku ps:scale -a $(HEROKU_APP_STG) web=1
 
