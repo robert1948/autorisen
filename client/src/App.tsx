@@ -8,7 +8,6 @@ import RequireAuth from "./routes/guards/RequireAuth";
 import RequireMvpAuth from "./routes/guards/RequireMvpAuth";
 import RequireMvpGuest from "./routes/guards/RequireMvpGuest";
 import {
-  MvpLanding,
   MvpAbout,
   MvpDocs,
   MvpLogin,
@@ -96,7 +95,7 @@ export default function App() {
       <Routes>
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
-        <Route path="/" element={<MvpLanding />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/docs" element={<MvpDocs />} />
 
