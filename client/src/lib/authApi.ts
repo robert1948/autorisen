@@ -8,6 +8,11 @@ const CSRF_HEADER = "X-CSRF-Token";
 export type UserRole = "Customer" | "Developer";
 
 let csrfTokenCache: string | null = null;
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
 
 const defaultHeaders: Record<string, string> = {
   "Content-Type": "application/json",
@@ -16,6 +21,21 @@ const defaultHeaders: Record<string, string> = {
 const defaultFetchOptions: RequestInit = {
   credentials: "include",
 };
+
+function getStoredAccessToken(): string | null {
+  if (typeof window === "undefined" || !("localStorage" in window)) {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem("autorisen-auth");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { accessToken?: string | null };
+    return parsed.accessToken ?? null;
+  } catch (err) {
+    console.warn("Failed to read auth state", err);
+    return null;
+  }
+}
 
 async function fetchCsrfToken(): Promise<string> {
   if (csrfTokenCache) {
@@ -54,8 +74,14 @@ async function parseError(response: Response): Promise<never> {
     console.warn("Failed to parse error response", err);
   }
 
+  if (response.status === 401 && unauthorizedHandler) {
+    unauthorizedHandler();
+  }
+
   invalidateCsrfToken();
-  throw new Error(message);
+  const error = new Error(message) as Error & { status?: number };
+  error.status = response.status;
+  throw error;
 }
 
 type FieldErrorMap = Record<string, string>;
@@ -183,6 +209,16 @@ export type TokenResponse = {
 
 export type SocialLoginResponse = TokenResponse & {
   email: string;
+};
+
+export type MeResponse = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  is_active: boolean;
+  email_verified: boolean;
 };
 
 export type GoogleLoginPayload = {
@@ -331,6 +367,36 @@ export async function loginWithLinkedIn(
   });
 
   return handleJson<SocialLoginResponse>(response);
+}
+
+export async function getMe(): Promise<MeResponse> {
+  const token = getStoredAccessToken();
+  const response = await fetch(`${AUTH_BASE}/me`, {
+    method: "GET",
+    headers: {
+      ...defaultHeaders,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...defaultFetchOptions,
+  });
+  if (response.ok) {
+    return handleJson<MeResponse>(response);
+  }
+
+  let message = `Request failed with status ${response.status}`;
+  try {
+    const data = await response.json();
+    if (typeof data?.detail === "string") {
+      message = data.detail;
+    } else if (data?.detail) {
+      message = JSON.stringify(data.detail);
+    }
+  } catch (err) {
+    console.warn("Failed to parse /me error response", err);
+  }
+  const error = new Error(message) as Error & { status?: number };
+  error.status = response.status;
+  throw error;
 }
 
 export async function refreshSession(refreshToken: string): Promise<TokenResponse> {

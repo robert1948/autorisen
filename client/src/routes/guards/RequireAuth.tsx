@@ -3,15 +3,14 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
 
 export default function RequireAuth() {
-  const { state, loading } = useAuth();
+  const { state } = useAuth();
   const location = useLocation();
 
-  // While AuthProvider is loading (login in progress etc.)
-  if (loading) return null; // or a spinner component
+  if (state.status === "unknown") {
+    return <div className="app-loading">Loading session…</div>;
+  }
 
-  const authed = Boolean(state.accessToken);
-
-  if (!authed) {
+  if (state.status === "unauthenticated") {
     return (
       <Navigate
         to="/auth/login"

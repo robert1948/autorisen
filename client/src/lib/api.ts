@@ -15,6 +15,12 @@ const defaultFetchOptions: RequestInit = {
   credentials: "include",
 };
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setApiUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -59,6 +65,10 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     signal,
     ...defaultFetchOptions,
   });
+
+  if (response.status === 401 && unauthorizedHandler) {
+    unauthorizedHandler();
+  }
 
   if (response.ok) {
     if (response.status === 204) {

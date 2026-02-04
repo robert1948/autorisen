@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { features } from "./config/features";
 
 // MVP scaffold routes (Spec-driven)
+import RequireAuth from "./routes/guards/RequireAuth";
 import RequireMvpAuth from "./routes/guards/RequireMvpAuth";
 import RequireMvpGuest from "./routes/guards/RequireMvpGuest";
 import {
@@ -119,7 +120,7 @@ export default function App() {
           <Route path="/onboarding/guide" element={<MvpOnboardingGuide />} />
 
           {/* App core */}
-          <Route path="/dashboard" element={<MvpDashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
           <Route path="/settings" element={<MvpSettings />} />
           <Route path="/settings/profile" element={<MvpSettingsProfile />} />
           <Route path="/settings/security" element={<MvpSettingsSecurity />} />
@@ -159,48 +160,50 @@ export default function App() {
         <Route path="/forgot-password" element={<Navigate to="/reset-password" replace />} />
 
         {/* -------------------- APP (CANONICAL) -------------------- */}
-        <Route path="/app" element={<AppEntryRedirect />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/app" element={<AppEntryRedirect />} />
 
-        {/* Onboarding canonical entry */}
-        {features.onboarding && (
-          <>
-            <Route path="/app/onboarding" element={<OnboardingGuide />} />
-            <Route path="/app/onboarding/checklist" element={<OnboardingChecklist />} />
-            <Route path="/app/onboarding/profile" element={<OnboardingProfile />} />
-            <Route path="/app/onboarding/customer" element={<OnboardingCustomer />} />
-            <Route path="/app/onboarding/developer" element={<OnboardingDeveloper />} />
-          </>
-        )}
+          {/* Onboarding canonical entry */}
+          {features.onboarding && (
+            <>
+              <Route path="/app/onboarding" element={<OnboardingGuide />} />
+              <Route path="/app/onboarding/checklist" element={<OnboardingChecklist />} />
+              <Route path="/app/onboarding/profile" element={<OnboardingProfile />} />
+              <Route path="/app/onboarding/customer" element={<OnboardingCustomer />} />
+              <Route path="/app/onboarding/developer" element={<OnboardingDeveloper />} />
+            </>
+          )}
 
-        {/* Core app pages */}
-        <Route path="/app/dashboard" element={<Dashboard />} />
-        <Route path="/app/settings" element={<Settings />} />
+          {/* Core app pages */}
+          <Route path="/app/dashboard" element={<Dashboard />} />
+          <Route path="/app/settings" element={<Settings />} />
 
-        {features.sunbirdPilot && (
-          <Route path="/app/sunbird-pilot" element={<SunbirdPilotMobile />} />
-        )}
+          {features.sunbirdPilot && (
+            <Route path="/app/sunbird-pilot" element={<SunbirdPilotMobile />} />
+          )}
 
-        {features.agentsShell && (
-          <>
-            <Route path="/app/agents" element={<Agents />} />
-            <Route path="/app/developer" element={<Developer />} />
-            <Route path="/app/chat" element={<ChatConsole />} />
-            <Route path="/app/chat/:threadId" element={<ChatConsole />} />
-          </>
-        )}
+          {features.agentsShell && (
+            <>
+              <Route path="/app/agents" element={<Agents />} />
+              <Route path="/app/developer" element={<Developer />} />
+              <Route path="/app/chat" element={<ChatConsole />} />
+              <Route path="/app/chat/:threadId" element={<ChatConsole />} />
+            </>
+          )}
 
-        {/* Payments */}
-        {features.payments && (
-          <>
-            <Route path="/app/billing" element={<Billing />} />
-            <Route path="/app/checkout" element={<Checkout />} />
-            <Route path="/app/checkout/success" element={<CheckoutSuccess />} />
-            <Route path="/app/checkout/cancel" element={<CheckoutCancel />} />
-          </>
-        )}
+          {/* Payments */}
+          {features.payments && (
+            <>
+              <Route path="/app/billing" element={<Billing />} />
+              <Route path="/app/checkout" element={<Checkout />} />
+              <Route path="/app/checkout/success" element={<CheckoutSuccess />} />
+              <Route path="/app/checkout/cancel" element={<CheckoutCancel />} />
+            </>
+          )}
 
-        {/* Marketplace (can be feature-flagged next) */}
-        <Route path="/app/marketplace" element={<Marketplace />} />
+          {/* Marketplace (can be feature-flagged next) */}
+          <Route path="/app/marketplace" element={<Marketplace />} />
+        </Route>
 
         {/* -------------------- LEGACY APP ALIASES -------------------- */}
         <Route path="/agents" element={<Navigate to="/app/agents" replace />} />
