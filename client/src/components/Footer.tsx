@@ -1,5 +1,6 @@
 import React from 'react';
 import logoUrl from "../assets/capecontrol-logo.png";
+import BuildBadge from "./version/BuildBadge";
 
 type Props = {
   onOpenSupport: () => void;
@@ -100,6 +101,7 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
               <span className="footer__status-dot" aria-hidden="true" />
               All systems operational
             </span>
+            <BuildBadge />
           </div>
         </div>
       </div>

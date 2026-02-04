@@ -1,15 +1,20 @@
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import Footer from '../../components/Footer';
 
 const Welcome: React.FC = () => {
   const [searchParams] = useSearchParams();
   const emailVerified = searchParams.get('email_verified');
   const userType = searchParams.get('type') || 'user';
+  const handleOpenSupport = () => {
+    console.log("Open support chat");
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      <div className="flex-1 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
           {/* Success Icon */}
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
             <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,8 +89,10 @@ const Welcome: React.FC = () => {
               </Link>
             </div>
           </div>
+          </div>
         </div>
       </div>
+      <Footer onOpenSupport={handleOpenSupport} />
     </div>
   );
 };

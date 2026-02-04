@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import Footer from '../../components/Footer';
 
 interface PricingTier {
   name: string;
@@ -13,6 +14,9 @@ interface PricingTier {
 
 const SubscribePage: React.FC = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const handleOpenSupport = () => {
+    console.log("Open support chat");
+  };
 
   const pricingTiers: PricingTier[] = [
     {
@@ -66,7 +70,8 @@ const SubscribePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-1">
       {/* Header */}
       <div className="bg-white">
         <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
@@ -246,6 +251,7 @@ const SubscribePage: React.FC = () => {
           </div>
         </div>
       </div>
+      <Footer onOpenSupport={handleOpenSupport} />
     </div>
   );
 };
