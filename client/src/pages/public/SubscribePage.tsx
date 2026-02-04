@@ -251,6 +251,7 @@ const SubscribePage: React.FC = () => {
           </div>
         </div>
       </div>
+      </div>
       <Footer onOpenSupport={handleOpenSupport} />
     </div>
   );
