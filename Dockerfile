@@ -33,6 +33,7 @@ RUN npm run build
 FROM python:${PYTHON_VERSION}-slim AS production
 
 ARG GIT_SHA=unknown
+ARG BUILD_EPOCH=unknown
 
 # Environment configuration
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -40,9 +41,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     ENV=prod \
     DEBUG=false \
     GIT_SHA=${GIT_SHA} \
+    BUILD_EPOCH=${BUILD_EPOCH} \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
+
+LABEL org.opencontainers.image.revision=$GIT_SHA \
+      build.epoch=$BUILD_EPOCH
 
 WORKDIR /app
 
