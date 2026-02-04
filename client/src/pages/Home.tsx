@@ -10,6 +10,7 @@ import AgentRegistryPanel from "../features/dev/AgentRegistryPanel";
 import MarketplaceShowcase from "../features/marketplace/MarketplaceShowcase";
 import AuthGate from "../features/auth/AuthGate";
 import logoUrl from "../assets/capecontrol-logo.png";
+import BuildBadge from "../components/version/BuildBadge";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 
@@ -504,6 +505,7 @@ const Home = () => {
                 <span className="footer__status-dot" aria-hidden="true" />
                 All systems operational
               </span>
+              <BuildBadge />
             </div>
           </div>
         </div>

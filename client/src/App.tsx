@@ -33,6 +33,7 @@ import {
 
 // Public
 import HomePage from "./pages/public/HomePage";
+import Home from "./pages/Home";
 import Welcome from "./pages/public/WelcomePage";
 import About from "./pages/public/AboutPage";
 import Subscribe from "./pages/public/SubscribePage";
@@ -95,7 +96,8 @@ export default function App() {
       <Routes>
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/landing-legacy" element={<HomePage />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/docs" element={<MvpDocs />} />
 
