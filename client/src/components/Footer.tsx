@@ -96,7 +96,6 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
           <p>© {new Date().getFullYear()} CapeControl. All rights reserved.</p>
           <div className="footer__bottom-meta">
             <span>Built with ❤️ for operators and their teams.</span>
-            <span>v{__APP_VERSION__}</span>
             <span className="footer__status">
               <span className="footer__status-dot" aria-hidden="true" />
               All systems operational

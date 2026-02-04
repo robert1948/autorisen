@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 
 type BuildInfo = {
   buildVersion: string;
-  gitSha?: string;
 };
 
 let cachedBuildInfo: BuildInfo | null = null;
@@ -29,14 +28,7 @@ const fetchBuildInfo = () => {
 
         if (!rawBuildVersion || rawBuildVersion === "unknown") return null;
 
-        const gitSha =
-          typeof (data as { gitSha?: unknown }).gitSha === "string"
-            ? (data as { gitSha: string }).gitSha
-            : typeof (data as { git_sha?: unknown }).git_sha === "string"
-              ? (data as { git_sha: string }).git_sha
-              : undefined;
-
-        const result = { buildVersion: String(rawBuildVersion), gitSha };
+        const result = { buildVersion: String(rawBuildVersion) };
         cachedBuildInfo = result;
         return result;
       })
@@ -61,10 +53,7 @@ const BuildBadge: React.FC = () => {
 
   if (!buildInfo?.buildVersion || buildInfo.buildVersion === "unknown") return null;
 
-  const shortSha = buildInfo.gitSha ? buildInfo.gitSha.slice(0, 7) : null;
-  const label = shortSha
-    ? `Build ${buildInfo.buildVersion} • ${shortSha}`
-    : `Build ${buildInfo.buildVersion}`;
+  const label = `Build ${buildInfo.buildVersion}`;
 
   return (
     <span
