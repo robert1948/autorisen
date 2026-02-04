@@ -439,12 +439,17 @@ def create_app() -> FastAPI:
 
     @application.get("/api/version", include_in_schema=False)
     def api_version():
-        git_sha = os.getenv("GIT_SHA", "").strip()
-        app_version = os.getenv("APP_VERSION", "").strip()
-        version_value = (
-            git_sha or app_version or datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        )
-        return {"version": version_value}
+        git_sha = os.getenv("GIT_SHA", "").strip() or None
+        build_epoch = os.getenv("BUILD_EPOCH", "").strip() or None
+        app_build_version = os.getenv("APP_BUILD_VERSION", "").strip()
+        build_version = app_build_version or git_sha or "unknown"
+        payload = {
+            "buildVersion": build_version,
+            "version": build_version,
+            "gitSha": git_sha,
+            "buildEpoch": build_epoch,
+        }
+        return JSONResponse(payload, headers={"Cache-Control": "no-store"})
 
     @application.get("/api/security/stats")
     def api_security_stats():
