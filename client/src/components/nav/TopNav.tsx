@@ -51,7 +51,7 @@ const TopNav = ({ onOpenSupport }: Props) => {
           <a href="#experiences" onClick={closeMenu}>Experiences</a>
         </nav>
         <div className="top-nav__auth">
-          <Link className="link" to="/login" onClick={closeMenu}>
+          <Link className="link" to="/auth/login" onClick={closeMenu}>
             Login
           </Link>
           <Link className="btn btn--ghost" to={registerHref} onClick={closeMenu}>
