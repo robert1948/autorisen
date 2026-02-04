@@ -439,10 +439,20 @@ def create_app() -> FastAPI:
 
     @application.get("/api/version", include_in_schema=False)
     def api_version():
-        git_sha = os.getenv("GIT_SHA", "").strip() or None
-        build_epoch = os.getenv("BUILD_EPOCH", "").strip() or None
-        app_build_version = os.getenv("APP_BUILD_VERSION", "").strip()
+        def _clean_env(value: str | None) -> str | None:
+            if value is None:
+                return None
+            cleaned = value.strip()
+            if not cleaned or cleaned.lower() == "unknown":
+                return None
+            return cleaned
+
+        git_sha = _clean_env(os.getenv("GIT_SHA"))
+        build_epoch = _clean_env(os.getenv("BUILD_EPOCH"))
+        app_build_version = _clean_env(os.getenv("APP_BUILD_VERSION"))
         build_version = app_build_version or git_sha or "unknown"
+        if git_sha is None and build_version != "unknown":
+            git_sha = build_version
         payload = {
             "buildVersion": build_version,
             "version": build_version,
