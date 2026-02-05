@@ -367,7 +367,9 @@ def test_password_policy_enforced(client):
     )
     assert res.status_code == 422, res.text
     body = res.json()
-    msgs = [err.get("msg", "") for err in body.get("detail", [])]
+    error = body.get("error", {})
+    fields = error.get("fields", {}) if isinstance(error, dict) else {}
+    msgs = list(fields.values())
     assert any("Password" in m and ("12" in m or "length" in m.lower()) for m in msgs)
 
 

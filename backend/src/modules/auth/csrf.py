@@ -8,6 +8,7 @@ from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from backend.src.core.config import settings
+from backend.src.core.error_envelope import build_error_envelope, map_http_exception
 from backend.src.services.csrf import generate_csrf_token, validate_csrf_token
 
 CSRF_COOKIE = "csrftoken"
@@ -126,7 +127,14 @@ class CSRFMiddleware:
         try:
             require_csrf_token(request)
         except HTTPException as exc:
-            response = JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+            if request.url.path.startswith("/api/auth/"):
+                code, message, fields = map_http_exception(exc)
+                response = JSONResponse(
+                    build_error_envelope(code, message, fields),
+                    status_code=exc.status_code,
+                )
+            else:
+                response = JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
             await response(scope, receive, send)
             return
 

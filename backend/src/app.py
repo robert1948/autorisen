@@ -11,6 +11,11 @@ from typing import TYPE_CHECKING, Optional, cast
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -23,6 +28,11 @@ from starlette.responses import (
 )
 
 from backend.src.core.config import settings
+from backend.src.core.error_envelope import (
+    build_error_envelope,
+    map_http_exception,
+    validation_fields,
+)
 from backend.src.core.rate_limit import configure_rate_limit
 from backend.src.db.session import SessionLocal
 from backend.src.modules.auth.csrf import CSRFMiddleware
@@ -504,9 +514,38 @@ def create_app() -> FastAPI:
     application.include_router(api, prefix="/api")
 
     # ----------------------------- Errors --------------------------------
+    def _is_auth_path(path: str) -> bool:
+        return path.startswith("/api/auth")
+
+    @application.exception_handler(HTTPException)
+    async def _http_exception_handler(request, exc: HTTPException):
+        if _is_auth_path(request.url.path):
+            code, message, fields = map_http_exception(exc)
+            return JSONResponse(
+                build_error_envelope(code, message, fields),
+                status_code=exc.status_code,
+                headers=exc.headers,
+            )
+        return await http_exception_handler(request, exc)
+
+    @application.exception_handler(RequestValidationError)
+    async def _validation_exception_handler(request, exc: RequestValidationError):
+        if _is_auth_path(request.url.path):
+            fields = validation_fields(exc)
+            return JSONResponse(
+                build_error_envelope("VALIDATION_ERROR", "Validation failed", fields),
+                status_code=422,
+            )
+        return await request_validation_exception_handler(request, exc)
+
     @application.exception_handler(Exception)
-    async def _unhandled_error(_, _exc: Exception):
+    async def _unhandled_error(request, _exc: Exception):
         logging.getLogger("uvicorn.error").exception("Unhandled exception")
+        if _is_auth_path(request.url.path):
+            return JSONResponse(
+                build_error_envelope("INTERNAL_ERROR", "Internal Server Error"),
+                status_code=500,
+            )
         return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
     # ----------------------------- Startup hooks --------------------------

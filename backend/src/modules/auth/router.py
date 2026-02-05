@@ -1761,6 +1761,7 @@ async def refresh(
     response: Response,
     payload: Optional[RefreshIn] = Body(default=None),
     db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
 ) -> RefreshOut:
     token = _resolve_refresh_token(payload, request)
     if not token:
