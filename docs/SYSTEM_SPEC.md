@@ -327,10 +327,11 @@ All auth endpoints SHOULD use a single error shape:
 `POST /api/auth/register/step1` → `POST /api/auth/register/step2` (temp token + profile). This spec treats `/api/auth/register` as the canonical MVP contract.
 
 #### 3.1.3 Session / Token Model (MVP)
-- **Access token**: JWT, short-lived; TTL configurable via `ACCESS_TOKEN_TTL_MINUTES` (default 7 days).
+- **Access token**: JWT; TTL configurable via `ACCESS_TOKEN_TTL_MINUTES` (current default 7 days).
 - **Refresh token**: opaque token stored server-side and rotated; returned in JSON and set as `refresh_token` cookie.
 - **Cookie settings**: `HttpOnly`, `SameSite={lax|strict|none}`, `Secure` auto-enabled when `SameSite=None`, `Path=/api/auth`.
 - **Storage (frontend)**: access token stored in local storage; refresh token stored in local storage (fallback) and via httpOnly cookie.
+   Security note: storing refresh tokens in localStorage is discouraged; prefer the httpOnly cookie as the primary mechanism.
 - **Refresh**: `POST /api/auth/refresh` returns new tokens and rotates refresh cookie.
 - **Logout**: `POST /api/auth/logout` clears refresh cookie and invalidates server-side refresh token.
 - **Authorization**: `Authorization: Bearer <access_token>` on protected endpoints.
