@@ -265,30 +265,141 @@ Optional (post-MVP):
 
 ### 3.1 Auth Flows
 
-- Login
-- Token refresh
-- Logout
+**Purpose:** Define the MVP authentication contract and session behavior for Auth v1.
 
-(Details to be added; behavior must match implementation.)
+**Diagram references:**
+- Source: `docs/diagrams/src/auth-workflow.mup`
+- Export: `docs/diagrams/export/auth-workflow.pdf`
+
+#### 3.1.1 Error Shape (canonical)
+All auth endpoints SHOULD use a single error shape:
+
+```json
+{
+   "error": {
+      "code": "STRING",
+      "message": "STRING",
+      "fields": { "field": "message" }
+   }
+}
+```
+
+#### 3.1.2 Endpoint Contracts (MVP)
+
+**POST `/api/auth/register`** (single-step registration)
+- **Request JSON**
+   - `first_name` (string, required)
+   - `last_name` (string, required)
+   - `email` (string, required, email format)
+   - `password` (string, required)
+   - `confirm_password` (string, required, must match)
+   - `role` (string, optional; default `Customer`)
+   - `company_name` (string, optional)
+   - `profile` (object, optional)
+   - `recaptcha_token` (string, optional; required when reCAPTCHA enabled)
+- **Validation**
+   - Email format enforced.
+   - Password policy (see §3.1.6).
+- **Success**
+   - `201 Created`
+   - Response JSON: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer", "email_verified": true }`
+   - Also sets `refresh_token` httpOnly cookie.
+- **Failures**
+   - `400` validation error
+   - `409` account already exists
+   - `429` rate limited
+
+**POST `/api/auth/login`**
+- **Request JSON**
+   - `email` (string, required, email format)
+   - `password` (string, required)
+   - `recaptcha_token` (string, optional; required when reCAPTCHA enabled)
+- **Success**
+   - `200 OK`
+   - Response JSON: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer", "email_verified": true }`
+   - Also sets `refresh_token` httpOnly cookie.
+- **Failures**
+   - `401` invalid credentials (generic message)
+   - `403` email not verified
+   - `429` rate limited (`Retry-After` header)
+
+**Notes:** The backend also supports a two-step registration flow:
+`POST /api/auth/register/step1` → `POST /api/auth/register/step2` (temp token + profile). This spec treats `/api/auth/register` as the canonical MVP contract.
+
+#### 3.1.3 Session / Token Model (MVP)
+- **Access token**: JWT, short-lived; TTL configurable via `ACCESS_TOKEN_TTL_MINUTES` (default 7 days).
+- **Refresh token**: opaque token stored server-side and rotated; returned in JSON and set as `refresh_token` cookie.
+- **Cookie settings**: `HttpOnly`, `SameSite={lax|strict|none}`, `Secure` auto-enabled when `SameSite=None`, `Path=/api/auth`.
+- **Storage (frontend)**: access token stored in local storage; refresh token stored in local storage (fallback) and via httpOnly cookie.
+- **Refresh**: `POST /api/auth/refresh` returns new tokens and rotates refresh cookie.
+- **Logout**: `POST /api/auth/logout` clears refresh cookie and invalidates server-side refresh token.
+- **Authorization**: `Authorization: Bearer <access_token>` on protected endpoints.
+
+#### 3.1.4 Account Status Rules
+- **active**: `is_active=true` and `email_verified=true` → login allowed.
+- **pending_verification**: `email_verified=false` → login denied with `403`.
+- **disabled**: `is_active=false` → login denied with `401` (generic invalid credentials).
+
+#### 3.1.5 Rate Limiting / Lockout (Measurable)
+- **Per-IP+email login gate** (in-memory):
+   - Max attempts: `AUTH_LOGIN_MAX_ATTEMPTS` (default 5)
+   - Window: `AUTH_LOGIN_WINDOW_SEC` (default 300s)
+   - Block: `AUTH_LOGIN_BLOCK_SEC` (default 300s)
+   - Response: `429` with `Retry-After`
+- **Global rate limit**: `RATE_LIMIT_PER_MIN` (default 10/min) applied via auth rate limiter.
+- **Audit events**: login attempt, login success, lockout (see login audit model).
+
+#### 3.1.6 Password Policy + UX Rules
+- **Minimum**: 12 characters; must include uppercase, lowercase, digit, and special character.
+- **Register UX**: field-level errors allowed.
+- **Login UX**: generic error only (avoid account enumeration).
+- **Show/Hide password**: allowed for UX.
+
+#### 3.1.7 Mismatch / Follow-up WO
+- **Error shape**: current implementation returns `{ "detail": "..." }` from FastAPI errors. Align to the canonical error envelope in a follow-up WO.
+- **CSRF on refresh**: SECURITY_CSRF.md requires CSRF for `POST /api/auth/refresh`, but the current endpoint does not enforce it. Align in a follow-up WO.
 
 ### 3.2 CSRF Policy
 
-- Token source
-- Cookie name(s)
-- Required headers
-- Protected endpoints
+Canonical reference: [SECURITY_CSRF.md](SECURITY_CSRF.md)
 
-> Canonical reference: [SECURITY_CSRF.md](SECURITY_CSRF.md)
+**Token source**
+- `GET /api/auth/csrf` returns JSON with `csrf`, `csrf_token`, and `token`.
+- Sets cookie `csrftoken` (readable, not HttpOnly) and mirrors into `X-CSRF-Token` response header.
+
+**Cookie names accepted**
+- `csrftoken` (preferred)
+- `csrf_token`
+
+**Required headers**
+- `X-CSRF-Token` (preferred) or `X-CSRFToken`
+
+**Protected endpoints**
+- All non-safe methods: `POST`, `PUT`, `PATCH`, `DELETE`.
+- Auth endpoints requiring CSRF include: `/api/auth/login`, `/api/auth/register`, `/api/auth/logout` (see mismatch note for refresh).
 
 ### 3.3 Session Guarantees
 
-- What the system guarantees
-- What the system explicitly does NOT guarantee
+**Guarantees**
+- Auth endpoints return access + refresh tokens on success.
+- Refresh token cookie is set with HttpOnly and SameSite policy.
+- Access tokens authorize protected endpoints via `Authorization: Bearer`.
+
+**Non-guarantees**
+- Sessions are not durable across hard cookie deletion or localStorage clearing.
+- Token refresh is not guaranteed if refresh token is expired/invalid.
 
 ### 3.4 Frozen vs Flexible Areas
 
-- Frozen: (to be defined)
-- Flexible: (to be defined)
+**Frozen**
+- CSRF policy (token source + cookie/header names).
+- Auth endpoint contracts (`/api/auth/login`, `/api/auth/register`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/me`).
+- Refresh cookie name/path and httpOnly requirement.
+
+**Flexible**
+- Token TTLs (env-configured).
+- Rate limit thresholds (env-configured).
+- UI copy/UX affordances (as long as security rules are unchanged).
 
 ---
 
