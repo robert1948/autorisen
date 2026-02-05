@@ -67,7 +67,7 @@ import LogoTestPage from "./pages/help/LogoTestPage";
 import SunbirdPilotMobile from "./pages/app/SunbirdPilotMobilePage";
 
 // CapeControl auth components (production-ready)
-import LoginPage from "./pages/auth/LoginPage";
+import LoginPage from "./pages/Login";
 import MFAChallenge from "./pages/auth/MfaChallengePage";
 import MFAEnroll from "./pages/auth/MfaEnrollPage";
 

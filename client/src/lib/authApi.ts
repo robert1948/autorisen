@@ -65,7 +65,9 @@ async function parseError(response: Response): Promise<never> {
 
   try {
     const data = await response.json();
-    if (typeof data?.detail === "string") {
+    if (typeof data?.error?.message === "string") {
+      message = data.error.message;
+    } else if (typeof data?.detail === "string") {
       message = data.detail;
     } else if (data?.detail) {
       message = JSON.stringify(data.detail);
@@ -92,6 +94,15 @@ export type RegisterApiError = Error & {
 };
 
 function extractFieldErrors(detail: unknown): FieldErrorMap | undefined {
+  if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+    const entries = Object.entries(detail as Record<string, unknown>);
+    if (entries.length > 0 && entries.every(([, value]) => typeof value === "string")) {
+      return entries.reduce<FieldErrorMap>((acc, [key, value]) => {
+        acc[key] = String(value);
+        return acc;
+      }, {});
+    }
+  }
   if (Array.isArray(detail)) {
     return detail.reduce<FieldErrorMap>((acc, item) => {
       if (!item || typeof item !== "object") return acc;
@@ -124,15 +135,15 @@ function extractFieldErrors(detail: unknown): FieldErrorMap | undefined {
 }
 
 async function parseRegisterError(response: Response): Promise<never> {
-  let data: { detail?: unknown } | undefined;
+  let data: { detail?: unknown; error?: { message?: string; fields?: unknown } } | undefined;
   try {
-    data = (await response.json()) as { detail?: unknown };
+    data = (await response.json()) as { detail?: unknown; error?: { message?: string; fields?: unknown } };
   } catch (err) {
     console.warn("Failed to parse register error response", err);
   }
 
   const status = response.status;
-  const detail = data?.detail;
+  const detail = data?.detail ?? data?.error?.message;
   let message = `Request failed with status ${status}`;
   if (status === 409) {
     message = "An account with this email already exists.";
@@ -146,7 +157,9 @@ async function parseRegisterError(response: Response): Promise<never> {
 
   const error = new Error(message) as RegisterApiError;
   error.status = status;
-  error.fieldErrors = extractFieldErrors(detail);
+  error.fieldErrors =
+    extractFieldErrors(data?.error?.fields) ??
+    extractFieldErrors(detail);
   invalidateCsrfToken();
   throw error;
 }

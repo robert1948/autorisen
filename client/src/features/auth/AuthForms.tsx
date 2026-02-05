@@ -9,9 +9,9 @@ const SOCIAL_PROVIDERS = ["google", "linkedin"] as const;
 type SocialProvider = (typeof SOCIAL_PROVIDERS)[number];
 
 const AuthForms = () => {
-  const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
+  const API_ROOT = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/+$/, "");
 
-  const { state, loginUser, logout, loading, error } = useAuth();
+  const { state, loginUser, logout, loading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +53,7 @@ const AuthForms = () => {
     }
     setSocialError(null);
     sessionStorage.setItem(oauthRecaptchaKey(provider), recaptchaToken);
-    const oauthBase = `${API_BASE}/api/auth/oauth/${provider}/start`;
+    const oauthBase = `${API_ROOT}/api/auth/oauth/${provider}/start`;
     const params = new URLSearchParams({
       next: "/dashboard",
       format: "json",
@@ -198,7 +198,10 @@ const AuthForms = () => {
             required
             type="email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              if (error) clearError();
+            }}
             placeholder="you@example.com"
             autoComplete="username"
           />
@@ -211,7 +214,10 @@ const AuthForms = () => {
               required
               minLength={12}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (error) clearError();
+              }}
               placeholder="Enter your password"
               autoComplete="current-password"
             />

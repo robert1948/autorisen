@@ -47,6 +47,7 @@ const AuthContext = createContext<{
   loginWithLinkedIn: (payload: LinkedInLoginPayload) => Promise<void>;
   setAuthFromTokens: (email: string, token: TokenResponse, emailVerified?: boolean) => void;
   markEmailVerified: () => void;
+  clearError: () => void;
   logout: () => Promise<void>;
 }>({
   state: {
@@ -65,6 +66,7 @@ const AuthContext = createContext<{
   loginWithLinkedIn: async () => undefined,
   setAuthFromTokens: () => undefined,
   markEmailVerified: () => undefined,
+  clearError: () => undefined,
   logout: async () => undefined,
 });
 
@@ -219,8 +221,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       bootstrapped.current = false;
       await fetchMeOnce();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed";
-      setError(message);
+      const status = (err as { status?: number }).status ?? 0;
+      if (status === 401) {
+        setError("Invalid credentials");
+      } else if (status === 422) {
+        setError("Login request rejected (check email/password format)");
+      } else if (status >= 500) {
+        setError("Server error, try again");
+      } else if (!status) {
+        setError("Cannot reach server");
+      } else {
+        const message = err instanceof Error ? err.message : "Login failed";
+        setError(message);
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -345,6 +358,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loginWithLinkedIn,
     setAuthFromTokens,
     markEmailVerified,
+    clearError: () => setError(null),
     logout,
   };
 
