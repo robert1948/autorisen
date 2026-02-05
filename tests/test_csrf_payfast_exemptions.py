@@ -8,7 +8,10 @@ def test_csrf_still_applies_to_auth_login(client):
         json={"email": "user@example.test", "password": "not-a-real-password"},
     )
     assert resp.status_code == 403
-    assert resp.json().get("detail") == "CSRF token missing or invalid"
+    payload = resp.json()
+    error = payload.get("error", {}) if isinstance(payload, dict) else {}
+    assert error.get("code") == "CSRF_FAILED"
+    assert error.get("message") == "CSRF token missing or invalid"
 
 
 def test_payfast_itn_post_is_csrf_exempt(client, monkeypatch):
