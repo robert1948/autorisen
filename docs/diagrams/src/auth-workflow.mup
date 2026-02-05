@@ -1,0 +1,837 @@
+{
+  "ideas": {
+    "1": {
+      "id": 1,
+      "title": "Modern Web Auth & Onboarding + Password Reset + MFA + Recovery",
+      "attr": {},
+      "ideas": {
+        "1": {
+          "title": "Future / Nice-to-have",
+          "ideas": {
+            "1": {
+              "title": "Passkeys / WebAuthn",
+              "id": 3
+            },
+            "2": {
+              "title": "Passwordless (magic link / OTP)",
+              "id": 4
+            },
+            "3": {
+              "title": "Social / OIDC login",
+              "id": 5
+            },
+            "4": {
+              "title": "Session / device management",
+              "id": 6
+            },
+            "5": {
+              "title": "Email + username change flow",
+              "id": 7
+            },
+            "6": {
+              "title": "MFA recovery via support / verified email",
+              "id": 8
+            },
+            "7": {
+              "title": "Trusted recovery contacts",
+              "id": 9
+            }
+          },
+          "id": 2
+        },
+        "2": {
+          "title": "Security & Shared",
+          "ideas": {
+            "1": {
+              "title": "argon2id / scrypt / bcrypt",
+              "id": 11
+            },
+            "2": {
+              "title": "Rate limiting (IP + email)",
+              "id": 12
+            },
+            "3": {
+              "title": "Refresh token rotation",
+              "id": 13
+            },
+            "4": {
+              "title": "Secure & SameSite cookies (alternative)",
+              "id": 14
+            },
+            "5": {
+              "title": "CSRF tokens (if cookie-based)",
+              "id": 15
+            },
+            "6": {
+              "title": "Audit log suspicious activity",
+              "id": 16
+            },
+            "7": {
+              "title": "Account lockout (temporary)",
+              "id": 17
+            },
+            "8": {
+              "title": "TOTP (HOTP/TOTP – RFC 6238/4226)",
+              "id": 18
+            },
+            "9": {
+              "title": "Reset token single-use + short expiry",
+              "id": 19
+            },
+            "10": {
+              "title": "MFA secret encrypted at rest",
+              "id": 20
+            },
+            "11": {
+              "title": "Backup codes: bcrypt hash, single-use",
+              "id": 21
+            },
+            "12": {
+              "title": "Recovery actions: high-risk audit + alerts",
+              "id": 22
+            }
+          },
+          "id": 10
+        },
+        "3": {
+          "title": "Unauthenticated",
+          "ideas": {
+            "1": {
+              "title": "Welcome / Auth choice screen",
+              "ideas": {
+                "1": {
+                  "title": "Login",
+                  "id": 25
+                },
+                "2": {
+                  "title": "Register",
+                  "id": 26
+                },
+                "3": {
+                  "title": "Continue with Google",
+                  "id": 27
+                },
+                "4": {
+                  "title": "Continue with GitHub",
+                  "id": 28
+                },
+                "5": {
+                  "title": "Continue with Apple",
+                  "id": 29
+                }
+              },
+              "id": 24
+            }
+          },
+          "id": 23
+        },
+        "4": {
+          "title": "Entry Points",
+          "ideas": {
+            "1": {
+              "title": "Landing / Marketing page",
+              "id": 31
+            },
+            "2": {
+              "title": "Deep link from email / mobile",
+              "id": 32
+            },
+            "3": {
+              "title": "Protected route → 401/403",
+              "id": 33
+            }
+          },
+          "id": 30
+        },
+        "5": {
+          "title": "Registration Flow",
+          "ideas": {
+            "1": {
+              "title": "Register screen",
+              "ideas": {
+                "1": {
+                  "title": "Email (required)",
+                  "id": 36
+                },
+                "2": {
+                  "title": "Password (min 12 chars, rules)",
+                  "id": 37
+                },
+                "3": {
+                  "title": "Confirm password",
+                  "id": 38
+                },
+                "4": {
+                  "title": "Username (optional, check availability)",
+                  "id": 39
+                },
+                "5": {
+                  "title": "Accept Terms & Privacy Policy",
+                  "id": 40
+                }
+              },
+              "id": 35
+            },
+            "2": {
+              "title": "→ POST /api/auth/register",
+              "id": 41
+            },
+            "3": {
+              "title": "Backend",
+              "ideas": {
+                "1": {
+                  "title": "Validate input",
+                  "id": 43
+                },
+                "2": {
+                  "title": "Email already exists? → 409",
+                  "id": 44
+                },
+                "3": {
+                  "title": "Hash password (argon2id)",
+                  "id": 45
+                },
+                "4": {
+                  "title": "Create user (email_verified = false, mfa_enabled = false)",
+                  "id": 46
+                },
+                "5": {
+                  "title": "Generate verification token",
+                  "id": 47
+                },
+                "6": {
+                  "title": "Queue → send verification email",
+                  "id": 48
+                },
+                "7": {
+                  "title": "Return 201 + short-lived JWT (unverified)",
+                  "id": 49
+                }
+              },
+              "id": 42
+            },
+            "4": {
+              "title": "Client → store token (localStorage / secure cookie)",
+              "id": 50
+            },
+            "5": {
+              "title": "Redirect → /verify-email (pending)",
+              "id": 51
+            }
+          },
+          "id": 34
+        },
+        "6": {
+          "title": "Login Flow",
+          "ideas": {
+            "1": {
+              "title": "Login screen",
+              "ideas": {
+                "1": {
+                  "title": "Email",
+                  "id": 54
+                },
+                "2": {
+                  "title": "Password",
+                  "id": 55
+                },
+                "3": {
+                  "title": "Remember me",
+                  "id": 56
+                },
+                "4": {
+                  "title": "Forgot password?",
+                  "id": 57
+                }
+              },
+              "id": 53
+            },
+            "2": {
+              "title": "→ POST /api/auth/login",
+              "id": 58
+            },
+            "3": {
+              "title": "Backend",
+              "ideas": {
+                "1": {
+                  "title": "Find user + check not locked",
+                  "id": 60
+                },
+                "2": {
+                  "title": "email_verified = true?",
+                  "id": 61
+                },
+                "3": {
+                  "title": "Verify password",
+                  "id": 62
+                },
+                "4": {
+                  "title": "Rate limit / brute-force protection",
+                  "id": 63
+                },
+                "5": {
+                  "title": "mfa_enabled && mfa_verified_required?",
+                  "id": 64
+                },
+                "6": {
+                  "title": "If MFA required → return 200 + { requires_mfa: true, mfa_method: 'totp' }",
+                  "id": 65
+                },
+                "7": {
+                  "title": "Else → issue access + refresh tokens",
+                  "id": 66
+                }
+              },
+              "id": 59
+            },
+            "4": {
+              "title": "Client",
+              "ideas": {
+                "1": {
+                  "title": "If requires_mfa → redirect to /mfa-verify",
+                  "id": 68
+                },
+                "2": {
+                  "title": "Else → store tokens → /dashboard",
+                  "id": 69
+                }
+              },
+              "id": 67
+            }
+          },
+          "id": 52
+        },
+        "7": {
+          "title": "MFA Setup Flow",
+          "ideas": {
+            "1": {
+              "title": "Where to initiate setup",
+              "ideas": {
+                "1": {
+                  "title": "During onboarding (after email verification)",
+                  "id": 72
+                },
+                "2": {
+                  "title": "Account settings → Security",
+                  "id": 73
+                },
+                "3": {
+                  "title": "Forced on first login after X days (optional policy)",
+                  "id": 74
+                }
+              },
+              "id": 71
+            },
+            "2": {
+              "title": "MFA setup screen (/settings/mfa/setup)",
+              "ideas": {
+                "1": {
+                  "title": "Choose method: Authenticator app (TOTP)",
+                  "id": 76
+                },
+                "2": {
+                  "title": "Backup codes (generate later)",
+                  "id": 77
+                },
+                "3": {
+                  "title": "Security key (WebAuthn – future)",
+                  "id": 78
+                }
+              },
+              "id": 75
+            },
+            "3": {
+              "title": "TOTP Setup steps",
+              "ideas": {
+                "1": {
+                  "title": "1. Generate TOTP secret (base32)",
+                  "id": 80
+                },
+                "2": {
+                  "title": "2. Show QR code + secret key (manual entry fallback)",
+                  "id": 81
+                },
+                "3": {
+                  "title": "3. User scans / enters in app (Google Auth, Authy, etc.)",
+                  "id": 82
+                },
+                "4": {
+                  "title": "4. User enters current 6-digit code to verify",
+                  "id": 83
+                },
+                "5": {
+                  "title": "→ POST /api/auth/mfa/setup/verify",
+                  "id": 84
+                },
+                "6": {
+                  "title": "payload: { code: '123456', method: 'totp' }",
+                  "id": 85
+                }
+              },
+              "id": 79
+            },
+            "4": {
+              "title": "Backend – Verify & Enable",
+              "ideas": {
+                "1": {
+                  "title": "Validate code against current TOTP",
+                  "id": 87
+                },
+                "2": {
+                  "title": "If valid: store encrypted secret, set mfa_enabled = true, mfa_method = 'totp'",
+                  "id": 88
+                },
+                "3": {
+                  "title": "Generate & show 8–12 backup codes (one-time view, uppercase + digits)",
+                  "id": 89
+                },
+                "4": {
+                  "title": "Store hashed backup codes (bcrypt/argon2)",
+                  "id": 90
+                },
+                "5": {
+                  "title": "Require re-auth (password + existing MFA if possible) before showing secrets/codes",
+                  "id": 91
+                },
+                "6": {
+                  "title": "Return success + force re-login or continue",
+                  "id": 92
+                }
+              },
+              "id": 86
+            },
+            "5": {
+              "title": "Client",
+              "ideas": {
+                "1": {
+                  "title": "Show backup codes (warn: copy/save securely, never screenshot/share)",
+                  "id": 94
+                },
+                "2": {
+                  "title": "Confirmation: MFA now active – save recovery codes!",
+                  "id": 95
+                },
+                "3": {
+                  "title": "Redirect to /dashboard or settings",
+                  "id": 96
+                }
+              },
+              "id": 93
+            }
+          },
+          "id": 70
+        },
+        "8": {
+          "title": "MFA Verification Flow (during login)",
+          "ideas": {
+            "1": {
+              "title": "After password correct → /mfa-verify",
+              "id": 98
+            },
+            "2": {
+              "title": "MFA verify screen",
+              "ideas": {
+                "1": {
+                  "title": "Enter 6-digit code from authenticator",
+                  "id": 100
+                },
+                "2": {
+                  "title": "Or use backup code",
+                  "id": 101
+                },
+                "3": {
+                  "title": "→ POST /api/auth/mfa/verify",
+                  "id": 102
+                }
+              },
+              "id": 99
+            },
+            "3": {
+              "title": "Backend",
+              "ideas": {
+                "1": {
+                  "title": "Validate TOTP code OR check & consume backup code (mark used)",
+                  "id": 104
+                },
+                "2": {
+                  "title": "If valid → issue access + refresh tokens",
+                  "id": 105
+                },
+                "3": {
+                  "title": "Remember device? (optional trusted device cookie – skip MFA for period)",
+                  "id": 106
+                },
+                "4": {
+                  "title": "Log MFA success",
+                  "id": 107
+                },
+                "5": {
+                  "title": "Invalid → increment attempts, lock after X",
+                  "id": 108
+                }
+              },
+              "id": 103
+            },
+            "4": {
+              "title": "Success → store tokens → /dashboard",
+              "id": 109
+            }
+          },
+          "id": 97
+        },
+        "9": {
+          "title": "MFA Recovery Flow (lost authenticator)",
+          "ideas": {
+            "1": {
+              "title": "User can't get TOTP code",
+              "id": 111
+            },
+            "2": {
+              "title": "Primary: Use backup code",
+              "ideas": {
+                "1": {
+                  "title": "During /mfa-verify → select 'Use recovery code'",
+                  "id": 113
+                },
+                "2": {
+                  "title": "Enter one backup code",
+                  "id": 114
+                },
+                "3": {
+                  "title": "Backend: validate hash + not used → consume code",
+                  "id": 115
+                },
+                "4": {
+                  "title": "If valid: grant access + redirect to /settings/mfa/recover",
+                  "id": 116
+                }
+              },
+              "id": 112
+            },
+            "3": {
+              "title": "MFA recovery screen (/settings/mfa/recover)",
+              "ideas": {
+                "1": {
+                  "title": "Option 1: Remaining backup codes",
+                  "id": 118
+                },
+                "2": {
+                  "title": "Option 2: Regenerate new TOTP (after password re-auth)",
+                  "id": 119
+                },
+                "3": {
+                  "title": "Option 3: Contact support / admin recovery (last resort)",
+                  "id": 120
+                }
+              },
+              "id": 117
+            },
+            "4": {
+              "title": "Regenerate TOTP (self-service)",
+              "ideas": {
+                "1": {
+                  "title": "Require password + email verification (magic link / OTP)",
+                  "id": 122
+                },
+                "2": {
+                  "title": "→ POST /api/auth/mfa/recover/regenerate",
+                  "id": 123
+                },
+                "3": {
+                  "title": "Backend: invalidate old TOTP secret",
+                  "id": 124
+                },
+                "4": {
+                  "title": "Generate new secret → show new QR + codes",
+                  "id": 125
+                },
+                "5": {
+                  "title": "User verifies new code → enable new setup",
+                  "id": 126
+                },
+                "6": {
+                  "title": "Invalidate all sessions / refresh tokens",
+                  "id": 127
+                }
+              },
+              "id": 121
+            },
+            "5": {
+              "title": "Admin / Support-assisted recovery",
+              "ideas": {
+                "1": {
+                  "title": "User submits request via help form / support ticket",
+                  "id": 129
+                },
+                "2": {
+                  "title": "Support verifies identity (gov ID upload, video call, knowledge-based Qs, etc.)",
+                  "id": 130
+                },
+                "3": {
+                  "title": "Admin: temporarily disable MFA or generate temp bypass",
+                  "id": 131
+                },
+                "4": {
+                  "title": "User logs in → forced to re-setup MFA",
+                  "id": 132
+                },
+                "5": {
+                  "title": "Audit log + notify user of recovery action",
+                  "id": 133
+                }
+              },
+              "id": 128
+            },
+            "6": {
+              "title": "Security notes",
+              "ideas": {
+                "1": {
+                  "title": "Backup codes: single-use, hashed, rate-limited",
+                  "id": 135
+                },
+                "2": {
+                  "title": "Recovery actions: high-risk → alert security team",
+                  "id": 136
+                },
+                "3": {
+                  "title": "Never allow MFA disable without strong proof",
+                  "id": 137
+                },
+                "4": {
+                  "title": "Encourage multiple authenticators / cloud-sync apps",
+                  "id": 138
+                }
+              },
+              "id": 134
+            }
+          },
+          "id": 110
+        },
+        "10": {
+          "title": "Password Reset Flow",
+          "ideas": {
+            "1": {
+              "title": "User clicks Forgot password?",
+              "id": 140
+            },
+            "2": {
+              "title": "Reset request screen",
+              "ideas": {
+                "1": {
+                  "title": "Enter email",
+                  "id": 142
+                },
+                "2": {
+                  "title": "→ POST /api/auth/password-reset/request",
+                  "id": 143
+                }
+              },
+              "id": 141
+            },
+            "3": {
+              "title": "Backend – Request",
+              "ideas": {
+                "1": {
+                  "title": "Find user by email",
+                  "id": 145
+                },
+                "2": {
+                  "title": "If exists: generate reset token (short-lived, ~1h)",
+                  "id": 146
+                },
+                "3": {
+                  "title": "Store hashed token + expiry + user_id",
+                  "id": 147
+                },
+                "4": {
+                  "title": "Queue → send password reset email with link",
+                  "id": 148
+                },
+                "5": {
+                  "title": "Always return 200 (no user enumeration)",
+                  "id": 149
+                }
+              },
+              "id": 144
+            },
+            "4": {
+              "title": "User receives email → clicks link",
+              "id": 150
+            },
+            "5": {
+              "title": "Reset page (/reset?token=xxx)",
+              "ideas": {
+                "1": {
+                  "title": "New password",
+                  "id": 152
+                },
+                "2": {
+                  "title": "Confirm new password",
+                  "id": 153
+                },
+                "3": {
+                  "title": "→ POST /api/auth/password-reset/confirm",
+                  "id": 154
+                },
+                "4": {
+                  "title": "token + new_password",
+                  "id": 155
+                }
+              },
+              "id": 151
+            },
+            "6": {
+              "title": "Backend – Confirm",
+              "ideas": {
+                "1": {
+                  "title": "Validate token (exists, not expired, hash match)",
+                  "id": 157
+                },
+                "2": {
+                  "title": "Hash new password (argon2id)",
+                  "id": 158
+                },
+                "3": {
+                  "title": "Update user password",
+                  "id": 159
+                },
+                "4": {
+                  "title": "Invalidate ALL existing refresh tokens for user",
+                  "id": 160
+                },
+                "5": {
+                  "title": "If mfa_enabled → optionally disable or keep",
+                  "id": 161
+                },
+                "6": {
+                  "title": "Delete used reset token",
+                  "id": 162
+                },
+                "7": {
+                  "title": "Return 200 success",
+                  "id": 163
+                }
+              },
+              "id": 156
+            },
+            "7": {
+              "title": "Client → show success → redirect to /login",
+              "id": 164
+            }
+          },
+          "id": 139
+        },
+        "11": {
+          "title": "Email Verification",
+          "ideas": {
+            "1": {
+              "title": "User clicks link → /verify?token=xxx",
+              "id": 166
+            },
+            "2": {
+              "title": "Backend",
+              "ideas": {
+                "1": {
+                  "title": "Validate token (signature + expiry)",
+                  "id": 168
+                },
+                "2": {
+                  "title": "Mark email_verified = true",
+                  "id": 169
+                },
+                "3": {
+                  "title": "Invalidate old refresh tokens (optional)",
+                  "id": 170
+                },
+                "4": {
+                  "title": "Issue new access + refresh tokens",
+                  "id": 171
+                }
+              },
+              "id": 167
+            },
+            "3": {
+              "title": "Redirect → /onboarding or /dashboard",
+              "id": 172
+            }
+          },
+          "id": 165
+        },
+        "12": {
+          "title": "Authenticated Session",
+          "ideas": {
+            "1": {
+              "title": "Request",
+              "ideas": {
+                "1": {
+                  "title": "Authorization: Bearer <access>",
+                  "id": 175
+                },
+                "2": {
+                  "title": "JWT middleware",
+                  "ideas": {
+                    "1": {
+                      "title": "Signature valid?",
+                      "id": 177
+                    },
+                    "2": {
+                      "title": "Not expired?",
+                      "id": 178
+                    },
+                    "3": {
+                      "title": "User still exists?",
+                      "id": 179
+                    }
+                  },
+                  "id": 176
+                }
+              },
+              "id": 174
+            },
+            "2": {
+              "title": "Access token expiring soon?",
+              "ideas": {
+                "1": {
+                  "title": "→ POST /api/auth/refresh",
+                  "id": 181
+                },
+                "2": {
+                  "title": "Send refresh_token",
+                  "id": 182
+                },
+                "3": {
+                  "title": "Validate & rotate refresh token",
+                  "id": 183
+                },
+                "4": {
+                  "title": "Issue new access + new refresh",
+                  "id": 184
+                }
+              },
+              "id": 180
+            },
+            "3": {
+              "title": "Logout",
+              "ideas": {
+                "1": {
+                  "title": "→ POST /api/auth/logout",
+                  "id": 186
+                },
+                "2": {
+                  "title": "Invalidate current refresh token",
+                  "id": 187
+                }
+              },
+              "id": 185
+            }
+          },
+          "id": 173
+        }
+      }
+    }
+  },
+  "formatVersion": 3,
+  "id": "root",
+  "attr": {},
+  "title": "Modern Web Auth & Onboarding + Password Reset + MFA + Recovery"
+}
