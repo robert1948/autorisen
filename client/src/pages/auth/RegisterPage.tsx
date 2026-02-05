@@ -21,6 +21,7 @@ import {
   type UserRole,
 } from "../../lib/authApi";
 import { useAuth } from "../../features/auth/AuthContext";
+import Footer from "../../components/Footer";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/;
 const PASSWORD_ERROR =
@@ -106,6 +107,7 @@ const Register = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const { setAuthFromTokens } = useAuth();
+  const handleOpenSupport = () => undefined;
 
   const sendAnalytics = useCallback(async (payload: { event_type: string; step?: string; role?: UserRole | null; details?: Record<string, unknown> }) => {
     try {
@@ -335,8 +337,9 @@ const Register = () => {
   const progress = useMemo(() => (step === 1 ? 50 : 100), [step]);
 
   return (
-    <main className="register-page">
-      <section className="register-card">
+    <>
+      <main className="register-page">
+        <section className="register-card">
         <header className="register-card__header">
           <h1>Create your CapeControl account</h1>
           <p>Two quick steps to tailor the experience for customers and developers.</p>
@@ -580,8 +583,10 @@ const Register = () => {
             </button>
           </form>
         )}
-      </section>
-    </main>
+        </section>
+      </main>
+      <Footer onOpenSupport={handleOpenSupport} />
+    </>
   );
 };
 

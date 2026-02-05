@@ -4,6 +4,9 @@
 
 ARG NODE_VERSION=20
 ARG PYTHON_VERSION=3.12
+ARG GIT_SHA=""
+ARG BUILD_EPOCH=""
+ARG APP_BUILD_VERSION=""
 
 # Frontend build stage
 FROM node:${NODE_VERSION}-alpine AS frontend-build
@@ -32,9 +35,9 @@ RUN npm run build
 # Production Python runtime stage
 FROM python:${PYTHON_VERSION}-slim AS production
 
-ARG GIT_SHA=unknown
-ARG BUILD_EPOCH=unknown
-ARG APP_BUILD_VERSION=unknown
+ARG GIT_SHA=""
+ARG BUILD_EPOCH=""
+ARG APP_BUILD_VERSION=""
 
 # Environment configuration
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -78,6 +81,10 @@ COPY --chown=app:app backend/ ./backend/
 COPY --chown=app:app app/ ./app/
 COPY --chown=app:app scripts/ ./scripts/
 COPY --chown=app:app --from=frontend-build /app/dist ./client/dist
+COPY --chown=app:app VERSION /app/VERSION
+RUN printf "%s" "$GIT_SHA" > /app/GIT_SHA \
+    && printf "%s" "$BUILD_EPOCH" > /app/BUILD_EPOCH \
+    && chown app:app /app/GIT_SHA /app/BUILD_EPOCH
 
 # Copy essential configuration files
 COPY --chown=app:app runtime.txt ./

@@ -457,15 +457,38 @@ def create_app() -> FastAPI:
                 return None
             return cleaned
 
-        git_sha = _clean_env(os.getenv("GIT_SHA"))
-        build_epoch = _clean_env(os.getenv("BUILD_EPOCH"))
-        app_build_version = _clean_env(os.getenv("APP_BUILD_VERSION"))
-        build_version = app_build_version or git_sha or "unknown"
-        if git_sha is None and build_version != "unknown":
-            git_sha = build_version
+        def _read_file_value(path: Path) -> str | None:
+            try:
+                if path.exists():
+                    content = path.read_text(encoding="utf-8").strip()
+                    if content and content.lower() != "unknown":
+                        return content
+            except Exception:
+                return None
+            return None
+
+        def _read_version_file() -> str | None:
+            candidates = [Path("/app/VERSION"), PROJECT_ROOT / "VERSION"]
+            for candidate in candidates:
+                value = _read_file_value(candidate)
+                if value:
+                    return value
+            return None
+
+        git_sha = (
+            _clean_env(os.getenv("GIT_SHA"))
+            or _clean_env(os.getenv("HEROKU_SLUG_COMMIT"))
+            or _clean_env(os.getenv("SOURCE_VERSION"))
+            or _read_file_value(Path("/app/GIT_SHA"))
+        )
+        build_epoch = _clean_env(os.getenv("BUILD_EPOCH")) or _read_file_value(Path("/app/BUILD_EPOCH")) or "unknown"
+        app_build_version = _clean_env(os.getenv("APP_BUILD_VERSION")) or _read_version_file()
+        short_sha = git_sha[:7] if git_sha else None
+        build_version = app_build_version or short_sha or build_epoch or "unknown"
+        version = app_build_version or "unknown"
         payload = {
             "buildVersion": build_version,
-            "version": build_version,
+            "version": version,
             "gitSha": git_sha,
             "buildEpoch": build_epoch,
         }
