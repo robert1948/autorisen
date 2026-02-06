@@ -271,10 +271,10 @@ def test_register_login_refresh_me_flow(client):
     me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {access_token}"})
     assert me.status_code == 200, me.text
     payload = me.json()
-    assert payload["email"] == email
-    assert payload["first_name"] == "Dev"
-    # company_name may be flattened or nested; accept either
-    assert payload.get("company_name") in (None, "Dev LLC") or "company" in payload
+    profile = payload.get("profile") or {}
+    assert profile.get("email") == email
+    assert profile.get("first_name") == "Dev"
+    assert profile.get("company_name") in (None, "Dev LLC")
 
     # refresh
     ref = _refresh(client, refresh_token)
@@ -287,7 +287,7 @@ def test_register_login_refresh_me_flow(client):
     # /me with new token
     me2 = client.get("/api/auth/me", headers={"Authorization": f"Bearer {new_access}"})
     assert me2.status_code == 200, me2.text
-    assert me2.json()["email"] == email
+    assert me2.json().get("profile", {}).get("email") == email
 
 
 def test_login_rate_limit(client):
