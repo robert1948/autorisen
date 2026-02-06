@@ -20,7 +20,11 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { loginUser, loading: authLoading, error: authError } = useAuth();
   const notice = (location.state as { notice?: string } | null)?.notice;
-  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/dashboard';
+  const searchParams = new URLSearchParams(location.search);
+  const nextParam = searchParams.get('next');
+  const stateRedirect = (location.state as { from?: string } | null)?.from;
+  const safeNext = nextParam && nextParam.startsWith('/') ? nextParam : null;
+  const redirectTo = safeNext ?? stateRedirect ?? '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

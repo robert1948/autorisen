@@ -15,7 +15,8 @@ export default function RequireMvpAuth() {
 
   const authed = Boolean(state.accessToken);
   if (!authed) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/auth/login?next=${next}`} replace />;
   }
 
   const path = location.pathname;
