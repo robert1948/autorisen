@@ -50,9 +50,10 @@ from backend.src.core.redis import (
     clear_user_token_version_cache,
     denylist_jti,
 )
-from backend.src.db.session import get_db
+from backend.src.db.session import SessionLocal, get_db
 from backend.src.db import models
 from backend.src.db.models import AnalyticsEvent
+from backend.src.modules.auth.audit import log_password_reset_event
 from backend.src.modules.user import service as user_service
 from backend.src.services import recaptcha as recaptcha_service
 from backend.src.services.emailer import (
@@ -143,6 +144,10 @@ class ForgotPasswordOut(BaseModel):
     )
 
 
+class PasswordResetRequestIn(BaseModel):
+    email: EmailStr
+
+
 class VerificationResendIn(BaseModel):
     email: EmailStr
 
@@ -168,6 +173,18 @@ class ResetPasswordIn(BaseModel):
 
 class ResetPasswordOut(BaseModel):
     message: str = "Your password has been updated."
+
+
+class PasswordResetConfirmIn(BaseModel):
+    token: ResetTokenStr
+    new_password: PasswordStr
+
+    @field_validator("new_password")
+    @classmethod
+    def _password_policy(cls, value: str) -> str:
+        if not PASSWORD_PATTERN.match(value or ""):
+            raise ValueError(PASSWORD_ERROR)
+        return value
 
 
 class RegisterStep1In(BaseModel):
@@ -1601,6 +1618,140 @@ async def login_linkedin(
 # -----------------
 
 
+def _reset_request_audit_context(request: Request) -> Dict[str, Optional[str]]:
+    return {
+        "ip_address": request.client.host if request.client else None,
+        "user_agent": request.headers.get("user-agent"),
+    }
+
+
+def _build_reset_url(raw_token: str) -> str:
+    frontend_origin = str(settings.frontend_origin).rstrip("/")
+    return f"{frontend_origin}/auth/reset-password?token={raw_token}"
+
+
+def _dispatch_password_reset_email(
+    event_id: str,
+    email: str,
+    reset_url: str,
+    expires_at: datetime,
+) -> None:
+    status = "sent"
+    error: Optional[str] = None
+    try:
+        send_password_reset_email(email, reset_url, expires_at)
+    except Exception as exc:  # pragma: no cover - network-specific
+        status = "failed"
+        error = str(exc)
+
+    with SessionLocal() as session:
+        event = session.get(models.EmailEvent, event_id)
+        if event is None:
+            return
+        setattr(event, "status", status)
+        setattr(event, "error", error)
+        session.add(event)
+        session.commit()
+
+
+def _handle_password_reset_request(
+    *,
+    email: str,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session,
+) -> ForgotPasswordOut:
+    if not _init_password_reset_service:
+        log.error("password_reset_initiate_missing")
+        raise HTTPException(status_code=500, detail="Password reset unavailable")
+
+    try:
+        result = _init_password_reset_service(db=db, email=email)  # type: ignore[misc]
+    except Exception as e:
+        log.exception("password_reset_initiate_error email=%s err=%s", email, e)
+        return ForgotPasswordOut()
+
+    if result:
+        user, raw_token, expires_at = result
+        reset_url = _build_reset_url(raw_token)
+        email_event = models.EmailEvent(
+            to_email=user.email,
+            template="password_reset",
+            status="queued",
+            error=None,
+        )
+        db.add(email_event)
+        db.commit()
+        background_tasks.add_task(
+            _dispatch_password_reset_email,
+            email_event.id,
+            user.email,
+            reset_url,
+            expires_at,
+        )
+        audit_context = _reset_request_audit_context(request)
+        log_password_reset_event(
+            db,
+            event_type="PASSWORD_RESET_REQUEST",
+            email=user.email,
+            user_id=getattr(user, "id", None),
+            ip_address=audit_context["ip_address"],
+            user_agent=audit_context["user_agent"],
+        )
+        log.info(
+            "password_reset_token_issued user_id=%s email=%s expires_at=%s",
+            getattr(user, "id", None),
+            user.email,
+            expires_at.isoformat(),
+        )
+    else:
+        log.info("password_reset_initiate_no_user email=%s", email)
+
+    return ForgotPasswordOut()
+
+
+def _handle_password_reset_confirm(
+    *,
+    token: str,
+    new_password: str,
+    request: Request,
+    db: Session,
+) -> ResetPasswordOut:
+    if not _complete_password_reset_service:
+        log.error("password_reset_complete_missing")
+        raise HTTPException(status_code=500, detail="Password reset unavailable")
+
+    token_preview = (token or "")[:6] + "***"
+
+    try:
+        user = _complete_password_reset_service(  # type: ignore[misc]
+            db=db,
+            token=token,
+            new_password=new_password,
+        )
+    except ValueError as ve:
+        log.warning("password_reset_invalid token=%s err=%s", token_preview, ve)
+        raise HTTPException(
+            status_code=400, detail="Invalid or expired reset token"
+        ) from ve
+    except Exception as e:
+        log.exception("password_reset_error token=%s err=%s", token_preview, e)
+        raise HTTPException(status_code=500, detail="Unable to reset password") from e
+
+    clear_user_token_version_cache(getattr(user, "id", ""))
+    audit_context = _reset_request_audit_context(request)
+    log_password_reset_event(
+        db,
+        event_type="PASSWORD_RESET_CONFIRM",
+        email=getattr(user, "email", ""),
+        user_id=getattr(user, "id", None),
+        ip_address=audit_context["ip_address"],
+        user_agent=audit_context["user_agent"],
+    )
+    log.info("password_reset_success user_id=%s", getattr(user, "id", None))
+    return ResetPasswordOut()
+
+
 @router.get("/oauth/google/start")
 async def oauth_google_start(
     request: Request, return_to: Optional[str] = None, next_url: Optional[str] = None
@@ -1683,76 +1834,67 @@ async def oauth_linkedin_callback(
     )
 
 
-@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=202)
-async def forgot_password(
-    payload: ForgotPasswordIn,
+@router.post("/password-reset/request", response_model=ForgotPasswordOut, status_code=202)
+async def password_reset_request(
+    payload: PasswordResetRequestIn,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ) -> ForgotPasswordOut:
     email = _normalize_email(payload.email)
+    return _handle_password_reset_request(
+        email=email,
+        background_tasks=background_tasks,
+        request=request,
+        db=db,
+    )
 
-    if not _init_password_reset_service:
-        log.error("password_reset_initiate_missing")
-        raise HTTPException(status_code=500, detail="Password reset unavailable")
 
-    try:
-        result = _init_password_reset_service(db=db, email=email)  # type: ignore[misc]
-    except Exception as e:
-        log.exception("password_reset_initiate_error email=%s err=%s", email, e)
-        return ForgotPasswordOut()
+@router.post("/password/forgot", response_model=ForgotPasswordOut, status_code=202)
+async def forgot_password(
+    payload: ForgotPasswordIn,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
+) -> ForgotPasswordOut:
+    return _handle_password_reset_request(
+        email=_normalize_email(payload.email),
+        background_tasks=background_tasks,
+        request=request,
+        db=db,
+    )
 
-    if result:
-        user, raw_token, expires_at = result
-        reset_url = f"{str(settings.frontend_origin).rstrip('/')}/reset-password?token={raw_token}"
-        background_tasks.add_task(
-            send_password_reset_email,
-            user.email,
-            reset_url,
-            expires_at,
-        )
-        log.info(
-            "password_reset_token_issued user_id=%s email=%s expires_at=%s",
-            getattr(user, "id", None),
-            user.email,
-            expires_at.isoformat(),
-        )
-    else:
-        log.info("password_reset_initiate_no_user email=%s", email)
 
-    return ForgotPasswordOut()
+@router.post("/password-reset/confirm", response_model=ResetPasswordOut, status_code=200)
+async def password_reset_confirm(
+    payload: PasswordResetConfirmIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_csrf_token),
+) -> ResetPasswordOut:
+    return _handle_password_reset_confirm(
+        token=payload.token,
+        new_password=payload.new_password,
+        request=request,
+        db=db,
+    )
 
 
 @router.post("/password/reset", response_model=ResetPasswordOut, status_code=200)
 async def reset_password(
     payload: ResetPasswordIn,
+    request: Request,
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ) -> ResetPasswordOut:
-    if not _complete_password_reset_service:
-        log.error("password_reset_complete_missing")
-        raise HTTPException(status_code=500, detail="Password reset unavailable")
-
-    token_preview = (payload.token or "")[:6] + "***"
-
-    try:
-        user = _complete_password_reset_service(  # type: ignore[misc]
-            db=db,
-            token=payload.token,
-            new_password=payload.password,
-        )
-    except ValueError as ve:
-        log.warning("password_reset_invalid token=%s err=%s", token_preview, ve)
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired reset token"
-        ) from ve
-    except Exception as e:
-        log.exception("password_reset_error token=%s err=%s", token_preview, e)
-        raise HTTPException(status_code=500, detail="Unable to reset password") from e
-
-    clear_user_token_version_cache(getattr(user, "id", ""))
-    log.info("password_reset_success user_id=%s", getattr(user, "id", None))
-    return ResetPasswordOut()
+    return _handle_password_reset_confirm(
+        token=payload.token,
+        new_password=payload.password,
+        request=request,
+        db=db,
+    )
 
 
 # -----------

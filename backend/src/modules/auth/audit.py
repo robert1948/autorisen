@@ -27,3 +27,23 @@ def log_login_attempt(
     )
     db.add(audit)
     db.commit()
+
+
+def log_password_reset_event(
+    db: Session,
+    *,
+    event_type: str,
+    email: str,
+    user_id: Optional[str] = None,
+    ip_address: Optional[str] = None,
+    user_agent: Optional[str] = None,
+) -> None:
+    audit = models.AuditEvent(
+        user_id=user_id,
+        event_type=event_type,
+        payload={"email": email},
+        ip_address=ip_address,
+        user_agent=user_agent,
+    )
+    db.add(audit)
+    db.commit()

@@ -230,6 +230,21 @@ class PasswordResetToken(Base):
     user = relationship("User", back_populates="password_reset_tokens")
 
 
+class EmailEvent(Base):
+    """Record outbound email delivery attempts."""
+
+    __tablename__ = "email_events"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    to_email = Column(String(320), nullable=False, index=True)
+    template = Column(String(64), nullable=False)
+    status = Column(String(32), nullable=False)
+    error = Column(Text, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class LoginAudit(Base):
     """Track authentication attempts for auditing and monitoring."""
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple, cast
@@ -40,6 +41,11 @@ def _generate_refresh_token() -> str:
 
 def _refresh_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+
+
+def _password_reset_hash(token: str) -> str:
+    secret = settings.secret_key.encode()
+    return hmac.new(secret, token.encode(), hashlib.sha256).hexdigest()
 
 
 def _normalize_email(email: str) -> str:
@@ -357,7 +363,7 @@ def initiate_password_reset(
         db.add(token)
 
     raw_token = base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip("=")
-    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    token_hash = _password_reset_hash(raw_token)
 
     record = models.PasswordResetToken(
         user=user,
@@ -384,7 +390,7 @@ def complete_password_reset(
     if not normalized_token:
         raise ValueError("Invalid reset token")
 
-    token_hash = hashlib.sha256(normalized_token.encode()).hexdigest()
+    token_hash = _password_reset_hash(normalized_token)
     record = db.scalar(
         select(models.PasswordResetToken).where(
             models.PasswordResetToken.token_hash == token_hash

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import '../../components/Auth/auth.css';
 import MFAChallenge from './MfaChallengePage';
 import Logo from '../../components/Logo';
@@ -39,6 +40,8 @@ const simulateLoginApi = (email: string, password: string): Promise<ApiResponse>
 };
 
 const LoginPage: React.FC = () => {
+  const location = useLocation();
+  const notice = (location.state as { notice?: string } | null)?.notice;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -88,6 +91,7 @@ const LoginPage: React.FC = () => {
         </div>
         <h1 className="cc-h1">{i18n['login.title']}</h1>
         <p className="cc-lead">{i18n['login.lead']}</p>
+        {notice && <div className="cc-success" role="status">{notice}</div>}
 
         <form onSubmit={onSubmit} aria-label="Login form">
           <div className="cc-form-group">
@@ -132,7 +136,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="cc-links" style={{marginTop:14}}>
-          <a href="#" onClick={(e)=>{e.preventDefault(); alert('Reset password flow placeholder')}}>{i18n['login.forgot']}</a>
+          <Link to="/auth/forgot-password">{i18n['login.forgot']}</Link>
           <a href="#" onClick={(e)=>{e.preventDefault(); alert('Forgot email flow placeholder')}}>{i18n['login.forgotEmail']}</a>
         </div>
 

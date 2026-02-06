@@ -267,8 +267,7 @@ export type PasswordResetResponse = {
 
 export type CompletePasswordResetPayload = {
   token: string;
-  password: string;
-  confirm_password: string;
+  new_password: string;
 };
 
 export async function registerStep1(
@@ -498,7 +497,7 @@ export async function resendVerification(email: string): Promise<void> {
 
 export async function requestPasswordReset(email: string): Promise<PasswordResetResponse> {
   const csrfToken = await fetchCsrfToken();
-  const response = await fetch(`${AUTH_BASE}/password/forgot`, {
+  const response = await fetch(`${AUTH_BASE}/password-reset/request`, {
     method: "POST",
     headers: {
       ...defaultHeaders,
@@ -516,7 +515,7 @@ export async function completePasswordReset(
   payload: CompletePasswordResetPayload,
 ): Promise<PasswordResetResponse> {
   const csrfToken = await fetchCsrfToken();
-  const response = await fetch(`${AUTH_BASE}/password/reset`, {
+  const response = await fetch(`${AUTH_BASE}/password-reset/confirm`, {
     method: "POST",
     headers: {
       ...defaultHeaders,

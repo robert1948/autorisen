@@ -158,7 +158,7 @@ export default function App() {
 
         {/* -------------------- LEGACY AUTH ALIASES -------------------- */}
         <Route path="/signup" element={<Navigate to="/auth/register" replace />} />
-        <Route path="/forgot-password" element={<Navigate to="/reset-password" replace />} />
+        <Route path="/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
 
         {/* -------------------- APP (CANONICAL) -------------------- */}
         <Route element={<RequireAuth />}>
