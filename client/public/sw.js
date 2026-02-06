@@ -54,8 +54,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Bypass the service worker for auth and API routes (network-only)
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
+  // Bypass the service worker for auth, API, and onboarding routes (network-only)
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/auth/') ||
+    url.pathname.startsWith('/onboarding/')
+  ) {
     return;
   }
 

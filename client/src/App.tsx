@@ -6,6 +6,7 @@ import { features } from "./config/features";
 // MVP scaffold routes (Spec-driven)
 import RequireAuth from "./routes/guards/RequireAuth";
 import RequireMvpAuth from "./routes/guards/RequireMvpAuth";
+import RequireOnboardingAuth from "./routes/guards/RequireOnboardingAuth";
 import RequireMvpGuest from "./routes/guards/RequireMvpGuest";
 import {
   MvpAbout,
@@ -18,7 +19,6 @@ import {
   MvpRegisterStep2,
   MvpVerifyEmail,
   MvpLogout,
-  MvpOnboardingWelcome,
   MvpOnboardingProfile,
   MvpOnboardingChecklist,
   MvpOnboardingGuide,
@@ -51,6 +51,7 @@ import OnboardingDeveloper from "./pages/onboarding/OnboardingDeveloperPage";
 import OnboardingGuide from "./pages/onboarding/OnboardingGuidePage";
 import OnboardingChecklist from "./pages/onboarding/OnboardingChecklistPage";
 import OnboardingProfile from "./pages/onboarding/OnboardingProfilePage";
+import OnboardingWelcome from "./pages/onboarding/OnboardingWelcomePage";
 
 // App pages
 import Dashboard from "./pages/app/DashboardPage";
@@ -112,14 +113,16 @@ export default function App() {
           <Route path="/verify-email/:token" element={<MvpVerifyEmail />} />
         </Route>
 
-        {/* Onboarding + App pages (require auth stub) */}
-        <Route element={<RequireMvpAuth />}>
-          {/* Onboarding */}
-          <Route path="/onboarding/welcome" element={<MvpOnboardingWelcome />} />
+        {/* Onboarding routes (auth guard via /api/auth/me) */}
+        <Route element={<RequireOnboardingAuth />}>
+          <Route path="/onboarding/welcome" element={<OnboardingWelcome />} />
           <Route path="/onboarding/profile" element={<MvpOnboardingProfile />} />
           <Route path="/onboarding/checklist" element={<MvpOnboardingChecklist />} />
           <Route path="/onboarding/guide" element={<MvpOnboardingGuide />} />
+        </Route>
 
+        {/* App pages (require auth stub) */}
+        <Route element={<RequireMvpAuth />}>
           {/* App core */}
           <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
           <Route path="/settings" element={<MvpSettings />} />

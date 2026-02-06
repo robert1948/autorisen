@@ -11,9 +11,10 @@ export default function RequireAuth() {
   }
 
   if (state.status === "unauthenticated") {
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
     return (
       <Navigate
-        to="/auth/login"
+        to={`/auth/login?next=${next}`}
         replace
         state={{ from: location.pathname }}
       />
