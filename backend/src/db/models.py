@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Index,
     Numeric,
     String,
     Text,
@@ -536,6 +537,175 @@ class OnboardingChecklist(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+
+class OnboardingSession(Base):
+    """Track onboarding sessions per user."""
+
+    __tablename__ = "onboarding_sessions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status = Column(String(32), nullable=False, server_default="active")
+    onboarding_completed = Column(Boolean, nullable=False, server_default="0")
+    last_step_key = Column(String(64), nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    started_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (Index("ix_onboarding_sessions_user_status", "user_id", "status"),)
+
+
+class OnboardingStep(Base):
+    """Catalog of onboarding steps."""
+
+    __tablename__ = "onboarding_steps"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    step_key = Column(String(64), nullable=False, unique=True)
+    title = Column(String(160), nullable=False)
+    order_index = Column(Integer, nullable=False, default=0)
+    required = Column(Boolean, nullable=False, server_default="1")
+    role_scope_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class UserOnboardingStepState(Base):
+    """Per-session onboarding step state."""
+
+    __tablename__ = "user_onboarding_step_state"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(
+        String(36),
+        ForeignKey("onboarding_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    step_key = Column(
+        String(64),
+        ForeignKey("onboarding_steps.step_key", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status = Column(String(32), nullable=False, server_default="pending")
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    skipped_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "step_key",
+            name="uq_onboarding_step_state_session_step",
+        ),
+    )
+
+
+class OnboardingMessage(Base):
+    """Messages captured during onboarding."""
+
+    __tablename__ = "onboarding_messages"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(
+        String(36),
+        ForeignKey("onboarding_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role = Column(String(32), nullable=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class TrustAcknowledgement(Base):
+    """Record trust acknowledgements (privacy/security)."""
+
+    __tablename__ = "trust_acknowledgements"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(
+        String(36),
+        ForeignKey("onboarding_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    key = Column(String(64), nullable=False)
+    metadata_json = Column(JSON, nullable=True)
+    acknowledged_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "key",
+            name="uq_trust_ack_user_key",
+        ),
+    )
+
+
+class OnboardingEventLog(Base):
+    """Audit log for onboarding events."""
+
+    __tablename__ = "onboarding_event_log"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(
+        String(36),
+        ForeignKey("onboarding_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_type = Column(String(64), nullable=False)
+    step_key = Column(String(64), nullable=True)
+    payload = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
 

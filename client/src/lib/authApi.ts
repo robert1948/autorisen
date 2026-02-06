@@ -56,6 +56,10 @@ async function fetchCsrfToken(): Promise<string> {
   return csrfTokenCache;
 }
 
+export async function getCsrfToken(): Promise<string> {
+  return fetchCsrfToken();
+}
+
 function invalidateCsrfToken(): void {
   csrfTokenCache = null;
 }

@@ -93,6 +93,9 @@ auth_v2_router = _safe_import("auth_v2", "app.routes.auth_v2", "router")
 agents_router = _safe_import("agents", "backend.src.modules.agents.router", "router")
 chatkit_router = _safe_import("chatkit", "backend.src.modules.chatkit.router", "router")
 flows_router = _safe_import("flows", "backend.src.modules.flows.router", "router")
+onboarding_router = _safe_import(
+    "onboarding", "backend.src.modules.onboarding.router", "router"
+)
 marketplace_router = _safe_import(
     "marketplace", "backend.src.modules.marketplace.router", "router"
 )
@@ -494,6 +497,8 @@ def create_app() -> FastAPI:
         api.include_router(chatkit_router)
     if flows_router:
         api.include_router(flows_router)
+    if onboarding_router:
+        api.include_router(onboarding_router)
     if marketplace_router:
         api.include_router(marketplace_router)
     if ops_router:
