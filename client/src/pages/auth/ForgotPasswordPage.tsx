@@ -1,11 +1,13 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 
+import Logo from "../../components/Logo";
+import "../../components/Auth/auth.css";
 import { requestPasswordReset } from "../../lib/authApi";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [message, setMessage] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent) => {
@@ -13,31 +15,37 @@ const ForgotPassword = () => {
     setStatus("loading");
     setMessage(null);
 
+    const neutralMessage = "If the email exists, we’ve sent a reset link.";
     try {
-      const response = await requestPasswordReset(email);
-      setStatus("success");
-      setMessage(response?.message ?? "Check your email for reset instructions.");
+      await requestPasswordReset(email.trim());
     } catch (err) {
-      const error = err instanceof Error ? err.message : "Unable to process request.";
-      setStatus("error");
-      setMessage(error);
+      console.warn("Password reset request failed", err);
+    } finally {
+      setStatus("success");
+      setMessage(neutralMessage);
     }
   };
 
   return (
-    <main className="auth-page">
-      <section className="auth-card" id="forgot-password">
-        <header className="auth-card__header">
-          <h2>Forgot your password?</h2>
-          <p className="auth-card__subtitle">
-            Enter the email associated with your CapeControl account and we&apos;ll send you a reset
-            link.
-          </p>
-        </header>
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            Email
+    <div className="cc-auth-wrapper">
+      <main className="cc-card" aria-live="polite">
+        <div className="cc-logo-container">
+          <Logo size="default" />
+        </div>
+        <h1 className="cc-h1">Forgot your password?</h1>
+        <p className="cc-lead">
+          Enter the email associated with your CapeControl account and we&apos;ll send you a reset
+          link.
+        </p>
+
+        <form onSubmit={handleSubmit} aria-label="Forgot password form">
+          <div className="cc-form-group">
+            <label className="cc-label" htmlFor="forgot-email">
+              Email
+            </label>
             <input
+              id="forgot-email"
+              className="cc-input"
               required
               type="email"
               value={email}
@@ -45,24 +53,37 @@ const ForgotPassword = () => {
               placeholder="you@example.com"
               autoComplete="email"
             />
-          </label>
-          {message && (
-            <p className={status === "success" ? "auth-success" : "auth-error"}>{message}</p>
-          )}
-          <button className="auth-submit" type="submit" disabled={status === "loading"}>
-            {status === "loading" ? "Sending..." : "Send reset link"}
-          </button>
+          </div>
+
+          {message && <div className="cc-success" role="status">{message}</div>}
+
+          <div style={{ marginTop: 12 }}>
+            <button
+              className={`cc-primary-btn ${status === "loading" ? "loading" : ""}`}
+              type="submit"
+              disabled={status === "loading"}
+              aria-disabled={status === "loading"}
+            >
+              {status === "loading" ? (
+                <>
+                  <span className="spinner" aria-hidden>
+                    ⏳
+                  </span>
+                  Sending...
+                </>
+              ) : (
+                "Send reset link"
+              )}
+            </button>
+          </div>
         </form>
-        <footer className="auth-footer">
-          <Link className="auth-footer__link" to="/">
-            Return to login
-          </Link>
-          <a className="auth-footer__link" href="mailto:support@capecontrol.ai">
-            Need help? Contact support
-          </a>
-        </footer>
-      </section>
-    </main>
+
+        <div className="cc-links" style={{ marginTop: 16 }}>
+          <Link to="/auth/login">Return to login</Link>
+          <a href="mailto:support@capecontrol.ai">Need help? Contact support</a>
+        </div>
+      </main>
+    </div>
   );
 };
 

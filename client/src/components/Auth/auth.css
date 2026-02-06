@@ -93,6 +93,7 @@
 .cc-input:focus{box-shadow:0 0 0 3px rgba(0,123,255,0.12);border-color:var(--primary);}
 .cc-input.error{border-color:var(--danger);}
 .cc-error{color:var(--danger);font-size:12px;margin-top:6px;}
+.cc-success{color:#7ddc9d;font-size:12px;margin-top:6px;}
 
 .cc-pass-wrap{display:flex;align-items:center;gap:8px}
 .cc-pass-toggle{background:transparent;border:none;color:var(--primary);cursor:pointer;padding:8px;border-radius:8px}

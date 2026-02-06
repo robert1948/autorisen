@@ -257,7 +257,7 @@ const AuthForms = () => {
         </div>
       </form>
       <footer className="auth-footer">
-        <Link className="auth-footer__link" to="/forgot-password">
+        <Link className="auth-footer__link" to="/auth/forgot-password">
           Forgot your password?
         </Link>
         <a className="auth-footer__link" href="mailto:support@capecontrol.ai">
