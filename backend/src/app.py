@@ -570,7 +570,7 @@ def create_app() -> FastAPI:
         @application.get("/{client_path:path}", include_in_schema=False)
         def _spa_fallback(client_path: str):
             # API routes are handled by the router mounted at /api
-            if client_path.startswith("api/"):
+            if client_path == "api" or client_path.startswith("api/"):
                 raise HTTPException(status_code=404)
 
             # Check for specific root-level files (sw.js, manifest, etc.)
