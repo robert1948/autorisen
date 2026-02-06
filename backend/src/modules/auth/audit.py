@@ -38,12 +38,13 @@ def log_password_reset_event(
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
 ) -> None:
-    audit = models.AuditEvent(
-        user_id=user_id,
-        event_type=event_type,
-        payload={"email": email},
+    details = f"{event_type}"
+    audit = models.LoginAudit(
+        email=email,
+        success=True,
         ip_address=ip_address,
         user_agent=user_agent,
+        details=details,
     )
     db.add(audit)
     db.commit()
