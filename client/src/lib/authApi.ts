@@ -211,14 +211,29 @@ export type SocialLoginResponse = TokenResponse & {
   email: string;
 };
 
-export type MeResponse = {
+export type MeProfile = {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  display_name: string;
+  status: string;
+  created_at: string;
+  last_login?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  company_name?: string | null;
+  email_verified?: boolean | null;
+};
+
+export type MeSummary = {
+  projects_count: number;
+  recent_activity: Array<Record<string, unknown>>;
+  system_status: string;
+};
+
+export type MeResponse = {
   role: string;
-  is_active: boolean;
-  email_verified: boolean;
+  profile: MeProfile;
+  summary?: MeSummary | null;
 };
 
 export type GoogleLoginPayload = {

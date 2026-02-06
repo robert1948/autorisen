@@ -124,19 +124,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const normalizeMe = useCallback((me: MeResponse): AuthUser => {
     const role = me.role ?? "";
     const roleNormalized = role.toLowerCase();
+    const firstName = me.profile?.first_name ?? "";
+    const lastName = me.profile?.last_name ?? "";
     return {
-      id: me.id,
-      email: me.email,
-      first_name: me.first_name,
-      last_name: me.last_name,
+      id: me.profile?.id ?? "",
+      email: me.profile?.email ?? "",
+      first_name: firstName,
+      last_name: lastName,
       role,
-      profile: {},
-      summary: {
-        email: me.email,
-        first_name: me.first_name,
-        last_name: me.last_name,
-        role,
-      },
+      profile: { ...me.profile },
+      summary: { ...(me.summary ?? {}) },
       developer: roleNormalized === "developer" ? {} : undefined,
     };
   }, []);
@@ -170,8 +167,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setState((prev) => ({
         ...prev,
         status: "authenticated",
-        userEmail: me.email ?? prev.userEmail,
-        isEmailVerified: Boolean(me.email_verified),
+        userEmail: me.profile?.email ?? prev.userEmail,
+        isEmailVerified: Boolean(me.profile?.email_verified),
         user: normalizeMe(me),
       }));
     } catch (err) {

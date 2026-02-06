@@ -101,6 +101,9 @@ user_router = _safe_import("user", "backend.src.modules.user.router", "router")
 payments_router = _safe_import(
     "payments", "backend.src.modules.payments.router", "router"
 )
+account_router = _safe_import(
+    "account", "backend.src.modules.account.router", "router"
+)
 
 # ------------------------------------------------------------------------------
 # Constants / paths
@@ -499,6 +502,8 @@ def create_app() -> FastAPI:
         api.include_router(user_router)
     if payments_router:
         api.include_router(payments_router)
+    if account_router:
+        api.include_router(account_router)
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")

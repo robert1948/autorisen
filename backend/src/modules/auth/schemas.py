@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
@@ -155,16 +155,35 @@ class LoginResponse(BaseModel):
     email_verified: bool = True
 
 
-class MeResponse(BaseModel):
-    """Canonical user profile response."""
+class MeProfile(BaseModel):
+    """Canonical profile payload for /auth/me."""
 
     id: str
     email: EmailStr
-    first_name: str
-    last_name: str
+    display_name: str
+    status: str
+    created_at: datetime
+    last_login: Optional[datetime] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    company_name: Optional[str] = None
+    email_verified: Optional[bool] = None
+
+
+class MeSummary(BaseModel):
+    """Summary payload for /auth/me."""
+
+    projects_count: int = 0
+    recent_activity: List[Dict[str, Any]] = Field(default_factory=list)
+    system_status: str = "ok"
+
+
+class MeResponse(BaseModel):
+    """Canonical user profile response."""
+
     role: str
-    is_active: bool
-    email_verified: bool
+    profile: MeProfile
+    summary: Optional[MeSummary] = None
 
 
 class ErrorResponse(BaseModel):
@@ -175,5 +194,7 @@ class ErrorResponse(BaseModel):
 
 # Resolve forward references
 LoginResponse.model_rebuild()
+MeProfile.model_rebuild()
+MeSummary.model_rebuild()
 MeResponse.model_rebuild()
 ErrorResponse.model_rebuild()
