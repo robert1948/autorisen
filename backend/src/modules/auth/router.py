@@ -36,6 +36,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import settings
@@ -50,7 +51,9 @@ from backend.src.core.redis import (
     denylist_jti,
 )
 from backend.src.db.session import get_db
+from backend.src.db import models
 from backend.src.db.models import AnalyticsEvent
+from backend.src.modules.user import service as user_service
 from backend.src.services import recaptcha as recaptcha_service
 from backend.src.services.emailer import (
     send_password_reset_email,
@@ -63,7 +66,9 @@ from .schemas import (
     AnalyticsEventIn,
     LoginRequest,
     LoginResponse,
+    MeProfile,
     MeResponse,
+    MeSummary,
     PASSWORD_ERROR,
     PASSWORD_PATTERN,
 )
@@ -1794,22 +1799,57 @@ async def refresh(
 
 
 @router.get("/me", response_model=MeResponse)
-async def me(current_user=Depends(get_current_user)):
-    return MeResponse(
-        id=current_user.id,
-        email=current_user.email,
-        first_name=current_user.first_name,
-        last_name=current_user.last_name,
-        role=current_user.role,
-        is_active=current_user.is_active,
-        email_verified=bool(
-            getattr(
-                current_user,
-                "email_verified",
-                getattr(current_user, "is_email_verified", True),
-            )
-        ),
+async def me(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    role_raw = str(getattr(current_user, "role", "")).lower()
+    role = "developer" if "dev" in role_raw else "user"
+    display_name = (
+        getattr(current_user, "full_name", "")
+        or f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip()
+        or getattr(current_user, "email", "")
     )
+    status_text = "active" if getattr(current_user, "is_active", False) else "inactive"
+    email_verified = bool(
+        getattr(
+            current_user,
+            "email_verified",
+            getattr(current_user, "is_email_verified", True),
+        )
+    )
+
+    projects_count = (
+        db.scalar(
+            select(func.count(models.Task.id)).where(models.Task.user_id == current_user.id),
+        )
+        or 0
+    )
+    recent_activity: list[dict[str, Any]] = []
+    try:
+        activity_items = user_service.get_recent_activity(db, current_user.id, limit=5)
+        recent_activity = [item.model_dump() for item in activity_items]
+    except Exception as exc:
+        log.warning("me_recent_activity_failed: %s", exc)
+
+    profile = MeProfile(
+        id=str(current_user.id),
+        email=current_user.email,
+        display_name=display_name,
+        status=status_text,
+        created_at=current_user.created_at,
+        last_login=getattr(current_user, "last_login_at", None),
+        first_name=getattr(current_user, "first_name", None),
+        last_name=getattr(current_user, "last_name", None),
+        company_name=getattr(current_user, "company_name", None),
+        email_verified=email_verified,
+    )
+    summary = MeSummary(
+        projects_count=int(projects_count),
+        recent_activity=recent_activity,
+        system_status="ok",
+    )
+    return MeResponse(role=role, profile=profile, summary=summary)
 
 
 @router.post("/logout", response_model=LogoutOut, status_code=200)

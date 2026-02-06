@@ -75,5 +75,5 @@ def test_me_returns_profile_with_token(client):
     # 3. Validate Response Shape
     data = me_resp.json()
     model = MeResponse(**data)
-    assert model.email == "me@example.com"
-    assert model.first_name == "Me"
+    assert model.profile.email == "me@example.com"
+    assert (model.profile.first_name or "") == "Me"
