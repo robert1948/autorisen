@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../../components/Auth/auth.css';
-import MFAChallenge from './MfaChallengePage';
 import Logo from '../../components/Logo';
+import { useAuth } from '../../features/auth/AuthContext';
 
 const i18n = {
   'login.title': 'Log in to CapeControl',
@@ -15,40 +15,18 @@ const i18n = {
   'mfa.bypass_note': 'reCAPTCHA is not configured. Set VITE_RECAPTCHA_SITE_KEY when you are ready to enforce verification. A temporary bypass token has been supplied for local testing.'
 };
 
-type ApiResponse = {
-  ok: boolean;
-  mfa_required?: boolean;
-  message?: string;
-};
-
-const simulateLoginApi = (email: string, password: string): Promise<ApiResponse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulated conditions:
-      // if email contains "mfa" then require MFA
-      if (email.includes('mfa')) {
-        resolve({ ok: true, mfa_required: true });
-        return;
-      }
-      if (email === 'user@example.com' && password === 'password') {
-        resolve({ ok: true });
-        return;
-      }
-      resolve({ ok: false, message: 'Invalid credentials' });
-    }, 900);
-  });
-};
-
 const LoginPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { loginUser, loading: authLoading, error: authError } = useAuth();
   const notice = (location.state as { notice?: string } | null)?.notice;
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?:string, password?:string }>({});
-  const [showMfa, setShowMfa] = useState(false);
 
   const validate = () => {
     const errs: { email?:string, password?:string } = {};
@@ -65,23 +43,15 @@ const LoginPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res = await simulateLoginApi(email.trim(), password);
-      if (!res.ok) {
-        setError(res.message || 'Network error');
-      } else if (res.mfa_required) {
-        setShowMfa(true);
-      } else {
-        // Simulate successful login
-        alert('Login successful (simulated)');
-      }
+      await loginUser(email.trim(), password, null);
+      navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError('Network error');
+      const message = err instanceof Error ? err.message : 'Network error';
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
-
-  if (showMfa) return <MFAChallenge onSuccess={() => alert('MFA Verified - login complete (simulated)')} onCancel={() => setShowMfa(false)} />;
 
   return (
     <div className="cc-auth-wrapper">
@@ -113,11 +83,24 @@ const LoginPage: React.FC = () => {
             <div className="cc-recaptcha-note" role="note">{i18n['mfa.bypass_note']}</div>
           )}
 
-          {error && <div className="cc-error" role="alert">{error}</div>}
+          {(error || authError) && (
+            <div className="cc-error" role="alert">{error || authError}</div>
+          )}
 
           <div style={{marginTop:12}}>
-            <button className={`cc-primary-btn ${loading ? 'loading' : ''}`} type="submit" disabled={loading} aria-disabled={loading}>
-              {loading ? (<><span className="spinner" aria-hidden>⏳</span> {i18n['login.button']}</>) : i18n['login.button']}
+            <button
+              className={`cc-primary-btn ${loading || authLoading ? 'loading' : ''}`}
+              type="submit"
+              disabled={loading || authLoading}
+              aria-disabled={loading || authLoading}
+            >
+              {loading || authLoading ? (
+                <>
+                  <span className="spinner" aria-hidden>⏳</span> {i18n['login.button']}
+                </>
+              ) : (
+                i18n['login.button']
+              )}
             </button>
           </div>
         </form>
