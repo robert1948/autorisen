@@ -54,16 +54,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Bypass the service worker for auth and API routes (network-only)
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
+    return;
+  }
+
   // Handle different types of requests
-  if (url.pathname.startsWith('/assets/')) {
-    // Cache-first strategy for hashed assets (they're immutable)
+  if (
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.startsWith('/icons/') ||
+    STATIC_CACHE_URLS.includes(url.pathname)
+  ) {
+    // Cache-first strategy for immutable/static assets only
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);
         if (cached) {
           return cached;
         }
-        
+
         const response = await fetch(request);
         if (response.ok) {
           cache.put(request, response.clone());
@@ -71,33 +80,11 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
     );
-  } else if (url.pathname === '/' || url.pathname.endsWith('.html')) {
-    // Network-first for HTML files (always check for updates)
-    event.respondWith(
-      fetch(request).catch(() => {
-        // Fallback to cache if network fails (offline support)
-        return caches.match(request);
-      })
-    );
-  } else if (url.pathname.startsWith('/api/')) {
-    // Network-only for API calls (no caching)
     return;
-  } else {
-    // Stale-while-revalidate for other static assets
-    event.respondWith(
-      caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(request);
-        const fetchPromise = fetch(request).then((response) => {
-          if (response.ok) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        });
-        
-        return cached || fetchPromise;
-      })
-    );
   }
+
+  // Network-only for all other requests (HTML routes, etc.)
+  return;
 });
 
 // Listen for skip waiting messages
