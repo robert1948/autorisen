@@ -47,7 +47,7 @@ export default function OnboardingProfile() {
             </label>
             <input
               id="first-name"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
               required
@@ -59,7 +59,7 @@ export default function OnboardingProfile() {
             </label>
             <input
               id="last-name"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
               required
@@ -71,7 +71,7 @@ export default function OnboardingProfile() {
             </label>
             <input
               id="company-name"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
               value={companyName}
               onChange={(event) => setCompanyName(event.target.value)}
             />
@@ -82,7 +82,7 @@ export default function OnboardingProfile() {
             </label>
             <select
               id="role"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
               value={role}
               onChange={(event) => setRole(event.target.value)}
             >
