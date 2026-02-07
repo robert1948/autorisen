@@ -23,17 +23,7 @@ const Dashboard = () => {
     }
   }, [navigate, status, isPreview]);
 
-  if (loading && !isPreview) {
-    return (
-      <div className="min-h-screen bg-slate-50 p-8">
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-        </div>
-      </div>
-    );
-  }
-
-  if (isPreview && (loading || error || !data)) {
+  if (isPreview) {
     return (
       <div className="min-h-screen bg-slate-50 p-8">
         <div className="mb-6 rounded-md border border-slate-200 bg-white p-4">
@@ -46,6 +36,16 @@ const Dashboard = () => {
           <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
           <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
           <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-8">
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
         </div>
       </div>
     );
