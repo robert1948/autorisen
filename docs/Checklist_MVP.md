@@ -30,3 +30,4 @@
 ### Latest Notes
 
 - 2025-10-20 — AUTH-005 security tests still timing out under SQLite; migration 202502191200 patched for CURRENT_TIMESTAMP, next step is finishing the CSRF/AsyncClient fixture refactor before FE-004 can resume.
+- 2026-02-07 — Added Playwright UI visual smoke tests with evidence capture for onboarding welcome and dashboard preview.
