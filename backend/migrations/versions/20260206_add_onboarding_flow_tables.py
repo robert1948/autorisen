@@ -1,7 +1,7 @@
 """add onboarding flow tables
 
 Revision ID: 20260206onboard
-Revises: c1e2d3f4g5h6
+Revises: 6fe00e043f8a
 Create Date: 2026-02-06 18:05:00.000000
 
 """
@@ -16,7 +16,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20260206onboard"
-down_revision: Union[str, None] = "c1e2d3f4g5h6"
+down_revision: Union[str, None] = "6fe00e043f8a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
