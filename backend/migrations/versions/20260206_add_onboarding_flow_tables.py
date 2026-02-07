@@ -210,7 +210,7 @@ def upgrade() -> None:
                 "step_key": step_key,
                 "title": title,
                 "order_index": order_index,
-                "required": 1 if required else 0,
+                "required": bool(required),
             },
         )
 
