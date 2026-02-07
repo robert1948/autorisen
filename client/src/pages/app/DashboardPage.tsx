@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { AccountBalanceModule } from "../../components/dashboard/AccountBalanceModule";
 import { AccountDetailsModule } from "../../components/dashboard/AccountDetailsModule";
@@ -11,18 +11,41 @@ import { useMe } from "../../hooks/useMe";
 const Dashboard = () => {
   const { loading, error, status, data, reload } = useMe();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isPreview = useMemo(() => {
+    const search = new URLSearchParams(location.search);
+    return search.get("preview") === "1" || localStorage.getItem("cc_preview_mode") === "true";
+  }, [location.search]);
 
   useEffect(() => {
-    if (status === 401 || status === 403) {
-      navigate("/login", { replace: true });
+    if ((status === 401 || status === 403) && !isPreview) {
+      navigate("/auth/login", { replace: true });
     }
-  }, [navigate, status]);
+  }, [navigate, status, isPreview]);
 
-  if (loading) {
+  if (loading && !isPreview) {
     return (
       <div className="min-h-screen bg-slate-50 p-8">
         <div className="flex h-64 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isPreview && (loading || error || !data)) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-8">
+        <div className="mb-6 rounded-md border border-slate-200 bg-white p-4">
+          <p className="text-sm text-slate-700">
+            Read-only preview. Sign in to load account data.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
+          <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
+          <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
+          <div className="h-40 rounded-lg border border-dashed border-slate-200 bg-white" />
         </div>
       </div>
     );
@@ -62,7 +85,7 @@ const Dashboard = () => {
       </header>
 
       <main className="p-8">
-        {error && (
+        {error && !isPreview && (
           <div className="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4">
             <p className="text-sm text-yellow-800">{error}</p>
           </div>

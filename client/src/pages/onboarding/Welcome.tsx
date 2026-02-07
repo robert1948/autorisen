@@ -46,7 +46,11 @@ export default function OnboardingWelcome() {
 
   const onExplore = () => {
     localStorage.setItem("onboarding_explore_quietly", "true");
-    navigate(safeNext ?? "/app/dashboard");
+    localStorage.setItem("cc_preview_mode", "true");
+    const target = safeNext ?? "/app/dashboard";
+    const hasQuery = target.includes("?");
+    const previewTarget = target + (hasQuery ? "&preview=1" : "?preview=1");
+    navigate(previewTarget);
   };
 
   const toggleGuide = () => {
@@ -88,7 +92,7 @@ export default function OnboardingWelcome() {
             onClick={onContinue}
             disabled={loading}
           >
-            Continue
+            Start setup
           </button>
           <button
             type="button"
@@ -113,8 +117,12 @@ export default function OnboardingWelcome() {
             checked={guideEnabled}
             onChange={toggleGuide}
           />
-          <label htmlFor="guide-enabled">Enable guided onboarding tips</label>
+          <label htmlFor="guide-enabled">Enable CapeAI guided onboarding tips</label>
         </div>
+
+        <p className="mt-2 text-xs text-slate-500">
+          CapeAI will explain each step as you go.
+        </p>
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
