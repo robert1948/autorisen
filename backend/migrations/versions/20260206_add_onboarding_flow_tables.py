@@ -195,15 +195,16 @@ def upgrade() -> None:
         ("trust_security", "Review security commitments", 8, True),
         ("complete", "Complete onboarding", 9, True),
     ]
+    insert_stmt = sa.text(
+        """
+        INSERT INTO onboarding_steps (id, step_key, title, order_index, required)
+        VALUES (:id, :step_key, :title, :order_index, :required)
+        ON CONFLICT(step_key) DO NOTHING
+        """
+    )
     for step_key, title, order_index, required in seed_steps:
-        op.execute(
-            sa.text(
-                """
-                INSERT INTO onboarding_steps (id, step_key, title, order_index, required)
-                VALUES (:id, :step_key, :title, :order_index, :required)
-                ON CONFLICT(step_key) DO NOTHING
-                """
-            ),
+        bind.execute(
+            insert_stmt,
             {
                 "id": str(uuid.uuid4()),
                 "step_key": step_key,
