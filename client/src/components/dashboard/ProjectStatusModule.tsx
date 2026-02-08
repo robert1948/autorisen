@@ -1,26 +1,36 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { dashboardModulesApi, type ProjectStatusItem } from "../../services/dashboardModulesApi";
+import { useAuth } from "../../features/auth/AuthContext";
 
 export const ProjectStatusModule = ({ title }: { title: string }) => {
+  const { state } = useAuth();
   const [projects, setProjects] = useState<ProjectStatusItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadProjects = useCallback(async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const data = await dashboardModulesApi.getProjects();
+      setProjects(data);
+      setLoaded(true);
+    } catch (err) {
+      const message =
+        state.status === "authenticated"
+          ? "Couldn't load this section. Try again."
+          : "Please sign in to view this section.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [state.status]);
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await dashboardModulesApi.getProjects();
-        setProjects(data);
-      } catch (err) {
-        setError((err as Error).message || "Failed to load project status");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    loadProjects();
+  }, [loadProjects]);
 
   if (loading) {
     return (
@@ -30,10 +40,25 @@ export const ProjectStatusModule = ({ title }: { title: string }) => {
     );
   }
 
+  if (!loading && error && !loaded) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+        <p className="mt-2 text-sm text-slate-600">{error}</p>
+        <button
+          onClick={loadProjects}
+          className="mt-4 rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-slate-600">{error}</p>}
       {projects.length === 0 ? (
         <p className="mt-3 text-sm text-slate-500">No projects yet.</p>
       ) : (
