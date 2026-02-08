@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { dashboardModulesApi, type PersonalInfo } from "../../services/dashboardModulesApi";
+import { useAuth } from "../../features/auth/AuthContext";
 
 const emptyInfo: PersonalInfo = {
   phone: "",
@@ -11,25 +12,34 @@ const emptyInfo: PersonalInfo = {
 };
 
 export const PersonalInfoModule = () => {
+  const { state } = useAuth();
   const [info, setInfo] = useState<PersonalInfo>(emptyInfo);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadInfo = useCallback(async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const data = await dashboardModulesApi.getPersonalInfo();
+      setInfo({ ...emptyInfo, ...data });
+      setLoaded(true);
+    } catch (err) {
+      const message =
+        state.status === "authenticated"
+          ? "Couldn't load this section. Try again."
+          : "Please sign in to view this section.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [state.status]);
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await dashboardModulesApi.getPersonalInfo();
-        setInfo({ ...emptyInfo, ...data });
-      } catch (err) {
-        setError((err as Error).message || "Failed to load personal info");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    loadInfo();
+  }, [loadInfo]);
 
   const handleSave = async () => {
     try {
@@ -38,7 +48,7 @@ export const PersonalInfoModule = () => {
       const updated = await dashboardModulesApi.updatePersonalInfo(info);
       setInfo({ ...emptyInfo, ...updated });
     } catch (err) {
-      setError((err as Error).message || "Failed to save personal info");
+      setError("Couldn't save changes. Try again.");
     } finally {
       setSaving(false);
     }
@@ -52,10 +62,25 @@ export const PersonalInfoModule = () => {
     );
   }
 
+  if (!loading && error && !loaded) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">Personal information</h3>
+        <p className="mt-2 text-sm text-slate-600">{error}</p>
+        <button
+          onClick={loadInfo}
+          className="mt-4 rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="text-lg font-semibold text-slate-900">Personal information</h3>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-slate-600">{error}</p>}
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
           <label className="text-xs font-semibold text-slate-500">Phone</label>

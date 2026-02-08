@@ -1,48 +1,9 @@
-import { getConfig } from "../config";
-
-function getApiBase(): string {
-  const config = getConfig();
-  return config.API_BASE_URL || "/api";
-}
+import { apiFetch } from "../lib/apiFetch";
 
 type RequestOptions = {
   method?: string;
   body?: unknown;
 };
-
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body } = options;
-  const response = await fetch(`${getApiBase()}${endpoint}`, {
-    method,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const error = new Error(`Request failed with status ${response.status}`) as Error & {
-      status?: number;
-    };
-    error.status = response.status;
-    try {
-      const data = await response.json();
-      if (typeof data?.detail === "string") {
-        error.message = data.detail;
-      }
-    } catch (err) {
-      // ignore parse errors
-    }
-    throw error;
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return (await response.json()) as T;
-}
 
 export type AccountDetails = {
   id: string;
@@ -94,24 +55,24 @@ export type AccountBalance = {
 
 export const dashboardModulesApi = {
   getAccountDetails(): Promise<AccountDetails> {
-    return request<AccountDetails>("/account/me");
+    return apiFetch<AccountDetails>("/account/me");
   },
   updateAccountDetails(payload: AccountUpdate): Promise<AccountDetails> {
-    return request<AccountDetails>("/account/me", { method: "PATCH", body: payload });
+    return apiFetch<AccountDetails>("/account/me", { method: "PATCH", body: payload });
   },
   getPersonalInfo(): Promise<PersonalInfo> {
-    return request<PersonalInfo>("/profile/me");
+    return apiFetch<PersonalInfo>("/profile/me");
   },
   updatePersonalInfo(payload: PersonalInfoUpdate): Promise<PersonalInfo> {
-    return request<PersonalInfo>("/profile/me", { method: "PATCH", body: payload });
+    return apiFetch<PersonalInfo>("/profile/me", { method: "PATCH", body: payload });
   },
   getProjects(): Promise<ProjectStatusItem[]> {
-    return request<ProjectStatusItem[]>("/projects/mine");
+    return apiFetch<ProjectStatusItem[]>("/projects/mine");
   },
   getBalance(): Promise<AccountBalance> {
-    return request<AccountBalance>("/billing/balance");
+    return apiFetch<AccountBalance>("/billing/balance");
   },
   deleteAccount(): Promise<{ status: string; message: string }> {
-    return request<{ status: string; message: string }>("/account/me", { method: "DELETE" });
+    return apiFetch<{ status: string; message: string }>("/account/me", { method: "DELETE" });
   },
 };
