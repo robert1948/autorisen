@@ -53,8 +53,23 @@ AGENT_SEEDS = [
 ]
 
 
+def _table_exists(name: str) -> bool:
+    return sa.inspect(op.get_bind()).has_table(name)
+
+
+def _column_exists(table: str, column: str) -> bool:
+    inspector = sa.inspect(op.get_bind())
+    return any(col["name"] == column for col in inspector.get_columns(table))
+
+
+def _index_exists(table: str, index_name: str) -> bool:
+    inspector = sa.inspect(op.get_bind())
+    return any(idx["name"] == index_name for idx in inspector.get_indexes(table))
+
+
 def upgrade() -> None:
-    op.create_table(
+    if not _table_exists("agent_runs"):
+        op.create_table(
         "agent_runs",
         sa.Column("id", sa.String(length=36), primary_key=True),
         sa.Column(
@@ -84,13 +99,18 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-    )
-    op.create_index("ix_agent_runs_agent_id", "agent_runs", ["agent_id"])
-    op.create_index("ix_agent_runs_user_id", "agent_runs", ["user_id"])
-    op.create_index("ix_agent_runs_status", "agent_runs", ["status"])
-    op.create_index("ix_agent_runs_created_at", "agent_runs", ["created_at"])
+        )
+    if not _index_exists("agent_runs", "ix_agent_runs_agent_id"):
+        op.create_index("ix_agent_runs_agent_id", "agent_runs", ["agent_id"])
+    if not _index_exists("agent_runs", "ix_agent_runs_user_id"):
+        op.create_index("ix_agent_runs_user_id", "agent_runs", ["user_id"])
+    if not _index_exists("agent_runs", "ix_agent_runs_status"):
+        op.create_index("ix_agent_runs_status", "agent_runs", ["status"])
+    if not _index_exists("agent_runs", "ix_agent_runs_created_at"):
+        op.create_index("ix_agent_runs_created_at", "agent_runs", ["created_at"])
 
-    op.create_table(
+    if not _table_exists("agent_events"):
+        op.create_table(
         "agent_events",
         sa.Column("id", sa.String(length=36), primary_key=True),
         sa.Column(
@@ -107,11 +127,14 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-    )
-    op.create_index("ix_agent_events_run_id", "agent_events", ["run_id"])
-    op.create_index("ix_agent_events_created_at", "agent_events", ["created_at"])
+        )
+    if not _index_exists("agent_events", "ix_agent_events_run_id"):
+        op.create_index("ix_agent_events_run_id", "agent_events", ["run_id"])
+    if not _index_exists("agent_events", "ix_agent_events_created_at"):
+        op.create_index("ix_agent_events_created_at", "agent_events", ["created_at"])
 
-    op.create_table(
+    if not _table_exists("faq_articles"):
+        op.create_table(
         "faq_articles",
         sa.Column("id", sa.String(length=36), primary_key=True),
         sa.Column("question", sa.String(length=255), nullable=False),
@@ -130,10 +153,24 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-    )
-    op.create_index("ix_faq_articles_created_at", "faq_articles", ["created_at"])
+        )
+    if _table_exists("faq_articles"):
+        for column_name, column in (
+            ("question", sa.Column("question", sa.String(length=255), nullable=True)),
+            ("answer", sa.Column("answer", sa.Text(), nullable=True)),
+            ("tags", sa.Column("tags", sa.JSON(), nullable=True)),
+            (
+                "is_published",
+                sa.Column("is_published", sa.Boolean(), nullable=False, server_default="1"),
+            ),
+        ):
+            if not _column_exists("faq_articles", column_name):
+                op.add_column("faq_articles", column)
+        if not _index_exists("faq_articles", "ix_faq_articles_created_at"):
+            op.create_index("ix_faq_articles_created_at", "faq_articles", ["created_at"])
 
-    op.create_table(
+    if not _table_exists("support_tickets"):
+        op.create_table(
         "support_tickets",
         sa.Column("id", sa.String(length=36), primary_key=True),
         sa.Column(
@@ -157,10 +194,24 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-    )
-    op.create_index("ix_support_tickets_user_id", "support_tickets", ["user_id"])
-    op.create_index("ix_support_tickets_status", "support_tickets", ["status"])
-    op.create_index("ix_support_tickets_created_at", "support_tickets", ["created_at"])
+        )
+    if _table_exists("support_tickets"):
+        for column_name, column in (
+            ("subject", sa.Column("subject", sa.String(length=160), nullable=True)),
+            ("body", sa.Column("body", sa.Text(), nullable=True)),
+            (
+                "status",
+                sa.Column("status", sa.String(length=32), nullable=True, server_default="open"),
+            ),
+        ):
+            if not _column_exists("support_tickets", column_name):
+                op.add_column("support_tickets", column)
+        if not _index_exists("support_tickets", "ix_support_tickets_user_id"):
+            op.create_index("ix_support_tickets_user_id", "support_tickets", ["user_id"])
+        if not _index_exists("support_tickets", "ix_support_tickets_status"):
+            op.create_index("ix_support_tickets_status", "support_tickets", ["status"])
+        if not _index_exists("support_tickets", "ix_support_tickets_created_at"):
+            op.create_index("ix_support_tickets_created_at", "support_tickets", ["created_at"])
 
     _seed_agents()
     _seed_faqs()
@@ -168,20 +219,34 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     _delete_seeded_agents()
-    op.drop_index("ix_support_tickets_created_at", table_name="support_tickets")
-    op.drop_index("ix_support_tickets_status", table_name="support_tickets")
-    op.drop_index("ix_support_tickets_user_id", table_name="support_tickets")
-    op.drop_table("support_tickets")
-    op.drop_index("ix_faq_articles_created_at", table_name="faq_articles")
-    op.drop_table("faq_articles")
-    op.drop_index("ix_agent_events_created_at", table_name="agent_events")
-    op.drop_index("ix_agent_events_run_id", table_name="agent_events")
-    op.drop_table("agent_events")
-    op.drop_index("ix_agent_runs_created_at", table_name="agent_runs")
-    op.drop_index("ix_agent_runs_status", table_name="agent_runs")
-    op.drop_index("ix_agent_runs_user_id", table_name="agent_runs")
-    op.drop_index("ix_agent_runs_agent_id", table_name="agent_runs")
-    op.drop_table("agent_runs")
+    if _table_exists("support_tickets"):
+        # support_tickets may have pre-existed; do not drop it
+        if _index_exists("support_tickets", "ix_support_tickets_created_at"):
+            op.drop_index("ix_support_tickets_created_at", table_name="support_tickets")
+        if _index_exists("support_tickets", "ix_support_tickets_status"):
+            op.drop_index("ix_support_tickets_status", table_name="support_tickets")
+        if _index_exists("support_tickets", "ix_support_tickets_user_id"):
+            op.drop_index("ix_support_tickets_user_id", table_name="support_tickets")
+    if _table_exists("faq_articles"):
+        if _index_exists("faq_articles", "ix_faq_articles_created_at"):
+            op.drop_index("ix_faq_articles_created_at", table_name="faq_articles")
+        op.drop_table("faq_articles")
+    if _table_exists("agent_events"):
+        if _index_exists("agent_events", "ix_agent_events_created_at"):
+            op.drop_index("ix_agent_events_created_at", table_name="agent_events")
+        if _index_exists("agent_events", "ix_agent_events_run_id"):
+            op.drop_index("ix_agent_events_run_id", table_name="agent_events")
+        op.drop_table("agent_events")
+    if _table_exists("agent_runs"):
+        if _index_exists("agent_runs", "ix_agent_runs_created_at"):
+            op.drop_index("ix_agent_runs_created_at", table_name="agent_runs")
+        if _index_exists("agent_runs", "ix_agent_runs_status"):
+            op.drop_index("ix_agent_runs_status", table_name="agent_runs")
+        if _index_exists("agent_runs", "ix_agent_runs_user_id"):
+            op.drop_index("ix_agent_runs_user_id", table_name="agent_runs")
+        if _index_exists("agent_runs", "ix_agent_runs_agent_id"):
+            op.drop_index("ix_agent_runs_agent_id", table_name="agent_runs")
+        op.drop_table("agent_runs")
 
 
 def _seed_agents() -> None:
