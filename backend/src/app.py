@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from re import sub
 from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast
@@ -216,6 +217,15 @@ def _is_test_mode() -> bool:
 def create_app() -> FastAPI:
     application = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
     test_mode = _is_test_mode()
+
+    @application.middleware("http")
+    async def _normalize_double_slashes(request, call_next):
+        path = request.scope.get("path", "")
+        if "//" in path:
+            normalized = sub(r"/{2,}", "/", path)
+            request.scope["path"] = normalized
+            request.scope["raw_path"] = normalized.encode()
+        return await call_next(request)
 
     # Enforce/relax email settings according to ENV and EMAIL_ENABLED
     _ensure_email_config(test_mode)
