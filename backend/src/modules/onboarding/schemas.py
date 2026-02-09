@@ -62,6 +62,30 @@ class OnboardingStepActionResponse(BaseModel):
     progress: int
 
 
+class OnboardingNextStepResponse(BaseModel):
+    step: Optional[OnboardingStepOut] = None
+    progress: int
+
+
+class OnboardingProgressResponse(BaseModel):
+    progress: int
+
+
+class OnboardingStepCompleteRequest(BaseModel):
+    step_key: str = Field(..., min_length=1)
+
+
+class OnboardingStepBlockedRequest(BaseModel):
+    step_key: str = Field(..., min_length=1)
+    reason: str = Field(..., min_length=1, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=1000)
+
+
+class OnboardingStepBlockedResponse(BaseModel):
+    step: OnboardingStepOut
+    progress: int
+
+
 class TrustAckResponse(BaseModel):
     key: str
     acknowledged_at: datetime

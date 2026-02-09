@@ -192,23 +192,25 @@ const Home = () => {
             <article>
               <h3>Workflow Mapping &amp; Onboarding</h3>
               <p>
-                Start with one real process—like onboarding a client or managing a job. CapeAI maps
-                the steps, identifies the friction, and turns it into a repeatable, trackable
-                workflow.
+                Start with one live workflow, like client onboarding or job intake. CapeControl
+                turns it into step-by-step progress you can track, with clear "next step" guidance.
+                Capture blockers as they happen and improve the flow over time.
               </p>
             </article>
             <article>
               <h3>Operations Command Center</h3>
               <p>
-                Ask plain-language questions about work in progress, bottlenecks, or recurring
-                issues. Get clear answers, not raw data, so you can make decisions faster.
+                Get decision-ready answers, not raw tables. Use guided, plain-language questions to
+                see current status, recurring blockers, and trends. Each response is backed by your
+                live system data and a clear summary.
               </p>
             </article>
             <article>
               <h3>Developers When You&apos;re Ready</h3>
               <p>
-                Start no-code. When you&apos;re ready, your team or partners can extend CapeControl
-                with custom agents, tools, and integrations—without losing governance.
+                Start simple with a no-code setup. When you&apos;re ready, enable published agents and
+                integrations with reviewed manifests, permissions, and audit logs, so every
+                extension stays governed and traceable.
               </p>
             </article>
           </div>

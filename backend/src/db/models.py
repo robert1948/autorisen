@@ -350,6 +350,7 @@ class Agent(Base):
         cascade="all, delete-orphan",
         order_by="AgentVersion.created_at.desc()",
     )
+    runs = relationship("AgentRun", back_populates="agent")
     tasks = relationship("Task", back_populates="agent")
     audit_events = relationship("AuditEvent", back_populates="agent")
 
@@ -443,6 +444,56 @@ class Task(Base):
 
     user = relationship("User")
     agent = relationship("Agent")
+
+
+class AgentRun(Base):
+    """Track user-initiated agent runs for the marketplace UI."""
+
+    __tablename__ = "agent_runs"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    agent_id = Column(
+        String(36), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    status = Column(String(32), nullable=False, server_default="active", index=True)
+    input_json = Column(JSON, nullable=True)
+    output_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    agent = relationship("Agent", back_populates="runs")
+    user = relationship("User")
+    events = relationship(
+        "AgentEvent", back_populates="run", cascade="all, delete-orphan"
+    )
+
+
+class AgentEvent(Base):
+    """Event log for actions performed within an agent run."""
+
+    __tablename__ = "agent_events"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    run_id = Column(
+        String(36), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event_type = Column(String(64), nullable=False)
+    payload_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+
+    run = relationship("AgentRun", back_populates="events")
 
 
 class Run(Base):
@@ -746,6 +797,52 @@ class AnalyticsEvent(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class FaqArticle(Base):
+    """Support FAQ knowledge base entries."""
+
+    __tablename__ = "faq_articles"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    question = Column(String(255), nullable=False)
+    answer = Column(Text, nullable=False)
+    tags = Column(JSON, nullable=True)
+    is_published = Column(Boolean, nullable=False, server_default="1")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class SupportTicket(Base):
+    """User-submitted support tickets."""
+
+    __tablename__ = "support_tickets"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    subject = Column(String(160), nullable=False)
+    body = Column(Text, nullable=False)
+    status = Column(String(32), nullable=False, server_default="open", index=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user = relationship("User")
 
 
 class Invoice(Base):
