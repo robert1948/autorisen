@@ -32,6 +32,7 @@ class RegisterStep1In(BaseModel):
     email: EmailStr
     password: str
     confirm_password: str
+    terms_accepted: Optional[bool] = None
     role: UserRole
     recaptcha_token: str
 

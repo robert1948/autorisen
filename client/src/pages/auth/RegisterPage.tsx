@@ -318,11 +318,7 @@ const Register = () => {
       await sendAnalytics({ event_type: "step_submit", step: "step2", role: result.user.role });
       await sendAnalytics({ event_type: "complete", role: result.user.role });
 
-      if (result.user.role === "Customer") {
-        navigate("/onboarding/customer", { replace: true });
-      } else {
-        navigate("/onboarding/developer", { replace: true });
-      }
+      navigate("/onboarding/welcome", { replace: true });
     } catch (err) {
       const registerError = err as RegisterApiError;
       const hasFieldErrors = applyFieldErrors(registerError.fieldErrors, step2Form);

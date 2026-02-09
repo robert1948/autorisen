@@ -19,6 +19,7 @@ from starlette.testclient import TestClient
 # ------------------------------------------------------------------
 
 TEST_DB_FILE = pathlib.Path("/tmp/autolocal_test.db")
+TEST_DB_PYTEST_FILE = pathlib.Path("/tmp/autolocal_test_pytest.db")
 TEST_DB_URL = f"sqlite:////{TEST_DB_FILE}"
 
 # IMPORTANT: do not use setdefault here.
@@ -119,9 +120,11 @@ class SyncClientAdapter:
 def _reset_sqlite_db_file() -> None:
     """Drop and recreate the SQLite file for a clean schema."""
     engine.dispose()
-    if TEST_DB_FILE.exists():
-        TEST_DB_FILE.unlink()
-    TEST_DB_FILE.parent.mkdir(parents=True, exist_ok=True)
+    for db_file in (TEST_DB_FILE, TEST_DB_PYTEST_FILE):
+        if db_file.exists():
+            db_file.unlink()
+        db_file.parent.mkdir(parents=True, exist_ok=True)
+    db_models.Base.metadata.drop_all(engine)
     db_models.Base.metadata.create_all(engine)
 
 

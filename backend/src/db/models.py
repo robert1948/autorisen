@@ -41,6 +41,8 @@ class User(Base):
     is_active = Column(Boolean, nullable=False, server_default="1")
     token_version = Column(Integer, nullable=False, default=0, server_default="0")
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    terms_version = Column(String(32), nullable=True)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
