@@ -54,17 +54,23 @@ AGENT_SEEDS = [
 
 
 def _table_exists(name: str) -> bool:
-    return sa.inspect(op.get_bind()).has_table(name)
+    return sa.inspect(op.get_bind()).has_table(name, schema="public")
 
 
 def _column_exists(table: str, column: str) -> bool:
     inspector = sa.inspect(op.get_bind())
-    return any(col["name"] == column for col in inspector.get_columns(table))
+    return any(
+        col["name"] == column
+        for col in inspector.get_columns(table, schema="public")
+    )
 
 
 def _index_exists(table: str, index_name: str) -> bool:
     inspector = sa.inspect(op.get_bind())
-    return any(idx["name"] == index_name for idx in inspector.get_indexes(table))
+    return any(
+        idx["name"] == index_name
+        for idx in inspector.get_indexes(table, schema="public")
+    )
 
 
 def upgrade() -> None:
