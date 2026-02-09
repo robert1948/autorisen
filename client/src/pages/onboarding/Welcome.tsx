@@ -34,6 +34,9 @@ export default function OnboardingWelcome() {
       .finally(() => {
         if (mounted) setLoading(false);
       });
+    if (typeof window !== "undefined" && "localStorage" in window) {
+      window.localStorage.setItem("onboarding_complete", "false");
+    }
     return () => {
       mounted = false;
     };
