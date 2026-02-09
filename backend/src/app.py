@@ -581,16 +581,17 @@ def create_app() -> FastAPI:
 
         @application.get("/{client_path:path}", include_in_schema=False)
         def _spa_fallback(client_path: str):
+            normalized_path = client_path.lstrip("/")
             # API routes are handled by the router mounted at /api
-            if client_path == "api" or client_path.startswith("api/"):
+            if normalized_path == "api" or normalized_path.startswith("api/"):
                 raise HTTPException(status_code=404)
 
             # Service worker is a static asset; never serve SPA HTML here.
-            if client_path == "sw.js":
+            if normalized_path == "sw.js":
                 raise HTTPException(status_code=404)
 
             # Check for specific root-level files (sw.js, manifest, etc.)
-            file_path = CLIENT_DIST / client_path
+            file_path = CLIENT_DIST / normalized_path
             if file_path.exists() and file_path.is_file():
                 return FileResponse(file_path)
 
