@@ -232,6 +232,7 @@ class RegisterIn(BaseModel):
     password: StrongPasswordStr
     confirm_password: StrongPasswordStr
     role: RoleStr = "Customer"
+    terms_accepted: Optional[bool] = None
     company_name: CompanyNameStr = ""
     profile: Profile = Field(default_factory=Profile)
     recaptcha_token: Optional[str] = None
@@ -315,6 +316,15 @@ INVALID_CREDENTIALS = HTTPException(
 )
 
 REFRESH_COOKIE_NAME = "refresh_token"
+TERMS_VERSION_DEFAULT = "v1"
+
+
+def _is_duplicate_email_error(exc: Exception) -> bool:
+    if auth_service is not None:
+        error_cls = getattr(auth_service, "DuplicateEmailError", None)
+        if error_cls and isinstance(exc, error_cls):
+            return True
+    return str(exc).strip().lower() == "email already registered."
 
 
 def _coerce_datetime(value: Any) -> Optional[datetime]:
@@ -978,6 +988,8 @@ def _begin_registration_adapter(
     last_name: str,
     password_plain: str,
     role: str,
+    terms_accepted: Optional[bool] = None,
+    terms_version: Optional[str] = None,
 ) -> str:
     if not _begin_reg:
         raise RuntimeError(
@@ -993,6 +1005,10 @@ def _begin_registration_adapter(
         "last_name": last_name,
         "role": _adapt_role_for_service(role),
     }
+    if terms_accepted is not None and "terms_accepted" in params:
+        kwargs["terms_accepted"] = terms_accepted
+    if terms_version is not None and "terms_version" in params:
+        kwargs["terms_version"] = terms_version
     if "password_plain" in params:
         kwargs["password_plain"] = password_plain
     elif "password" in params:
@@ -1171,6 +1187,8 @@ async def register_step1(
             last_name=payload.last_name.strip(),
             password_plain=payload.password,
             role=role,
+            terms_accepted=payload.terms_accepted,
+            terms_version=TERMS_VERSION_DEFAULT,
         )
         log.info("register_step1_ok email=%s role=%s", email, role)
         return RegisterStep1Out(temp_token=temp_token)
@@ -1263,6 +1281,8 @@ async def register_step2(
             access_token="", refresh_token=None, expires_at=None, user={}
         )
     except ValueError as ve:
+        if _is_duplicate_email_error(ve):
+            raise HTTPException(status_code=409, detail=str(ve)) from ve
         log.warning("register_step2_invalid temp: %s", ve)
         raise HTTPException(status_code=400, detail=str(ve)) from ve
     except HTTPException:
@@ -1285,6 +1305,9 @@ async def register_single(
 
     await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
+    if payload.terms_accepted is not True:
+        raise HTTPException(status_code=400, detail="Terms must be accepted")
+
     try:
         temp_token = _begin_registration_adapter(
             db=db,
@@ -1293,6 +1316,8 @@ async def register_single(
             last_name=payload.last_name.strip(),
             password_plain=payload.password,
             role=role,
+            terms_accepted=payload.terms_accepted,
+            terms_version=TERMS_VERSION_DEFAULT,
         )
         result = _complete_registration_adapter(
             db=db,

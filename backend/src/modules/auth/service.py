@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional, Tuple, cast
 from uuid import uuid4
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.src.core.config import settings
@@ -27,6 +28,12 @@ REFRESH_TOKEN_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 TEMP_TOKEN_PURPOSE = "register_step1"
 ACCESS_TOKEN_PURPOSE = "access"
 PASSWORD_RESET_TTL_MINUTES = int(os.getenv("PASSWORD_RESET_TTL_MINUTES", "30"))
+TERMS_VERSION_DEFAULT = "v1"
+
+
+class DuplicateEmailError(ValueError):
+    """Raised when a registration hits a unique email constraint."""
+
 
 
 def _ensure_aware(value: datetime) -> datetime:
@@ -50,6 +57,15 @@ def _password_reset_hash(token: str) -> str:
 
 def _normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def _is_unique_violation(exc: IntegrityError) -> bool:
+    orig = getattr(exc, "orig", None)
+    pgcode = getattr(orig, "pgcode", None)
+    if pgcode == "23505":
+        return True
+    message = str(orig or exc).lower()
+    return "unique constraint" in message or "unique violation" in message
 
 
 def _token_version_for(user: Any, *, default: int = 0) -> int:
@@ -76,7 +92,7 @@ def ensure_email_available(db: Session, email: str) -> None:
         select(models.User).where(func.lower(models.User.email) == normalized)
     )
     if existing:
-        raise ValueError("Email already registered.")
+        raise DuplicateEmailError("Email already registered.")
 
 
 def begin_registration(
@@ -87,6 +103,8 @@ def begin_registration(
     email: str,
     password: str,
     role: UserRole,
+    terms_accepted: Optional[bool] = None,
+    terms_version: Optional[str] = None,
 ) -> str:
     """Generate a temporary token carrying registration information."""
     ensure_email_available(db, email)
@@ -101,6 +119,9 @@ def begin_registration(
         "password_hash": password_hash,
         "purpose": TEMP_TOKEN_PURPOSE,
     }
+    if terms_accepted is True:
+        payload["terms_accepted"] = True
+        payload["terms_version"] = terms_version or TERMS_VERSION_DEFAULT
     token, _ = create_jwt(payload, settings.temp_token_ttl_minutes)
     return token
 
@@ -121,6 +142,8 @@ def complete_registration(
     ensure_email_available(db, normalized_email)
 
     now = datetime.now(timezone.utc)
+    terms_accepted = bool(payload.get("terms_accepted"))
+    terms_version = payload.get("terms_version") or TERMS_VERSION_DEFAULT
 
     user = models.User(
         email=normalized_email,
@@ -133,6 +156,9 @@ def complete_registration(
         is_email_verified=False,
         password_changed_at=now,
     )
+    if terms_accepted:
+        user.terms_accepted_at = now
+        user.terms_version = terms_version
 
     credential = models.Credential(
         user=user,
@@ -142,29 +168,35 @@ def complete_registration(
     )
 
     setattr(user, "profile", models.UserProfile(profile=profile))
-    db.add(user)
-    db.add(credential)
+    try:
+        db.add(user)
+        db.add(credential)
 
-    # Ensure PKs are available before generating tokens
-    db.flush()
+        # Ensure PKs are available before generating tokens
+        db.flush()
 
-    refresh_token = _generate_refresh_token()
-    _create_session(db, user, refresh_token)
+        refresh_token = _generate_refresh_token()
+        _create_session(db, user, refresh_token)
 
-    token_version = _token_version_for(user)
-    access_payload = {
-        "sub": user.email,
-        "user_id": user.id,
-        "role": user.role,
-        "purpose": ACCESS_TOKEN_PURPOSE,
-        "jti": str(uuid4()),
-        "token_version": token_version,
-    }
-    access_token, expires_at = create_jwt(
-        access_payload, settings.access_token_ttl_minutes
-    )
+        token_version = _token_version_for(user)
+        access_payload = {
+            "sub": user.email,
+            "user_id": user.id,
+            "role": user.role,
+            "purpose": ACCESS_TOKEN_PURPOSE,
+            "jti": str(uuid4()),
+            "token_version": token_version,
+        }
+        access_token, expires_at = create_jwt(
+            access_payload, settings.access_token_ttl_minutes
+        )
 
-    db.commit()
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if _is_unique_violation(exc):
+            raise DuplicateEmailError("Email already registered.") from exc
+        raise
 
     return access_token, refresh_token, expires_at, user
 
