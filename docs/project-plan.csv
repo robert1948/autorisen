@@ -38,3 +38,6 @@ PAY-INTENT-001,Maintain payments intent-only scope (no implementation in MVP),ma
 GOV-001,Publish auth changes playbook (guardrails for auth/csrf edits),docs,planned,P0,,"Spec: SYSTEM_SPEC §3 and §8. Defines preconditions + stop conditions.",docs/playbooks/PLAYBOOK_AUTH_CHANGES.md,"Doc review"
 GOV-002,Publish release & deploy playbook (deploy rules + rollback),docs,planned,P1,,"Spec: SYSTEM_SPEC §6.2 and §6.3. Deploy/migrate separate; approvals required.",docs/playbooks/PLAYBOOK_RELEASE_AND_DEPLOY.md,"Doc review"
 GOV-003,Perform management freeze review and publish results,management,planned,P0,,"Spec: SYSTEM_SPEC §3.4, §2.5, §2.6, §4.4. Record what is frozen/flexible/deferred.",docs/FREEZE_REVIEW.md,"Doc review: confirmations present"
+
+# ROUTING HOTFIXES
+ROUTING-SPA-API-001,Fix SPA fallback intercepting /api and /sw.js (autorisen),engineering,done,P0,2026-02-09,"Spec: SYSTEM_SPEC §2.5 (routing) and §6.2. Route order keeps /api and /sw.js out of SPA fallback.","docs/evidence/ROUTING-SPA-API-001/2026-02-09/deploy-verification.md; branch=wo/routing-spa-api-001; commit=40326fd7","./.venv/bin/python -m pytest -q; npm -C client ci; npm -C client run build; curl /api/version /sw.js"
