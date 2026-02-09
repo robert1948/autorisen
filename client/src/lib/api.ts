@@ -288,8 +288,33 @@ export type MarketplaceAgent = {
   thumbnail_url?: string | null;
 };
 
+export type AgentRun = {
+  id: string;
+  agent_id: string;
+  user_id: string;
+  status: string;
+  input_json?: Record<string, unknown> | null;
+  output_json?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AgentActionResult = {
+  run_id: string;
+  event_id: string;
+  status: string;
+  result: Record<string, unknown>;
+};
+
+export type OpsInsight = {
+  title: string;
+  summary: string;
+  key_metrics: Array<Record<string, unknown>>;
+  sources: Array<Record<string, unknown>>;
+};
+
 export async function fetchMarketplaceAgents(): Promise<MarketplaceAgent[]> {
-  return request<MarketplaceAgent[]>("/marketplace/agents", { auth: false });
+  return request<MarketplaceAgent[]>("/agents?published=true");
 }
 
 export type MarketplaceAgentDetail = MarketplaceAgent & {
@@ -307,7 +332,33 @@ export type MarketplaceAgentDetail = MarketplaceAgent & {
 export async function fetchMarketplaceAgentDetail(
   slug: string,
 ): Promise<MarketplaceAgentDetail> {
-  return request<MarketplaceAgentDetail>(`/marketplace/agents/${slug}`, { auth: false });
+  return request<MarketplaceAgentDetail>(`/agents/${slug}?published=true`);
+}
+
+export async function launchMarketplaceAgent(
+  slug: string,
+  input?: Record<string, unknown>,
+): Promise<AgentRun> {
+  return request<AgentRun>(`/agents/${slug}/launch`, {
+    method: "POST",
+    body: { input },
+  });
+}
+
+export async function runMarketplaceAgentAction(
+  slug: string,
+  runId: string,
+  action: string,
+  payload: Record<string, unknown> = {},
+): Promise<AgentActionResult> {
+  return request<AgentActionResult>(`/agents/${slug}/action`, {
+    method: "POST",
+    body: {
+      run_id: runId,
+      action,
+      payload,
+    },
+  });
 }
 
 export { request as apiRequest };

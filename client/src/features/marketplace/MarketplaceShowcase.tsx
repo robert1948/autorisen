@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import {
   fetchMarketplaceAgentDetail,
   fetchMarketplaceAgents,
-  runFlow,
-  type FlowRunResponse,
+  launchMarketplaceAgent,
+  runMarketplaceAgentAction,
+  type AgentRun,
   type MarketplaceAgent,
   type MarketplaceAgentDetail,
 } from "../../lib/api";
@@ -19,7 +20,16 @@ const MarketplaceShowcase = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
-  const [runResult, setRunResult] = useState<FlowRunResponse | null>(null);
+  const [activeRun, setActiveRun] = useState<AgentRun | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionResult, setActionResult] = useState<Record<string, unknown> | null>(null);
+  const [nextStepKey, setNextStepKey] = useState<string>("");
+  const [blockedReason, setBlockedReason] = useState<string>("");
+  const [blockedNotes, setBlockedNotes] = useState<string>("");
+  const [faqQuery, setFaqQuery] = useState<string>("");
+  const [ticketSubject, setTicketSubject] = useState<string>("");
+  const [ticketBody, setTicketBody] = useState<string>("");
   const [search, setSearch] = useState("");
   const [placementFilter, setPlacementFilter] = useState("all");
 
@@ -63,6 +73,16 @@ const MarketplaceShowcase = () => {
   useEffect(() => {
     if (!activeSlug) {
       setDetail(null);
+      setActiveRun(null);
+      setActionResult(null);
+      setActionError(null);
+      setRunError(null);
+      setNextStepKey("");
+      setBlockedReason("");
+      setBlockedNotes("");
+      setFaqQuery("");
+      setTicketSubject("");
+      setTicketBody("");
       return;
     }
     let mounted = true;
@@ -90,11 +110,45 @@ const MarketplaceShowcase = () => {
     };
   }, [activeSlug]);
 
-  const handleRunAgent = async () => {
+  const ensureRun = async () => {
+    if (!detail) return null;
+    if (activeRun) return activeRun;
+    try {
+      setRunLoading(true);
+      const run = await launchMarketplaceAgent(detail.slug, { source: "marketplace" });
+      setActiveRun(run);
+      setRunError(null);
+      return run;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to launch agent";
+      setRunError(message);
+      return null;
+    } finally {
+      setRunLoading(false);
+    }
+  };
+
+  const handleAgentAction = async (action: string, payload: Record<string, unknown>) => {
     if (!detail) return;
-    // TODO: Implement run logic with new API structure
-    // For now, we just show an alert or log
-    console.log("Run agent not implemented for new structure yet");
+    const run = await ensureRun();
+    if (!run) return;
+    try {
+      setActionLoading(true);
+      const result = await runMarketplaceAgentAction(detail.slug, run.id, action, payload);
+      setActionResult(result.result);
+      setActionError(null);
+      if (detail.slug === "onboarding-guide") {
+        const step = (result.result as { step?: { step_key?: string } }).step;
+        if (step?.step_key) {
+          setNextStepKey(step.step_key);
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to run action";
+      setActionError(message);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -191,6 +245,8 @@ const MarketplaceShowcase = () => {
               <p><strong>Author:</strong> {detail.author}</p>
               <p><strong>License:</strong> {detail.license}</p>
               <p><strong>Rating:</strong> {detail.rating} ({detail.downloads} downloads)</p>
+              <p><strong>Permissions:</strong> {detail.permissions?.join(", ") || "None listed"}</p>
+              <p><strong>Capabilities:</strong> {detail.tags?.join(", ") || "Not specified"}</p>
               
               {detail.readme && (
                 <div className="marketplace-modal__readme">
@@ -207,6 +263,150 @@ const MarketplaceShowcase = () => {
               )}
             </section>
 
+            <section className="marketplace-modal__runner">
+              <h5>Agent Runner</h5>
+              {runError && <p className="marketplace__error">{runError}</p>}
+              {actionError && <p className="marketplace__error">{actionError}</p>}
+
+              {detail.slug === "onboarding-guide" && (
+                <div className="marketplace-runner">
+                  <div className="marketplace-runner__row">
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() => handleAgentAction("next_step", {})}
+                      disabled={actionLoading}
+                    >
+                      Show next step
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Step key"
+                      value={nextStepKey}
+                      onChange={(event) => setNextStepKey(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--small"
+                      onClick={() => handleAgentAction("complete_step", { step_key: nextStepKey })}
+                      disabled={actionLoading || !nextStepKey}
+                    >
+                      Mark complete
+                    </button>
+                  </div>
+                  <div className="marketplace-runner__row">
+                    <input
+                      type="text"
+                      placeholder="Blocked reason"
+                      value={blockedReason}
+                      onChange={(event) => setBlockedReason(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Notes (optional)"
+                      value={blockedNotes}
+                      onChange={(event) => setBlockedNotes(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() =>
+                        handleAgentAction("blocked", {
+                          step_key: nextStepKey,
+                          reason: blockedReason,
+                          notes: blockedNotes || undefined,
+                        })
+                      }
+                      disabled={actionLoading || !nextStepKey || !blockedReason}
+                    >
+                      I&apos;m blocked
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {detail.slug === "cape-support-bot" && (
+                <div className="marketplace-runner">
+                  <div className="marketplace-runner__row">
+                    <input
+                      type="text"
+                      placeholder="Search FAQs"
+                      value={faqQuery}
+                      onChange={(event) => setFaqQuery(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() => handleAgentAction("faq_search", { query: faqQuery })}
+                      disabled={actionLoading}
+                    >
+                      Search
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() => handleAgentAction("list_tickets", {})}
+                      disabled={actionLoading}
+                    >
+                      My tickets
+                    </button>
+                  </div>
+                  <div className="marketplace-runner__row">
+                    <input
+                      type="text"
+                      placeholder="Ticket subject"
+                      value={ticketSubject}
+                      onChange={(event) => setTicketSubject(event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Ticket details"
+                      value={ticketBody}
+                      onChange={(event) => setTicketBody(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--small"
+                      onClick={() => handleAgentAction("create_ticket", { subject: ticketSubject, body: ticketBody })}
+                      disabled={actionLoading || !ticketSubject || !ticketBody}
+                    >
+                      Create ticket
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {detail.slug === "data-analyst" && (
+                <div className="marketplace-runner">
+                  <div className="marketplace-runner__row">
+                    {[
+                      "project_status",
+                      "top_blockers",
+                      "onboarding_completion_rate",
+                      "agent_usage_last_7d",
+                      "open_support_tickets",
+                    ].map((intent) => (
+                      <button
+                        key={intent}
+                        type="button"
+                        className="btn btn--ghost btn--small"
+                        onClick={() => handleAgentAction("insight", { intent })}
+                        disabled={actionLoading}
+                      >
+                        {intent.replace(/_/g, " ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {actionResult && (
+                <pre className="marketplace-modal__config">
+                  {JSON.stringify(actionResult, null, 2)}
+                </pre>
+              )}
+            </section>
+
             <div className="marketplace-modal__actions">
               <button type="button" className="btn btn--ghost btn--small" onClick={() => setActiveSlug(null)}>
                 Close
@@ -214,10 +414,10 @@ const MarketplaceShowcase = () => {
               <button
                 type="button"
                 className="btn btn--primary btn--small"
-                onClick={handleRunAgent}
+                onClick={() => ensureRun()}
                 disabled={runLoading}
               >
-                {runLoading ? "Running…" : "Run with CapeControl"}
+                {runLoading ? "Launching…" : "Launch agent"}
               </button>
             </div>
           </div>

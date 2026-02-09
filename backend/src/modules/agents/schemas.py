@@ -64,3 +64,31 @@ class AgentResponse(AgentBase):
     created_at: datetime
     updated_at: datetime
     versions: list[AgentVersionResponse] = Field(default_factory=list)
+
+
+class AgentRunCreate(SchemaBase):
+    input: Optional[Dict[str, Any]] = None
+
+
+class AgentRunResponse(SchemaBase):
+    id: str
+    agent_id: str
+    user_id: str
+    status: str
+    input_json: Optional[Dict[str, Any]] = None
+    output_json: Optional[Dict[str, Any]] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AgentActionRequest(SchemaBase):
+    run_id: str
+    action: str
+    payload: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentActionResponse(SchemaBase):
+    run_id: str
+    event_id: str
+    status: str
+    result: Dict[str, Any]

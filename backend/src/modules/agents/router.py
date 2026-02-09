@@ -3,14 +3,26 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, WebSocket
 from sqlalchemy import select, update
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
+from backend.src.modules.marketplace.models import (
+    AgentCategory,
+    AgentDetail,
+    AgentListing,
+    MarketplaceSearchRequest,
+)
+from backend.src.modules.marketplace.service import MarketplaceService
+from backend.src.modules.onboarding import service as onboarding_service
+from backend.src.modules.ops import service as ops_service
+from backend.src.modules.support import service as support_service
 
 from . import schemas
 from .executor import AgentExecutor, TaskCreate, TaskResponse
@@ -51,11 +63,26 @@ def _get_agent(db: Session, agent_id: str, owner: models.User) -> models.Agent:
     return agent
 
 
-@router.get("", response_model=list[schemas.AgentResponse])
-def list_agents(
+@router.get("", response_model=list[schemas.AgentResponse] | list[AgentListing])
+async def list_agents(
+    published: bool = False,
+    q: str | None = None,
+    category: AgentCategory | None = None,
+    limit: int = 50,
     owner: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
-) -> list[schemas.AgentResponse]:
+) -> list[schemas.AgentResponse] | list[AgentListing]:
+    if published:
+        service = MarketplaceService(db)
+        request = MarketplaceSearchRequest(
+            query=q,
+            category=category,
+            limit=limit,
+            sort_by="updated",
+        )
+        result = await service.search_agents(request)
+        return result.agents
+
     agents = db.scalars(
         select(models.Agent).where(models.Agent.owner_id == owner.id)
     ).all()
@@ -191,14 +218,204 @@ def publish_version(
     return version
 
 
-@router.get("/{agent_id}", response_model=schemas.AgentResponse)
-def get_agent(
+@router.get("/{agent_id}", response_model=schemas.AgentResponse | AgentDetail)
+async def get_agent(
     agent_id: str,
+    published: bool = False,
     owner: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
-) -> schemas.AgentResponse:
+) -> schemas.AgentResponse | AgentDetail:
+    if published:
+        service = MarketplaceService(db)
+        return await service.get_agent_detail(agent_id)
     agent = _get_agent(db, agent_id, owner)
     return agent
+
+
+def _get_published_agent(db: Session, slug: str) -> tuple[models.Agent, models.AgentVersion]:
+    agent = db.scalar(
+        select(models.Agent)
+        .options(selectinload(models.Agent.versions))
+        .where(models.Agent.slug == slug)
+    )
+    if agent is None:
+        raise HTTPException(status_code=404, detail="agent not found")
+    version = next(
+        (v for v in agent.versions if v.status == "published"),
+        None,
+    )
+    if version is None:
+        raise HTTPException(status_code=404, detail="published version not found")
+    return agent, version
+
+
+@router.post("/{slug}/launch", response_model=schemas.AgentRunResponse, status_code=201)
+def launch_agent(
+    slug: str,
+    payload: schemas.AgentRunCreate,
+    owner: models.User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.AgentRunResponse:
+    agent, _version = _get_published_agent(db, slug)
+    run = models.AgentRun(
+        agent_id=agent.id,
+        user_id=owner.id,
+        status="active",
+        input_json=payload.input,
+    )
+    db.add(run)
+    db.flush()
+    db.add(
+        models.AgentEvent(
+            run_id=run.id,
+            event_type="launch",
+            payload_json={"slug": slug, "input": payload.input or {}},
+        )
+    )
+    db.add(
+        models.AuditEvent(
+            user_id=owner.id,
+            agent_id=agent.id,
+            event_type="agent_run_launch",
+            payload={"run_id": run.id, "slug": slug},
+        )
+    )
+    db.commit()
+    db.refresh(run)
+    return schemas.AgentRunResponse(
+        id=run.id,
+        agent_id=run.agent_id,
+        user_id=run.user_id,
+        status=run.status,
+        input_json=run.input_json,
+        output_json=run.output_json,
+        created_at=run.created_at,
+        updated_at=run.updated_at,
+    )
+
+
+@router.post("/{slug}/action", response_model=schemas.AgentActionResponse)
+def run_agent_action(
+    slug: str,
+    payload: schemas.AgentActionRequest,
+    owner: models.User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.AgentActionResponse:
+    agent, _version = _get_published_agent(db, slug)
+    run = db.scalar(
+        select(models.AgentRun).where(
+            models.AgentRun.id == payload.run_id,
+            models.AgentRun.user_id == owner.id,
+        )
+    )
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    if run.agent_id != agent.id:
+        raise HTTPException(status_code=400, detail="run does not match agent")
+
+    action = payload.action.strip().lower()
+    result: dict[str, Any]
+
+    if slug == "onboarding-guide":
+        if action == "next_step":
+            result = onboarding_service.get_next_step(db, owner)
+        elif action == "complete_step":
+            step_key = str(payload.payload.get("step_key", "")).strip()
+            if not step_key:
+                raise HTTPException(status_code=400, detail="step_key is required")
+            result = onboarding_service.set_step_status(db, owner, step_key, "completed")
+        elif action == "blocked":
+            step_key = str(payload.payload.get("step_key", "")).strip()
+            reason = str(payload.payload.get("reason", "")).strip()
+            notes = payload.payload.get("notes")
+            if not step_key or not reason:
+                raise HTTPException(status_code=400, detail="step_key and reason are required")
+            result = onboarding_service.mark_step_blocked(
+                db, owner, step_key, reason, notes=notes if isinstance(notes, str) else None
+            )
+        else:
+            raise HTTPException(status_code=400, detail="unsupported onboarding action")
+    elif slug == "cape-support-bot":
+        if action == "faq_search":
+            query = str(payload.payload.get("query", "")).strip() or None
+            faqs = support_service.search_faqs(db, query)
+            result = {
+                "faqs": [
+                    {
+                        "id": faq.id,
+                        "question": faq.question,
+                        "answer": faq.answer,
+                        "tags": list(faq.tags or []),
+                    }
+                    for faq in faqs
+                ]
+            }
+        elif action == "create_ticket":
+            subject = str(payload.payload.get("subject", "")).strip()
+            body = str(payload.payload.get("body", "")).strip()
+            if not subject or not body:
+                raise HTTPException(status_code=400, detail="subject and body are required")
+            ticket = support_service.create_ticket(
+                db, user_id=owner.id, subject=subject, body=body
+            )
+            result = {
+                "ticket": {
+                    "id": ticket.id,
+                    "subject": ticket.subject,
+                    "body": ticket.body,
+                    "status": ticket.status,
+                    "created_at": ticket.created_at,
+                }
+            }
+        elif action == "list_tickets":
+            tickets = support_service.list_tickets(db, owner.id)
+            result = {
+                "tickets": [
+                    {
+                        "id": ticket.id,
+                        "subject": ticket.subject,
+                        "body": ticket.body,
+                        "status": ticket.status,
+                        "created_at": ticket.created_at,
+                    }
+                    for ticket in tickets
+                ]
+            }
+        else:
+            raise HTTPException(status_code=400, detail="unsupported support action")
+    elif slug == "data-analyst":
+        if action != "insight":
+            raise HTTPException(status_code=400, detail="unsupported analyst action")
+        intent = str(payload.payload.get("intent", "")).strip()
+        if not intent:
+            raise HTTPException(status_code=400, detail="intent is required")
+        result = ops_service.build_insight(db, owner, intent)
+    else:
+        raise HTTPException(status_code=400, detail="unknown agent slug")
+
+    event = models.AgentEvent(
+        run_id=run.id,
+        event_type=action,
+        payload_json={"action": action, "result": result},
+    )
+    run.output_json = {"last_action": action, "result": result}
+    db.add(event)
+    db.add(
+        models.AuditEvent(
+            user_id=owner.id,
+            agent_id=agent.id,
+            event_type="agent_action",
+            payload={"run_id": run.id, "slug": slug, "action": action},
+        )
+    )
+    db.commit()
+    db.refresh(event)
+    return schemas.AgentActionResponse(
+        run_id=run.id,
+        event_id=event.id,
+        status=run.status,
+        result=result,
+    )
 
 
 # Task execution endpoints

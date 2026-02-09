@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from backend.src.agents.mcp_host import mcp_host
+from backend.src.db import models
+from backend.src.db.session import get_session
+from backend.src.modules.auth.deps import get_verified_user
+
+from . import schemas, service
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 
@@ -75,3 +81,13 @@ async def mcp_smoke():
                 "and configured in config/mcp/servers.dev.yaml."
             ),
         }
+
+
+@router.get("/insights", response_model=schemas.OpsInsightResponse)
+def get_insights(
+    intent: schemas.OpsInsightIntent,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.OpsInsightResponse:
+    payload = service.build_insight(db, current_user, intent.value)
+    return schemas.OpsInsightResponse(**payload)

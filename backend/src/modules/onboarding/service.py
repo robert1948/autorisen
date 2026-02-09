@@ -316,6 +316,106 @@ def set_step_status(
     return build_status_payload(session, steps, states)
 
 
+def get_next_step(db: Session, user: models.User) -> dict[str, Any]:
+    session = get_active_session(db, user.id)
+    if not session:
+        session = models.OnboardingSession(
+            user_id=user.id,
+            status="active",
+            onboarding_completed=False,
+            last_step_key="welcome",
+        )
+        db.add(session)
+        db.flush()
+        log_event(db, session_id=session.id, user_id=user.id, event_type="start")
+
+    steps = get_steps(db)
+    states = ensure_step_state(db, session.id, steps)
+    db.commit()
+
+    state_map = {state.step_key: state for state in states}
+    next_step = None
+    for step in steps:
+        if not step.required:
+            continue
+        state = state_map.get(step.step_key)
+        if not state or state.status != "completed":
+            next_step = step
+            break
+    payload_steps = serialize_steps(steps, states)
+    step_payload = (
+        next((item for item in payload_steps if item["step_key"] == next_step.step_key), None)
+        if next_step
+        else None
+    )
+    return {
+        "step": step_payload,
+        "progress": compute_progress(steps, states),
+    }
+
+
+def mark_step_blocked(
+    db: Session,
+    user: models.User,
+    step_key: str,
+    reason: str,
+    notes: Optional[str] = None,
+) -> dict[str, Any]:
+    session = get_active_session(db, user.id)
+    if not session:
+        session = models.OnboardingSession(
+            user_id=user.id,
+            status="active",
+            onboarding_completed=False,
+            last_step_key="welcome",
+        )
+        db.add(session)
+        db.flush()
+
+    step = db.scalar(
+        select(models.OnboardingStep).where(models.OnboardingStep.step_key == step_key)
+    )
+    if not step:
+        raise ValueError("Step not found")
+
+    state = db.scalar(
+        select(models.UserOnboardingStepState).where(
+            models.UserOnboardingStepState.session_id == session.id,
+            models.UserOnboardingStepState.step_key == step_key,
+        )
+    )
+    if not state:
+        state = models.UserOnboardingStepState(
+            session_id=session.id,
+            step_key=step_key,
+            status="pending",
+        )
+        db.add(state)
+
+    state.status = "blocked"
+    session.last_step_key = step_key
+    log_event(
+        db,
+        session_id=session.id,
+        user_id=user.id,
+        event_type="step_blocked",
+        step_key=step_key,
+        payload={"reason": reason, "notes": notes},
+    )
+
+    steps = get_steps(db)
+    states = ensure_step_state(db, session.id, steps)
+    db.commit()
+    payload_steps = serialize_steps(steps, states)
+    step_payload = next((item for item in payload_steps if item["step_key"] == step_key), None)
+    if not step_payload:
+        raise ValueError("Step not found")
+    return {
+        "step": step_payload,
+        "progress": compute_progress(steps, states),
+    }
+
+
 def acknowledge_trust(
     db: Session,
     user: models.User,
