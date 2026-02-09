@@ -558,6 +558,13 @@ def create_app() -> FastAPI:
 
     # ----------------------------- SPA mount ------------------------------
     if spa_index:
+        @application.get("/sw.js", include_in_schema=False)
+        def service_worker():
+            sw_path = CLIENT_DIST / "sw.js"
+            if sw_path.exists() and sw_path.is_file():
+                return FileResponse(sw_path, media_type="application/javascript")
+            return PlainTextResponse("Not found", status_code=404)
+
         # Mount static assets explicitly to avoid root catch-all issues
         if (CLIENT_DIST / "assets").exists():
             application.mount(
@@ -576,6 +583,10 @@ def create_app() -> FastAPI:
         def _spa_fallback(client_path: str):
             # API routes are handled by the router mounted at /api
             if client_path == "api" or client_path.startswith("api/"):
+                raise HTTPException(status_code=404)
+
+            # Service worker is a static asset; never serve SPA HTML here.
+            if client_path == "sw.js":
                 raise HTTPException(status_code=404)
 
             # Check for specific root-level files (sw.js, manifest, etc.)
