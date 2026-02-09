@@ -826,12 +826,14 @@ class SupportTicket(Base):
     __tablename__ = "support_tickets"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(
-        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    subject = Column(String(160), nullable=False)
-    body = Column(Text, nullable=False)
-    status = Column(String(32), nullable=False, server_default="open", index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    priority = Column(String(32), nullable=True)
+    status = Column(String(32), nullable=True)
+    assigned_to = Column(String(255), nullable=True)
+    resolution = Column(Text, nullable=True)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
     )
@@ -841,8 +843,7 @@ class SupportTicket(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
-
-    user = relationship("User")
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class Invoice(Base):

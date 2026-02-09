@@ -47,8 +47,8 @@ def create_ticket(
     )
     return schemas.SupportTicketOut(
         id=ticket.id,
-        subject=ticket.subject,
-        body=ticket.body,
+        subject=ticket.title,
+        body=ticket.description,
         status=ticket.status,
         created_at=ticket.created_at,
     )
@@ -64,8 +64,8 @@ def list_tickets(
         tickets=[
             schemas.SupportTicketOut(
                 id=ticket.id,
-                subject=ticket.subject,
-                body=ticket.body,
+                subject=ticket.title,
+                body=ticket.description,
                 status=ticket.status,
                 created_at=ticket.created_at,
             )
