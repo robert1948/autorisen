@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.support.service import support_user_id
 
 
 def build_insight(db: Session, user: models.User, intent: str) -> dict[str, Any]:
@@ -130,7 +131,7 @@ def build_insight(db: Session, user: models.User, intent: str) -> dict[str, Any]
     if intent == "open_support_tickets":
         open_count = db.scalar(
             select(func.count()).select_from(models.SupportTicket).where(
-                models.SupportTicket.user_id == user.id,
+                models.SupportTicket.user_id == support_user_id(user.id),
                 models.SupportTicket.status == "open",
             )
         )

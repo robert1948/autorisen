@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Optional
+import zlib
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -24,6 +25,10 @@ def search_faqs(db: Session, query: Optional[str]) -> list[models.FaqArticle]:
     return db.scalars(stmt).all()
 
 
+def support_user_id(user_id: str) -> int:
+    return int(zlib.crc32(user_id.encode("utf-8")) & 0xFFFFFFFF)
+
+
 def create_ticket(
     db: Session,
     *,
@@ -32,9 +37,9 @@ def create_ticket(
     body: str,
 ) -> models.SupportTicket:
     ticket = models.SupportTicket(
-        user_id=user_id,
-        subject=subject,
-        body=body,
+        user_id=support_user_id(user_id),
+        title=subject,
+        description=body,
         status="open",
     )
     db.add(ticket)
@@ -46,7 +51,7 @@ def create_ticket(
 def list_tickets(db: Session, user_id: str) -> list[models.SupportTicket]:
     stmt = (
         select(models.SupportTicket)
-        .where(models.SupportTicket.user_id == user_id)
+        .where(models.SupportTicket.user_id == support_user_id(user_id))
         .order_by(models.SupportTicket.created_at.desc())
     )
     return db.scalars(stmt).all()
