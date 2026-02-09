@@ -21,6 +21,10 @@ export function useOnboardingStatus() {
     setState((prev) => ({ ...prev, loading: true, error: null, status: undefined }));
     try {
       const data = await getOnboardingStatus();
+      if (typeof window !== "undefined" && "localStorage" in window) {
+        const completed = Boolean(data?.session?.onboarding_completed);
+        window.localStorage.setItem("onboarding_complete", completed ? "true" : "false");
+      }
       setState({ loading: false, error: null, status: undefined, data });
     } catch (err) {
       const status = (err as { status?: number }).status;

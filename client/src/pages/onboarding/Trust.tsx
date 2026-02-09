@@ -29,6 +29,7 @@ export default function OnboardingTrust() {
     try {
       await completeOnboarding();
       localStorage.removeItem("onboarding_explore_quietly");
+      localStorage.setItem("onboarding_complete", "true");
       navigate("/app/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to complete onboarding");
