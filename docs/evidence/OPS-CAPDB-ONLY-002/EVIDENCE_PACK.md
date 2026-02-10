@@ -4,6 +4,21 @@
 - Change: Added backend middleware to block write methods when READ_ONLY_MODE=1.
 - Verification: Initial 503s were due to maintenance mode ON; post-maintenance retry returned 200s; write attempt returned 403 on autorisen.
 
+## Risks and mitigations
+- Risk: autorisen write attempts against shared DB.
+	Mitigation: READ_ONLY_MODE middleware blocks POST/PUT/PATCH/DELETE with HTTP 403.
+- Risk: downtime during DB switch.
+	Mitigation: maintenance mode used, health checks repeated after maintenance off.
+
+## Verification summary
+- Health/version checks: logs/phase5r_*_health_http.txt and logs/phase5r_*_version_http.txt (200/200).
+- Read-only enforcement: logs/phase5r_aut_post_block_http.txt (403).
+
+## Rollback (high-level)
+- Re-enable maintenance mode, then re-promote the prior autorisen DB add-on if needed.
+- Disable READ_ONLY_MODE and redeploy the last known-good autorisen image.
+- Verify /api/health and /api/version return 200 before restoring access.
+
 ## Key Evidence Index
 - Middleware code: backend/src/middleware/read_only.py
 - App wiring: backend/src/app.py
