@@ -325,7 +325,19 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 # -----------------------------------------------------------------------------
 deploy-heroku: deploy-autorisen ## Build/push/release to staging (autorisen) only
 
-.PHONY: deploy-autorisen verify-autorisen
+.PHONY: deploy-autorisen verify-autorisen test-backend build-client ship-autorisen
+
+test-backend: ## Run backend tests (pytest)
+	@set -euo pipefail; \
+	./.venv/bin/python -m pytest -q
+
+build-client: ## Install client deps and build
+	@set -euo pipefail; \
+	npm -C client ci --no-audit --fund=false; \
+	npm -C client run build
+
+ship-autorisen: test-backend build-client deploy-autorisen verify-autorisen ## Test, build, deploy, and verify autorisen
+	@echo "ship-autorisen complete"
 
 deploy-autorisen: ## Build/push/release to staging (autorisen) with build args
 	@set -euo pipefail; \
