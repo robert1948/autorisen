@@ -1,77 +1,79 @@
 # CSRF Policy (CapeControl / AutoLocal)
 
-This project uses a **double-submit CSRF** pattern:
+This project uses a **double-submit CSRF** pattern.
 
-- The backend issues a CSRF token.
-- The browser stores it in a readable cookie (not HttpOnly).
-- Every **state-changing** request must echo the same token in a request header.
+## Purpose / Threat model
 
-If the header token and cookie token are missing/mismatched/invalid, the request is rejected with **HTTP 403**.
+- The server MUST issue a CSRF token and the browser MUST store it in a readable cookie.
+- Every state-changing request MUST echo the same token in a request header.
+- If the header token and cookie token are missing, mismatched, or invalid, the server MUST reject the request with HTTP 403.
 
 ## Source of truth
 
 - CSRF implementation: `backend/src/modules/auth/csrf.py`
+- CSRF token helpers: `backend/src/services/csrf.py`
+- CSRF middleware wiring: `backend/src/app.py`
 - Auth router CSRF dependency: `backend/src/modules/auth/router.py`
 
-## What requires CSRF
+## CSRF Mechanism (canonical)
 
-CSRF checks apply to **all non-safe HTTP methods**:
+### Token issuance (source of truth)
 
-- Safe methods (no CSRF required): `GET`, `HEAD`, `OPTIONS`, `TRACE`
-- CSRF required by default: `POST`, `PUT`, `PATCH`, `DELETE`
+- Clients MUST obtain tokens from `GET /api/auth/csrf`.
+- The response MUST include the token under these JSON keys: `csrf`, `csrf_token`, `token`.
+- The response MUST set a cookie named `csrftoken`.
+- The response MUST mirror the token in the `X-CSRF-Token` response header.
 
-### Auth endpoints (common ones)
+### Cookie requirements
 
-Most `/api/auth/*` endpoints that mutate state are `POST` and therefore require CSRF, including:
+- Cookie name: `csrftoken` (canonical).
+- Accepted cookie names (first-match): `csrftoken`, `csrf_token`, `XSRF-TOKEN`.
+- Cookie scope: `Path=/`.
+- Cookie MUST be readable by the browser (`HttpOnly=false`).
+- Cookie `SameSite` MUST follow `SESSION_COOKIE_SAMESITE` (`lax`, `strict`, or `none`).
+- Cookie `Secure` MUST be `true` when `SESSION_COOKIE_SECURE=true` or when `SameSite=none`.
+- No `Domain` attribute is set by default.
 
-- `POST /api/auth/login`
-- `POST /api/auth/register` and `POST /api/auth/register/step1`, `POST /api/auth/register/step2`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `POST /api/auth/verify/resend`
-- `POST /api/auth/password/forgot`
-- `POST /api/auth/password/reset`
+### Header requirements
 
-`GET /api/auth/me` does **not** require CSRF (it’s a safe method).
+- For every protected request, the client MUST send a CSRF header containing the token.
+- Accepted header names (first-match):
+  - `X-CSRF-Token` (preferred)
+  - `X-CSRFToken`
+  - `X-XSRF-TOKEN`
 
-### Exemptions
+### Validation rules
 
-A small number of routes may be exempted for server-to-server webhook flows. Exemptions are defined in `EXEMPT_ROUTES` in `backend/src/modules/auth/csrf.py` and should remain narrow (method + path).
+- The request MUST include both a CSRF cookie and a CSRF header.
+- The cookie token and header token MUST be byte-for-byte equal.
+- The token MUST pass signature validation and TTL checks.
+- Tokens are signed (nonce + timestamp + HMAC) and are valid for 1 hour by default.
 
-## How to obtain a CSRF token
+## Protected Requests
 
-Call:
+- CSRF checks MUST run for all non-safe HTTP methods: `POST`, `PUT`, `PATCH`, `DELETE`.
+- Safe methods do NOT require CSRF: `GET`, `HEAD`, `OPTIONS`, `TRACE`.
+- Enforcement applies globally via CSRF middleware (not just auth routes).
 
-- `GET /api/auth/csrf`
+### Explicit exemptions
 
-Response behavior:
+Only these routes are exempted for server-to-server webhook flows:
 
-- Returns JSON containing the token under multiple keys: `csrf`, `csrf_token`, and `token`.
-- Sets a cookie named `csrftoken` (path `/`, not HttpOnly).
-- Mirrors the token into the `X-CSRF-Token` response header.
+- `POST /api/payments/payfast/checkout`
+- `POST /api/payments/payfast/itn`
 
-## What to send on protected requests
+## Client implementation notes (SPA-safe)
 
-For any CSRF-protected request, send **both**:
+- Clients SHOULD call `GET /api/auth/csrf` on startup (or before the first mutating request).
+- Clients MUST attach `X-CSRF-Token: <token>` to every protected request.
+- Clients MUST send cookies (`credentials: "include"` / `withCredentials: true`).
+- CORS allows these headers: `X-CSRF-Token`, `X-CSRFToken`, `X-XSRF-Token`.
 
-1) A cookie named `csrftoken` with the token value.
-2) A header containing the same token.
+## Error handling
 
-### Header names accepted
-
-The backend accepts any of these request headers:
-
-- `X-CSRF-Token` (preferred)
-- `X-CSRFToken`
-- `X-XSRF-TOKEN`
-
-### Cookie names accepted
-
-The backend accepts any of these cookie names:
-
-- `csrftoken` (preferred)
-- `csrf_token`
-- `XSRF-TOKEN`
+- Missing header or cookie MUST return HTTP 403 with `{"detail":"CSRF token missing or invalid"}`.
+- Mismatched tokens MUST return HTTP 403 with `{"detail":"CSRF token mismatch"}`.
+- Invalid/expired tokens MUST return HTTP 403 with `{"detail":"Invalid CSRF token"}`.
 
 ## Refresh endpoint specifics
 

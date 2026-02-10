@@ -313,12 +313,15 @@ CSRF bootstrap
 
 ### 3.2 CSRF Policy
 
-- Token source
-- Cookie name(s)
-- Required headers
-- Protected endpoints
-
-> Canonical reference: [SECURITY_CSRF.md](SECURITY_CSRF.md)
+- Canonical policy: [SECURITY_CSRF.md](SECURITY_CSRF.md)
+- Token source: `GET /api/auth/csrf` returns JSON keys `csrf`, `csrf_token`, `token`,
+   sets `csrftoken` cookie (Path `/`, not HttpOnly) and mirrors `X-CSRF-Token`.
+- Cookie/header requirements: requests MUST include matching CSRF cookie + header.
+   Header accepted: `X-CSRF-Token` (preferred), `X-CSRFToken`, `X-XSRF-TOKEN`.
+   Cookie accepted: `csrftoken` (preferred), `csrf_token`, `XSRF-TOKEN`.
+- Protected scope: all non-safe methods (`POST`, `PUT`, `PATCH`, `DELETE`) across
+   the API, except explicit exemptions:
+   `POST /api/payments/payfast/checkout`, `POST /api/payments/payfast/itn`.
 
 ### 3.3 Session Guarantees
 
