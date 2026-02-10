@@ -325,34 +325,26 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 # -----------------------------------------------------------------------------
 deploy-heroku: deploy-autorisen ## Build/push/release to staging (autorisen) only
 
-deploy-autorisen: docker-build ## Build/push/release to staging (autorisen) with enhanced logging
-	@echo "🔐 Logging in to Heroku Container Registry..."
-	@LOGIN_OK=0; \
-	for i in 1 2 3; do \
-		if heroku container:login >/dev/null 2>&1; then echo "✅ Login successful"; LOGIN_OK=1; break; fi; \
-		echo "⚠️  Login failed (attempt $$i/3). Retrying in 5s..."; sleep 5; \
-	done; \
-	if [ "$$LOGIN_OK" -ne 1 ]; then echo "❌ Login failed after retries"; exit 1; fi
-	@echo ""
-	@echo "🚀 === DEPLOYING TO STAGING ($(HEROKU_APP_STG)) ==="
-	@echo "🏷️  Tagging image for staging registry..."
-	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_STG)/web
-	@echo "📤 Pushing image to staging registry..."
-	@for i in 1 2 3; do \
-		if docker push registry.heroku.com/$(HEROKU_APP_STG)/web; then echo "✅ Staging push successful"; break; fi; \
-		echo "⚠️  Staging push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
-		[ $$i -eq 3 ] && { echo "❌ Staging push failed after retries"; exit 1; } || true; \
-	done
-	@echo "🚀 Releasing container to staging..."
-	@for i in 1 2 3; do \
-		if heroku container:release web --app $(HEROKU_APP_STG); then echo "✅ Staging release successful"; break; fi; \
-		echo "⚠️  Staging release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
-		[ $$i -eq 3 ] && { echo "❌ Staging release failed after retries"; exit 1; } || true; \
-	done
-	@echo "✅ Staging deployment completed! App URL: $(STAGING_URL)"
-	@echo ""
-	@echo "✅ AUTORISEN DEPLOYMENT COMPLETED"
-	@echo "   📋 Staging:    $(STAGING_URL)"
+.PHONY: deploy-autorisen verify-autorisen
+
+deploy-autorisen: ## Build/push/release to staging (autorisen) with build args
+	@set -euo pipefail; \
+	export HEROKU_PAGER=cat; \
+	GIT_SHA="$$(git rev-parse --short=12 HEAD)"; \
+	BUILD_EPOCH="$$(date +%s)"; \
+	echo "GIT_SHA=$$GIT_SHA"; \
+	echo "BUILD_EPOCH=$$BUILD_EPOCH"; \
+	heroku container:push web --arg "GIT_SHA=$$GIT_SHA,BUILD_EPOCH=$$BUILD_EPOCH" -a autorisen; \
+	heroku container:release web -a autorisen
+
+verify-autorisen: ## Verify autorisen release, version, and DB revision
+	@set -euo pipefail; \
+	export HEROKU_PAGER=cat; \
+	timeout 30 heroku releases -a autorisen | head -n 8; \
+	AUTO_BASE="$$(heroku apps:info -a autorisen | awk -F': ' '/Web URL/{print $$2}' | tr -d ' ')"; \
+	echo "autorisen base: $$AUTO_BASE"; \
+	curl -sS -H "Cache-Control: no-cache" "$${AUTO_BASE}api/version?ts=$$(date +%s)" | python3 -m json.tool || true; \
+	timeout 30 heroku pg:psql -a autorisen -c "SELECT version_num FROM alembic_version;"
 
 deploy-capecraft: docker-build ## Build/push/release to production (capecraft) with guardrails
 	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
@@ -1384,5 +1376,3 @@ capsule-plan-sync:
 	@echo "CAPSULE: OPS-PLAN-SYNC — Update Project Plan & Related Files"
 	@# run scripts to regenerate docs or summaries
 
-deploy-autorisen: ## Deploy specifically to autorisen (staging)
-	@$(MAKE) heroku-deploy-stg
