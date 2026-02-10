@@ -9,7 +9,7 @@ id,task,owner,status,priority,completion_date,notes,artifacts,verification_comma
 DOCS-001,Derive downstream management artifacts from SYSTEM_SPEC,docs,done,P0,2026-01-06,"Spec: SYSTEM_SPEC §1.1. Artifacts derive strictly from spec; no code changes.",docs/SYSTEM_SPEC.md,"Manual review: confirm no code/migrations/deploys"
 
 # SYSTEM SPEC COMPLETION (spec has placeholders that must match implementation)
-SPEC-001,Fill in Auth Flows details (login/refresh/logout) to match implementation,docs,planned,P0,,"Spec: SYSTEM_SPEC §3.1. Replace placeholders with authoritative behavior (no code changes).",docs/SYSTEM_SPEC.md,"Doc review: confirm matches current behavior"
+SPEC-001,Fill in Auth Flows details (login/refresh/logout) to match implementation,docs,done,P0,2026-02-10,"Spec: SYSTEM_SPEC §3.1. Replace placeholders with authoritative behavior (no code changes). Aligned §3.1 auth flows to implementation.",docs/SYSTEM_SPEC.md,"Doc review: confirm matches current behavior"
 SPEC-002,Fill in CSRF policy details (token source/cookie/header/protected endpoints),docs,planned,P0,,"Spec: SYSTEM_SPEC §3.2 (see SECURITY_CSRF). Must be canonical + precise.",docs/SECURITY_CSRF.md,"Doc review: validate against SECURITY_CSRF.md"
 SPEC-003,Define Session Guarantees and non-guarantees,docs,planned,P1,,"Spec: SYSTEM_SPEC §3.3. Document guarantees only; avoid implying durability beyond implementation.",docs/SYSTEM_SPEC.md,"Doc review"
 SPEC-004,Define Frozen vs Flexible areas in spec,docs,planned,P1,,"Spec: SYSTEM_SPEC §3.4 and §8. Establish governance markers without expanding scope.",docs/SYSTEM_SPEC.md,"Doc review"
