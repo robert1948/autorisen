@@ -14,6 +14,7 @@ __pycache__/
 *.db
 .coverage
 *.coverage
+coverage/
 
 # Python tooling caches
 .mypy_cache/
@@ -33,6 +34,7 @@ ENV/
 # Environment files - be specific about what we allow
 .env
 .env.*
+.envrc
 !.env.example
 !client/.env.example
 .env.local
@@ -69,6 +71,7 @@ build/
 # Node / frontend
 node_modules/
 */node_modules/
+**/node_modules/
 client/node_modules/
 client/dist/
 client/.cache/
@@ -90,7 +93,9 @@ CapeControl_React_Starter_Dark/package-lock.json
 
 # React/Vite specific
 .vite/
+**/.vite/
 dist/
+**/dist/
 *.tsbuildinfo
 
 # TypeScript build outputs
@@ -184,6 +189,7 @@ LogoW.png
 
 # Production logs and monitoring
 logs/
+ship_autorisen_*.log
 *.access.log
 *.error.log
 monitoring/temp/
