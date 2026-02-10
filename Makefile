@@ -97,7 +97,7 @@ TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
 # PHONY index (single, authoritative)
 # -----------------------------------------------------------------------------
 .PHONY: help project-info venv install format lint test docker-build docker-run docker-push \
-	deploy-heroku heroku-deploy-stg heroku-deploy-prod heroku-logs heroku-run-migrate \
+	deploy-heroku deploy-autorisen deploy-capecraft heroku-deploy-stg heroku-deploy-prod heroku-logs heroku-run-migrate \
 	github-update clean plan-validate plan-open \
 	migrate-up migrate-revision \
 	sitemap-generate-dev sitemap-generate-prod verify-sitemap verify-sitemap-dev verify-sitemap-prod \
@@ -188,7 +188,7 @@ ops-release-all: ## Sync plan, fix docs, show info, push to git, and release to 
 	@echo "    Ensure all changes are committed."
 	@echo "    This will:"
 	@echo "    1. git push origin main"
-	@echo "    2. make deploy-heroku (Staging + Prod)"
+	@echo "    2. make deploy-heroku (Staging only)"
 	@echo "    3. make dockerhub-release"
 	@echo ""
 	@read -p "Press Enter to continue or Ctrl+C to cancel..." _
@@ -323,7 +323,9 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 # ----------------------------------------------------------------------------- 
 # Heroku container deploy (Enhanced)
 # -----------------------------------------------------------------------------
-deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) and production (capecraft) with enhanced logging
+deploy-heroku: deploy-autorisen ## Build/push/release to staging (autorisen) only
+
+deploy-autorisen: docker-build ## Build/push/release to staging (autorisen) with enhanced logging
 	@echo "🔐 Logging in to Heroku Container Registry..."
 	@LOGIN_OK=0; \
 	for i in 1 2 3; do \
@@ -349,6 +351,19 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 	done
 	@echo "✅ Staging deployment completed! App URL: $(STAGING_URL)"
 	@echo ""
+	@echo "✅ AUTORISEN DEPLOYMENT COMPLETED"
+	@echo "   📋 Staging:    $(STAGING_URL)"
+
+deploy-capecraft: docker-build ## Build/push/release to production (capecraft) with guardrails
+	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
+	@echo "🔐 Logging in to Heroku Container Registry..."
+	@LOGIN_OK=0; \
+	for i in 1 2 3; do \
+		if heroku container:login >/dev/null 2>&1; then echo "✅ Login successful"; LOGIN_OK=1; break; fi; \
+		echo "⚠️  Login failed (attempt $$i/3). Retrying in 5s..."; sleep 5; \
+	done; \
+	if [ "$$LOGIN_OK" -ne 1 ]; then echo "❌ Login failed after retries"; exit 1; fi
+	@echo ""
 	@echo "🚀 === DEPLOYING TO PRODUCTION ($(HEROKU_APP_PROD)) ==="
 	@echo "🏷️  Tagging image for production registry..."
 	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_PROD)/web
@@ -365,10 +380,6 @@ deploy-heroku: docker-build ## Build/push/release to both staging (autorisen) an
 		[ $$i -eq 3 ] && { echo "❌ Production release failed after retries"; exit 1; } || true; \
 	done
 	@echo "✅ Production deployment completed! App URL: $(PROD_BASE_URL)"
-	@echo ""
-	@echo "🎉 DUAL DEPLOYMENT COMPLETED!"
-	@echo "   📋 Staging:    $(STAGING_URL)"
-	@echo "   🚀 Production: $(PROD_BASE_URL)"
 
 heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
@@ -380,6 +391,7 @@ heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 
 heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD))
 	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
+	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
 	heroku container:login
 	heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
 	heroku container:release web -a $(HEROKU_APP_PROD)
