@@ -1,0 +1,29 @@
+=== DATABASE_URL, HEROKU_POSTGRESQL_AQUA_URL
+
+Plan:                  essential-0
+Status:                Available
+Connections:           0/20
+PG Version:            16.10
+Created:               2024-11-10 14:11 
+Data Size:             10.1 MB / 1 GB (0.99%) (In compliance)
+Tables:                32/4000 (In compliance)
+Fork/Follow:           Unsupported
+Rollback:              Unsupported
+Continuous Protection: Off
+Billing App:           capecraft
+Add-on:                postgresql-rigid-25868
+
+=== HEROKU_POSTGRESQL_GREEN_URL
+
+Plan:                  essential-0
+Status:                Available
+Connections:           6/20
+PG Version:            17.6
+Created:               2025-08-14 07:48 
+Data Size:             12.7 MB / 1 GB (1.24%) (In compliance)
+Tables:                66/4000 (In compliance)
+Fork/Follow:           Unsupported
+Rollback:              Unsupported
+Continuous Protection: Off
+Add-on:                postgresql-adjacent-76478
+

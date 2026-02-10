@@ -1,0 +1,14 @@
+=== DATABASE_URL
+
+Plan:                  essential-0
+Status:                Available
+Connections:           2/20
+PG Version:            16.10
+Created:               2024-11-10 14:11 
+Data Size:             10.1 MB / 1 GB (0.99%) (In compliance)
+Tables:                32/4000 (In compliance)
+Fork/Follow:           Unsupported
+Rollback:              Unsupported
+Continuous Protection: Off
+Add-on:                postgresql-rigid-25868
+

@@ -1,0 +1,1 @@
+AUT_BASE=https://autorisen-dac8e65796e7.herokuapp.com

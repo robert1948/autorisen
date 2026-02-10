@@ -1,0 +1,13 @@
+=== capecraft
+
+Addons:         heroku-postgresql:essential-0
+Auto Cert Mgmt: true
+Dynos:          web: 1
+Git URL:        https://git.heroku.com/capecraft.git
+Owner:          zeonita@gmail.com
+Pipeline:       capecontrol - production
+Region:         us
+Repo Size:      0 B
+Slug Size:      0 B
+Stack:          container
+Web URL:        https://capecraft-65eeb6ddf78b.herokuapp.com/

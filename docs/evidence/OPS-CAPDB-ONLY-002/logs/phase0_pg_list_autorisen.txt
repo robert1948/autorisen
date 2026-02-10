@@ -1,0 +1,14 @@
+=== DATABASE_URL, HEROKU_POSTGRESQL_GREEN_URL
+
+Plan:                  essential-0
+Status:                Available
+Connections:           7/20
+PG Version:            17.6
+Created:               2025-08-14 07:48 
+Data Size:             12.7 MB / 1 GB (1.24%) (In compliance)
+Tables:                66/4000 (In compliance)
+Fork/Follow:           Unsupported
+Rollback:              Unsupported
+Continuous Protection: Off
+Add-on:                postgresql-adjacent-76478
+
