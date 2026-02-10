@@ -1,0 +1,7 @@
+=== Release v783
+
+Add-ons:                heroku-postgresql:essential-0
+By:                     zeonita@gmail.com
+Change:                 Deployed web (dd20d2272d2b)
+Eligible for Rollback?: Yes
+When:                   2026-02-10T14:52:43Z

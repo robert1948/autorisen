@@ -1,0 +1,13 @@
+=== autorisen
+
+Addons:         heroku-postgresql:essential-0
+Auto Cert Mgmt: true
+Dynos:          web: 1, worker: 1
+Git URL:        https://git.heroku.com/autorisen.git
+Owner:          zeonita@gmail.com
+Pipeline:       capecontrol - development
+Region:         us
+Repo Size:      8 MB
+Slug Size:      0 B
+Stack:          container
+Web URL:        https://autorisen-dac8e65796e7.herokuapp.com/

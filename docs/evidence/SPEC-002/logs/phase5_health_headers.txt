@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Cache-Control: no-store
+Content-Length: 144
+Content-Type: application/json
+Date: Tue, 10 Feb 2026 15:11:03 GMT
+Nel: {"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}
+Report-To: {"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=oAyiaeA4gXGq4BMgm9Foari9X3RTa8xHAOWAFv%2BLvzw%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1770736264"}],"max_age":3600}
+Reporting-Endpoints: heroku-nel="https://nel.heroku.com/reports?s=oAyiaeA4gXGq4BMgm9Foari9X3RTa8xHAOWAFv%2BLvzw%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1770736264"
+Server: Heroku
+Via: 1.1 heroku-router
+X-Ratelimit-Limit: 100
+X-Ratelimit-Remaining: 99
+X-Ratelimit-Reset: 1770736324
+
