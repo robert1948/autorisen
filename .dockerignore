@@ -49,6 +49,7 @@ webhooks/secrets/
 *.pyo
 *.pyd
 __pycache__/
+**/__pycache__
 .venv/
 .venv_*/
 venv/
@@ -72,6 +73,7 @@ client/.turbo/
 client/coverage/
 node_modules/
 */node_modules/
+**/node_modules/
 # Local-only npm lockfiles (repo uses pnpm; keep accidental npm locks out of images)
 package-lock.json
 client/package-lock.json
@@ -172,6 +174,7 @@ client/src/pages/chat/Demo*.tsx
 # Build artifacts
 build/
 dist/
+**/dist/
 .release/
 docker-data/
 .docker/
@@ -196,6 +199,9 @@ websocket-metrics/
 payment-logs/
 chat-session-logs/
 websocket-connection-logs/
+
+# Vite build cache
+**/.vite
 
 # Performance and load testing
 load-test-results/
