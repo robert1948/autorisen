@@ -325,7 +325,10 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 # -----------------------------------------------------------------------------
 deploy-heroku: deploy-autorisen ## Build/push/release to staging (autorisen) only
 
-.PHONY: deploy-autorisen verify-autorisen test-backend build-client ship-autorisen
+.PHONY: deploy-autorisen verify-autorisen test-backend build-client ship-autorisen ship-autorisen-log
+
+# Where to write evidence logs (override: make ship-autorisen-log EVIDENCE_DIR=/path)
+EVIDENCE_DIR ?= /tmp
 
 test-backend: ## Run backend tests (pytest)
 	@set -euo pipefail; \
@@ -338,6 +341,14 @@ build-client: ## Install client deps and build
 
 ship-autorisen: test-backend build-client deploy-autorisen verify-autorisen ## Test, build, deploy, and verify autorisen
 	@echo "ship-autorisen complete"
+
+ship-autorisen-log: ## Run ship-autorisen and tee output to a timestamped evidence log
+	@set -euo pipefail; \
+	TS="$$(date +%Y%m%d_%H%M%S)"; \
+	LOG="$(EVIDENCE_DIR)/ship_autorisen_$${TS}.log"; \
+	echo "[evidence] writing $$LOG"; \
+	{ $(MAKE) ship-autorisen; } 2>&1 | tee "$$LOG"; \
+	echo "[evidence] saved $$LOG"
 
 deploy-autorisen: ## Build/push/release to staging (autorisen) with build args
 	@set -euo pipefail; \
