@@ -265,11 +265,51 @@ Optional (post-MVP):
 
 ### 3.1 Auth Flows
 
-- Login
-- Token refresh
-- Logout
+All auth endpoints are served under `/api/auth`. Non-GET endpoints require a
+CSRF header+cookie pair (see §3.2).
 
-(Details to be added; behavior must match implementation.)
+Login
+- Endpoint: `POST /api/auth/login`
+- Request JSON: `{ "email": "...", "password": "...", "recaptcha_token"?: "..." }`
+- Success `200`:
+   - Response JSON: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer", "email_verified": true }`
+   - Sets `refresh_token` cookie (HttpOnly, path `/api/auth`, `SameSite` and
+      `Secure` per settings; `Max-Age`/`Expires` derived from access TTL)
+- Failure:
+   - `401` invalid credentials
+   - `403` email not verified
+   - `429` rate-limited (Retry-After header)
+
+Token refresh
+- Endpoint: `POST /api/auth/refresh`
+- Request: accepts refresh token from JSON body `{ "refresh_token": "..." }`
+   or from `refresh_token` cookie
+- Success `200`:
+   - Response JSON: `{ "access_token": "...", "refresh_token": "...", "expires_at": "..." }`
+   - Rotates refresh token (new token stored; cookie updated)
+- Failure: `401` invalid refresh token
+
+Current user
+- Endpoint: `GET /api/auth/me`
+- Auth: `Authorization: Bearer <access_token>`
+- Success `200`: `MeResponse` with role, profile, and summary
+
+Logout
+- Endpoint: `POST /api/auth/logout`
+- Request JSON (optional): `{ "all_devices": false }`
+- Behavior:
+   - Clears `refresh_token` cookie
+   - Revokes refresh token if present
+   - If `all_devices=true`, increments user token version (invalidates tokens)
+- Response:
+   - `200` with `{ "message": "Logged out" }` when token is present
+   - `204` when no token is provided
+
+CSRF bootstrap
+- Endpoint: `GET /api/auth/csrf`
+- Response JSON: `{ "csrf": "...", "csrf_token": "...", "token": "..." }`
+- Sets `csrftoken` cookie (not HttpOnly) and mirrors the token in response header
+   `X-CSRF-Token`
 
 ### 3.2 CSRF Policy
 
