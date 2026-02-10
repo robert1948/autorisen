@@ -1,0 +1,3 @@
+0b627d7b docs(security): specify CSRF token/cookie/header policy (SPEC-002)
+docs/SECURITY_CSRF.md
+docs/SYSTEM_SPEC.md
