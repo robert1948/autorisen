@@ -28,6 +28,7 @@ from backend.src.core.rate_limit import configure_rate_limit
 from backend.src.db.session import SessionLocal
 from backend.src.modules.auth.csrf import CSRFMiddleware
 from backend.src.middleware.cache_headers import CacheHeadersMiddleware
+from backend.src.middleware.read_only import ReadOnlyModeMiddleware
 
 try:
     from app.middleware.ddos_protection import DDoSProtectionMiddleware  # type: ignore
@@ -252,6 +253,9 @@ def create_app() -> FastAPI:
 
     # CSRF middleware (Pure ASGI)
     application.add_middleware(CSRFMiddleware)
+
+    # Read-only mode guard (run before routers)
+    application.add_middleware(ReadOnlyModeMiddleware)
 
     # CORS
     allow_origins = {
