@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sys
 from re import sub
 from datetime import date, datetime
@@ -14,7 +15,10 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
+from sqlalchemy import select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import (
     FileResponse,
     HTMLResponse,
@@ -25,6 +29,7 @@ from starlette.responses import (
 
 from backend.src.core.config import settings
 from backend.src.core.rate_limit import configure_rate_limit
+from backend.src.db.models import AppBuild
 from backend.src.db.session import SessionLocal
 from backend.src.modules.auth.csrf import CSRFMiddleware
 from backend.src.middleware.cache_headers import CacheHeadersMiddleware
@@ -210,6 +215,145 @@ def _is_test_mode() -> bool:
         or settings_flag
         or pytest_active
     )
+
+
+def _clean_env_value(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned or cleaned.lower() == "unknown":
+        return None
+    return cleaned
+
+
+def _parse_int(value: str | None) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_version_label(app_build_version: str | None, git_sha: str | None) -> str | None:
+    if app_build_version:
+        if "build" in app_build_version.lower():
+            return app_build_version
+        return f"Build {app_build_version}"
+    if git_sha:
+        return f"Build {git_sha}"
+    return None
+
+
+def _parse_build_number(version_label: str | None) -> int | None:
+    if not version_label:
+        return None
+    match = re.search(r"\b(\d+)\b", version_label)
+    if not match:
+        return None
+    return _parse_int(match.group(1))
+
+
+def _get_env_build_info() -> dict[str, str | int | None]:
+    git_sha = _clean_env_value(os.getenv("GIT_SHA"))
+    build_epoch_raw = _clean_env_value(os.getenv("BUILD_EPOCH"))
+    app_build_version = _clean_env_value(os.getenv("APP_BUILD_VERSION"))
+    build_version = git_sha or app_build_version or "unknown"
+    version_label = _build_version_label(app_build_version, git_sha)
+    build_number = _parse_build_number(version_label)
+    return {
+        "build_version": build_version,
+        "version_label": version_label,
+        "build_number": build_number,
+        "git_sha": git_sha,
+        "build_epoch": build_epoch_raw,
+    }
+
+
+def _fetch_latest_build_from_db(app_name: str) -> dict[str, str | int] | None:
+    try:
+        with SessionLocal() as session:  # type: ignore[call-arg]
+            stmt = (
+                select(AppBuild)
+                .where(AppBuild.app_name == app_name)
+                .order_by(AppBuild.created_at.desc())
+                .limit(1)
+            )
+            record = session.execute(stmt).scalar_one_or_none()
+            if record is None:
+                return None
+            return {
+                "version_label": record.version_label,
+                "build_number": record.build_number,
+                "git_sha": record.git_sha,
+                "build_epoch": record.build_epoch,
+            }
+    except SQLAlchemyError:
+        log.warning("app_builds unavailable; falling back to env", exc_info=True)
+        return None
+
+
+def record_build_if_new() -> None:
+    app_name = os.getenv("APP_NAME", "autorisen").strip() or "autorisen"
+    env_info = _get_env_build_info()
+    git_sha = env_info.get("git_sha")
+    build_epoch_raw = env_info.get("build_epoch")
+    version_label = env_info.get("version_label")
+    build_number = env_info.get("build_number")
+    build_epoch = _parse_int(build_epoch_raw if isinstance(build_epoch_raw, str) else None)
+
+    if not git_sha or build_epoch is None or not version_label:
+        log.warning("Build metadata incomplete; skipping app_builds insert")
+        return
+
+    payload = {
+        "app_name": app_name,
+        "version_label": version_label,
+        "build_number": build_number,
+        "git_sha": git_sha,
+        "build_epoch": build_epoch,
+    }
+
+    try:
+        with SessionLocal() as session:  # type: ignore[call-arg]
+            dialect = session.get_bind().dialect.name
+            if dialect == "postgresql":
+                stmt = (
+                    pg_insert(AppBuild)
+                    .values(**payload)
+                    .on_conflict_do_nothing(
+                        index_elements=["app_name", "git_sha", "build_epoch"]
+                    )
+                )
+                session.execute(stmt)
+                session.commit()
+                return
+            if dialect == "sqlite":
+                stmt = (
+                    sqlite_insert(AppBuild)
+                    .values(**payload)
+                    .on_conflict_do_nothing(
+                        index_elements=["app_name", "git_sha", "build_epoch"]
+                    )
+                )
+                session.execute(stmt)
+                session.commit()
+                return
+
+            exists = (
+                session.query(AppBuild)
+                .filter(
+                    AppBuild.app_name == app_name,
+                    AppBuild.git_sha == git_sha,
+                    AppBuild.build_epoch == build_epoch,
+                )
+                .first()
+            )
+            if exists is None:
+                session.add(AppBuild(**payload))
+                session.commit()
+    except SQLAlchemyError:
+        log.warning("Failed to record build metadata", exc_info=True)
 
 
 # ------------------------------------------------------------------------------
@@ -456,23 +600,31 @@ def create_app() -> FastAPI:
 
     @application.get("/api/version", include_in_schema=False)
     def api_version():
-        def _clean_env(value: str | None) -> str | None:
-            if value is None:
-                return None
-            cleaned = value.strip()
-            if not cleaned or cleaned.lower() == "unknown":
-                return None
-            return cleaned
+        app_name = os.getenv("APP_NAME", "autorisen").strip() or "autorisen"
+        db_info = _fetch_latest_build_from_db(app_name)
+        if db_info is not None:
+            payload = {
+                "versionLabel": db_info["version_label"],
+                "buildNumber": db_info["build_number"],
+                "gitSha": db_info["git_sha"],
+                "buildEpoch": str(db_info["build_epoch"]),
+                "buildVersion": db_info["version_label"],
+                "version": db_info["version_label"],
+                "source": "db",
+            }
+            return JSONResponse(payload, headers={"Cache-Control": "no-store"})
 
-        git_sha = _clean_env(os.getenv("GIT_SHA"))
-        build_epoch = _clean_env(os.getenv("BUILD_EPOCH"))
-        app_build_version = _clean_env(os.getenv("APP_BUILD_VERSION"))
-        build_version = git_sha or app_build_version or "unknown"
+        env_info = _get_env_build_info()
+        build_version = env_info["build_version"]
+        version_label = env_info["version_label"]
         payload = {
+            "versionLabel": version_label,
+            "buildNumber": env_info["build_number"],
+            "gitSha": env_info["git_sha"],
+            "buildEpoch": env_info["build_epoch"],
             "buildVersion": build_version,
             "version": build_version,
-            "gitSha": git_sha,
-            "buildEpoch": build_epoch,
+            "source": "env",
         }
         return JSONResponse(payload, headers={"Cache-Control": "no-store"})
 
@@ -566,6 +718,10 @@ def create_app() -> FastAPI:
                 log.exception("Unexpected MCP host start failure")
 
         log.info("MCP host startup hook registered")
+
+    @application.on_event("startup")
+    def _record_build_metadata() -> None:
+        record_build_if_new()
 
     # ----------------------------- SPA mount ------------------------------
     if spa_index:

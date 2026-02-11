@@ -6,6 +6,7 @@ import uuid
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     CheckConstraint,
     Column,
@@ -276,6 +277,32 @@ class EmailJob(Base):
 
     __table_args__ = (
         Index("ix_email_jobs_status_run_after", "status", "run_after"),
+    )
+
+
+class AppBuild(Base):
+    """Recorded build metadata for runtime version display."""
+
+    __tablename__ = "app_builds"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    app_name = Column(String(64), nullable=False, server_default="autorisen")
+    version_label = Column(String(128), nullable=False)
+    build_number = Column(Integer, nullable=True)
+    git_sha = Column(String(64), nullable=False)
+    build_epoch = Column(BigInteger, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "app_name",
+            "git_sha",
+            "build_epoch",
+            name="uq_app_builds_identity",
+        ),
+        Index("ix_app_builds_app_name_created_at", "app_name", "created_at"),
     )
 
 
