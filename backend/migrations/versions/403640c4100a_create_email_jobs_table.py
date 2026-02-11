@@ -23,7 +23,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
-    if "email_jobs" not in inspector.get_table_names():
+    if not inspector.has_table("email_jobs"):
         op.create_table(
             "email_jobs",
             sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -67,6 +67,6 @@ def upgrade() -> None:
 def downgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
-    if "email_jobs" in inspector.get_table_names():
+    if inspector.has_table("email_jobs"):
         op.drop_index("ix_email_jobs_status_run_after", table_name="email_jobs")
         op.drop_table("email_jobs")
