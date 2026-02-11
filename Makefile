@@ -15,7 +15,8 @@ TASK_CAPSULE_TEMPLATE := docs/task-capsule-template.md
 PROJECT_PLAN_CSV := docs/project-plan.csv
 
 
-export PYTHONPATH ?= $(CURDIR)
+PYTHONPATH ?= $(CURDIR)
+export PYTHONPATH
 
 
 mcp-host:
@@ -69,6 +70,18 @@ HEROKU_APP_STG  ?= autorisen
 HEROKU_APP_PROD ?= capecraft
 HEROKU_APP_NAME ?= $(HEROKU_APP_STG)
 HEROKU_APP      ?= $(HEROKU_APP_STG)
+
+# ----------------------------------------------------------------------------- 
+# Safety gate: production operations require explicit opt-in
+# ----------------------------------------------------------------------------- 
+ALLOW_PROD ?= 0
+
+.PHONY: require-prod
+require-prod: ## Guard: require ALLOW_PROD=1 for production actions
+	@if [ "$(ALLOW_PROD)" != "1" ]; then \
+		echo "❌ Refusing production action (locked). Re-run with ALLOW_PROD=1 (only when explicitly instructed)."; \
+		exit 2; \
+	fi
 
 # Domains
 DEV_BASE_URL  ?= https://dev.cape-control.com
@@ -357,7 +370,7 @@ deploy-autorisen: ## Build/push/release to staging (autorisen) with build args
 	BUILD_EPOCH="$$(date +%s)"; \
 	echo "GIT_SHA=$$GIT_SHA"; \
 	echo "BUILD_EPOCH=$$BUILD_EPOCH"; \
-	heroku container:push web --arg "GIT_SHA=$$GIT_SHA,BUILD_EPOCH=$$BUILD_EPOCH" -a autorisen; \
+	heroku container:push web -a autorisen --arg "GIT_SHA=$$GIT_SHA" --arg "BUILD_EPOCH=$$BUILD_EPOCH"; \
 	heroku container:release web -a autorisen
 
 verify-autorisen: ## Verify autorisen release, version, and DB revision
@@ -365,11 +378,12 @@ verify-autorisen: ## Verify autorisen release, version, and DB revision
 	export HEROKU_PAGER=cat; \
 	timeout 30 heroku releases -a autorisen | head -n 8; \
 	AUTO_BASE="$$(heroku apps:info -a autorisen | awk -F': ' '/Web URL/{print $$2}' | tr -d ' ')"; \
+	AUTO_BASE="$${AUTO_BASE%/}"; \
 	echo "autorisen base: $$AUTO_BASE"; \
-	curl -sS -H "Cache-Control: no-cache" "$${AUTO_BASE}api/version?ts=$$(date +%s)" | python3 -m json.tool || true; \
+	curl -sS -H "Cache-Control: no-cache" "$${AUTO_BASE}/api/version?ts=$$(date +%s)" | python3 -m json.tool || true; \
 	timeout 30 heroku pg:psql -a autorisen -c "SELECT version_num FROM alembic_version;"
 
-deploy-capecraft: docker-build ## Build/push/release to production (capecraft) with guardrails
+deploy-capecraft: require-prod docker-build ## Build/push/release to production (capecraft) with guardrails
 	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
 	@echo "🔐 Logging in to Heroku Container Registry..."
 	@LOGIN_OK=0; \
@@ -404,7 +418,7 @@ heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
 	@echo "✅ Staging deployment complete"
 	heroku open -a $(HEROKU_APP_STG)
 
-heroku-deploy-prod: ## Quick push/release to production only ($(HEROKU_APP_PROD))
+heroku-deploy-prod: require-prod ## Quick push/release to production only ($(HEROKU_APP_PROD))
 	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
 	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
 	heroku container:login
@@ -1148,7 +1162,7 @@ heroku-config-stg:
 	@heroku config:set -a $(HEROKU_APP_STG) ENV=staging RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=true
 
 
-heroku-config-prod:
+heroku-config-prod: require-prod
 	@heroku config:set -a $(HEROKU_APP_PROD) ENV=production RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=false
 
 
@@ -1166,7 +1180,7 @@ heroku-smoke-staging:
 	@heroku logs --tail -a $(HEROKU_APP_STG)
 
 
-promote-prod:
+promote-prod: require-prod
 	@heroku pipelines:promote -a $(HEROKU_APP_STG)
 
 
@@ -1192,7 +1206,7 @@ heroku-open-prod:
 
 
 # Usage: make heroku-rollback REL=v123
-heroku-rollback:
+heroku-rollback: require-prod
 	@if [ -z "$$REL" ]; then echo "Set REL=vNNN" && exit 1; fi
 	@heroku rollback -a $(HEROKU_APP_PROD) $$REL
 
@@ -1226,20 +1240,10 @@ ENV ?= dev
 mcp-smoke:
 	@echo "== MCP smoke test =="
 	@set -euo pipefail; \
-	: $${OPENAI_API_KEY:?OPENAI_API_KEY must be set for MCP smoke test}; \
-	LOG_FILE=$$(mktemp -t mcp-smoke.XXXXXX.log); \
-	SERVER_PID=; \
-	cleanup() { trap - INT TERM EXIT; \
-		if [ -n "$$SERVER_PID" ]; then \
-			kill $$SERVER
-	fi; \
-	RESP=$$(curl -fsS http://127.0.0.1:$(MCP_SMOKE_PORT)/api/ops/mcp/smoke); \
+	command -v jq >/dev/null 2>&1 || { echo "❌ jq is required for mcp-smoke"; exit 127; }; \
+	RESP=$$(curl -fsS "http://127.0.0.1:$(MCP_SMOKE_PORT)/api/ops/mcp/smoke"); \
 	echo "$$RESP" | jq .; \
-	if ! echo "$$RESP" | jq -e '.ok == true' >/dev/null; then \
-		echo "MCP smoke failed" >&2; \
-		echo "See details above (last_error/servers)." >&2; \
-		exit 1; \
-	fi
+	echo "$$RESP" | jq -e '.ok == true' >/dev/null
 
 run-local:
 	@echo "== Backend (with MCP) =="
@@ -1372,6 +1376,7 @@ capecraft:
 capecraft-spec:
 	@echo "📋 CapeCraft Design Specification:"
 	@echo "  Guide: docs/checklists/capecraft_implementation_guide.md"
+	@if [ -f docs/checklists/capecraft_implementation_guide.md ]; then \
 		echo "✅ Specification file exists"; \
 	else \
 		echo "❌ Specification file missing"; \
