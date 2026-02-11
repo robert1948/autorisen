@@ -65,6 +65,43 @@ def test_record_build_if_new_idempotent(monkeypatch):
     record_build_if_new()
 
     with SessionLocal() as session:
-        count = session.query(AppBuild).count()
+        rows = (
+            session.query(AppBuild)
+            .filter(AppBuild.git_sha == "idempotent", AppBuild.build_epoch == 123)
+            .all()
+        )
 
-    assert count == 1
+    assert len(rows) == 1
+    assert rows[0].build_number == 1
+
+
+def test_record_build_if_new_auto_increment(monkeypatch):
+    _clear_app_builds()
+
+    with SessionLocal() as session:
+        session.add(
+            AppBuild(
+                app_name="autorisen",
+                version_label="Build 488",
+                build_number=488,
+                git_sha="oldsha",
+                build_epoch=111,
+            )
+        )
+        session.commit()
+
+    monkeypatch.setenv("GIT_SHA", "newsha")
+    monkeypatch.setenv("BUILD_EPOCH", "222")
+    monkeypatch.setenv("APP_BUILD_VERSION", "488")
+
+    record_build_if_new()
+
+    with SessionLocal() as session:
+        record = (
+            session.query(AppBuild)
+            .filter(AppBuild.git_sha == "newsha", AppBuild.build_epoch == 222)
+            .one()
+        )
+
+    assert record.build_number == 489
+    assert record.version_label == "Build 489"
