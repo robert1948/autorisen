@@ -26,8 +26,8 @@ const TopNav = ({ onOpenSupport }: Props) => {
           className="top-nav__logo"
           src={logoUrl}
           alt="CapeControl logo"
-          width={48}
-          height={48}
+          width={72}
+          height={72}
           loading="lazy"
         />
         <span className="top-nav__title">CapeControl</span>

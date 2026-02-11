@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -298,26 +298,45 @@ def record_build_if_new() -> None:
     env_info = _get_env_build_info()
     git_sha = env_info.get("git_sha")
     build_epoch_raw = env_info.get("build_epoch")
-    version_label = env_info.get("version_label")
-    build_number = env_info.get("build_number")
     build_epoch = _parse_int(build_epoch_raw if isinstance(build_epoch_raw, str) else None)
 
-    if not git_sha or build_epoch is None or not version_label:
+    if not git_sha or build_epoch is None:
         log.warning("Build metadata incomplete; skipping app_builds insert")
         return
-
-    payload = {
-        "app_name": app_name,
-        "version_label": version_label,
-        "build_number": build_number,
-        "git_sha": git_sha,
-        "build_epoch": build_epoch,
-    }
 
     try:
         with SessionLocal() as session:  # type: ignore[call-arg]
             dialect = session.get_bind().dialect.name
             if dialect == "postgresql":
+                lock_key = f"app_builds:{app_name}"
+                session.execute(
+                    text("select pg_advisory_xact_lock(hashtext(:lock_key))"),
+                    {"lock_key": lock_key},
+                )
+                exists = session.execute(
+                    select(AppBuild.id)
+                    .where(
+                        AppBuild.app_name == app_name,
+                        AppBuild.git_sha == git_sha,
+                        AppBuild.build_epoch == build_epoch,
+                    )
+                    .limit(1)
+                ).scalar_one_or_none()
+                if exists is not None:
+                    session.rollback()
+                    return
+                next_number = session.execute(
+                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1)
+                    .where(AppBuild.app_name == app_name)
+                ).scalar_one()
+                build_number = int(next_number)
+                payload = {
+                    "app_name": app_name,
+                    "version_label": f"Build {build_number}",
+                    "build_number": build_number,
+                    "git_sha": git_sha,
+                    "build_epoch": build_epoch,
+                }
                 stmt = (
                     pg_insert(AppBuild)
                     .values(**payload)
@@ -329,6 +348,30 @@ def record_build_if_new() -> None:
                 session.commit()
                 return
             if dialect == "sqlite":
+                exists = session.execute(
+                    select(AppBuild.id)
+                    .where(
+                        AppBuild.app_name == app_name,
+                        AppBuild.git_sha == git_sha,
+                        AppBuild.build_epoch == build_epoch,
+                    )
+                    .limit(1)
+                ).scalar_one_or_none()
+                if exists is not None:
+                    session.rollback()
+                    return
+                next_number = session.execute(
+                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1)
+                    .where(AppBuild.app_name == app_name)
+                ).scalar_one()
+                build_number = int(next_number)
+                payload = {
+                    "app_name": app_name,
+                    "version_label": f"Build {build_number}",
+                    "build_number": build_number,
+                    "git_sha": git_sha,
+                    "build_epoch": build_epoch,
+                }
                 stmt = (
                     sqlite_insert(AppBuild)
                     .values(**payload)
@@ -350,6 +393,18 @@ def record_build_if_new() -> None:
                 .first()
             )
             if exists is None:
+                next_number = session.execute(
+                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1)
+                    .where(AppBuild.app_name == app_name)
+                ).scalar_one()
+                build_number = int(next_number)
+                payload = {
+                    "app_name": app_name,
+                    "version_label": f"Build {build_number}",
+                    "build_number": build_number,
+                    "git_sha": git_sha,
+                    "build_epoch": build_epoch,
+                }
                 session.add(AppBuild(**payload))
                 session.commit()
     except SQLAlchemyError:

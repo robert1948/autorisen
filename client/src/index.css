@@ -124,9 +124,9 @@ a {
 }
 
 .top-nav__logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
   box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
   background: radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.35), transparent);
   object-fit: contain;
@@ -134,7 +134,7 @@ a {
 
 .top-nav__title {
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   letter-spacing: 0.01em;
 }
 
@@ -3471,12 +3471,12 @@ a {
   }
 
   .top-nav__logo {
-    width: 56px; /* Larger logo */
-    height: 56px;
+    width: 80px; /* Larger logo */
+    height: 80px;
   }
 
   .top-nav__title {
-    font-size: 1.4rem; /* Larger title */
+    font-size: 1.6rem; /* Larger title */
   }
 
   .top-nav__hamburger {
