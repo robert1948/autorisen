@@ -15,6 +15,13 @@ See our comprehensive [Vision Statement](./VISION_STATEMENT.md) for our core pil
 - **Active Tasks**: 2 in progress
 - **Project Version**: v0.3.0
 
+## Current Status (2026-02-11)
+
+- **Phase**: MVP stabilization
+- **Autorisen**: release v542; `/api/version` returns expected gitSha/buildEpoch
+- **Worker**: crash loop resolved after manual runtime DB hotfix (created `email_jobs` table + index)
+- **Next**: codify migration/guard in repo and reconcile Alembic stamping before trusting migrations again
+
 ## Phase Summary
 
 ## Priority Breakdown

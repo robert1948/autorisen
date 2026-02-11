@@ -248,6 +248,37 @@ class EmailEvent(Base):
     )
 
 
+class EmailJob(Base):
+    """Queued email job payloads for background processing."""
+
+    __tablename__ = "email_jobs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_type = Column(String(64), nullable=False)
+    payload = Column(JSON, nullable=False)
+    status = Column(String(32), nullable=False, index=True)
+    attempts = Column(Integer, nullable=False, server_default="0")
+    max_attempts = Column(Integer, nullable=False, server_default="3")
+    run_after = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    last_error = Column(Text, nullable=True)
+    idempotency_key = Column(String(128), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        Index("ix_email_jobs_status_run_after", "status", "run_after"),
+    )
+
+
 class LoginAudit(Base):
     """Track authentication attempts for auditing and monitoring."""
 
