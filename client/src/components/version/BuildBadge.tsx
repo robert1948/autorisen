@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 type BuildInfo = {
-  buildVersion: string;
+  versionLabel: string;
 };
 
 let cachedBuildInfo: BuildInfo | null = null;
@@ -19,6 +19,11 @@ const fetchBuildInfo = () => {
         const data = await response.json().catch(() => null);
         if (!data || typeof data !== "object") return null;
 
+        const rawVersionLabel =
+          typeof (data as { versionLabel?: unknown }).versionLabel === "string"
+            ? (data as { versionLabel: string }).versionLabel
+            : null;
+
         const rawBuildVersion =
           typeof (data as { buildVersion?: unknown }).buildVersion === "string"
             ? (data as { buildVersion: string }).buildVersion
@@ -26,9 +31,14 @@ const fetchBuildInfo = () => {
               ? (data as { version: string }).version
               : null;
 
-        if (!rawBuildVersion || rawBuildVersion === "unknown") return null;
+        const labelSource = rawVersionLabel || rawBuildVersion;
+        if (!labelSource || labelSource === "unknown") return null;
 
-        const result = { buildVersion: String(rawBuildVersion) };
+        const versionLabel = labelSource.toLowerCase().includes("build")
+          ? labelSource
+          : `Build ${labelSource}`;
+
+        const result = { versionLabel };
         cachedBuildInfo = result;
         return result;
       })
@@ -51,9 +61,9 @@ const BuildBadge: React.FC = () => {
     };
   }, []);
 
-  if (!buildInfo?.buildVersion || buildInfo.buildVersion === "unknown") return null;
+  if (!buildInfo?.versionLabel || buildInfo.versionLabel === "unknown") return null;
 
-  const label = `Build ${buildInfo.buildVersion}`;
+  const label = buildInfo.versionLabel;
 
   return (
     <span
