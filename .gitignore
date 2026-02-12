@@ -401,3 +401,7 @@ docs/evidence/**/video/
 docs/evidence/**/*.sql.dump
 docs/evidence/**/*.psql.out
 docs/evidence/**/*.har
+
+# Allow evidence logs to be committed (governance evidence packs)
+!docs/evidence/**/logs/
+!docs/evidence/**/logs/**
