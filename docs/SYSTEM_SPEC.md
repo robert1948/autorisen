@@ -349,8 +349,62 @@ CSRF bootstrap
 
 ### 3.3 Session Guarantees
 
-- What the system guarantees
-- What the system explicitly does NOT guarantee
+#### 3.3.1 What the system guarantees
+
+Token lifecycle:
+- Access tokens are stateless JWTs (HS256), signed with `SECRET_KEY`.
+- Refresh tokens are opaque (48 random bytes, base64url-encoded), stored server-side
+  as SHA-256 hashes in the `sessions` table.
+- CSRF tokens are signed (`nonce.timestamp.HMAC-SHA256`), validated statelessly.
+
+Token lifetimes:
+- Access token: 7 days (`ACCESS_TOKEN_TTL_MINUTES`, default 10,080).
+- Refresh token: 7 days (`REFRESH_TOKEN_EXPIRE_DAYS`, default 7).
+- CSRF token: 1 hour (hardcoded).
+- Password reset token: 30 minutes (`PASSWORD_RESET_TTL_MINUTES`).
+- Temporary registration token: 15 minutes (`TEMP_TOKEN_TTL_MINUTES`).
+
+Refresh behavior:
+- Refresh rotates both access and refresh tokens (single-use rotation).
+- The old refresh token is implicitly invalidated (hash replaced in the session row).
+- The session row's `expires_at` is extended on each successful refresh.
+
+Logout:
+- Single-device logout clears the refresh cookie, revokes the session row
+  (`revoked_at` set), and adds the access token's JTI to a deny list.
+- All-devices logout additionally increments `users.token_version`, which invalidates
+  all existing access JWTs for that user on their next API call.
+
+Persistence:
+- Refresh sessions (`sessions` table) survive server restarts.
+- `token_version` is authoritative in the database; cache misses fall back to DB.
+- CSRF tokens are stateless and survive restarts (no server state required).
+- Access JWTs are stateless and survive restarts (validated by signature + expiry).
+
+Server-side session state:
+- Each login creates a row in `sessions` with: `user_id`, `token_hash`, `user_agent`,
+  `ip_address`, `created_at`, `expires_at`, `revoked_at`.
+- This is a per-device session model.
+
+#### 3.3.2 What the system explicitly does NOT guarantee
+
+- **Immediate revocation of access tokens without Redis.** The JTI deny list uses
+  Redis when available; the in-memory fallback is lost on server restart. A revoked
+  access token may be usable until its natural expiry if Redis is unavailable.
+- **Refresh token replay detection.** If a rotated-out refresh token is reused, it
+  simply fails lookup. There is no breach alerting or session-family revocation.
+- **Per-user session limits.** Users may have unlimited concurrent sessions/devices.
+- **Expired session cleanup.** Stale `sessions` rows are not reaped automatically;
+  they are rejected at refresh time but remain in the table.
+- **Cross-device logout propagation for single-device logout.** Only the current
+  device's tokens are affected. Other devices continue until their tokens expire.
+- **All-devices logout does not individually revoke session rows.** It relies on
+  `token_version` mismatch to reject future access tokens from other sessions.
+- **Sliding expiry on access tokens.** Access tokens expire at the fixed time set
+  at creation; activity does not extend their lifetime.
+- **CSRF token auto-refresh.** CSRF tokens expire after 1 hour. Clients must
+  periodically call `GET /api/auth/csrf` to obtain fresh tokens for mutations.
+  The CSRF TTL is shorter than the access token TTL.
 
 ### 3.4 Frozen vs Flexible Areas
 
