@@ -1,0 +1,18 @@
+Progress: resolved 0, reused 1, downloaded 0, added 0
+Progress: resolved 1, reused 1, downloaded 0, added 0
+Progress: resolved 15, reused 14, downloaded 0, added 0
+Progress: resolved 22, reused 22, downloaded 0, added 0
+Progress: resolved 47, reused 47, downloaded 0, added 0
+Progress: resolved 105, reused 102, downloaded 0, added 0
+Progress: resolved 198, reused 153, downloaded 0, added 0
+Progress: resolved 243, reused 198, downloaded 0, added 0
+Progress: resolved 284, reused 239, downloaded 0, added 0
+Progress: resolved 308, reused 263, downloaded 0, added 0
+Progress: resolved 327, reused 282, downloaded 0, added 0
+Progress: resolved 335, reused 290, downloaded 0, added 0
+ WARN  2 deprecated subdependencies found: glob@10.4.5, whatwg-encoding@3.1.1
+Progress: resolved 340, reused 295, downloaded 0, added 0
+Already up to date
+Progress: resolved 340, reused 295, downloaded 0, added 0, done
+
+Done in 12.8s using pnpm v10.29.3
