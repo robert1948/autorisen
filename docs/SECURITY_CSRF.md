@@ -24,6 +24,12 @@ This project uses a **double-submit CSRF** pattern.
 - The response MUST set a cookie named `csrftoken`.
 - The response MUST mirror the token in the `X-CSRF-Token` response header.
 
+### Token format and TTL
+
+- Token format is `<nonce>.<timestamp>.<signature>`.
+- The signature is an HMAC-SHA256 of `nonce.timestamp` using `SECRET_KEY`.
+- Default TTL is 1 hour; expired tokens MUST be rejected.
+
 ### Cookie requirements
 
 - Cookie name: `csrftoken` (canonical).
