@@ -1,0 +1,20 @@
+== gh pr view (json) ==
+{"baseRefName":"main","commits":[{"authoredDate":"2026-02-12T14:34:16Z","authors":[{"email":"zeonita@gmail.com","id":"MDQ6VXNlcjQ2MTU1MjA1","login":"robert1948","name":"robert1948"}],"committedDate":"2026-02-12T14:34:16Z","messageBody":"","messageHeadline":"docs(evidence): init evidence pack for SPEC-009","oid":"f67122561eceb9e7b51b962752589add5883026c"},{"authoredDate":"2026-02-12T14:35:37Z","authors":[{"email":"zeonita@gmail.com","id":"MDQ6VXNlcjQ2MTU1MjA1","login":"robert1948","name":"robert1948"}],"committedDate":"2026-02-12T14:35:37Z","messageBody":"","messageHeadline":"docs(migrations): define SPEC-009 migration rules","oid":"d84fc8f48e3e3d159f47bdf38285611632c5e15b"}],"files":[{"path":"docs/SYSTEM_SPEC.md","additions":24,"deletions":0},{"path":"docs/evidence/SPEC-009/README.txt","additions":3,"deletions":0},{"path":"docs/evidence/SPEC-009/logs/rg_migration_hits.txt","additions":164,"deletions":0},{"path":"docs/evidence/SPEC-009/logs/spec-009_evidence.txt","additions":30,"deletions":0},{"path":"docs/project-plan.csv","additions":1,"deletions":1}],"headRefName":"wo/spec-009-001","mergeable":"MERGEABLE","number":53,"state":"OPEN","title":"docs(migrations): define SPEC-009 migration rules"}
+
+== gh pr diff --name-only ==
+docs/SYSTEM_SPEC.md
+docs/evidence/SPEC-009/README.txt
+docs/evidence/SPEC-009/logs/rg_migration_hits.txt
+docs/evidence/SPEC-009/logs/spec-009_evidence.txt
+docs/project-plan.csv
+
+== gh pr checks ==
+GitGuardian Security Checks	pass	2s	https://dashboard.gitguardian.com	
+
+== diffstat (from PR patch) ==
+ docs/SYSTEM_SPEC.md                               |   24 +++
+ docs/evidence/SPEC-009/README.txt                 |    3 
+ docs/evidence/SPEC-009/logs/rg_migration_hits.txt |  164 +++++++++++++++++++++
+ docs/evidence/SPEC-009/logs/spec-009_evidence.txt |   30 ++++
+ docs/project-plan.csv                             |    2 
+ 5 files changed, 222 insertions(+), 1 deletion(-)
