@@ -408,8 +408,38 @@ Server-side session state:
 
 ### 3.4 Frozen vs Flexible Areas
 
-- Frozen: (to be defined)
-- Flexible: (to be defined)
+This section defines what is locked for MVP stability and what may evolve.
+See also: FREEZE_REVIEW.md for the full management assessment.
+
+#### Frozen (no changes without PLAYBOOK_AUTH_CHANGES.md procedure)
+
+- **Auth endpoint contracts** — Request/response shapes, status codes, and endpoint
+  paths for login, refresh, logout, me, and csrf (§3.1).
+- **CSRF double-submit pattern** — Cookie name (`csrftoken`), header name
+  (`X-CSRF-Token`), validation rules, and exemption list (§3.2, SECURITY_CSRF.md).
+- **Refresh token rotation model** — Single-use opaque tokens stored as SHA-256
+  hashes in the `sessions` table (§3.3.1).
+- **Cookie attributes** — `refresh_token` (HttpOnly, path `/api/auth`), `csrftoken`
+  (not HttpOnly, path `/`). SameSite/Secure per environment settings.
+- **Token signing** — HS256 with `SECRET_KEY`. Algorithm and key material must not
+  change without a dedicated security review work order.
+- **`token_version` revocation model** — All-devices logout increments
+  `users.token_version` to invalidate outstanding access JWTs.
+
+#### Flexible (may evolve within guardrails)
+
+- **Token TTL values** — Access, refresh, CSRF, and temporary token lifetimes may
+  be tuned via environment variables without changing the auth model.
+- **Rate limiting thresholds** — Login attempt limits and lockout durations may be
+  adjusted without changing the auth flow.
+- **Deny list backend** — May switch between Redis and in-memory without changing
+  the auth contract (Redis is recommended for production).
+- **Session table cleanup** — A reaper for expired session rows may be added without
+  changing the auth flow.
+- **OAuth provider configuration** — Google/LinkedIn OAuth scopes and callback handling
+  may be refined without changing the core JWT/CSRF model.
+- **Error message wording** — Auth error response text may be improved for clarity
+  without changing status codes or response structure.
 
 ---
 
