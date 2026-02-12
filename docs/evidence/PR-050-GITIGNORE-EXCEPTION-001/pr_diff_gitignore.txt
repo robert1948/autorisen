@@ -1,0 +1,12 @@
+diff --git a/.gitignore b/.gitignore
+index b971e837..b23f62c8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -401,3 +401,7 @@ docs/evidence/**/video/
+ docs/evidence/**/*.sql.dump
+ docs/evidence/**/*.psql.out
+ docs/evidence/**/*.har
++
++# Allow evidence logs to be committed (governance evidence packs)
++!docs/evidence/**/logs/
++!docs/evidence/**/logs/**

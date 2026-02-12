@@ -1,0 +1,7 @@
+backend/pyproject.toml
+backend/requirements.txt
+requirements-dev.txt
+requirements-optional.txt
+requirements.txt
+servers/figma-mcp/requirements.txt
+servers/my-mcp-server-41491980/requirements.txt

@@ -1,0 +1,2 @@
+=== git check-ignore ===
+.gitignore:407:!docs/evidence/**/logs/**	docs/evidence/WO-DASH-PROJECT-STATUS-VAL-001/logs/pnpm_install_refresh_lock.txt

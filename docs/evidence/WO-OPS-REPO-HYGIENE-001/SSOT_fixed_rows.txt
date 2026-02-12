@@ -1,0 +1,1 @@
+line=25 cols:10->9 id=CHORE-REPO-001 verification_commands_prefix=rg -n \ship_autorisen_|node_modules|__pycache__|\\.venv\" .gitignore; sed -n '1,200p' .dockerignore"

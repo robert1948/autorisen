@@ -1,0 +1,3 @@
+docs/evidence/WO-OPS-REPO-HYGIENE-001/75_git_status_porcelain_before_evidence_commit.txt
+docs/evidence/WO-OPS-REPO-HYGIENE-001/76_staged_evidence_files.txt
+docs/evidence/WO-OPS-REPO-HYGIENE-001/77_git_status_after_evidence_commit.txt

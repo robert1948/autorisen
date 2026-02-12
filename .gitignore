@@ -352,3 +352,56 @@ archive/local/
 
 # Local artifacts
 /os
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+.npm/
+.pnpm-store/
+
+# Logs / runtime
+*.log
+logs/
+tmp/
+temp/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Evidence raw (keep summaries in Git, raw heavy ignored)
+docs/evidence/_raw/
+docs/evidence/**/screenshots/
+docs/evidence/**/video/
+docs/evidence/**/*.sql.dump
+docs/evidence/**/*.psql.out
+docs/evidence/**/*.har
+
+# Allow evidence logs to be committed (governance evidence packs)
+!docs/evidence/**/logs/
+!docs/evidence/**/logs/**

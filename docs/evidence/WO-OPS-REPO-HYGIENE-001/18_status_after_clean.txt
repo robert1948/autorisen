@@ -1,0 +1,7 @@
+## wo/repo-hygiene-001
+ M .gitignore
+ A docs/REPO_HYGIENE.md
+ M docs/project-plan.csv
+ A scripts/audit_repo_size.sh
+ A scripts/clean.sh
+?? docs/evidence/WO-OPS-REPO-HYGIENE-001/

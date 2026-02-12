@@ -1,0 +1,63 @@
+ .gitignore                                         |   49 +
+ client/pnpm-lock.yaml                              | 2484 +++--------
+ docs/REPO_HYGIENE.md                               |   35 +
+ .../WO-OPS-REPO-HYGIENE-001/00_context.txt         |   12 +
+ .../WO-OPS-REPO-HYGIENE-001/01_before_du.txt       |   40 +
+ .../02_before_git_clean_nd.txt                     |    1 +
+ .../03_before_git_clean_ndX.txt                    |   40 +
+ .../04_top_files_before.txt                        |   60 +
+ .../11_repo_hygiene_doc.patch                      |   41 +
+ .../WO-OPS-REPO-HYGIENE-001/12_gitignore.patch     |   57 +
+ .../WO-OPS-REPO-HYGIENE-001/13_scripts.patch       |   30 +
+ .../14_status_after_docs_scripts.txt               |    7 +
+ .../15_clean_dryrun_ignored.txt                    |   41 +
+ .../16_clean_dryrun_untracked.txt                  |    1 +
+ ...7_clean_dryrun_untracked_excluding_evidence.txt |    0
+ .../18_status_after_clean.txt                      |    7 +
+ .../WO-OPS-REPO-HYGIENE-001/19_after_du.txt        |   40 +
+ .../WO-OPS-REPO-HYGIENE-001/20_top_files_after.txt |   60 +
+ .../21_after_git_clean_nd.txt                      |    1 +
+ .../22_after_git_clean_ndX.txt                     |    0
+ .../evidence/WO-OPS-REPO-HYGIENE-001/23_pytest.txt |  146 +
+ .../WO-OPS-REPO-HYGIENE-001/29_dep_files_found.txt |    7 +
+ .../WO-OPS-REPO-HYGIENE-001/30_deps_patch.patch    |  208 +
+ .../WO-OPS-REPO-HYGIENE-001/31_pip_upgrade.txt     |   20 +
+ .../32_pip_install_requirements.txt                |  182 +
+ .../WO-OPS-REPO-HYGIENE-001/33_import_check.txt    |    1 +
+ .../34_pytest_after_deps.txt                       |    0
+ .../37_dep_files_confirm.txt                       |    7 +
+ .../38_selected_dev_req.txt                        |    1 +
+ .../39_dev_install_note.txt                        |    1 +
+ .../40_pip_install_dev_requirements.txt            |   45 +
+ .../41_pytest_import_check.txt                     |    1 +
+ .../WO-OPS-REPO-HYGIENE-001/43_dev_req_patch.patch |    0
+ .../44_pytest_after_testdeps.txt                   |    1 +
+ .../46_compose_build_final.txt                     |  863 ++++
+ .../WO-OPS-REPO-HYGIENE-001/47_client_ls.txt       |   19 +
+ .../48_client_lockfiles.txt                        |    2 +
+ .../WO-OPS-REPO-HYGIENE-001/49_pnpm_install.txt    |   23 +
+ .../WO-OPS-REPO-HYGIENE-001/50_frontend_build.txt  |    6 +
+ .../WO-OPS-REPO-HYGIENE-001/53_diffstat_final.txt  |    7 +
+ .../54_full_diff_final.patch                       | 4007 ++++++++++++++++++
+ .../55_status_before_commit.txt                    |    8 +
+ .../56_pnpm_lock_before.yaml                       | 4438 ++++++++++++++++++++
+ .../57_package_manager_field.txt                   |    0
+ .../58_pnpm_install_nofrozen.txt                   |   56 +
+ .../59_pnpm_lock_diff.patch                        | 3799 +++++++++++++++++
+ .../60_pnpm_lock_after.yaml                        | 2986 +++++++++++++
+ .../61_frontend_build_after_lock_update.txt        |   15 +
+ .../62_pnpm_install_frozen_after_update.txt        |   41 +
+ .../evidence/WO-OPS-REPO-HYGIENE-001/64_pr_url.txt |    1 +
+ .../WO-OPS-REPO-HYGIENE-001/65_ssot_pr_link.patch  |   10 +
+ .../SSOT_diff_after_repair.patch                   |   79 +
+ .../SSOT_diff_after_row.patch                      |   80 +
+ .../WO-OPS-REPO-HYGIENE-001/SSOT_fixed_rows.txt    |    1 +
+ docs/evidence/WO-OPS-REPO-HYGIENE-001/SUMMARY.md   |   29 +
+ .../project-plan_after_repair.csv                  |   27 +
+ .../project-plan_after_row.csv                     |   28 +
+ .../project-plan_before.csv                        |   48 +
+ .../project-plan_failed_raw.csv                    |   48 +
+ docs/project-plan.csv                              |   74 +-
+ scripts/audit_repo_size.sh                         |    7 +
+ scripts/clean.sh                                   |   11 +
+ 62 files changed, 18324 insertions(+), 2015 deletions(-)

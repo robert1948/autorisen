@@ -1,0 +1,23 @@
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json
+
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 9 dependencies were added: @hookform/resolvers@^3.9.0, @playwright/test@^1.58.2, @types/node@^22.7.4, @types/react-google-recaptcha@^2.1.9, typescript@^5.4.5, @tanstack/react-query@^5.66.1, react-google-recaptcha@^3.1.0, react-hook-form@^7.53.0, zod@^3.23.8
+* 20 dependencies were removed: @radix-ui/react-slot@^1.2.3, @radix-ui/react-tabs@^1.1.12, axios@^1.10.0, class-variance-authority@^0.7.1, clsx@^2.1.1, framer-motion@^12.19.1, lucide-react@^0.522.0, recharts@^3.1.2, tailwind-merge@^3.3.1, tailwindcss-animate@^1.0.7, @eslint/js@^9.25.0, @testing-library/user-event@^14.6.1, @vitest/coverage-v8@^3.2.4, @vitest/ui@^3.2.4, eslint@^9.25.0, eslint-plugin-react-hooks@^5.2.0, eslint-plugin-react-refresh@^0.4.19, globals@^16.0.0, vite-plugin-static-copy@^3.1.0, vite-tsconfig-paths@^5.1.4
+* 13 dependencies are mismatched:
+  - react (lockfile: ^19.1.0, manifest: ^18.3.1)
+  - react-dom (lockfile: ^19.1.0, manifest: ^18.3.1)
+  - react-router-dom (lockfile: ^7.6.2, manifest: ^6.28.0)
+  - @testing-library/react (lockfile: ^16.3.0, manifest: ^16.0.1)
+  - @types/react (lockfile: ^19.1.2, manifest: ^18.3.3)
+  - @types/react-dom (lockfile: ^19.1.2, manifest: ^18.3.0)
+  - @vitejs/plugin-react (lockfile: ^4.4.1, manifest: ^4.3.0)
+  - autoprefixer (lockfile: ^10.4.21, manifest: ^10.4.23)
+  - jsdom (lockfile: ^26.1.0, manifest: ^25.0.1)
+  - postcss (lockfile: ^8.5.5, manifest: ^8.5.6)
+  - tailwindcss (lockfile: ^3.4.3, manifest: ^3.4.19)
+  - vite (lockfile: ^6.3.5, manifest: ^5.4.1)
+  - vitest (lockfile: ^3.2.4, manifest: ^2.1.4)
+
