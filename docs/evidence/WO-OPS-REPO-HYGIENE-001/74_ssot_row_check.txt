@@ -1,0 +1,2 @@
+FOUND: WO-OPS-REPO-HYGIENE-001
+ARTIFACTS: docs/evidence/WO-OPS-REPO-HYGIENE-001/; docs/REPO_HYGIENE.md; scripts/clean.sh; PR: https://github.com/robert1948/autorisen/pull/50
