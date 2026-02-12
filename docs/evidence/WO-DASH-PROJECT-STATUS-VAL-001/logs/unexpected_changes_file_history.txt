@@ -1,0 +1,14 @@
+=== backend/src/modules/account/schemas.py ===
+1a7cced7 test(frontend): verify client build with pnpm lockfile
+70ba33e9 feat(dashboard): role-based dashboard modules (DB-backed)
+=== backend/src/modules/account/router.py ===
+1a7cced7 test(frontend): verify client build with pnpm lockfile
+70ba33e9 feat(dashboard): role-based dashboard modules (DB-backed)
+=== client/src/services/dashboardModulesApi.ts ===
+1a7cced7 test(frontend): verify client build with pnpm lockfile
+6dc0bd53 fix(ui): align dashboard widgets with session auth; remove false 'Not authenticated' errors
+70ba33e9 feat(dashboard): role-based dashboard modules (DB-backed)
+=== client/src/components/dashboard/ProjectStatusModule.tsx ===
+1a7cced7 test(frontend): verify client build with pnpm lockfile
+6dc0bd53 fix(ui): align dashboard widgets with session auth; remove false 'Not authenticated' errors
+70ba33e9 feat(dashboard): role-based dashboard modules (DB-backed)

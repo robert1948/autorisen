@@ -213,6 +213,31 @@ def get_projects_mine(
     ]
 
 
+@router.get("/projects/status", response_model=schemas.ProjectStatusSummary)
+def get_project_status_summary(
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ProjectStatusSummary:
+    tasks = db.scalars(
+        select(models.Task)
+        .where(models.Task.user_id == current_user.id)
+        .order_by(models.Task.created_at.desc())
+        .limit(25),
+    ).all()
+    projects = [
+        schemas.ProjectStatusItem(
+            id=str(task.id),
+            title=task.goal or "Task",
+            status=task.status,
+            created_at=task.created_at,
+        )
+        for task in tasks
+    ]
+    # Provide a safe default when the user has no tasks.
+    value = projects[0].status if projects else "Not set"
+    return schemas.ProjectStatusSummary(value=value, total=len(projects), projects=projects)
+
+
 @router.get("/billing/balance", response_model=schemas.AccountBalance)
 def get_billing_balance(
     current_user: models.User = Depends(get_verified_user),

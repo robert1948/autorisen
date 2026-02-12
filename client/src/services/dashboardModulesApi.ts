@@ -47,6 +47,12 @@ export type ProjectStatusItem = {
   created_at: string;
 };
 
+export type ProjectStatusSummary = {
+  value: string;
+  total: number;
+  projects: ProjectStatusItem[];
+};
+
 export type AccountBalance = {
   total_paid: number;
   total_pending: number;
@@ -68,6 +74,9 @@ export const dashboardModulesApi = {
   },
   getProjects(): Promise<ProjectStatusItem[]> {
     return apiFetch<ProjectStatusItem[]>("/projects/mine");
+  },
+  getProjectStatus(): Promise<ProjectStatusSummary> {
+    return apiFetch<ProjectStatusSummary>("/projects/status");
   },
   getBalance(): Promise<AccountBalance> {
     return apiFetch<AccountBalance>("/billing/balance");
