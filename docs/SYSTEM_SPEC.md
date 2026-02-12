@@ -217,6 +217,30 @@ Rules:
 - Deploy and migrate are separate steps (never implicit).
 - Every migration must be reversible where feasible (downgrade guidance).
 
+#### Migration Rules (SPEC-009)
+
+1. No implicit migrations
+   - The app must not auto-run schema migrations on startup by default.
+   - CI/CD must not run migrations implicitly as part of deploy.
+
+2. Explicit approvals required
+   - Any schema change requires an explicit approval step (PR review plus documented go/no-go).
+   - Migration execution must be a conscious action (manual command), not a side-effect.
+
+3. Environment boundary
+   - autorisen (staging): migrations allowed with evidence pack and verification.
+   - capecraft (production): forbidden unless Robert explicitly instructs and approvals are recorded.
+
+4. Minimum migration PR requirements
+   - Alembic revision (or migration script) included and reviewed.
+   - Rollback plan documented (downgrade path or recovery approach).
+   - Verification commands included (examples: `alembic heads`, `alembic history`, `alembic current`, SQL checks).
+   - Evidence artifacts captured under `docs/evidence/<WO_ID>/logs/`.
+
+5. Execution guard
+   - Migrations must require an explicit flag or guard (example policy language):
+     "Only run migrations when `ALLOW_MIGRATIONS=1` (or equivalent) is present, and only in staging unless explicitly approved."
+
 ---
 
 ### 2.6.4 Environments

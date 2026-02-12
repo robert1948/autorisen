@@ -1,0 +1,30 @@
+== git status ==
+ M docs/SYSTEM_SPEC.md
+ M docs/project-plan.csv
+?? docs/evidence/SPEC-009/logs/
+
+== diff --stat ==
+ docs/SYSTEM_SPEC.md   | 24 ++++++++++++++++++++++++
+ docs/project-plan.csv |  2 +-
+ 2 files changed, 25 insertions(+), 1 deletion(-)
+
+== grep: Migration Rules section ==
+docs/Master_ProjectPlan.md:172:| SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | planned | P0 |  |
+docs/SYSTEM_SPEC.md:220:#### Migration Rules (SPEC-009)
+docs/project-plan.csv:11:SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,done,P0,2026-02-12,"Defined migration rules: approvals required; no implicit migrations; staging-only unless explicitly approved.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/SPEC-009/README.txt:1:WO: SPEC-009
+docs/evidence/WO-OPS-REPO-HYGIENE-001/project-plan_after_row.csv:11:SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.,docs/SYSTEM_SPEC.md,Doc review
+docs/evidence/WO-OPS-REPO-HYGIENE-001/SSOT_diff_after_row.patch:25:-SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/WO-OPS-REPO-HYGIENE-001/SSOT_diff_after_row.patch:63:+SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.,docs/SYSTEM_SPEC.md,Doc review
+docs/evidence/WO-OPS-REPO-HYGIENE-001/project-plan_after_repair.csv:11:SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.,docs/SYSTEM_SPEC.md,Doc review
+docs/evidence/WO-OPS-REPO-HYGIENE-001/30_deps_patch.patch:123:-SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/WO-OPS-REPO-HYGIENE-001/30_deps_patch.patch:161:+SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.,docs/SYSTEM_SPEC.md,Doc review
+docs/evidence/WO-OPS-REPO-HYGIENE-001/project-plan_failed_raw.csv:20:SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/WO-OPS-REPO-HYGIENE-001/SSOT_diff_after_repair.patch:25:-SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/WO-OPS-REPO-HYGIENE-001/SSOT_diff_after_repair.patch:63:+SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.,docs/SYSTEM_SPEC.md,Doc review
+docs/evidence/WO-OPS-REPO-HYGIENE-001/project-plan_before.csv:20:SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/WO-OPS-REPO-HYGIENE-001/54_full_diff_final.patch:3922:-SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,"Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.",docs/SYSTEM_SPEC.md,"Doc review"
+docs/evidence/WO-OPS-REPO-HYGIENE-001/54_full_diff_final.patch:3960:+SPEC-009,Define migration rules (approvals required; no implicit migrations),docs,planned,P0,,Spec: SYSTEM_SPEC §6.3 and §2.6.3. Establish management gate for migrations.,docs/SYSTEM_SPEC.md,Doc review
+
+== SPEC-009 row (SSOT) ==
+{'id': 'SPEC-009', 'task': 'Define migration rules (approvals required; no implicit migrations)', 'owner': 'docs', 'status': 'done', 'priority': 'P0', 'completion_date': '2026-02-12', 'notes': 'Defined migration rules: approvals required; no implicit migrations; staging-only unless explicitly approved.', 'artifacts': 'docs/SYSTEM_SPEC.md', 'verification_commands': 'Doc review'}
