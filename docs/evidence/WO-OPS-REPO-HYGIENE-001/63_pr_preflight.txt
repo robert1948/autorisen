@@ -1,0 +1,6 @@
+2026-02-12T06:38:05+02:00
+BRANCH=wo/repo-hygiene-001
+HEAD=b6a58a49aff6d96a9b59a40afcdc1a58a50f4ce5
+## wo/repo-hygiene-001...origin/wo/repo-hygiene-001
+?? docs/evidence/WO-OPS-REPO-HYGIENE-001/63_pr_preflight.txt
+b6a58a49 chore(repo): hygiene cleanup (ignore + tools + SSOT + deps + lockfile)
