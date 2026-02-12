@@ -1,0 +1,2 @@
+=== RECORD: STALE BRANCH EXISTS (DO NOT TOUCH) ===
+7648a2c0218be6b2cdd052a48542dc0078d0c780	refs/heads/wo/mvp-routes-002

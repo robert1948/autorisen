@@ -1,0 +1,169 @@
+=== CHECK existing wo/mvp-routes-002 ===
+7648a2c0218be6b2cdd052a48542dc0078d0c780 refs/heads/wo/mvp-routes-002
+  wo/mvp-routes-002                                   7648a2c0 [origin/wo/mvp-routes-002] chore(ssot): close MVP-ROUTES-002 and reference implementation commit
+Your branch is up to date with 'origin/wo/mvp-routes-002'.
+## wo/mvp-routes-002...origin/wo/mvp-routes-002
+--- log ---
+7648a2c0 (HEAD -> wo/mvp-routes-002, origin/wo/mvp-routes-002) chore(ssot): close MVP-ROUTES-002 and reference implementation commit
+--- diff vs main ---
+ .dockerignore                                      |    4 -
+ .env.example                                       |    3 +
+ .gitattributes                                     |    2 +
+ .gitignore                                         |   22 +-
+ AUTONOMY_PLAYBOOK.md                               |  197 +
+ CapeControl_React_Starter_Dark/src/App.tsx         |   13 +-
+ .../src/pages/Dashboard.tsx                        |  441 +-
+ CapeControl_React_Starter_Dark/src/pages/Home.tsx  |   75 +-
+ Dockerfile                                         |   17 +-
+ Dockerfile.production                              |    8 +-
+ Dockerfile.worker                                  |   45 +
+ Makefile                                           |   27 +-
+ Procfile                                           |    1 +
+ {client/src => archive/2026-02-02}/index copy.css  |    0
+ .../202601210001_add_login_audit_reason.py         |   32 +
+ .../versions/5f20050b5a77_email_jobs_outbox.py     |   81 +
+ ...3f8a_agents_add_tenant_id_current_version_id.py |  176 +
+ backend/src/app.py                                 |   21 +-
+ backend/src/common/__init__.py                     |    0
+ backend/src/common/security/__init__.py            |    0
+ backend/src/common/security/auth_lockout.py        |  193 +
+ backend/src/common/security/auth_rate_limit.py     |  127 +
+ backend/src/core/config.py                         |    8 +
+ backend/src/core/redis.py                          |   72 +
+ backend/src/db/models.py                           |   55 +-
+ backend/src/db/session.py                          |    6 +-
+ backend/src/modules/agents/manifest_validator.py   |   39 +
+ backend/src/modules/agents/router.py               |   68 +-
+ backend/src/modules/agents/schemas.py              |   17 +-
+ backend/src/modules/auth/audit.py                  |    2 +
+ backend/src/modules/auth/deps.py                   |   13 +-
+ backend/src/modules/auth/router.py                 |  336 +-
+ backend/src/services/email_queue.py                |  123 +
+ backend/src/worker/__init__.py                     |    0
+ backend/src/worker/email_worker.py                 |  197 +
+ backend/tests/test_email_outbox.py                 |  118 +
+ client/README.md                                   |   12 +
+ client/package-lock.json                           | 5242 ++++++++++++++++++++
+ client/package.json                                |    4 +
+ client/public/sw.js                                |    3 +-
+ client/scripts/archive_guard.cjs                   |   95 +
+ client/scripts/route_guard.cjs                     |   46 +
+ client/scripts/route_guard.js                      |    6 +
+ client/src/App.tsx                                 |  140 +-
+ client/src/{ => archive}/components/HomePage.tsx   |    6 +-
+ client/src/{ => archive}/components/nav/TopNav.tsx |   38 +-
+ client/src/archive/pages/DashboardPage.tsx         |  137 +
+ client/src/{ => archive}/pages/Home.tsx            |   10 +-
+ client/src/archive/pages/Landing.tsx               |  640 +++
+ client/src/{ => archive}/pages/public/HomePage.tsx |    5 +
+ client/src/assets/CapeControl_Logo_Transparent.png |  Bin 0 -> 152739 bytes
+ client/src/components/Auth/auth.css                |    4 +
+ client/src/components/Footer.tsx                   |   80 +-
+ client/src/components/nav/PublicTopNav.tsx         |  117 +
+ client/src/components/payments/CheckoutFlow.tsx    |    4 +-
+ client/src/content/docs/00-start-here.md           |   12 +
+ client/src/content/docs/01-curiosity-trail.md      |    9 +
+ client/src/content/docs/02-trust-and-safety.md     |   12 +
+ client/src/content/docs/03-agents-101.md           |   11 +
+ client/src/content/docs/04-marketplace-preview.md  |   11 +
+ client/src/content/docs/05-roadmap.md              |   14 +
+ client/src/content/docs/index.ts                   |   60 +
+ client/src/features/auth/AuthForms.tsx             |    6 +-
+ client/src/features/dashboard/api.ts               |   12 +
+ .../features/dashboard/components/ActivityItem.tsx |   21 +
+ .../features/dashboard/components/EmptyState.tsx   |   18 +
+ .../features/dashboard/components/ErrorState.tsx   |   18 +
+ .../src/features/dashboard/components/KpiCard.tsx  |   25 +
+ .../features/dashboard/components/PageHeader.tsx   |   19 +
+ client/src/features/dashboard/components/Panel.tsx |   21 +
+ .../dashboard/components/SkeletonBlock.tsx         |   16 +
+ .../features/dashboard/components/StatusPill.tsx   |   25 +
+ .../features/dashboard/components/TrendChart.tsx   |   31 +
+ client/src/features/dashboard/fixtures.ts          |   54 +
+ client/src/features/dashboard/mappers.ts           |   93 +
+ client/src/features/dashboard/types.ts             |   31 +
+ client/src/features/dev/AgentRegistryPanel.tsx     |    2 +-
+ client/src/lib/api.ts                              |   40 +-
+ client/src/pages/ExplorePage.tsx                   |   78 +
+ client/src/pages/Landing.tsx                       |   89 -
+ client/src/pages/LandingMinimal.tsx                |   51 +
+ client/src/pages/app/AgentsPage.tsx                |    6 +-
+ client/src/pages/app/BillingPage.tsx               |    2 +-
+ client/src/pages/app/ChatConsolePage.tsx           |    2 +-
+ client/src/pages/app/DashboardPage.tsx             |  642 ++-
+ client/src/pages/app/DeveloperPage.tsx             |    2 +-
+ client/src/pages/app/MarketplacePage.tsx           |    6 +-
+ client/src/pages/app/SettingsPage.tsx              |    6 +-
+ client/src/pages/auth/LoginPage.tsx                |  118 +-
+ client/src/pages/auth/ResetPasswordPage.tsx        |   25 +-
+ client/src/pages/auth/SocialCallbackPage.tsx       |    2 +-
+ client/src/pages/auth/VerifyEmailPendingPage.tsx   |   84 +
+ client/src/pages/docs/DocReaderPage.tsx            |  178 +
+ client/src/pages/docs/DocsHomePage.tsx             |    5 +
+ client/src/pages/mvp/MvpScaffoldPage.tsx           |   16 +-
+ .../src/pages/onboarding/OnboardingGuidePage.tsx   |    4 +-
+ client/src/pages/public/ApiDocsPage.tsx            |   30 +
+ client/src/pages/public/ContactPage.tsx            |   33 +
+ client/src/pages/public/DeveloperHubPage.tsx       |   30 +
+ client/src/pages/public/EarlyAccessPage.tsx        |   94 +
+ client/src/pages/public/FaqPage.tsx                |   64 +
+ client/src/pages/public/MarketplacePublicPage.tsx  |   67 +
+ client/src/pages/public/OverviewPage.tsx           |   76 +
+ client/src/pages/public/PricingPage.tsx            |   73 +
+ client/src/pages/public/PrivacyPage.tsx            |   30 +
+ client/src/pages/public/TermsPage.tsx              |   30 +
+ client/src/pages/public/WelcomePage.tsx            |    8 +-
+ client/src/routes/guards/RequireAuth.tsx           |  100 +-
+ client/src/routes/guards/RequireMvpAuth.tsx        |    2 +-
+ client/src/routes/guards/RequireMvpGuest.tsx       |    4 +-
+ client/src/routes/guards/SoftGateInterstitial.tsx  |   76 +
+ client/src/services/api.ts                         |  285 +-
+ client/src/types/global.d.ts                       |    2 +-
+ client/src/version.ts                              |    6 +
+ client/src/vite-env.d.ts                           |    2 +-
+ client/tsconfig.json                               |    2 +-
+ client/vite.config.ts                              |    3 +-
+ docker-compose.yml                                 |   13 +
+ docs/AUTONOMY_CHANGE_TYPES.md                      |   17 +
+ docs/AUTONOMY_CHARTER.md                           |   50 +
+ docs/EVIDENCE_CHECKLIST.md                         |   22 +
+ docs/FREEZE_REVIEW.md                              |    8 +-
+ docs/INDEX.md                                      |    4 +
+ docs/MVP_ACCEPTANCE.md                             |   98 +
+ docs/MVP_FREEZE.md                                 |   39 +
+ docs/MVP_PAGES_AND_ROUTES.md                       |   11 +-
+ docs/Master_ProjectPlan.md                         |   38 +-
+ docs/PLAYBOOK_OVERVIEW.md                          |   17 +
+ docs/RUNBOOK_VS_CHAT.md                            |   41 +
+ docs/SPEC_FOUNDATIONAL_MAP.md                      |  122 +
+ docs/SPEC_VIBE_CODING.md                           |  116 +
+ docs/SYSTEM_SPEC.md                                |  208 +-
+ docs/WO-LANDING-ALCHEMY-001-evidence.md            |   67 +
+ docs/WO_INDEX.md                                   |   16 +
+ docs/agents/AGENTS_PROMPT_CRITIQUE_RUBRIC.md       |   65 +
+ docs/agents/AGENTS_PROMPT_ITERATION_LOG.md         |   12 +
+ docs/agents/manifest.schema.json                   |   60 +
+ docs/archive/2026-02-02/ARCHIVE_INDEX.md           |   16 +
+ .../2026-02-02}/MASTER_PROJECT_PLAN.csv            |    0
+ .../2026-02-02}/autorisen_project_plan.csv.old     |    0
+ .../2026-02-02}/project-plan-backup-20251108.csv   |    0
+ docs/{ => archive/2026-02-02}/project-plan-old.csv |    0
+ docs/capcontrol-curiosity-cascade.mm               |    1 +
+ docs/cape-control-agents-system.mm                 |  535 ++
+ docs/capecontrol-agents-system.mm                  |  159 +-
+ docs/capecontrol-user-flow.mm                      |   68 +-
+ docs/figma/DASHBOARD_V1_FIGMA_TO_CODE_MAP.md       |   65 +
+ docs/playbooks/PLAYBOOK_AUTH_CHANGES.md            |   47 +-
+ docs/playbooks/PLAYBOOK_DB_MIGRATIONS.md           |   55 +-
+ docs/project-plan.README.md                        |   44 +
+ docs/project-plan.csv                              |   67 +-
+ docs/spec/3_state_rule.md                          |   32 +
+ docs/templates/WO-MIGRATION.md                     |  187 +
+ docs/work_orders/WO-NAV-TRUST-ALIGN-001.md         |   50 +
+ heroku.yml                                         |    2 +
+ requirements.txt                                   |    1 +
+ tests/test_auth.py                                 |   98 +-
+ tests/test_auth_canonical.py                       |   33 +-
+ tests/test_auth_lockout.py                         |  130 +
+ tests/test_auth_rate_limits.py                     |  100 +
+ 160 files changed, 13863 insertions(+), 873 deletions(-)

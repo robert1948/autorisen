@@ -39,6 +39,8 @@ Columns:
 
 ## Notes (from SYSTEM_SPEC)
 - Navigation is strictly linear: Public → Auth → Onboarding → App (SYSTEM_SPEC §2.5.7).
+- Registration prompts must follow the interest-triggered policy (SYSTEM_SPEC §2.5.3).
 - Billing is display-only for MVP (SYSTEM_SPEC §2.5.4).
 - Help is read-only (SYSTEM_SPEC §2.5.5).
 - Registration step routes and email verification are unauthenticated entry points (SYSTEM_SPEC §2.5.2).
+- `/logout` is an action route (not a full page) per SYSTEM_SPEC §2.5.2.

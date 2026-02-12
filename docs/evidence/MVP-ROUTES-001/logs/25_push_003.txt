@@ -1,0 +1,9 @@
+=== PUSH wo/mvp-routes-003 ===
+remote: 
+remote: Create a pull request for 'wo/mvp-routes-003' on GitHub by visiting:        
+remote:      https://github.com/robert1948/autorisen/pull/new/wo/mvp-routes-003        
+remote: 
+To github.com:robert1948/autorisen.git
+ * [new branch]        wo/mvp-routes-003 -> wo/mvp-routes-003
+branch 'wo/mvp-routes-003' set up to track 'origin/wo/mvp-routes-003'.
+DONE: Continue MVP-ROUTES-001 work on wo/mvp-routes-003
