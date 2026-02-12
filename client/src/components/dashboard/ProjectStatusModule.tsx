@@ -6,6 +6,7 @@ import { useAuth } from "../../features/auth/AuthContext";
 export const ProjectStatusModule = ({ title }: { title: string }) => {
   const { state } = useAuth();
   const [projects, setProjects] = useState<ProjectStatusItem[]>([]);
+  const [statusValue, setStatusValue] = useState<string>("Not set");
   const [loading, setLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,8 +15,9 @@ export const ProjectStatusModule = ({ title }: { title: string }) => {
     try {
       setError(null);
       setLoading(true);
-      const data = await dashboardModulesApi.getProjects();
-      setProjects(data);
+      const data = await dashboardModulesApi.getProjectStatus();
+      setProjects(data.projects ?? []);
+      setStatusValue(data.value || "Not set");
       setLoaded(true);
     } catch (err) {
       const message =
@@ -57,10 +59,15 @@ export const ProjectStatusModule = ({ title }: { title: string }) => {
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+          {statusValue}
+        </span>
+      </div>
       {error && <p className="mt-2 text-sm text-slate-600">{error}</p>}
       {projects.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">No projects yet.</p>
+        <p className="mt-3 text-sm text-slate-500">Status: {statusValue}.</p>
       ) : (
         <ul className="mt-3 space-y-3">
           {projects.map((project) => (

@@ -60,6 +60,14 @@ class ProjectStatusItem(BaseModel):
     created_at: datetime
 
 
+class ProjectStatusSummary(BaseModel):
+    """Project status summary for dashboard module."""
+
+    value: str
+    total: int
+    projects: list[ProjectStatusItem]
+
+
 class AccountBalance(BaseModel):
     """Account balance summary."""
 
