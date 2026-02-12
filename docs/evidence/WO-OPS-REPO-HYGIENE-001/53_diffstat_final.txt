@@ -1,0 +1,7 @@
+ .gitignore                 |   49 +
+ client/pnpm-lock.yaml      | 2484 +++++++++-----------------------------------
+ docs/REPO_HYGIENE.md       |   35 +
+ docs/project-plan.csv      |   74 +-
+ scripts/audit_repo_size.sh |    7 +
+ scripts/clean.sh           |   11 +
+ 6 files changed, 645 insertions(+), 2015 deletions(-)

@@ -1,0 +1,19 @@
+total 212
+drwxrwxr-x  7 robert robert   4096 Feb 12 06:17 .
+drwxrwxr-x 22 robert robert   4096 Feb 12 06:24 ..
+drwxrwxr-x  2 robert robert   4096 Feb  3 06:01 client
+drwxrwxr-x  2 robert robert   4096 Feb 10 09:15 e2e
+-rw-rw-r--  1 robert robert    231 Dec 16 08:42 .env.example
+-rw-rw-r--  1 robert robert   1664 Nov 12 18:16 index.html
+-rw-rw-r--  1 robert robert   1315 Feb 10 09:15 package.json
+-rw-rw-r--  1 robert robert    478 Feb 10 09:15 playwright.config.ts
+-rw-rw-r--  1 robert robert 145747 Oct 16 05:16 pnpm-lock.yaml
+-rw-rw-r--  1 robert robert     80 Jan  1 05:54 postcss.config.js
+drwxrwxr-x  3 robert robert   4096 Feb 10 09:15 public
+drwxrwxr-x 17 robert robert   4096 Feb 11 17:46 src
+-rw-rw-r--  1 robert robert    722 Jan 11 06:58 tailwind.config.js
+-rw-rw-r--  1 robert robert    625 Feb  3 05:59 tsconfig.json
+-rw-rw-r--  1 robert robert    210 Oct 16 05:16 tsconfig.node.json
+drwxrwxr-x  3 robert robert   4096 Oct 17 09:06 types
+-rw-rw-r--  1 robert robert   2376 Feb  3 05:59 vite.config.ts
+-rw-rw-r--  1 robert robert    261 Nov  9 10:16 vitest.config.ts

@@ -1,0 +1,12 @@
+PWD=/home/robert/Development/capecontrol
+2026-02-12T06:11:34+02:00
+BRANCH=main
+HEAD=4d3880968d8dcfde28e4ce64ab9103fe0d7bf43f
+REMOTES:
+heroku	https://git.heroku.com/autorisen.git (fetch)
+heroku	https://git.heroku.com/autorisen.git (push)
+origin	git@github.com:robert1948/autorisen.git (fetch)
+origin	git@github.com:robert1948/autorisen.git (push)
+STATUS:
+## main...origin/main
+?? docs/evidence/WO-OPS-REPO-HYGIENE-001/

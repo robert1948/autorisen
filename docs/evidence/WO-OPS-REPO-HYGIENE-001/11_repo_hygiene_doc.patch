@@ -1,0 +1,41 @@
+diff --git a/docs/REPO_HYGIENE.md b/docs/REPO_HYGIENE.md
+new file mode 100644
+index 00000000..3d4c663e
+--- /dev/null
++++ b/docs/REPO_HYGIENE.md
+@@ -0,0 +1,35 @@
++# Repo Hygiene (Autorisen / Staging)
++
++## Purpose
++Keep the autorisen repository small, reproducible, and evidence-first without committing build artifacts, caches, or heavy raw evidence.
++
++## What stays in Git
++- Source code, configs, Dockerfiles, compose files
++- docs/specs and runbooks
++- Evidence packs that are copy/paste-ready summaries:
++  - command lines used
++  - small outputs and pass/fail results
++  - diffs / patches (small text)
++
++## What must NOT be committed
++- Build artifacts: `node_modules/`, `dist/`, `build/`, `.vite/`
++- Python caches/venvs: `__pycache__/`, `.pytest_cache/`, `.mypy_cache/`, `.venv/`
++- Logs and runtime output: `*.log`, `logs/`, `tmp/`
++- Secrets: `.env`, keys, tokens, credentials
++- Heavy/raw evidence artifacts:
++  - screenshots, videos, HAR files
++  - DB dumps / large SQL outputs
++
++## Evidence storage rules
++- Git-friendly evidence goes under: `docs/evidence/<WO-ID>/`
++- Heavy/raw artifacts go under: `docs/evidence/_raw/` (ignored by Git)
++
++## Cleanup commands
++- Local cleanup script:
++  - `scripts/clean.sh`
++- Preview what would be removed:
++  - `git clean -nd`  (untracked)
++  - `git clean -ndX` (ignored only)
++
++## Safety
++- This repo is staging/sandbox (autorisen). Do not run production/capecraft commands unless explicitly instructed by Robert.

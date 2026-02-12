@@ -1,0 +1,6 @@
+
+> autorisen-client@0.2.10 build /home/robert/Development/capecontrol/client
+> vite build
+
+ ELIFECYCLE  Command failed.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
