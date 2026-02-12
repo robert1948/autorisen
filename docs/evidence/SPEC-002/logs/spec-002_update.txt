@@ -1,0 +1,15 @@
+== diff --stat ==
+ docs/SECURITY_CSRF.md | 6 ++++++
+ docs/project-plan.csv | 2 +-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+== SECURITY_CSRF excerpt ==
+27:### Token format and TTL
+29:- Token format is `<nonce>.<timestamp>.<signature>`.
+30:- The signature is an HMAC-SHA256 of `nonce.timestamp` using `SECRET_KEY`.
+31:- Default TTL is 1 hour; expired tokens MUST be rejected.
+55:- The token MUST pass signature validation and TTL checks.
+56:- Tokens are signed (nonce + timestamp + HMAC) and are valid for 1 hour by default.
+
+== SPEC-002 row ==
+{'id': 'SPEC-002', 'task': 'Fill in CSRF policy details (token source/cookie/header/protected endpoints)', 'owner': 'docs', 'status': 'done', 'priority': 'P0', 'completion_date': '2026-02-12', 'notes': 'Spec: SYSTEM_SPEC §3.2 (see SECURITY_CSRF). Must be canonical + precise.', 'artifacts': 'docs/SECURITY_CSRF.md', 'verification_commands': 'Doc review: validate against SECURITY_CSRF.md'}
