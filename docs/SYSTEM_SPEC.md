@@ -271,14 +271,100 @@ Production:
 
 ### 2.6.5 Observability & Maintenance (MVP)
 
-Required:
-- Connection health checks
-- Basic query error logging
-- Backup/restore procedure documented
-- Simple DB reset procedure for local dev
+#### Connection Health Checks
 
-Optional (post-MVP):
-- Advanced metrics, query profiling, partitioning, read replicas
+The application exposes three health endpoints:
+
+| Endpoint | DB query? | Purpose |
+|---|---|---|
+| `GET /api/health` | **Yes** (`SELECT 1`) | Full health with DB connectivity check |
+| `GET /api/health/alive` | No | Liveness probe (container is running) |
+| `GET /api/health/ping` | No | Lightweight readiness probe |
+
+`/api/health` opens a `SessionLocal` session, executes `SELECT 1`, and reports
+`"database_connected": true/false`. On failure it returns `"status": "degraded"`
+and logs the exception. This endpoint is used by:
+- Heroku Dockerfile `HEALTHCHECK` instruction
+- Post-deploy smoke tests (`make smoke-staging`, `make smoke-prod`)
+- CI Docker build tests (`ci-test.yml`)
+- Deployment verification (`deploy-staging.yml`, `deploy-heroku.yml`)
+
+#### Connection Pool Configuration
+
+| Setting | Env Var | Default | Notes |
+|---|---|---|---|
+| `pool_pre_ping` | — | `True` | Validates connections before use |
+| `pool_size` | `DB_POOL_SIZE` | `5` | Conservative for single-dyno Heroku |
+| `max_overflow` | `DB_MAX_OVERFLOW` | `5` | Max 10 concurrent connections |
+| `pool_recycle` | `DB_POOL_RECYCLE` | `1800` | 30-minute recycle to avoid stale connections |
+| SSL mode | `DATABASE_SSL` | Auto-detect | Enabled for `amazonaws.com` or `heroku` URLs |
+
+Pool monitoring (event listeners, metrics export) is **not implemented** in MVP.
+
+#### Query Error Logging
+
+- SQLAlchemy query-level logging (`echo=True`) is not enabled by default.
+- Database connection failures are caught and logged in the `/api/health` handler.
+- SQL errors during request handling are propagated as HTTP 500 responses with
+  structured error logging via the middleware stack.
+- Slow query detection is **not implemented** in MVP.
+
+#### Backup & Restore
+
+- **Heroku Postgres**: Automatic daily backups are provided by the Heroku Managed
+  Postgres plan. No additional backup automation exists in the repository.
+- **Backup verification**: Not automated. Verify via `heroku pg:backups -a <app>`.
+- **Restore**: Use `heroku pg:backups:restore` for point-in-time recovery.
+- **Local backups**: Not applicable — local dev uses disposable Docker volumes.
+
+Backup verification targets (`heroku pg:info`, `heroku pg:diagnose`) are **not yet
+added** to the Makefile. This is a known gap.
+
+#### Local Database Reset
+
+No dedicated `db-reset` Makefile target exists. The manual procedure is:
+
+```bash
+# 1. Destroy the Docker volume (removes all local data)
+docker compose down -v
+
+# 2. Restart Postgres
+docker compose up -d db
+sleep 3
+
+# 3. Run migrations to recreate schema
+make migrate-up
+# Or: ALEMBIC_DATABASE_URL="postgresql://devuser:devpass@localhost:5433/devdb" \
+#     alembic -c backend/alembic.ini upgrade head
+```
+
+Local Postgres runs on port `5433` (not default `5432`) with credentials
+`devuser` / `devpass` / `devdb`. pgAdmin is available on port `5050` via the
+`tools` profile: `docker compose --profile tools up -d`.
+
+No seed data scripts exist. Fresh local databases start empty after migrations.
+
+#### Heroku Database Operations
+
+| Operation | Command |
+|---|---|
+| Check migration version | `heroku pg:psql -a <app> -c "SELECT version_num FROM alembic_version"` |
+| Run migrations | `make heroku-run-migrate HEROKU_APP_NAME=<app>` |
+| Interactive shell | `make heroku-shell` |
+| View DB info | `heroku pg:info -a <app>` |
+| View connection stats | `heroku pg:diagnose -a <app>` |
+| View backups | `heroku pg:backups -a <app>` |
+
+Only the first three are currently wired into Makefile targets.
+
+#### Post-MVP (Not Implemented)
+
+- Advanced connection pool monitoring (SQLAlchemy pool events, metrics export)
+- Slow query detection and logging
+- Query profiling
+- Automated backup verification
+- Database partitioning
+- Read replicas
 
 ---
 
