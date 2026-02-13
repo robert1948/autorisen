@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import ChatModal, { type ChatPlacement } from "../components/chat/ChatModal";
 import TopNav from "../components/nav/TopNav";
@@ -9,6 +9,7 @@ import AgentWorkbench from "../features/dev/AgentWorkbench";
 import AgentRegistryPanel from "../features/dev/AgentRegistryPanel";
 import MarketplaceShowcase from "../features/marketplace/MarketplaceShowcase";
 import AuthGate from "../features/auth/AuthGate";
+import { useAuth } from "../features/auth/AuthContext";
 import logoUrl from "../assets/capecontrol-logo.png";
 import BuildBadge from "../components/version/BuildBadge";
 
@@ -63,6 +64,9 @@ const chatConfig: Record<Exclude<ActiveChat, null>, ChatView> = {
 
 const Home = () => {
   const { search } = useLocation();
+  const navigate = useNavigate();
+  const { state: authState } = useAuth();
+  const isAuthenticated = Boolean(authState.accessToken);
   const registerHref = `/auth/register${search}`;
   const [state, setState] = useState<HealthState>({ loading: true });
   const [activeChat, setActiveChat] = useState<ActiveChat>(null);
@@ -100,6 +104,11 @@ const Home = () => {
   const chatModalConfig = activeChat ? chatConfig[activeChat] : null;
 
   const launchChat = (placement: Exclude<ActiveChat, null>) => {
+    if (!isAuthenticated) {
+      // Redirect unauthenticated users to register (onboarding) or login (support)
+      navigate(placement === "support" ? "/auth/login" : registerHref);
+      return;
+    }
     setActiveChat(placement);
   };
 
