@@ -9,6 +9,12 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 _ALLOWED_METHODS: set[str] = {"GET", "HEAD", "OPTIONS"}
 _BLOCKED_METHODS: set[str] = {"POST", "PUT", "PATCH", "DELETE"}
 
+# Paths exempt from read-only restrictions (auth must always work)
+_EXEMPT_PATH_PREFIXES: tuple[str, ...] = (
+    "/api/auth/",
+    "/api/health",
+)
+
 
 def _read_only_enabled() -> bool:
     return os.getenv("READ_ONLY_MODE", "0").strip() == "1"
@@ -27,6 +33,12 @@ class ReadOnlyModeMiddleware:
             return
 
         if not _read_only_enabled():
+            await self.app(scope, receive, send)
+            return
+
+        # Always allow auth and health endpoints regardless of read-only mode
+        path = scope.get("path", "")
+        if any(path.startswith(prefix) for prefix in _EXEMPT_PATH_PREFIXES):
             await self.app(scope, receive, send)
             return
 
