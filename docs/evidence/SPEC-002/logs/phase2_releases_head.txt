@@ -1,0 +1,17 @@
+=== capecraft Releases - Current: v783
+
+ v783 Deployed web (dd20d2272d2b)                  zeonita@gmail.com 2026/02/10 16:52:43 +0200 (~ 16m ago) 
+ v782 Rollback to v780                             zeonita@gmail.com 2026/02/10 03:23:04 +0200 (~ 13h ago) 
+ v781 Deployed web (bc9fd6d462d3)                  zeonita@gmail.com 2026/02/09 16:37:57 +0200 (~ 24h ago) 
+ v780 Deployed web (42508dd5e918)                  zeonita@gmail.com 2026/01/20 04:52:07 +0200             
+ v779 Deployed web (9391b9c2a8f2)                  zeonita@gmail.com 2026/01/11 10:39:23 +0200             
+ v778 Set RUN_DB_MIGRATIONS_ON_STARTUP config vars zeonita@gmail.com 2026/01/11 10:38:08 +0200             
+ v777 Rollback to v775                             zeonita@gmail.com 2026/01/09 03:31:44 +0200             
+ v776 Deployed web (54f2294675d8)                  zeonita@gmail.com 2026/01/09 03:23:46 +0200             
+ v775 Set PAYFAST_PASSPHRASE config vars           zeonita@gmail.com 2026/01/06 09:37:06 +0200             
+ v774 Deployed web (819dd6bbb3f0)                  zeonita@gmail.com 2026/01/06 09:08:21 +0200             
+ v773 Deployed web (d03ceecd3b33)                  zeonita@gmail.com 2026/01/06 08:19:14 +0200             
+ v772 Set PAYFAST_PASSPHRASE config vars           zeonita@gmail.com 2026/01/06 06:52:10 +0200             
+ v771 Set PAYFAST_MERCHANT_KEY config vars         zeonita@gmail.com 2026/01/05 17:09:33 +0200             
+ v770 Set PAYFAST_MERCHANT_ID config vars          zeonita@gmail.com 2026/01/05 17:09:05 +0200             
+ v769 Deployed web (fc1fff254b5d)                  zeonita@gmail.com 2026/01/04 09:17:00 +0200             

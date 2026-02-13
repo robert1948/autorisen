@@ -1,0 +1,10 @@
+38638157 (HEAD -> main, origin/main) docs(security): specify CSRF token/cookie/header policy (SPEC-002)
+e3fed5ff docs(plan): record SPEC-001 merged (PR #42)
+31813bc2 (backup/main-ahead-20260210-091952) docs(plan): mark DOC-OPS-DOCKER-001 done (visibility note)
+98fc9028 chore(repo): ignore hygiene + Docker Hub publish workflow (manual)
+5db1b166 chore(evidence): add ship-autorisen-log make target
+abe4e1e2 chore(deploy): add ship-autorisen make target
+4c8ba53f chore(deploy): add autorisen deploy + verify make targets
+617049ca chore(deploy): guardrails to prevent accidental capecraft deploys
+9bbb918f Harden version metadata and support ticket mapping
+ee587f1c fix(migrations): scope idempotence checks to public schema
