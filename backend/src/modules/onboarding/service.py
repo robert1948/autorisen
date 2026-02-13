@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
@@ -94,7 +95,11 @@ def ensure_step_state(
                 status="pending",
             )
         )
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        # Concurrent insert — just re-read
     return db.scalars(
         select(models.UserOnboardingStepState).where(
             models.UserOnboardingStepState.session_id == session_id
@@ -295,6 +300,28 @@ def set_step_status(
             status="pending",
         )
         db.add(state)
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            # Row was inserted concurrently — refetch
+            state = db.scalar(
+                select(models.UserOnboardingStepState).where(
+                    models.UserOnboardingStepState.session_id == session.id,
+                    models.UserOnboardingStepState.step_key == step_key,
+                )
+            )
+            if not state:  # pragma: no cover — defensive
+                raise ValueError("Step state could not be resolved")
+            # Re-fetch the session too since we rolled back
+            session = get_active_session(db, user.id)
+            if not session:
+                raise ValueError("Session lost after rollback")
+            step = db.scalar(
+                select(models.OnboardingStep).where(models.OnboardingStep.step_key == step_key)
+            )
+            if not step:
+                raise ValueError("Step not found")
     state.status = status
     if status == "completed":
         state.completed_at = _utcnow()
@@ -312,7 +339,20 @@ def set_step_status(
     )
     steps = get_steps(db)
     states = ensure_step_state(db, session.id, steps)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Concurrent ensure_step_state collision — re-read and return
+        steps = get_steps(db)
+        session = get_active_session(db, user.id)
+        if not session:
+            raise ValueError("Session lost after commit retry")
+        states = db.scalars(
+            select(models.UserOnboardingStepState).where(
+                models.UserOnboardingStepState.session_id == session.id
+            )
+        ).all()
     return build_status_payload(session, steps, states)
 
 
