@@ -1,0 +1,1 @@
+CAP_DB_ADDON=postgresql-rigid-25868

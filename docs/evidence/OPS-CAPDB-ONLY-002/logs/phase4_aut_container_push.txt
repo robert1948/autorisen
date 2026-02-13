@@ -1,0 +1,54 @@
+=== Building web (/home/robert/Development/capecontrol/Dockerfile)
+
+=== Pushing web (/home/robert/Development/capecontrol/Dockerfile)
+
+Using default tag: latest
+The push refers to repository [registry.heroku.com/autorisen/web]
+802b9eef68fd: Preparing
+28b535871648: Preparing
+68e53b079e3a: Preparing
+d5491ff1dd5f: Preparing
+129c6ca406e8: Preparing
+747e8c824442: Preparing
+82da6261ab1a: Preparing
+e7342d79916e: Preparing
+32ace8f8659a: Preparing
+f8fece431e50: Preparing
+1aaa3c596640: Preparing
+fee63d0a729a: Preparing
+76df34c32b24: Preparing
+7770fbb416af: Preparing
+acbbee3380a1: Preparing
+16dffb6a6636: Preparing
+d7c97cb6f1fe: Preparing
+747e8c824442: Waiting
+82da6261ab1a: Waiting
+e7342d79916e: Waiting
+32ace8f8659a: Waiting
+f8fece431e50: Waiting
+1aaa3c596640: Waiting
+fee63d0a729a: Waiting
+76df34c32b24: Waiting
+7770fbb416af: Waiting
+acbbee3380a1: Waiting
+16dffb6a6636: Waiting
+d7c97cb6f1fe: Waiting
+68e53b079e3a: Pushed
+d5491ff1dd5f: Pushed
+28b535871648: Pushed
+802b9eef68fd: Pushed
+129c6ca406e8: Pushed
+32ace8f8659a: Pushed
+82da6261ab1a: Pushed
+747e8c824442: Pushed
+e7342d79916e: Pushed
+76df34c32b24: Layer already exists
+7770fbb416af: Layer already exists
+acbbee3380a1: Layer already exists
+16dffb6a6636: Layer already exists
+1aaa3c596640: Pushed
+d7c97cb6f1fe: Layer already exists
+fee63d0a729a: Pushed
+f8fece431e50: Pushed
+latest: digest: sha256:a09077ea2988152a7d9e574859c043a8296a8d7ea78a6fe5f930c44431bac856 size: 3869
+Your image has been successfully pushed. You can now release it with the 'container:release' command.
