@@ -1,6 +1,6 @@
 // Service Worker for CapeControl
 // Version: bump this on every deploy for automatic updates
-const SW_VERSION = "cc-v0.2.5-2";
+const SW_VERSION = "cc-v0.2.5-3";
 const CACHE_NAME = `autorisen-cache-${SW_VERSION}`;
 
 // Assets to cache (adjust based on your needs)

@@ -24,9 +24,9 @@ class DDoSProtectionMiddleware:
     def __init__(
         self,
         app: ASGIApp,
-        limit: int = 100,
+        limit: int = 200,
         window: int = 60,
-        burst_limit: int = 20,
+        burst_limit: int = 30,
     ) -> None:
         self.app = app
         self.limit = limit
@@ -36,6 +36,8 @@ class DDoSProtectionMiddleware:
         self.requests: Dict[str, Tuple[int, float]] = defaultdict(lambda: (0, time.time()))
         # IP -> (count, last_request_time) for burst detection
         self.bursts: Dict[str, Tuple[int, float]] = defaultdict(lambda: (0, time.time()))
+        # IP -> block_until timestamp for repeat offenders
+        self.blocked: Dict[str, float] = {}
         
         # Check if disabled via environment variable (useful for tests)
         self.disabled = os.getenv("DISABLE_RATE_LIMIT", "").strip().lower() in {"1", "true", "yes"}
@@ -69,6 +71,21 @@ class DDoSProtectionMiddleware:
         client_ip = self._get_client_ip(scope)
         now = time.time()
 
+        # 0. Check hard-block for repeat offenders
+        block_until = self.blocked.get(client_ip, 0)
+        if now < block_until:
+            remaining = int(block_until - now)
+            response = JSONResponse(
+                {
+                    "detail": "Too many requests — please wait before retrying",
+                    "retry_after": remaining,
+                },
+                status_code=429,
+                headers={"Retry-After": str(remaining)},
+            )
+            await response(scope, receive, send)
+            return
+
         # 1. Window-based Rate Limiting
         count, start_time = self.requests[client_ip]
         
@@ -77,14 +94,23 @@ class DDoSProtectionMiddleware:
             self.requests[client_ip] = (1, now)
         else:
             if count >= self.limit:
-                log.warning(f"Rate limit exceeded for {client_ip}")
+                # Sliding block: extend the block for persistent offenders.
+                # Each hit during rate-limit adds 60s (capped at 5 min).
+                current_block = self.blocked.get(client_ip, now)
+                new_block = max(current_block, now) + self.window
+                self.blocked[client_ip] = min(new_block, now + 300)
+                retry_after = int(self.blocked[client_ip] - now)
+                log.warning(
+                    f"Rate limit exceeded for {client_ip} — blocked for {retry_after}s"
+                )
                 response = JSONResponse(
                     {
                         "detail": "Too many requests",
                         "endpoint_type": "general",
-                        "retry_after": int(self.window - (now - start_time)),
+                        "retry_after": retry_after,
                     },
                     status_code=429,
+                    headers={"Retry-After": str(retry_after)},
                 )
                 await response(scope, receive, send)
                 return
@@ -93,19 +119,24 @@ class DDoSProtectionMiddleware:
         # 2. Burst Protection (Token Bucket-ish)
         burst_count, last_req_time = self.bursts[client_ip]
         
-        # Decay burst count over time (1 token per second)
+        # Decay burst count over time
         time_passed = now - last_req_time
         burst_count = max(0, burst_count - int(time_passed * 2))  # Decay 2 per second
         
         if burst_count >= self.burst_limit:
-            log.warning(f"Burst attack detected from {client_ip}")
+            # Sliding block for burst offenders: 120s hard-block
+            self.blocked[client_ip] = max(
+                self.blocked.get(client_ip, 0), now + 120
+            )
+            log.warning(f"Burst attack detected from {client_ip} — blocked for 120s")
             response = JSONResponse(
                 {
                     "detail": "Burst attack detected",
-                    "endpoint_type": "auth",  # Assuming auth is most sensitive
+                    "endpoint_type": "auth",
                     "retry_after": 120,
                 },
                 status_code=429,
+                headers={"Retry-After": "120"},
             )
             await response(scope, receive, send)
             return
