@@ -9,9 +9,16 @@ export type UserRole = "Customer" | "Developer";
 
 let csrfTokenCache: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;
+let authUnauthorizedFired = false;
+let authUnauthorizedTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function setUnauthorizedHandler(handler: (() => void) | null): void {
   unauthorizedHandler = handler;
+  authUnauthorizedFired = false;
+  if (authUnauthorizedTimer) {
+    clearTimeout(authUnauthorizedTimer);
+    authUnauthorizedTimer = null;
+  }
 }
 
 const defaultHeaders: Record<string, string> = {
@@ -78,7 +85,9 @@ async function parseError(response: Response): Promise<never> {
     console.warn("Failed to parse error response", err);
   }
 
-  if (response.status === 401 && unauthorizedHandler) {
+  if (response.status === 401 && unauthorizedHandler && !authUnauthorizedFired) {
+    authUnauthorizedFired = true;
+    authUnauthorizedTimer = setTimeout(() => { authUnauthorizedFired = false; }, 2000);
     unauthorizedHandler();
   }
 

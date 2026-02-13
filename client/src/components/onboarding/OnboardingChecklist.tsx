@@ -61,6 +61,11 @@ const OnboardingChecklist: React.FC = () => {
         );
       } catch (err) {
         if (!mounted) return;
+        // Silently handle auth/rate-limit errors — global handler manages redirect
+        const status = (err as { status?: number }).status;
+        if (status === 401 || status === 403 || status === 429) {
+          return;
+        }
         const message = err instanceof Error ? err.message : "Failed to load onboarding checklist";
         setError(message);
       } finally {

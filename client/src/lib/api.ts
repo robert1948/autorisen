@@ -16,9 +16,17 @@ const defaultFetchOptions: RequestInit = {
 };
 
 let unauthorizedHandler: (() => void) | null = null;
+let unauthorizedFired = false;
+let unauthorizedTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function setApiUnauthorizedHandler(handler: (() => void) | null): void {
   unauthorizedHandler = handler;
+  // Reset the dedup flag when handler is (re)set
+  unauthorizedFired = false;
+  if (unauthorizedTimer) {
+    clearTimeout(unauthorizedTimer);
+    unauthorizedTimer = null;
+  }
 }
 
 type RequestOptions = {
@@ -66,7 +74,10 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     ...defaultFetchOptions,
   });
 
-  if (response.status === 401 && unauthorizedHandler) {
+  if (response.status === 401 && unauthorizedHandler && !unauthorizedFired) {
+    unauthorizedFired = true;
+    // Debounce: only fire once per 2 s window to prevent redirect storms
+    unauthorizedTimer = setTimeout(() => { unauthorizedFired = false; }, 2000);
     unauthorizedHandler();
   }
 
@@ -98,7 +109,9 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     console.warn("Failed to parse error response", err);
   }
 
-  throw new Error(message);
+  const error = new Error(message) as Error & { status?: number };
+  error.status = response.status;
+  throw error;
 }
 
 export type ChecklistTask = {

@@ -38,6 +38,13 @@ const OnboardingHistory = () => {
         }
       } catch (err) {
         if (mounted) {
+          // Silently handle auth errors — the global unauthorized handler
+          // already takes care of redirect / state cleanup.
+          const status = (err as { status?: number }).status;
+          if (status === 401 || status === 403 || status === 429) {
+            setLoading(false);
+            return;
+          }
           const message = err instanceof Error ? err.message : "Unable to load onboarding runs";
           setError(message);
         }

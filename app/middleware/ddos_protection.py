@@ -40,6 +40,16 @@ class DDoSProtectionMiddleware:
         # Check if disabled via environment variable (useful for tests)
         self.disabled = os.getenv("DISABLE_RATE_LIMIT", "").strip().lower() in {"1", "true", "yes"}
 
+    def _get_client_ip(self, scope: Scope) -> str:
+        """Extract real client IP from X-Forwarded-For header (Heroku, proxies) or fall back to socket IP."""
+        headers = dict(scope.get("headers", []))
+        # Heroku/proxies set X-Forwarded-For: <client>, <proxy1>, <proxy2>
+        xff = headers.get(b"x-forwarded-for", b"").decode("latin-1").strip()
+        if xff:
+            # First entry is the real client IP
+            return xff.split(",")[0].strip()
+        return scope.get("client", ("0.0.0.0", 0))[0]
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
@@ -49,7 +59,14 @@ class DDoSProtectionMiddleware:
             await self.app(scope, receive, send)
             return
 
-        client_ip = scope.get("client", ("0.0.0.0", 0))[0]
+        # Only rate-limit API routes; let page navigation, static assets, and
+        # health checks through so the browser can always load fresh code.
+        path = scope.get("path", "")
+        if not path.startswith("/api/"):
+            await self.app(scope, receive, send)
+            return
+
+        client_ip = self._get_client_ip(scope)
         now = time.time()
 
         # 1. Window-based Rate Limiting
