@@ -480,15 +480,72 @@ NEXT-003 may only resume when:
 
 ### 5.1 Determinism Requirements
 
-- Time
-- Email
-- Rate-limiting
+Tests must be deterministic: identical inputs produce identical results regardless
+of environment, time of day, or external service availability.
+
+Time:
+- Rate limiter `_now()` is frozen to a constant epoch (`1_700_000_000.0`) via the
+  `_auth_rate_limiter_determinism` autouse fixture.
+- No `freezegun` or `freeze_time` is used. Tests must not depend on wall-clock time.
+- If time-dependent behavior is tested in the future, a deterministic time source
+  must be injected (mock or fixture), never `datetime.now()` or `time.time()` directly.
+
+Email:
+- `smtplib.SMTP` is monkeypatched with `_DummySMTP` via the `_email_sink` autouse fixture.
+  All sent email is captured in `app.state.test_emails` / `app.state.mailbox` / `app.state.outbox`.
+- The `mailer_core` module appends to `TEST_OUTBOX` when `settings.env == "test"` instead
+  of sending via SMTP.
+- No real SMTP connection is ever made during tests.
+
+Rate-limiting:
+- Rate limiter state (`_attempts`, `_blocks`) is cleared before each test via autouse fixture.
+- `RATE_LIMIT_BACKEND=memory` and `DISABLE_RATE_LIMIT=1` are set in test environment.
+- Tests that verify rate-limit behavior must use the deterministic in-memory backend.
+
+External services:
+- `DISABLE_RECAPTCHA=true` in test environment — no external captcha calls.
+- OpenAI is mocked via `mock_openai` fixture (returns `AsyncMock` with canned responses).
+- No external HTTP calls are permitted in tests. Any integration requiring an external
+  service must use a mock or stub.
+
+Database:
+- Tests use disposable SQLite at `/tmp/autolocal_test.db`.
+- The database is dropped and recreated at session start via `_prepare_test_db` fixture.
+- `RUN_DB_MIGRATIONS_ON_STARTUP=0` — schema is created via `Base.metadata.create_all`,
+  not Alembic migrations.
 
 ### 5.2 Test Environment Guarantees
 
-- What “green CI” means
-- What tests may mock
-- What tests must not mock
+#### What "green CI" means
+
+A passing CI run confirms:
+- Backend tests pass (`pytest tests/ -q`).
+- Python linting passes (`ruff check`, `ruff format --check`).
+- Frontend linting, type-checking, and production build succeed.
+- Docker image builds and `/api/health` responds (on PRs).
+- Documentation lint passes.
+- Security scan completes (Trivy filesystem scan).
+
+A passing CI run does NOT confirm:
+- Production database compatibility (tests use SQLite, not PostgreSQL).
+- Alembic migration correctness (migrations are not run in tests).
+- Frontend E2E behavior (Playwright tests exist but are not required to pass).
+- MyPy type-checking strictness (allowed to fail with `|| true`).
+
+#### What tests may mock
+
+- SMTP / email delivery (`_DummySMTP` fixture).
+- Rate limiter time source (`_now()` frozen to constant).
+- Rate limiter state (cleared per test).
+- OpenAI / LLM API calls (`mock_openai` fixture).
+- reCAPTCHA validation (disabled via `DISABLE_RECAPTCHA`).
+
+#### What tests must NOT mock
+
+- Auth endpoint behavior — tests must call real `/api/auth/*` endpoints.
+- CSRF validation — tests must obtain and use real CSRF tokens.
+- Database operations — tests must use real ORM operations against SQLite.
+- JWT signing and validation — tests must use real `python-jose` with test secret key.
 
 ---
 
@@ -496,20 +553,93 @@ NEXT-003 may only resume when:
 
 ### 6.1 Development Rules
 
-- Branching strategy
-- Merge rules
-- Commit discipline
+#### Branching strategy
+
+| Purpose | Branch prefix | Example |
+|---------|---------------|--------|
+| Work orders | `wo/` | `wo/spec-005` |
+| Features | `feature/` | `feature/marketplace-agent` |
+| Bug fixes | `fix/` | `fix/csrf-cookie-domain` |
+| Chores | `chore/` | `chore/dep-update` |
+| Integration | `develop` | — |
+| Staging | `staging` | — |
+| Production | `main` | — |
+
+All feature branches are created from `main` (or `origin/main`) unless the work
+order explicitly specifies otherwise.
+
+#### Merge rules
+
+- All merges to `main` require a pull request.
+- PRs must use the structured PR template (`.github/pull_request_template.md`):
+  title, related issues, changes, testing performed, deployment notes, checklist.
+- At least one approval is recommended; owner (`robert1948`) may self-merge when
+  sole contributor.
+- Squash-merge is the default merge strategy.
+- Force-pushes to `main` and `develop` are prohibited.
+
+#### Commit discipline
+
+- Commit messages should be imperative present tense ("Add", "Fix", "Update").
+- Reference work order ID or issue number where applicable.
+- Codex guard (`.github/workflows/codex-guard.yml`) runs pre-commit validation
+  on `wo/**` branches.
 
 ### 6.2 Deployment Rules
 
-- When deploys are allowed
-- Required approvals
-- Rollback expectations
+#### When deploys are allowed
+
+| Target | Trigger | Workflow |
+|--------|---------|----------|
+| Staging (`autorisen`) | Push to `develop` or `staging` | `deploy-staging.yml` |
+| Production (`capecraft`) | Push to `main` | `deploy-heroku.yml` |
+| Docker Hub | Push to `main` | Included in `deploy-heroku.yml` |
+
+Manual deployment is available via `make deploy-heroku` with retry logic (3 attempts).
+
+#### Required approvals
+
+- Staging: No approval required; CI must pass.
+- Production: CI must pass and PR must be merged to `main`.
+- Production (capecraft): Requires `ALLOW_PROD=1` environment variable to confirm intent.
+
+#### Deployment pipeline
+
+1. CI tests run (backend, frontend, Docker build, security scan).
+2. Docker image built (`docker build -t autorisen:local .`).
+3. Image pushed to Heroku Container Registry.
+4. `heroku container:release web` executes.
+5. Release phase: `bash scripts/release.sh` — migrations are **disabled** by policy
+   (`RUN_DB_MIGRATIONS_ON_STARTUP=0`); script runs health check only.
+6. Post-deploy smoke: `/api/health` and `/api/auth/csrf` verified.
+7. On staging: explicit migration via `make heroku-run-migrate` if needed.
+
+#### Rollback expectations
+
+- Rollback is via `heroku rollback` or by reverting the merge commit and re-deploying.
+- Database rollbacks require manual Alembic downgrade — see `PLAYBOOK_DB_MIGRATIONS.md`.
+- There is no automated rollback trigger; human judgment is required.
 
 ### 6.3 Migration Rules
 
-- When migrations are allowed
-- Approval requirements
+Migration policy is defined authoritatively in **§2.6.3** (SPEC-009). This section
+summarizes the operational guard rails.
+
+#### When migrations are allowed
+
+- **Local / test**: Any time; SQLite is disposable.
+- **Staging**: After staging deploy, via `make heroku-run-migrate`. Must be verified
+  before merging to `main`.
+- **Production**: Only after explicit approval and evidence that the migration ran
+  cleanly on staging. Execute via `make heroku-run-migrate`.
+
+#### Approval requirements
+
+- Migrations must be in a dedicated PR (or clearly separated in a mixed PR).
+- PR description must include the Alembic revision chain and expected DDL.
+- The `PLAYBOOK_DB_MIGRATIONS.md` playbook must be followed.
+- `RUN_DB_MIGRATIONS_ON_STARTUP` must remain `0` in production — migrations
+  are never auto-applied in the release phase.
 
 ---
 
@@ -517,8 +647,10 @@ NEXT-003 may only resume when:
 
 ### 7.1 Frozen Milestones
 
-- Auth stability
-- Security policy locked
+- **Auth stability**: JWT + CSRF + refresh token architecture is frozen per §3.
+  No structural changes without GOV-001 playbook procedure.
+- **Security policy locked**: Rate limiting, CSRF, input sanitization, and DDoS
+  protection configuration is frozen. Changes require security review.
 
 ### 7.2 Roadmap Unlock Criteria (Normative)
 
@@ -581,9 +713,30 @@ Roadmap progression is unlocked only when the current stage gate is satisfied.
 
 ### 8.1 How This Spec Is Updated
 
-- Who may edit
-- Review process
-- Versioning
+#### Who may edit
+
+- Repository owner (`robert1948`) has final authority over all sections.
+- AI agents (Copilot, Codex) may propose spec changes via PRs on `wo/` branches;
+  all proposals require human review before merge.
+- No `CODEOWNERS` file is currently configured; branch protection is managed
+  via GitHub repository settings.
+
+#### Review process
+
+1. Spec changes must be submitted as a pull request using the structured PR template.
+2. The PR must identify which sections are modified and whether they are
+   **frozen**, **flexible**, or **deferred** (see §3.4).
+3. Changes to **frozen** sections require explicit justification and must follow
+   the applicable playbook (e.g., `PLAYBOOK_AUTH_CHANGES.md` for §3).
+4. Changes to **flexible** sections may proceed with standard PR review.
+5. The `FREEZE_REVIEW.md` must be updated when frozen-section changes are merged.
+
+#### Versioning
+
+- The spec version tracks the application version in `VERSION` (currently v0.2.10).
+- Substantive changes increment the document revision noted in the spec header.
+- The revision history is maintained via git log; no in-document changelog is required.
+- `project-plan.csv` is updated to record which work order modified which section.
 
 ### 8.2 Authority
 
