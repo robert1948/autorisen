@@ -549,8 +549,7 @@ def create_app() -> FastAPI:
 
     @application.get("/robots.txt", include_in_schema=False)
     def robots_txt():
-        base = os.getenv("PUBLIC_BASE_URL", "https://dev.cape-control.com").rstrip("/")
-        body = f"User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n"
+        body = "User-agent: *\nDisallow: /\n"
         return Response(
             content=body,
             media_type="text/plain",
