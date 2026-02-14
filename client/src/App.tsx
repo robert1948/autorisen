@@ -37,6 +37,7 @@ import Subscribe from "./pages/public/SubscribePage";
 import DeveloperInfo from "./pages/public/DeveloperInfoPage";
 import CustomerInfo from "./pages/public/CustomerInfoPage";
 import TermsAndConditions from "./pages/public/TermsAndConditionsPage";
+import DeveloperTerms from "./pages/public/DeveloperTermsPage";
 
 // Auth pages / flows
 import Register from "./pages/auth/RegisterPage";
@@ -149,6 +150,7 @@ export default function App() {
         <Route path="/developers" element={<DeveloperInfo />} />
         <Route path="/customer-terms" element={<CustomerInfo />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+        <Route path="/developer-terms" element={<DeveloperTerms />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
         <Route path="/auth/login" element={<LoginPage />} />

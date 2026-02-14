@@ -486,8 +486,8 @@ const DeveloperInfoPage: React.FC = () => {
               >
                 Register as a Developer
               </Link>
-              <Link to="/terms-and-conditions" className="btn btn--ghost" style={{ textAlign: "center" }}>
-                Read Terms &amp; Conditions
+              <Link to="/developer-terms" className="btn btn--ghost" style={{ textAlign: "center" }}>
+                Read Developer T&amp;Cs
               </Link>
               <a
                 href="mailto:support@cape-control.com"
@@ -610,7 +610,10 @@ const DeveloperInfoPage: React.FC = () => {
                   <a href="/#privacy">Privacy Policy</a>
                 </li>
                 <li>
-                  <Link to="/terms-and-conditions">Terms of Service</Link>
+                  <Link to="/terms-and-conditions">Customer T&amp;Cs</Link>
+                </li>
+                <li>
+                  <Link to="/developer-terms">Developer T&amp;Cs</Link>
                 </li>
               </ul>
             </div>

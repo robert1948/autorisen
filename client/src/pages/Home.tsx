@@ -477,6 +477,9 @@ const Home = () => {
                   <Link to="/developers">Developer Info</Link>
                 </li>
                 <li>
+                  <Link to="/developer-terms">Developer T&amp;Cs</Link>
+                </li>
+                <li>
                   <a href="#developers">Developer Hub</a>
                 </li>
                 <li>
@@ -504,7 +507,7 @@ const Home = () => {
                   <a href="#privacy">Privacy Policy</a>
                 </li>
                 <li>
-                  <Link to="/terms-and-conditions">Terms of Service</Link>
+                  <Link to="/terms-and-conditions">Customer T&amp;Cs</Link>
                 </li>
               </ul>
             </div>
