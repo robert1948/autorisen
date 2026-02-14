@@ -471,13 +471,13 @@ const Home = () => {
               <h4>Developers</h4>
               <ul className="footer__links-list">
                 <li>
+                  <Link to="/developers">Developer Info</Link>
+                </li>
+                <li>
                   <a href="#developers">Developer Hub</a>
                 </li>
                 <li>
                   <a href="#experiences">Join as Developer</a>
-                </li>
-                <li>
-                  <a href="#developers">API Documentation</a>
                 </li>
               </ul>
             </div>

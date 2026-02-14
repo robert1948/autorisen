@@ -34,6 +34,7 @@ import Home from "./pages/Home";
 import Welcome from "./pages/public/WelcomePage";
 import About from "./pages/public/AboutPage";
 import Subscribe from "./pages/public/SubscribePage";
+import DeveloperInfo from "./pages/public/DeveloperInfoPage";
 
 // Auth pages / flows
 import Register from "./pages/auth/RegisterPage";
@@ -143,6 +144,7 @@ export default function App() {
         <Route path="/demo" element={<Welcome />} />
         <Route path="/how-it-works" element={<About />} />
         <Route path="/subscribe" element={<Subscribe />} />
+        <Route path="/developers" element={<DeveloperInfo />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
         <Route path="/auth/login" element={<LoginPage />} />
