@@ -14,7 +14,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "20260214_dev_admin"
-down_revision: Union[str, None] = "20260213_create_email_events"
+down_revision: Union[str, None] = "20260213_email_events"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
