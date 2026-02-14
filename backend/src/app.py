@@ -125,6 +125,11 @@ admin_mgmt_router = _safe_import(
     "backend.src.modules.auth.admin_router",
     "admin_router",
 )
+dev_dashboard_router = _safe_import(
+    "dev_dashboard",
+    "backend.src.modules.dev.router",
+    "router",
+)
 
 # ------------------------------------------------------------------------------
 # Constants / paths
@@ -746,6 +751,9 @@ def create_app() -> FastAPI:
     if admin_mgmt_router:
         # → /api/admin/invite, /api/admin/invites, /api/admin/register
         api.include_router(admin_mgmt_router, prefix="/admin")
+    if dev_dashboard_router:
+        # → /api/dev/profile, /api/dev/api-keys, /api/dev/usage
+        api.include_router(dev_dashboard_router, prefix="/dev")
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")
