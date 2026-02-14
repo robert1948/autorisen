@@ -504,7 +504,7 @@ const Home = () => {
                   <a href="#privacy">Privacy Policy</a>
                 </li>
                 <li>
-                  <a href="#terms">Terms of Service</a>
+                  <Link to="/terms-and-conditions">Terms of Service</Link>
                 </li>
               </ul>
             </div>

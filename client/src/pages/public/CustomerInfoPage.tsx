@@ -82,9 +82,9 @@ const CustomerInfoPage: React.FC = () => {
             </p>
             <p style={{ opacity: 0.7, fontStyle: "italic", marginBottom: "2.5rem" }}>
               For full details, refer to the complete{" "}
-              <a href="/#terms" style={{ color: "#93c5fd" }}>
+              <Link to="/terms-and-conditions" style={{ color: "#93c5fd" }}>
                 Terms and Conditions
-              </a>
+              </Link>
               .
             </p>
 
@@ -453,9 +453,9 @@ const CustomerInfoPage: React.FC = () => {
               >
                 Register Now
               </a>
-              <a href="/#terms" className="btn btn--ghost" style={{ textAlign: "center" }}>
+              <Link to="/terms-and-conditions" className="btn btn--ghost" style={{ textAlign: "center" }}>
                 Read Full Terms &amp; Conditions
-              </a>
+              </Link>
               <a
                 href="mailto:support@cape-control.com"
                 className="btn btn--ghost"
@@ -594,7 +594,7 @@ const CustomerInfoPage: React.FC = () => {
                   <a href="/#privacy">Privacy Policy</a>
                 </li>
                 <li>
-                  <a href="/#terms">Terms of Service</a>
+                  <Link to="/terms-and-conditions">Terms of Service</Link>
                 </li>
               </ul>
             </div>

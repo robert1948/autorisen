@@ -422,7 +422,7 @@ const Register = () => {
               <label className="auth-terms">
                 <input type="checkbox" {...step1Form.register("terms_accepted")} />
                 <span>
-                  I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>,
+                  I agree to the <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">terms</a>,
                   <a href="/privacy" target="_blank" rel="noopener noreferrer"> privacy policy</a>, and
                   <a href="/cookies" target="_blank" rel="noopener noreferrer"> cookie policy</a>.
                   See our <a href="/customer-terms" target="_blank" rel="noopener noreferrer">proposal terms</a>.
