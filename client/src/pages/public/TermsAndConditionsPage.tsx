@@ -27,6 +27,25 @@ const TermsAndConditionsPage: React.FC = () => {
     new Set<SectionKey>(["definitions"])
   );
 
+  const allKeys: SectionKey[] = [
+    "definitions",
+    "scope",
+    "payment",
+    "timeline",
+    "ip",
+    "data",
+    "confidentiality",
+    "termination",
+    "warranties",
+    "indemnification",
+    "forcemajeure",
+    "nonsolicitation",
+    "governing",
+    "amendments",
+    "miscellaneous",
+    "acceptance",
+  ];
+
   const toggle = (key: SectionKey) => {
     setOpenSections((prev) => {
       const next = new Set(prev);
@@ -36,31 +55,8 @@ const TermsAndConditionsPage: React.FC = () => {
     });
   };
 
-  const expandAll = () => {
-    setOpenSections(
-      new Set<SectionKey>([
-        "definitions",
-        "scope",
-        "payment",
-        "timeline",
-        "ip",
-        "data",
-        "confidentiality",
-        "termination",
-        "warranties",
-        "indemnification",
-        "forcemajeure",
-        "nonsolicitation",
-        "governing",
-        "amendments",
-        "miscellaneous",
-        "acceptance",
-      ])
-    );
-  };
-
+  const expandAll = () => setOpenSections(new Set<SectionKey>(allKeys));
   const collapseAll = () => setOpenSections(new Set<SectionKey>());
-
   const isOpen = (key: SectionKey) => openSections.has(key);
   const chevron = (key: SectionKey) => (isOpen(key) ? "▾" : "▸");
 
@@ -96,7 +92,8 @@ const TermsAndConditionsPage: React.FC = () => {
     marginLeft: "1rem",
     paddingLeft: "1rem",
     borderLeft: "2px solid rgba(255,255,255,0.08)",
-    marginTop: "0.75rem",
+    marginTop: "0.5rem",
+    marginBottom: "0.5rem",
   };
 
   return (
@@ -105,9 +102,9 @@ const TermsAndConditionsPage: React.FC = () => {
       <main className="landing__main">
         <section className="section" style={{ paddingTop: "6rem" }}>
           <div style={{ maxWidth: 860, margin: "0 auto" }}>
-            <span className="badge badge--accent">Legal</span>
+            <span className="badge badge--accent">Customer Legal</span>
             <h1 style={{ fontSize: "2.4rem", lineHeight: 1.2, marginBottom: "0.5rem" }}>
-              Terms and Conditions
+              Terms and Conditions for Customers
             </h1>
             <p style={{ opacity: 0.7, marginBottom: "0.25rem" }}>
               <strong>Cape Craft Projects CC</strong>, trading as <strong>CapeControl</strong>
@@ -116,37 +113,21 @@ const TermsAndConditionsPage: React.FC = () => {
               Effective Date: February 14, 2026 &nbsp;|&nbsp; Last Updated: February 14, 2026
             </p>
 
-            <p style={{ marginBottom: "1rem" }}>
-              Welcome to CapeControl ("Agency," "we," "us," or "our"). These Terms and Conditions
-              ("T&amp;Cs") govern the provision of services by the Agency to you, the customer
-              ("Customer," "you," or "your"). By engaging our services, signing a Proposal, or
-              making any payment, you agree to be bound by these T&amp;Cs. Please read them
-              carefully before proceeding.
+            <p style={{ marginBottom: "1.5rem" }}>
+              Welcome to CapeControl (&ldquo;Agency,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or
+              &ldquo;our&rdquo;). These Terms and Conditions (&ldquo;T&amp;Cs&rdquo;) govern the
+              provision of services by the Agency to you, the customer (&ldquo;Customer,&rdquo;
+              &ldquo;you,&rdquo; or &ldquo;your&rdquo;). By engaging our services, signing a
+              Proposal, or making any payment, you agree to be bound by these T&amp;Cs. Please
+              read them carefully before proceeding.
             </p>
 
             {/* Toggle controls */}
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                marginBottom: "2rem",
-                flexWrap: "wrap",
-              }}
-            >
-              <button
-                type="button"
-                className="btn btn--ghost"
-                style={{ fontSize: "0.85rem", padding: "0.5rem 1rem" }}
-                onClick={expandAll}
-              >
+            <div style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+              <button type="button" className="btn btn--ghost" style={{ fontSize: "0.85rem", padding: "0.5rem 1rem" }} onClick={expandAll}>
                 Expand All Sections
               </button>
-              <button
-                type="button"
-                className="btn btn--ghost"
-                style={{ fontSize: "0.85rem", padding: "0.5rem 1rem" }}
-                onClick={collapseAll}
-              >
+              <button type="button" className="btn btn--ghost" style={{ fontSize: "0.85rem", padding: "0.5rem 1rem" }} onClick={collapseAll}>
                 Collapse All
               </button>
             </div>
@@ -182,7 +163,7 @@ const TermsAndConditionsPage: React.FC = () => {
                 <div style={bodyStyle}>
                   <p><strong>2.1.</strong> The Agency will provide Services as outlined in the Proposal, which forms an integral part of these T&amp;Cs. In the event of a conflict between the Proposal and these T&amp;Cs, the Proposal shall prevail unless expressly stated otherwise.</p>
                   <p><strong>2.2.</strong> Any changes to the scope, timeline, or deliverables must be documented in a written Change Order signed by authorised representatives of both parties. Additional fees may apply for scope changes.</p>
-                  <p><strong>2.3.</strong> The Customer agrees to provide, in a timely manner, all necessary information, materials, access credentials (e.g., APIs, systems, platforms), and cooperation reasonably required for the Agency to deliver the Services. Delays attributable to the Customer's failure to fulfil these obligations may result in corresponding extensions to project timelines.</p>
+                  <p><strong>2.3.</strong> The Customer agrees to provide, in a timely manner, all necessary information, materials, access credentials (e.g., APIs, systems, platforms), and cooperation reasonably required for the Agency to deliver the Services. Delays attributable to the Customer&rsquo;s failure to fulfil these obligations may result in corresponding extensions to project timelines.</p>
                   <p><strong>2.4.</strong> The Agency reserves the right to subcontract portions of the Services to qualified third-party developers or contractors, provided that the Agency remains responsible for the quality and compliance of the subcontracted work under these T&amp;Cs.</p>
                   <p><strong>2.5.</strong> The Agency may use third-party tools, platforms, or services (e.g., cloud hosting, AI model APIs) in delivering the Services. The Customer acknowledges that such third-party services are subject to their own terms and conditions, which the Agency will disclose upon request.</p>
                 </div>
@@ -200,7 +181,7 @@ const TermsAndConditionsPage: React.FC = () => {
                   <p><strong>3.1. Fees:</strong> The Customer agrees to pay the fees outlined in the Proposal. All fees are quoted in South African Rand (ZAR) and are exclusive of applicable taxes (including VAT) unless expressly stated otherwise. The Customer is responsible for all applicable taxes.</p>
                   <p><strong>3.2. Payment Schedule:</strong> Payments shall be made according to the milestones or schedule set out in the Proposal (e.g., 50% upon signing, 50% upon completion). No work will commence until the initial payment is received unless otherwise agreed in writing.</p>
                   <p><strong>3.3. Invoicing:</strong> Invoices will be issued electronically to the email address provided by the Customer and are due within 14 days of the invoice date unless otherwise specified in the Proposal.</p>
-                  <p><strong>3.4. Late Payments:</strong> Overdue payments shall incur interest at a rate of 1.5% per month or the maximum rate permitted by applicable law, whichever is lower, on the outstanding balance, calculated from the due date until the date of payment. The Agency reserves the right to suspend or delay all Services without liability for any consequences arising from such suspension until the Customer's account is fully settled. The Customer shall also be responsible for any reasonable collection costs, including legal fees, incurred by the Agency.</p>
+                  <p><strong>3.4. Late Payments:</strong> Overdue payments shall incur interest at a rate of 1.5% per month (or the maximum rate permitted by applicable South African law, whichever is lower) on the outstanding balance, calculated from the due date until the date of payment. The Agency reserves the right to suspend or delay all Services without liability for any consequences arising from such suspension until the Customer&rsquo;s account is fully settled. The Customer shall also be responsible for any reasonable collection costs, including legal fees, incurred by the Agency.</p>
                   <p><strong>3.5. Refunds:</strong> Fees are non-refundable for work already completed. Refund entitlements arising from termination are governed by Section 8. Any refunds will be processed within 30 days of the determination of the refundable amount.</p>
                   <p><strong>3.6. Expense Reimbursement:</strong> Any out-of-pocket expenses (e.g., third-party software licences, hosting fees) required for the Services will be pre-approved by the Customer in writing and invoiced separately.</p>
                 </div>
@@ -233,11 +214,12 @@ const TermsAndConditionsPage: React.FC = () => {
               {isOpen("ip") && (
                 <div style={bodyStyle}>
                   <p><strong>5.1. Pre-Existing IP:</strong> The Agency retains all rights, title, and interest in any Pre-Existing IP, including proprietary frameworks, libraries, tools, code templates, and methodologies used in or incorporated into the Deliverables. To the extent Pre-Existing IP is incorporated into the Deliverables, the Agency grants the Customer a non-exclusive, perpetual, irrevocable, worldwide, royalty-free licence to use such Pre-Existing IP solely as part of and to the extent necessary for the use of the Deliverables for their intended purpose.</p>
-                  <p><strong>5.2. Custom Deliverables Ownership:</strong> Upon full and final payment of all fees due under the applicable Proposal, the IP rights for custom Deliverables shall be handled as specified in the Proposal. Where not specified:</p>
+                  <p><strong>5.2. Custom Deliverables Ownership:</strong> Upon full and final payment of all fees due under the applicable Proposal:</p>
                   <div style={subStyle}>
-                    <p><strong>Option A (Licence):</strong> The Agency grants the Customer a non-exclusive, perpetual, irrevocable, worldwide licence to use, modify, and deploy the custom portions of the Deliverables for the Customer's internal business purposes. The Agency retains ownership of the custom Deliverables.</p>
+                    <p><strong>Option A (Licence):</strong> The Agency grants the Customer a non-exclusive, perpetual, irrevocable, worldwide licence to use, modify, and deploy the custom portions of the Deliverables for the Customer&rsquo;s internal business purposes. The Agency retains ownership of the custom Deliverables.</p>
                     <p><strong>Option B (Assignment):</strong> The Agency assigns to the Customer all rights, title, and interest in the custom portions of the Deliverables specifically created for the Customer. The Agency retains a non-exclusive, royalty-free licence to use general techniques, knowledge, experience, and non-Customer-specific components developed during the Services for future projects.</p>
                   </div>
+                  <p><em>The applicable option will be specified in the Proposal.</em></p>
                   <p><strong>5.3. Customer Materials:</strong> The Customer grants the Agency a non-exclusive, royalty-free, limited licence to use any materials provided by the Customer (e.g., logos, branding assets, data, content) solely for the purpose of performing the Services. All rights in Customer materials remain with the Customer.</p>
                   <p><strong>5.4. Third-Party IP:</strong> The Customer represents and warrants that all materials provided to the Agency do not infringe upon any third-party intellectual property rights, proprietary rights, or other legal rights. The Customer shall indemnify and hold harmless the Agency from any claims, damages, or expenses arising from any such infringement.</p>
                   <p><strong>5.5. Open-Source Components:</strong> Where open-source software is incorporated into the Deliverables, the Agency will disclose the applicable open-source licences. The Customer acknowledges that such components are subject to their respective licence terms.</p>
@@ -253,10 +235,10 @@ const TermsAndConditionsPage: React.FC = () => {
               </button>
               {isOpen("data") && (
                 <div style={bodyStyle}>
-                  <p><strong>6.1. Data Handling:</strong> Where the Agency processes personal data on behalf of the Customer in the course of providing the Services, both parties agree to comply with all applicable data protection laws and regulations (including, where applicable, the Protection of Personal Information Act (POPIA) and equivalent legislation).</p>
-                  <p><strong>6.2. Data Processing Agreement:</strong> If the Services involve the processing of personal data, the parties shall enter into a separate Data Processing Agreement (DPA) that complies with applicable legal requirements. The DPA shall form part of these T&amp;Cs.</p>
-                  <p><strong>6.3. Customer Obligations:</strong> The Customer warrants that any personal data provided to the Agency has been collected lawfully, that all necessary consents have been obtained, and that the Customer has a valid legal basis for sharing such data with the Agency.</p>
-                  <p><strong>6.4. Data Security:</strong> The Agency will implement reasonable technical and organisational measures to protect any data provided by the Customer against unauthorised access, loss, or destruction.</p>
+                  <p><strong>6.1. Data Handling:</strong> Where the Agency processes personal data on behalf of the Customer in the course of providing the Services, both parties agree to comply with all applicable data protection laws and regulations, including the Protection of Personal Information Act, 2013 (POPIA), and where applicable, the EU GDPR, UK GDPR, CCPA, or equivalent legislation.</p>
+                  <p><strong>6.2. Data Processing Agreement:</strong> If the Services involve the processing of personal data (as defined in POPIA), the parties shall enter into a separate Data Processing Agreement (DPA) that complies with applicable legal requirements, including POPIA&rsquo;s requirements for operators. The DPA shall form part of these T&amp;Cs.</p>
+                  <p><strong>6.3. Customer Obligations:</strong> The Customer warrants that any personal data provided to the Agency has been collected lawfully, that all necessary consents have been obtained in accordance with POPIA (or the applicable data protection legislation in the Customer&rsquo;s jurisdiction), and that the Customer has a valid legal basis for sharing such data with the Agency.</p>
+                  <p><strong>6.4. Data Security:</strong> The Agency will implement reasonable technical and organisational measures to protect any data provided by the Customer against unauthorised access, loss, or destruction, in compliance with POPIA and applicable industry standards.</p>
                 </div>
               )}
             </div>
@@ -271,13 +253,13 @@ const TermsAndConditionsPage: React.FC = () => {
                 <div style={bodyStyle}>
                   <p><strong>7.1.</strong> Both parties agree to maintain the confidentiality of all Confidential Information received from the other party during and after the term of the Services. Neither party shall disclose, use, or permit disclosure of Confidential Information except as necessary to perform or receive the Services or as required by applicable law or regulation.</p>
                   <p><strong>7.2.</strong> Confidentiality obligations under this section do not apply to information that:</p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>(a) is or becomes publicly available through no fault of the receiving party;</li>
-                    <li>(b) was already known to the receiving party before disclosure;</li>
-                    <li>(c) is independently developed by the receiving party without reference to the disclosing party's Confidential Information; or</li>
-                    <li>(d) is rightfully received from a third party without restriction on disclosure.</li>
-                  </ul>
-                  <p><strong>7.3.</strong> The Agency may use the Customer's name, logo, and a general description of the project in the Agency's portfolio and marketing materials, unless the Customer opts out by providing written notice to the Agency. Any detailed case studies or testimonials require the Customer's prior written approval.</p>
+                  <div style={subStyle}>
+                    <p>(a) is or becomes publicly available through no fault of the receiving party;</p>
+                    <p>(b) was already known to the receiving party before disclosure;</p>
+                    <p>(c) is independently developed by the receiving party without reference to the disclosing party&rsquo;s Confidential Information; or</p>
+                    <p>(d) is rightfully received from a third party without restriction on disclosure.</p>
+                  </div>
+                  <p><strong>7.3.</strong> The Agency may use the Customer&rsquo;s name, logo, and a general description of the project in the Agency&rsquo;s portfolio and marketing materials, unless the Customer opts out by providing written notice to the Agency. Any detailed case studies or testimonials require the Customer&rsquo;s prior written approval.</p>
                   <p><strong>7.4.</strong> Confidentiality obligations under this section shall survive termination or expiration of these T&amp;Cs for a period of 3 years.</p>
                 </div>
               )}
@@ -292,24 +274,24 @@ const TermsAndConditionsPage: React.FC = () => {
               {isOpen("termination") && (
                 <div style={bodyStyle}>
                   <p><strong>8.1. Termination for Breach:</strong> Either party may terminate the Services by providing written notice if the other party materially breaches these T&amp;Cs and fails to cure such breach within 14 days of receiving written notice specifying the nature of the breach.</p>
-                  <p><strong>8.2. Termination for Convenience by the Customer:</strong> The Customer may terminate the Services at any time by providing 30 days' written notice to the Agency. In such case:</p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>If terminated before Services commence, a cancellation fee of 20% of the total project fee shall apply.</li>
-                    <li>If terminated after Services have commenced, the Customer shall pay for all work satisfactorily completed up to the effective date of termination, plus any non-cancellable third-party costs incurred by the Agency.</li>
-                  </ul>
+                  <p><strong>8.2. Termination for Convenience by the Customer:</strong> The Customer may terminate the Services at any time by providing 30 days&rsquo; written notice to the Agency. In such case:</p>
+                  <div style={subStyle}>
+                    <p>If terminated before Services commence, a cancellation fee of 20% of the total project fee shall apply.</p>
+                    <p>If terminated after Services have commenced, the Customer shall pay for all work satisfactorily completed up to the effective date of termination, plus any non-cancellable third-party costs incurred by the Agency.</p>
+                  </div>
                   <p><strong>8.3. Termination by the Agency:</strong> The Agency may terminate the Services immediately upon written notice if:</p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>The Customer fails to make any payment when due and such failure continues for 14 days after written notice;</li>
-                    <li>The Customer fails to provide necessary materials, access, or cooperation, materially impeding the Agency's ability to perform; or</li>
-                    <li>The Customer becomes insolvent, enters administration, or undergoes analogous proceedings.</li>
-                  </ul>
+                  <div style={subStyle}>
+                    <p>The Customer fails to make any payment when due and such failure continues for 14 days after written notice;</p>
+                    <p>The Customer fails to provide necessary materials, access, or cooperation, materially impeding the Agency&rsquo;s ability to perform; or</p>
+                    <p>The Customer becomes insolvent, enters business rescue, liquidation, or undergoes analogous proceedings.</p>
+                  </div>
                   <p><strong>8.4. Post-Termination Obligations:</strong></p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>The Agency will deliver to the Customer all completed Deliverables and work-in-progress for which the Customer has paid.</li>
-                    <li>The Customer will pay all outstanding fees for Services rendered and expenses incurred up to the termination date within 14 days of receiving a final invoice.</li>
-                    <li>Each party will promptly return or destroy the other party's Confidential Information upon written request, except as required to be retained by law.</li>
-                    <li>Sections 5 (Intellectual Property), 6 (Data Protection), 7 (Confidentiality), 8.4 (Post-Termination Obligations), 9 (Warranties and Liability), and 13 (Governing Law) shall survive termination.</li>
-                  </ul>
+                  <div style={subStyle}>
+                    <p>The Agency will deliver to the Customer all completed Deliverables and work-in-progress for which the Customer has paid.</p>
+                    <p>The Customer will pay all outstanding fees for Services rendered and expenses incurred up to the termination date within 14 days of receiving a final invoice.</p>
+                    <p>Each party will promptly return or destroy the other party&rsquo;s Confidential Information upon written request, except as required to be retained by law.</p>
+                    <p>Sections 5 (Intellectual Property), 6 (Data Protection), 7 (Confidentiality), 8.4 (Post-Termination Obligations), 9 (Warranties and Liability), and 13 (Governing Law) shall survive termination.</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -323,25 +305,25 @@ const TermsAndConditionsPage: React.FC = () => {
               {isOpen("warranties") && (
                 <div style={bodyStyle}>
                   <p><strong>9.1. Agency Warranty:</strong> The Agency warrants that:</p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>Services will be performed with reasonable professional care, skill, and diligence consistent with generally accepted industry standards;</li>
-                    <li>Deliverables will substantially conform to the specifications set out in the Proposal for a period of 30 days following acceptance ("Warranty Period");</li>
-                    <li>During the Warranty Period, the Agency will remedy any material defects in the Deliverables at no additional cost, provided the defect is attributable to the Agency's work and not to modifications made by the Customer, Customer-provided materials, or third-party systems.</li>
-                  </ul>
+                  <div style={subStyle}>
+                    <p>Services will be performed with reasonable professional care, skill, and diligence consistent with generally accepted industry standards;</p>
+                    <p>Deliverables will substantially conform to the specifications set out in the Proposal for a period of 30 days following acceptance (&ldquo;Warranty Period&rdquo;);</p>
+                    <p>During the Warranty Period, the Agency will remedy any material defects in the Deliverables at no additional cost, provided the defect is attributable to the Agency&rsquo;s work and not to modifications made by the Customer, Customer-provided materials, or third-party systems.</p>
+                  </div>
                   <p><strong>9.2. Customer Warranty:</strong> The Customer warrants that:</p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>All information and materials provided to the Agency are accurate, complete, and lawfully obtained;</li>
-                    <li>The Customer has full authority to enter into these T&amp;Cs and to authorise the Agency to perform the Services;</li>
-                    <li>Customer-provided materials do not infringe upon any third-party rights.</li>
-                  </ul>
+                  <div style={subStyle}>
+                    <p>All information and materials provided to the Agency are accurate, complete, and lawfully obtained;</p>
+                    <p>The Customer has full authority to enter into these T&amp;Cs and to authorise the Agency to perform the Services;</p>
+                    <p>Customer-provided materials do not infringe upon any third-party rights.</p>
+                  </div>
                   <p><strong>9.3. Disclaimer:</strong> Except as expressly stated in these T&amp;Cs, the Agency makes no other warranties, whether express, implied, statutory, or otherwise, including any implied warranties of merchantability, fitness for a particular purpose, or non-infringement. The Agency does not warrant that the Deliverables will be error-free or that their operation will be uninterrupted.</p>
                   <p><strong>9.4. Limitation of Liability:</strong></p>
-                  <ul style={{ paddingLeft: "1.5rem" }}>
-                    <li>The Agency's total aggregate liability arising out of or in connection with these T&amp;Cs, whether in contract, tort (including negligence), breach of statutory duty, or otherwise, shall not exceed the total fees actually paid by the Customer under the applicable Proposal in the 12 months preceding the claim.</li>
-                    <li>In no event shall the Agency be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, loss of revenue, loss of data, loss of business opportunity, or loss of goodwill, even if advised of the possibility of such damages.</li>
-                    <li>Nothing in these T&amp;Cs shall exclude or limit liability for: (a) death or personal injury caused by negligence; (b) fraud or fraudulent misrepresentation; or (c) any other liability that cannot be excluded or limited by applicable law.</li>
-                  </ul>
-                  <p><strong>9.5. No Guarantee of Results:</strong> The Agency does not guarantee any specific business outcomes, revenue increases, performance metrics, or results from the use of the Deliverables beyond their substantial conformance with the agreed specifications. The Customer acknowledges that the success of AI-based solutions may depend on factors beyond the Agency's control, including data quality, user adoption, and market conditions.</p>
+                  <div style={subStyle}>
+                    <p>The Agency&rsquo;s total aggregate liability arising out of or in connection with these T&amp;Cs, whether in contract, delict (including negligence), breach of statutory duty, or otherwise, shall not exceed the total fees actually paid by the Customer under the applicable Proposal in the 12 months preceding the claim.</p>
+                    <p>In no event shall the Agency be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, loss of revenue, loss of data, loss of business opportunity, or loss of goodwill, even if advised of the possibility of such damages.</p>
+                    <p>Nothing in these T&amp;Cs shall exclude or limit liability for: (a) death or personal injury caused by negligence; (b) fraud or fraudulent misrepresentation; or (c) any other liability that cannot be excluded or limited by applicable South African law.</p>
+                  </div>
+                  <p><strong>9.5. No Guarantee of Results:</strong> The Agency does not guarantee any specific business outcomes, revenue increases, performance metrics, or results from the use of the Deliverables beyond their substantial conformance with the agreed specifications. The Customer acknowledges that the success of AI-based solutions may depend on factors beyond the Agency&rsquo;s control, including data quality, user adoption, and market conditions.</p>
                 </div>
               )}
             </div>
@@ -354,8 +336,8 @@ const TermsAndConditionsPage: React.FC = () => {
               </button>
               {isOpen("indemnification") && (
                 <div style={bodyStyle}>
-                  <p><strong>10.1. Customer Indemnification:</strong> The Customer shall indemnify, defend, and hold harmless the Agency and its officers, directors, employees, and contractors from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to: (a) the Customer's breach of these T&amp;Cs; (b) the Customer's use of the Deliverables in a manner not contemplated by the Proposal; (c) any infringement of third-party rights by Customer-provided materials; or (d) the Customer's violation of applicable laws.</p>
-                  <p><strong>10.2. Agency Indemnification:</strong> The Agency shall indemnify, defend, and hold harmless the Customer from and against any third-party claims alleging that the Deliverables (excluding Customer-provided materials and third-party components) infringe a third party's intellectual property rights, provided that the Customer promptly notifies the Agency in writing and gives the Agency reasonable control over the defence and settlement of such claim.</p>
+                  <p><strong>10.1. Customer Indemnification:</strong> The Customer shall indemnify, defend, and hold harmless the Agency and its officers, directors, employees, and contractors from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorney fees) arising out of or related to: (a) the Customer&rsquo;s breach of these T&amp;Cs; (b) the Customer&rsquo;s use of the Deliverables in a manner not contemplated by the Proposal; (c) any infringement of third-party rights by Customer-provided materials; or (d) the Customer&rsquo;s violation of applicable laws.</p>
+                  <p><strong>10.2. Agency Indemnification:</strong> The Agency shall indemnify, defend, and hold harmless the Customer from and against any third-party claims alleging that the Deliverables (excluding Customer-provided materials and third-party components) infringe a third party&rsquo;s intellectual property rights, provided that the Customer promptly notifies the Agency in writing and gives the Agency reasonable control over the defence and settlement of such claim.</p>
                 </div>
               )}
             </div>
@@ -368,7 +350,7 @@ const TermsAndConditionsPage: React.FC = () => {
               </button>
               {isOpen("forcemajeure") && (
                 <div style={bodyStyle}>
-                  <p><strong>11.1.</strong> Neither party shall be liable for any delay or failure to perform its obligations under these T&amp;Cs to the extent that such delay or failure results from circumstances beyond that party's reasonable control ("Force Majeure Event"), including but not limited to natural disasters, pandemics, acts of war or terrorism, government actions, power or internet failures, cyberattacks, or third-party service provider outages.</p>
+                  <p><strong>11.1.</strong> Neither party shall be liable for any delay or failure to perform its obligations under these T&amp;Cs to the extent that such delay or failure results from circumstances beyond that party&rsquo;s reasonable control (&ldquo;Force Majeure Event&rdquo;), including but not limited to natural disasters, pandemics, acts of war or terrorism, government actions, load shedding or prolonged power outages, internet failures, cyberattacks, or third-party service provider outages.</p>
                   <p><strong>11.2.</strong> The affected party must notify the other party in writing within 5 business days of becoming aware of the Force Majeure Event, detailing the nature, expected duration, and steps being taken to mitigate the impact.</p>
                   <p><strong>11.3.</strong> If a Force Majeure Event continues for more than 60 days, either party may terminate the affected Services upon written notice without further liability, except for payment of Services satisfactorily rendered prior to the Force Majeure Event.</p>
                 </div>
@@ -383,7 +365,7 @@ const TermsAndConditionsPage: React.FC = () => {
               </button>
               {isOpen("nonsolicitation") && (
                 <div style={bodyStyle}>
-                  <p><strong>12.1.</strong> During the term of the Services and for a period of 12 months following termination, neither party shall directly solicit or hire any employee or contractor of the other party who was materially involved in the Services without the other party's prior written consent. This restriction does not apply to individuals who respond to general public job advertisements.</p>
+                  <p><strong>12.1.</strong> During the term of the Services and for a period of 12 months following termination, neither party shall directly solicit or hire any employee or contractor of the other party who was materially involved in the Services without the other party&rsquo;s prior written consent. This restriction does not apply to individuals who respond to general public job advertisements.</p>
                 </div>
               )}
             </div>
@@ -397,9 +379,12 @@ const TermsAndConditionsPage: React.FC = () => {
               {isOpen("governing") && (
                 <div style={bodyStyle}>
                   <p><strong>13.1.</strong> These T&amp;Cs shall be governed by and construed in accordance with the laws of the Republic of South Africa, without regard to its conflict of law principles.</p>
-                  <p><strong>13.2.</strong> The parties agree to attempt to resolve any dispute arising out of or in connection with these T&amp;Cs through good-faith negotiation for a period of 30 days following written notice of the dispute.</p>
-                  <p><strong>13.3.</strong> If the dispute is not resolved through negotiation, the parties agree to submit the dispute to binding arbitration in Cape Town under the rules of the Arbitration Foundation of Southern Africa (AFSA). The arbitration shall be conducted in English, and the arbitrator's decision shall be final and binding. Alternatively, either party may elect to submit the dispute to the exclusive jurisdiction of the courts of Cape Town.</p>
-                  <p><strong>13.4.</strong> Nothing in this section shall prevent either party from seeking interim or injunctive relief in a court of competent jurisdiction to protect its intellectual property or Confidential Information.</p>
+                  <p><strong>13.2.</strong> The parties hereby submit to the exclusive jurisdiction of the High Court of South Africa, Western Cape Division, Cape Town, or such other competent court in Cape Town, South Africa, for the resolution of any disputes arising out of or in connection with these T&amp;Cs. Each party irrevocably waives any objection to the laying of venue in such courts and any claim that any action or proceeding brought in such courts has been brought in an inconvenient forum.</p>
+                  <p><strong>13.3.</strong> The parties agree to attempt to resolve any dispute arising out of or in connection with these T&amp;Cs through good-faith negotiation for a period of at least 30 calendar days following written notice of the dispute.</p>
+                  <p><strong>13.4.</strong> If the dispute is not resolved through negotiation, the parties agree to submit the dispute to mediation administered by the Arbitration Foundation of Southern Africa (AFSA) or another mutually agreed mediation body, with mediation proceedings to be held in Cape Town, South Africa, before pursuing arbitration or litigation.</p>
+                  <p><strong>13.5.</strong> If mediation is unsuccessful within 30 calendar days of its commencement (or such longer period as the parties may agree), the dispute shall be referred to and finally resolved by binding arbitration conducted in Cape Town, South Africa, under the rules of the Arbitration Foundation of Southern Africa (AFSA). The arbitration shall be conducted by a single arbitrator, unless the parties agree otherwise. The language of the arbitration shall be English. The arbitrator&rsquo;s award shall be final and binding and may be entered as a judgment in any court of competent jurisdiction, including the High Court of South Africa, Western Cape Division, Cape Town.</p>
+                  <p><strong>13.6.</strong> Nothing in this section shall prevent either party from seeking urgent interim relief, including an interdict or other equitable relief, in the High Court of South Africa, Western Cape Division, Cape Town, or any other court of competent jurisdiction, to protect its intellectual property or Confidential Information, without the requirement to first pursue negotiation, mediation, or arbitration.</p>
+                  <p><strong>13.7.</strong> Nothing in this section shall be construed to limit any rights the Customer may have under the Consumer Protection Act, 2008 (Act No. 68 of 2008), to the extent applicable.</p>
                 </div>
               )}
             </div>
@@ -412,7 +397,7 @@ const TermsAndConditionsPage: React.FC = () => {
               </button>
               {isOpen("amendments") && (
                 <div style={bodyStyle}>
-                  <p><strong>14.1.</strong> The Agency may update these T&amp;Cs by providing the Customer with at least 30 days' written notice. Updated T&amp;Cs will apply to Services commenced or renewed after the effective date of the update. Continued engagement of new Services after such notice constitutes acceptance. Material changes to terms governing ongoing projects require the Customer's written consent.</p>
+                  <p><strong>14.1.</strong> The Agency may update these T&amp;Cs by providing the Customer with at least 30 days&rsquo; written notice. Updated T&amp;Cs will apply to Services commenced or renewed after the effective date of the update. Continued engagement of new Services after such notice constitutes acceptance. Material changes to terms governing ongoing projects require the Customer&rsquo;s written consent.</p>
                   <p><strong>14.2.</strong> Any amendments to the Proposal, scope of Services, or project-specific terms must be documented in a written Change Order signed by authorised representatives of both parties.</p>
                 </div>
               )}
@@ -427,12 +412,13 @@ const TermsAndConditionsPage: React.FC = () => {
               {isOpen("miscellaneous") && (
                 <div style={bodyStyle}>
                   <p><strong>15.1. Entire Agreement:</strong> These T&amp;Cs, together with the applicable Proposal, any Change Orders, and any Data Processing Agreement, constitute the entire agreement between the parties with respect to the subject matter hereof and supersede all prior negotiations, representations, warranties, understandings, or agreements, whether written or oral.</p>
-                  <p><strong>15.2. Assignment:</strong> The Customer may not assign, transfer, or delegate any of its rights or obligations under these T&amp;Cs without the Agency's prior written consent. The Agency may assign these T&amp;Cs to a successor entity in connection with a merger, acquisition, or sale of substantially all of its assets, provided the successor assumes the Agency's obligations hereunder.</p>
+                  <p><strong>15.2. Assignment:</strong> The Customer may not assign, transfer, or delegate any of its rights or obligations under these T&amp;Cs without the Agency&rsquo;s prior written consent. The Agency may assign these T&amp;Cs to a successor entity in connection with a merger, acquisition, or sale of substantially all of its assets, provided the successor assumes the Agency&rsquo;s obligations hereunder.</p>
                   <p><strong>15.3. Severability:</strong> If any provision of these T&amp;Cs is held to be invalid, illegal, or unenforceable by a court of competent jurisdiction, such provision shall be modified to the minimum extent necessary to make it enforceable, and the remaining provisions shall continue in full force and effect.</p>
                   <p><strong>15.4. Waiver:</strong> No failure or delay by either party in exercising any right or remedy under these T&amp;Cs shall constitute a waiver of that right or remedy. Any waiver must be in writing and signed by the waiving party.</p>
                   <p><strong>15.5. Notices:</strong> All notices, requests, and communications under these T&amp;Cs must be in writing and sent to the contact details specified in the Proposal (or as updated by written notice). Notices shall be deemed received: (a) upon delivery if delivered by hand; (b) upon confirmed transmission if sent by email; or (c) 3 business days after posting if sent by registered mail.</p>
                   <p><strong>15.6. Independent Contractors:</strong> The relationship between the Agency and the Customer is that of independent contractors. Nothing in these T&amp;Cs creates a partnership, joint venture, employment, or agency relationship between the parties.</p>
                   <p><strong>15.7. Third-Party Rights:</strong> These T&amp;Cs do not confer any rights on any third party unless expressly stated.</p>
+                  <p><strong>15.8. Electronic Signatures:</strong> Electronic signatures shall be deemed valid and binding to the extent permitted by the Electronic Communications and Transactions Act, 2002 (Act No. 25 of 2002).</p>
                 </div>
               )}
             </div>
@@ -465,7 +451,7 @@ const TermsAndConditionsPage: React.FC = () => {
                 className="btn btn--primary"
                 style={{ textAlign: "center" }}
               >
-                Register Now
+                Register as Customer
               </Link>
               <Link
                 to="/customer-terms"
@@ -497,16 +483,8 @@ const TermsAndConditionsPage: React.FC = () => {
                 { label: "Company", value: "Cape Craft Projects CC", href: undefined },
                 { label: "Trading As", value: "CapeControl", href: undefined },
                 { label: "Location", value: "Cape Town, South Africa", href: undefined },
-                {
-                  label: "Email",
-                  value: "support@cape-control.com",
-                  href: "mailto:support@cape-control.com",
-                },
-                {
-                  label: "Website",
-                  value: "cape-control.com",
-                  href: "https://cape-control.com",
-                },
+                { label: "Email", value: "support@cape-control.com", href: "mailto:support@cape-control.com" },
+                { label: "Website", value: "cape-control.com", href: "https://cape-control.com" },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -545,12 +523,12 @@ const TermsAndConditionsPage: React.FC = () => {
                 lineHeight: 1.7,
               }}
             >
-              <strong>Legal Notice:</strong> These Terms and Conditions are intended for
-              business-to-business (B2B) engagements. If you are a consumer (an individual not
-              acting in a business capacity), additional consumer protection provisions under
-              applicable legislation may apply. This document should be reviewed by a qualified
-              legal professional in your jurisdiction. Cape Control recommends that all customers
-              seek independent legal advice before engaging services.
+              <strong>Legal Disclaimer:</strong> This document is provided for informational purposes
+              only and does not constitute legal advice. These Terms and Conditions are governed by the
+              laws of the Republic of South Africa. All disputes shall be resolved in Cape Town, South
+              Africa, as specified in Section 13. Customers are encouraged to seek independent legal
+              advice before engaging services. This document should be reviewed periodically as the
+              Agency may update it with 30 days&rsquo; notice in accordance with Section 14.
             </div>
           </div>
         </section>
@@ -578,37 +556,23 @@ const TermsAndConditionsPage: React.FC = () => {
             <div className="footer__column">
               <h4>Platform</h4>
               <ul className="footer__links-list">
-                <li>
-                  <Link to="/">Home</Link>
-                </li>
-                <li>
-                  <Link to="/subscribe">Pricing</Link>
-                </li>
+                <li><Link to="/">Home</Link></li>
+                <li><Link to="/subscribe">Pricing</Link></li>
               </ul>
             </div>
             <div className="footer__column">
               <h4>Information</h4>
               <ul className="footer__links-list">
-                <li>
-                  <Link to="/customer-terms">Proposal Terms</Link>
-                </li>
-                <li>
-                  <Link to="/developers">Developer Info</Link>
-                </li>
-                <li>
-                  <Link to="/terms-and-conditions">Full T&amp;Cs</Link>
-                </li>
+                <li><Link to="/customer-terms">Proposal Terms</Link></li>
+                <li><Link to="/terms-and-conditions">Customer T&amp;Cs</Link></li>
+                <li><Link to="/developer-terms">Developer T&amp;Cs</Link></li>
               </ul>
             </div>
             <div className="footer__column">
               <h4>Company</h4>
               <ul className="footer__links-list">
-                <li>
-                  <a href="/#about">About</a>
-                </li>
-                <li>
-                  <a href="/#privacy">Privacy Policy</a>
-                </li>
+                <li><a href="/#about">About</a></li>
+                <li><a href="/#privacy">Privacy Policy</a></li>
               </ul>
             </div>
           </div>
