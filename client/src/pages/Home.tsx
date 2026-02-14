@@ -468,8 +468,11 @@ const Home = () => {
             </div>
 
             <div className="footer__column">
-              <h4>Developers</h4>
+              <h4>Information</h4>
               <ul className="footer__links-list">
+                <li>
+                  <Link to="/customer-terms">Proposal Terms</Link>
+                </li>
                 <li>
                   <Link to="/developers">Developer Info</Link>
                 </li>

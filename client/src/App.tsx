@@ -35,6 +35,7 @@ import Welcome from "./pages/public/WelcomePage";
 import About from "./pages/public/AboutPage";
 import Subscribe from "./pages/public/SubscribePage";
 import DeveloperInfo from "./pages/public/DeveloperInfoPage";
+import CustomerInfo from "./pages/public/CustomerInfoPage";
 
 // Auth pages / flows
 import Register from "./pages/auth/RegisterPage";
@@ -145,6 +146,7 @@ export default function App() {
         <Route path="/how-it-works" element={<About />} />
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/developers" element={<DeveloperInfo />} />
+        <Route path="/customer-terms" element={<CustomerInfo />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
         <Route path="/auth/login" element={<LoginPage />} />

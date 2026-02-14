@@ -423,6 +423,7 @@ const Register = () => {
                   I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>,
                   <a href="/privacy" target="_blank" rel="noopener noreferrer"> privacy policy</a>, and
                   <a href="/cookies" target="_blank" rel="noopener noreferrer"> cookie policy</a>.
+                  See our <a href="/customer-terms" target="_blank" rel="noopener noreferrer">proposal terms</a>.
                 </span>
               </label>
             </FormInput>
