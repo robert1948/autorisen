@@ -90,6 +90,9 @@ class User(Base):
     )
     tasks = relationship("Task", back_populates="user")
     audit_events = relationship("AuditEvent", back_populates="user")
+    subscription = relationship(
+        "Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class Credential(Base):
@@ -1145,3 +1148,86 @@ class AdminInvite(Base):
     )
 
     inviter = relationship("User", foreign_keys=[invited_by])
+
+
+# ---------------------------------------------------------------------------
+# Subscription / plan models
+# ---------------------------------------------------------------------------
+
+
+class Subscription(Base):
+    """Tracks a user's current subscription plan and billing status."""
+
+    __tablename__ = "subscriptions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    plan_id = Column(String(32), nullable=False, server_default="starter")
+    status = Column(String(32), nullable=False, server_default="active")
+    current_period_start = Column(DateTime(timezone=True), nullable=True)
+    current_period_end = Column(DateTime(timezone=True), nullable=True)
+    cancel_at_period_end = Column(Boolean, nullable=False, server_default="0")
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    payment_provider = Column(String(32), nullable=True)
+    provider_subscription_id = Column(String(255), nullable=True, index=True)
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "plan_id IN ('starter', 'growth', 'enterprise')",
+            name="subscription_plan_check",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'cancelled', 'past_due', 'trialing', 'pending')",
+            name="subscription_status_check",
+        ),
+    )
+
+    user = relationship("User", back_populates="subscription")
+
+
+class EnterpriseInquiry(Base):
+    """Enterprise tier contact request."""
+
+    __tablename__ = "enterprise_inquiries"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    company_name = Column(String(200), nullable=False)
+    contact_email = Column(String(320), nullable=False)
+    contact_name = Column(String(100), nullable=False)
+    message = Column(Text, nullable=True)
+    status = Column(String(32), nullable=False, server_default="new")
+    responded_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('new', 'contacted', 'closed')",
+            name="enterprise_inquiry_status_check",
+        ),
+    )
+
+    user = relationship("User")

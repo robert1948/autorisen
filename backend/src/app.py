@@ -130,6 +130,11 @@ dev_dashboard_router = _safe_import(
     "backend.src.modules.dev.router",
     "router",
 )
+subscriptions_router = _safe_import(
+    "subscriptions",
+    "backend.src.modules.subscriptions.router",
+    "router",
+)
 
 # ------------------------------------------------------------------------------
 # Constants / paths
@@ -754,6 +759,9 @@ def create_app() -> FastAPI:
     if dev_dashboard_router:
         # → /api/dev/profile, /api/dev/api-keys, /api/dev/usage
         api.include_router(dev_dashboard_router, prefix="/dev")
+    if subscriptions_router:
+        # → /api/subscriptions/plans, /current, /subscribe, /cancel, etc.
+        api.include_router(subscriptions_router)
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")
