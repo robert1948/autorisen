@@ -353,6 +353,7 @@ const Register = () => {
                 description="Find developers and agents that accelerate your roadmap."
                 selected={step1Role === "Customer"}
                 onSelect={handleRoleSelect}
+                infoLink="/customer-terms"
               />
               <RoleCard
                 role="Developer"
@@ -360,6 +361,7 @@ const Register = () => {
                 description="Showcase your skills, match with customers, and manage engagements."
                 selected={step1Role === "Developer"}
                 onSelect={handleRoleSelect}
+                infoLink="/developers"
               />
             </div>
 

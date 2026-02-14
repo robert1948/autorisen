@@ -438,6 +438,21 @@ a {
   transform: translateY(-2px);
 }
 
+.role-card__info-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: #93c5fd;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.role-card__info-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 .password-meter {
   display: flex;
   flex-direction: column;
