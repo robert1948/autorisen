@@ -115,6 +115,16 @@ payments_router = _safe_import(
 account_router = _safe_import(
     "account", "backend.src.modules.account.router", "router"
 )
+developer_router = _safe_import(
+    "developer_auth",
+    "backend.src.modules.auth.admin_router",
+    "developer_router",
+)
+admin_mgmt_router = _safe_import(
+    "admin_mgmt",
+    "backend.src.modules.auth.admin_router",
+    "admin_router",
+)
 
 # ------------------------------------------------------------------------------
 # Constants / paths
@@ -730,6 +740,12 @@ def create_app() -> FastAPI:
         api.include_router(payments_router)
     if account_router:
         api.include_router(account_router)
+    if developer_router:
+        # → /api/auth/register/developer
+        api.include_router(developer_router, prefix="/auth")
+    if admin_mgmt_router:
+        # → /api/admin/invite, /api/admin/invites, /api/admin/register
+        api.include_router(admin_mgmt_router, prefix="/admin")
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")

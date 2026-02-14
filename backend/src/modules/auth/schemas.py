@@ -22,6 +22,7 @@ class UserRole(str, Enum):
 
     CUSTOMER = "Customer"
     DEVELOPER = "Developer"
+    ADMIN = "Admin"
 
 
 class RegisterStep1In(BaseModel):
@@ -193,9 +194,152 @@ class ErrorResponse(BaseModel):
     detail: str
 
 
+# ---------------------------------------------------------------------------
+# Developer registration schemas
+# ---------------------------------------------------------------------------
+
+
+class DeveloperRegisterIn(BaseModel):
+    """Extended registration payload for developers."""
+
+    first_name: str = Field(..., max_length=50)
+    last_name: str = Field(..., max_length=50)
+    email: EmailStr
+    password: str
+    confirm_password: str
+    terms_accepted: bool
+    company_name: str = Field(default="", max_length=100)
+    recaptcha_token: Optional[str] = None
+    # Developer-specific fields
+    organization: Optional[str] = Field(default=None, max_length=200)
+    use_case: Optional[str] = Field(default=None, max_length=64)
+    website_url: Optional[str] = Field(default=None, max_length=500)
+    github_url: Optional[str] = Field(default=None, max_length=500)
+    developer_terms_accepted: bool = False
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def _strip_names(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Required")
+        return value
+
+    @field_validator("password")
+    @classmethod
+    def _validate_password(cls, value: str) -> str:
+        if not PASSWORD_PATTERN.match(value):
+            raise ValueError(PASSWORD_ERROR)
+        return value
+
+    @model_validator(mode="after")
+    def _check_passwords_and_terms(self) -> "DeveloperRegisterIn":
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match.")
+        if not self.terms_accepted:
+            raise ValueError("Terms must be accepted.")
+        if not self.developer_terms_accepted:
+            raise ValueError("Developer terms must be accepted.")
+        return self
+
+
+class DeveloperRegisterOut(BaseModel):
+    """Response after developer registration completes."""
+
+    access_token: str
+    refresh_token: Optional[str] = None
+    email_verified: bool = False
+    message: str = "Developer account created. Please verify your email."
+
+
+# ---------------------------------------------------------------------------
+# Admin invite / registration schemas
+# ---------------------------------------------------------------------------
+
+
+class AdminInviteIn(BaseModel):
+    """Payload for an admin to invite a new admin."""
+
+    target_email: EmailStr
+    expiry_hours: int = Field(default=48, ge=1, le=168)
+
+
+class AdminInviteOut(BaseModel):
+    """Response after successfully creating an admin invite."""
+
+    invite_id: str
+    target_email: str
+    expires_at: datetime
+    message: str = "Admin invite sent."
+
+
+class AdminInviteListOut(BaseModel):
+    """Single invite entry for listing."""
+
+    id: str
+    target_email: str
+    invited_by: Optional[str] = None
+    created_at: datetime
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+
+
+class AdminRegisterIn(BaseModel):
+    """Registration payload for admin invite-based signup."""
+
+    invite_token: str = Field(..., min_length=10, max_length=255)
+    first_name: str = Field(..., max_length=50)
+    last_name: str = Field(..., max_length=50)
+    email: EmailStr
+    password: str
+    confirm_password: str
+    terms_accepted: bool
+    company_name: str = Field(default="", max_length=100)
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def _strip_names(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Required")
+        return value
+
+    @field_validator("password")
+    @classmethod
+    def _validate_password(cls, value: str) -> str:
+        if not PASSWORD_PATTERN.match(value):
+            raise ValueError(PASSWORD_ERROR)
+        return value
+
+    @model_validator(mode="after")
+    def _check_passwords_and_terms(self) -> "AdminRegisterIn":
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match.")
+        if not self.terms_accepted:
+            raise ValueError("Terms must be accepted.")
+        return self
+
+
+class AdminRegisterOut(BaseModel):
+    """Response after admin registration completes."""
+
+    access_token: str
+    refresh_token: Optional[str] = None
+    email_verified: bool = True
+    message: str = "Admin account created."
+
+
 # Resolve forward references
 LoginResponse.model_rebuild()
 MeProfile.model_rebuild()
 MeSummary.model_rebuild()
 MeResponse.model_rebuild()
 ErrorResponse.model_rebuild()
+DeveloperRegisterIn.model_rebuild()
+DeveloperRegisterOut.model_rebuild()
+AdminInviteIn.model_rebuild()
+AdminInviteOut.model_rebuild()
+AdminInviteListOut.model_rebuild()
+AdminRegisterIn.model_rebuild()
+AdminRegisterOut.model_rebuild()

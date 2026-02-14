@@ -80,6 +80,12 @@ class Settings(BaseSettings):
     # environment name
     env: Literal["dev", "test", "staging", "prod"] = Field("dev", alias="ENV")
 
+    # Admin / developer registration
+    admin_invite_ttl_hours: int = Field(default=48, alias="ADMIN_INVITE_TTL_HOURS")
+    developer_terms_version: str = Field(
+        default="dev-v1", alias="DEVELOPER_TERMS_VERSION"
+    )
+
     @model_validator(mode="after")
     def _apply_legacy_names(self) -> "Settings":
         """

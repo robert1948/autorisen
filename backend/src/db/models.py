@@ -1060,3 +1060,88 @@ class PaymentMethod(Base):
 
     # Relationships
     user = relationship("User", back_populates="payment_methods")
+
+
+# ---------------------------------------------------------------------------
+# Developer & Admin registration models
+# ---------------------------------------------------------------------------
+
+
+class DeveloperProfile(Base):
+    """Extended profile data for users with the Developer role."""
+
+    __tablename__ = "developer_profiles"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    organization = Column(String(200), nullable=True)
+    use_case = Column(String(64), nullable=True)
+    website_url = Column(String(500), nullable=True)
+    github_url = Column(String(500), nullable=True)
+    developer_terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    developer_terms_version = Column(String(32), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user = relationship("User", backref="developer_profile")
+
+
+class ApiCredential(Base):
+    """API key pair issued to developers."""
+
+    __tablename__ = "api_credentials"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    client_id = Column(String(64), unique=True, nullable=False, index=True)
+    client_secret_hash = Column(String(255), nullable=False)
+    label = Column(String(100), nullable=True)
+    is_active = Column(Boolean, nullable=False, server_default="1")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", backref="api_credentials")
+
+
+class AdminInvite(Base):
+    """Invite token for admin account registration (invite-only)."""
+
+    __tablename__ = "admin_invites"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    target_email = Column(String(320), nullable=False, index=True)
+    invited_by = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    token_hash = Column(String(255), unique=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    used_by = Column(String(36), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    inviter = relationship("User", foreign_keys=[invited_by])
