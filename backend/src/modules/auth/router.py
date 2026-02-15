@@ -1444,7 +1444,7 @@ async def login(
 ):
     email = _normalize_email(payload.email)
 
-    await _verify_recaptcha_token(payload.recaptcha_token, request)
+    await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
     ip = request.client.host if request.client else "unknown"
     allowed, retry_after = allow_login(ip, email)

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../../components/Auth/auth.css';
 import Logo from '../../components/Logo';
+import Recaptcha from '../../components/Recaptcha';
 import { useAuth } from '../../features/auth/AuthContext';
 
 const i18n = {
@@ -31,6 +32,7 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?:string, password?:string }>({});
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const validate = () => {
     const errs: { email?:string, password?:string } = {};
@@ -47,7 +49,7 @@ const LoginPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await loginUser(email.trim(), password, null);
+      await loginUser(email.trim(), password, recaptchaToken);
       navigate(redirectTo, { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Network error';
@@ -83,9 +85,7 @@ const LoginPage: React.FC = () => {
             {validationErrors.password && <div id="pass-error" className="cc-error">{validationErrors.password}</div>}
           </div>
 
-          {import.meta.env.DEV && (
-            <div className="cc-recaptcha-note" role="note">{i18n['mfa.bypass_note']}</div>
-          )}
+          <Recaptcha onVerify={setRecaptchaToken} />
 
           {(error || authError) && (
             <div className="cc-error" role="alert">{error || authError}</div>
