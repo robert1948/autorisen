@@ -201,7 +201,11 @@ def get_status(db: Session, user: models.User) -> dict[str, Any]:
 
 
 def start_onboarding(db: Session, user: models.User) -> dict[str, Any]:
+    # Reuse existing session — prefer active, then fall back to latest (completed)
     session = get_active_session(db, user.id)
+    if not session:
+        # Check for a completed session first to avoid creating duplicates
+        session = get_latest_session(db, user.id)
     if not session:
         session = models.OnboardingSession(
             user_id=user.id,
