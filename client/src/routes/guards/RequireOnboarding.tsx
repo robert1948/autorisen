@@ -5,6 +5,8 @@ import { useOnboardingStatus } from "../../hooks/useOnboardingStatus";
 
 const allowlistPrefixes = ["/onboarding", "/app/onboarding", "/app/account"];
 
+/* v0.2.5-4: bypass onboarding for users with no session or 100% progress */
+
 function hasExploreQuietly(): boolean {
   return localStorage.getItem("onboarding_explore_quietly") === "true";
 }
