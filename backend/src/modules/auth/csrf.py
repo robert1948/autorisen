@@ -27,7 +27,7 @@ SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
 # server-to-server POSTs and must not be blocked by CSRF.
 # Keep exemptions as narrow as possible (method + path).
 EXEMPT_ROUTES: set[tuple[str, str]] = {
-    ("POST", "/api/payments/payfast/checkout"),
+    # ITN is a server-to-server callback from PayFast — no browser cookies involved
     ("POST", "/api/payments/payfast/itn"),
 }
 

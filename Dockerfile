@@ -26,6 +26,11 @@ RUN touch tailwind.config.js postcss.config.js
 COPY client/tailwind.config.js* ./
 COPY client/postcss.config.js* ./
 
+# Enable feature flags for production build
+ENV VITE_FF_PAYMENTS=true
+ENV VITE_FF_ONBOARDING=true
+ENV VITE_FF_AGENTS_SHELL=true
+
 # Build frontend with npm
 RUN npm run build
 

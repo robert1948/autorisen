@@ -4,14 +4,20 @@ from __future__ import annotations
 
 from urllib.parse import parse_qsl
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
+from backend.src.db import models
 from backend.src.db.session import get_session
+from backend.src.modules.auth.deps import get_verified_user
 from .config import PayFastSettings, get_payfast_settings
 from .constants import get_payfast_product_by_code
 from . import schemas, service
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/payments/payfast", tags=["payments"])
 
@@ -19,10 +25,15 @@ router = APIRouter(prefix="/payments/payfast", tags=["payments"])
 @router.post("/checkout", response_model=schemas.PayFastCheckoutResponse)
 def create_checkout_session(
     payload: schemas.PayFastCheckoutRequest,
+    current_user: models.User = Depends(get_verified_user),
     settings: PayFastSettings = Depends(get_payfast_settings),
     db: Session = Depends(get_session),
 ) -> schemas.PayFastCheckoutResponse:
     """Generate a signed set of form fields for the PayFast hosted checkout."""
+
+    # Use the authenticated user's email — ignore any email in the payload
+    customer_email = current_user.email
+    log.info("Checkout initiated by user %s for %s", current_user.id, payload.product_code or payload.item_name)
 
     amount = payload.amount
     item_name = payload.item_name
@@ -55,11 +66,11 @@ def create_checkout_session(
         settings=settings,
         db=db,
         amount=amount,
-        item_name=item_name,  # validated: required unless product_code resolved
+        item_name=item_name,
         item_description=item_description,
-        customer_email=payload.customer_email,
-        customer_first_name=payload.customer_first_name,
-        customer_last_name=payload.customer_last_name,
+        customer_email=customer_email,
+        customer_first_name=payload.customer_first_name or current_user.first_name,
+        customer_last_name=payload.customer_last_name or current_user.last_name,
         metadata=metadata,
     )
 

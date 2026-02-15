@@ -19,7 +19,11 @@ class PayFastCheckoutRequest(BaseModel):
     )
     item_name: Optional[str] = Field(default=None, min_length=3, max_length=255)
     item_description: Optional[str] = Field(default=None, max_length=255)
-    customer_email: str = Field(..., min_length=5, max_length=255)
+    customer_email: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Ignored — backend uses the authenticated user's email",
+    )
     customer_first_name: Optional[str] = Field(default=None, max_length=64)
     customer_last_name: Optional[str] = Field(default=None, max_length=64)
     metadata: Dict[str, str | int | float] = Field(default_factory=dict)
@@ -45,13 +49,6 @@ class PayFastCheckoutRequest(BaseModel):
             # PayFast allows up to custom_str5; enforce early.
             pruned = dict(list(value.items())[:5])
             return pruned
-        return value
-
-    @field_validator("customer_email")
-    @classmethod
-    def validate_email(cls, value: str) -> str:
-        if "@" not in value:
-            raise ValueError("customer_email must contain '@'")
         return value
 
 
