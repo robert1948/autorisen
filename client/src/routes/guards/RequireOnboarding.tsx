@@ -32,7 +32,15 @@ export default function RequireOnboarding() {
 
   const path = location.pathname;
   const allowlisted = allowlistPrefixes.some((p) => path.startsWith(p));
-  const completed = Boolean(data?.session?.onboarding_completed);
+
+  // Consider onboarding done if:
+  // 1. session.onboarding_completed flag is true, OR
+  // 2. progress is 100% (all steps done but /complete wasn't called), OR
+  // 3. no session exists (user predates onboarding feature)
+  const sessionComplete = Boolean(data?.session?.onboarding_completed);
+  const allStepsDone = (data?.progress ?? 0) >= 100;
+  const noSession = !data?.session;
+  const completed = sessionComplete || allStepsDone || noSession;
 
   if (!completed && !allowlisted) {
     const next = encodeURIComponent(`${location.pathname}${location.search}`);
