@@ -1465,7 +1465,11 @@ async def login(
         "login_attempt email=%s found=%s ip=%s ua=%s", email, user_found, ip, user_agent
     )
 
-    if user and not getattr(user, "is_email_verified", False):
+    if (
+        settings.auth_require_email_verification
+        and user
+        and not getattr(user, "is_email_verified", False)
+    ):
         record_login_attempt(ip, email, success=False)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

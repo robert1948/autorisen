@@ -80,6 +80,11 @@ class Settings(BaseSettings):
     # environment name
     env: Literal["dev", "test", "staging", "prod"] = Field("dev", alias="ENV")
 
+    # Auth behaviour
+    auth_require_email_verification: bool = Field(
+        default=True, alias="AUTH_REQUIRE_EMAIL_VERIFICATION"
+    )
+
     # Admin / developer registration
     admin_invite_ttl_hours: int = Field(default=48, alias="ADMIN_INVITE_TTL_HOURS")
     developer_terms_version: str = Field(
