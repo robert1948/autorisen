@@ -57,6 +57,7 @@ from backend.src.modules.auth.audit import log_password_reset_event
 from backend.src.modules.user import service as user_service
 from backend.src.services import recaptcha as recaptcha_service
 from backend.src.services.emailer import (
+    send_login_notification,
     send_password_reset_email,
     send_verification_email,
 )
@@ -1438,6 +1439,7 @@ async def login(
     payload: LoginRequest,
     request: Request,
     response: Response,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user_agent: Optional[str] = Header(default=None),
     _: None = Depends(require_csrf_token),
@@ -1488,6 +1490,9 @@ async def login(
                 "login_success email=%s user_id=%s", email, getattr(user, "id", None)
             )
             record_login_attempt(ip, email, success=True)
+            background_tasks.add_task(
+                send_login_notification, email, ip_address=ip, user_agent=user_agent
+            )
             _set_refresh_cookie(response, refresh_token, expires_at=expires_at)
             return LoginResponse(
                 access_token=access_token,
@@ -1545,6 +1550,9 @@ async def login(
         )
         log.info("login_success email=%s user_id=%s", email, user.id)
         record_login_attempt(ip, email, success=True)
+        background_tasks.add_task(
+            send_login_notification, email, ip_address=ip, user_agent=user_agent
+        )
         fallback_expiry = datetime.now(timezone.utc) + timedelta(days=7)
         _set_refresh_cookie(response, refresh_token, expires_at=fallback_expiry)
         return LoginResponse(

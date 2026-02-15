@@ -12,6 +12,8 @@ from backend.src.core.mailer import MailerError, send_email
 
 logger = logging.getLogger(__name__)
 
+LOGIN_NOTIFY_RECIPIENT = "bobby@cape-control.com"
+
 TEMPLATE_DIR = Path(__file__).resolve().parent / "email_templates"
 
 
@@ -147,4 +149,52 @@ def send_verification_email(
         logger.info(
             "Verification email dispatched",
             extra={"email": email, "verify_url": verify_url},
+        )
+
+
+def send_login_notification(
+    email: str,
+    *,
+    ip_address: str = "unknown",
+    user_agent: str | None = None,
+) -> None:
+    """Notify bobby@cape-control.com that a user logged in. Soft-fail."""
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    subject = f"[CapeControl] Login: {email}"
+    text_body = (
+        f"Login notification\n\n"
+        f"User: {email}\n"
+        f"Time: {now}\n"
+        f"IP:   {ip_address}\n"
+        f"UA:   {user_agent or 'N/A'}\n"
+    )
+    html_body = f"""
+    <h3>Login Notification</h3>
+    <table style="border-collapse:collapse;">
+      <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">User</td><td>{email}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Time</td><td>{now}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">IP</td><td>{ip_address}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">User-Agent</td><td>{user_agent or 'N/A'}</td></tr>
+    </table>
+    <p style="color:#888;font-size:12px;">— CapeControl Platform</p>
+    """
+
+    try:
+        send_email(
+            subject=subject,
+            to=[LOGIN_NOTIFY_RECIPIENT],
+            text_body=text_body,
+            html_body=html_body,
+        )
+    except MailerError:
+        logger.warning(
+            "Login notification email failed",
+            extra={"email": email, "ip": ip_address},
+        )
+    else:
+        logger.info(
+            "Login notification sent to %s for %s",
+            LOGIN_NOTIFY_RECIPIENT,
+            email,
         )
