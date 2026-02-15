@@ -17,7 +17,6 @@ import {
   MvpResetPasswordConfirm,
   MvpRegisterStep1,
   MvpRegisterStep2,
-  MvpVerifyEmail,
   MvpLogout,
   MvpDashboard,
   MvpSettings,
@@ -59,6 +58,8 @@ import OnboardingTrust from "./pages/onboarding/Trust";
 
 // App pages
 import Dashboard from "./pages/app/DashboardPage";
+import CreateProjectPage from "./pages/app/CreateProjectPage";
+import ProjectDetailPage from "./pages/app/ProjectDetailPage";
 import Marketplace from "./pages/app/MarketplacePage";
 import Agents from "./pages/app/AgentsPage";
 import Developer from "./pages/app/DeveloperPage";
@@ -114,8 +115,10 @@ export default function App() {
           <Route path="/reset-password/confirm" element={<MvpResetPasswordConfirm />} />
           <Route path="/register/step-1" element={<MvpRegisterStep1 />} />
           <Route path="/register/step-2" element={<MvpRegisterStep2 />} />
-          <Route path="/verify-email/:token" element={<MvpVerifyEmail />} />
         </Route>
+
+        {/* Email verification — outside auth guards so links always work */}
+        <Route path="/verify-email/:token" element={<VerifyEmailRedirect />} />
 
         {/* Onboarding routes (auth required) */}
         <Route element={<RequireAuth />}>
@@ -195,6 +198,8 @@ export default function App() {
 
             {/* Core app pages */}
             <Route path="/app/dashboard" element={<Dashboard />} />
+            <Route path="/app/projects/new" element={<CreateProjectPage />} />
+            <Route path="/app/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/app/settings" element={<Settings />} />
 
             {features.sunbirdPilot && (

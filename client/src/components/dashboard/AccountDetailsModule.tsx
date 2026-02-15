@@ -1,7 +1,19 @@
+/**
+ * AccountDetailsModule — view and edit core account information.
+ *
+ * Per spec §3.2: editable fields with optimistic UI,
+ * proper ARIA labels, and skeleton loading states.
+ */
+
 import { useCallback, useEffect, useState } from "react";
 
 import { dashboardModulesApi, type AccountDetails } from "../../services/dashboardModulesApi";
 import { useAuth } from "../../features/auth/AuthContext";
+import type { UserProfile } from "../../types/user";
+
+interface AccountDetailsModuleProps {
+  user?: UserProfile;
+}
 
 const emptyDetails: AccountDetails = {
   id: "",
@@ -14,7 +26,7 @@ const emptyDetails: AccountDetails = {
   company_name: "",
 };
 
-export const AccountDetailsModule = () => {
+export const AccountDetailsModule = ({ user }: AccountDetailsModuleProps) => {
   const { state } = useAuth();
   const [details, setDetails] = useState<AccountDetails>(emptyDetails);
   const [loading, setLoading] = useState(true);
@@ -62,8 +74,16 @@ export const AccountDetailsModule = () => {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">Loading account details…</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm" role="status" aria-label="Loading account details" aria-busy="true">
+        <div className="animate-pulse">
+          <div className="mb-4 h-5 w-1/3 rounded bg-slate-200" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="h-10 rounded bg-slate-200" />
+            <div className="h-10 rounded bg-slate-200" />
+            <div className="h-10 rounded bg-slate-200" />
+            <div className="h-10 rounded bg-slate-200" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -84,10 +104,10 @@ export const AccountDetailsModule = () => {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="account-details-heading">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900">Account details</h3>
-        <span className="text-xs uppercase text-slate-500">{details.status}</span>
+        <h3 id="account-details-heading" className="text-lg font-semibold text-slate-900">Account details</h3>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs uppercase text-slate-500">{details.status}</span>
       </div>
       {error && <p className="mt-2 text-sm text-slate-600">{error}</p>}
       <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -132,11 +152,12 @@ export const AccountDetailsModule = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          aria-busy={saving}
         >
           {saving ? "Saving…" : "Save changes"}
         </button>
       </div>
-    </div>
+    </section>
   );
 };

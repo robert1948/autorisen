@@ -29,6 +29,7 @@ export type PersonalInfo = {
   timezone?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  currency?: string | null;
   updated_at?: string | null;
 };
 
@@ -38,6 +39,7 @@ export type PersonalInfoUpdate = {
   timezone?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  currency?: string | null;
 };
 
 export type ProjectStatusItem = {
@@ -51,6 +53,17 @@ export type ProjectStatusSummary = {
   value: string;
   total: number;
   projects: ProjectStatusItem[];
+};
+
+export type ProjectDetail = {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  created_at: string;
+  updated_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
 };
 
 export type AccountBalance = {
@@ -74,6 +87,18 @@ export const dashboardModulesApi = {
   },
   getProjects(): Promise<ProjectStatusItem[]> {
     return apiFetch<ProjectStatusItem[]>("/projects/mine");
+  },
+  createProject(payload: { title: string; description?: string }): Promise<ProjectStatusItem> {
+    return apiFetch<ProjectStatusItem>("/projects", { method: "POST", body: payload });
+  },
+  getProject(id: string): Promise<ProjectDetail> {
+    return apiFetch<ProjectDetail>(`/projects/${id}`);
+  },
+  updateProject(id: string, payload: { title?: string; description?: string; status?: string }): Promise<ProjectDetail> {
+    return apiFetch<ProjectDetail>(`/projects/${id}`, { method: "PATCH", body: payload });
+  },
+  deleteProject(id: string): Promise<void> {
+    return apiFetch<void>(`/projects/${id}`, { method: "DELETE" });
   },
   getProjectStatus(): Promise<ProjectStatusSummary> {
     return apiFetch<ProjectStatusSummary>("/projects/status");

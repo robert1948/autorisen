@@ -38,6 +38,7 @@ class PersonalInfo(BaseModel):
     timezone: Optional[str] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    currency: Optional[str] = "ZAR"
     updated_at: Optional[datetime] = None
 
 
@@ -49,6 +50,35 @@ class PersonalInfoUpdate(BaseModel):
     timezone: Optional[str] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    currency: Optional[str] = None
+
+
+class ProjectCreate(BaseModel):
+    """Create a new project."""
+
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = None
+
+
+class ProjectUpdate(BaseModel):
+    """Update a project."""
+
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = None
+    status: Optional[str] = Field(default=None, pattern="^(pending|in-progress|completed|cancelled)$")
+
+
+class ProjectDetail(BaseModel):
+    """Full project detail response."""
+
+    id: str
+    title: str
+    description: Optional[str] = None
+    status: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 
 class ProjectStatusItem(BaseModel):

@@ -12,6 +12,15 @@ type ApiFetchError = Error & { status?: number };
 
 const AUTH_STORAGE_KEY = "autorisen-auth";
 
+/**
+ * Read a cookie value by name from document.cookie.
+ */
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 function getApiBase(): string {
   const envBase = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
     ?.VITE_API_BASE;
@@ -62,6 +71,14 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
 
   if (body !== undefined) {
     requestHeaders["Content-Type"] = "application/json";
+  }
+
+  // Attach CSRF token for mutating requests
+  if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+    const csrfToken = getCookie("csrftoken");
+    if (csrfToken) {
+      requestHeaders["X-CSRF-Token"] = csrfToken;
+    }
   }
 
   if (auth) {

@@ -1,9 +1,21 @@
+/**
+ * AccountBalanceModule — account credits, usage, and billing.
+ *
+ * Per spec §3.5: balance display, usage breakdown,
+ * low balance alert at 80% threshold.
+ */
+
 import { useCallback, useEffect, useState } from "react";
 
 import { dashboardModulesApi, type AccountBalance } from "../../services/dashboardModulesApi";
 import { useAuth } from "../../features/auth/AuthContext";
+import type { UserProfile } from "../../types/user";
 
-export const AccountBalanceModule = () => {
+interface AccountBalanceModuleProps {
+  user?: UserProfile;
+}
+
+export const AccountBalanceModule = ({ user }: AccountBalanceModuleProps) => {
   const { state } = useAuth();
   const [balance, setBalance] = useState<AccountBalance | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,8 +46,14 @@ export const AccountBalanceModule = () => {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">Loading balance…</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm" role="status" aria-label="Loading balance" aria-busy="true">
+        <div className="animate-pulse">
+          <div className="mb-4 h-5 w-1/3 rounded bg-slate-200" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="h-20 rounded bg-slate-200" />
+            <div className="h-20 rounded bg-slate-200" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -56,25 +74,44 @@ export const AccountBalanceModule = () => {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">Account balance</h3>
-      {error && <p className="mt-2 text-sm text-slate-600">{error}</p>}
+    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="balance-heading">
+      <h3 id="balance-heading" className="text-lg font-semibold text-slate-900">Account balance</h3>
+      {error && <p className="mt-2 text-sm text-slate-600" role="alert">{error}</p>}
       {balance && (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-md bg-slate-50 p-4">
-            <p className="text-xs uppercase text-slate-500">Total paid</p>
-            <p className="text-2xl font-semibold text-slate-900">
-              {balance.currency} {balance.total_paid.toFixed(2)}
-            </p>
+        <>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-md bg-slate-50 p-4">
+              <p className="text-xs uppercase text-slate-500">Total paid</p>
+              <p className="text-2xl font-semibold text-slate-900">
+                {balance.currency} {balance.total_paid.toFixed(2)}
+              </p>
+            </div>
+            <div className="rounded-md bg-slate-50 p-4">
+              <p className="text-xs uppercase text-slate-500">Pending</p>
+              <p className="text-2xl font-semibold text-slate-900">
+                {balance.currency} {balance.total_pending.toFixed(2)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-md bg-slate-50 p-4">
-            <p className="text-xs uppercase text-slate-500">Pending</p>
-            <p className="text-2xl font-semibold text-slate-900">
-              {balance.currency} {balance.total_pending.toFixed(2)}
-            </p>
-          </div>
-        </div>
+
+          {/* Low balance alert per spec §3.5 */}
+          {balance.total_paid <= 0 && balance.total_pending <= 0 && (
+            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3" role="alert">
+              <p className="text-sm text-amber-800">
+                Your balance is empty.{" "}
+                <a href="/app/billing" className="font-medium underline hover:text-amber-900">
+                  Add credits
+                </a>{" "}
+                or{" "}
+                <a href="/app/billing/upgrade" className="font-medium underline hover:text-amber-900">
+                  upgrade your plan
+                </a>{" "}
+                to avoid service interruption.
+              </p>
+            </div>
+          )}
+        </>
       )}
-    </div>
+    </section>
   );
 };

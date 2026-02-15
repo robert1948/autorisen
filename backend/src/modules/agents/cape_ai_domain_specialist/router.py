@@ -66,7 +66,7 @@ async def ask_domain_specialist(
 
     # Persist real result payload
     db.query(models.Task).filter(models.Task.id == task_result.id).update(
-        {"result": result.dict()}
+        {"output_data": result.dict()}
     )
     db.commit()
     task_result.result = result.dict()
@@ -90,8 +90,8 @@ async def stream_domain_specialist_task(
         await executor.execute_task(
             TaskCreate(
                 agent_id=task.agent_id,
-                goal=task.goal or "",
-                input=task.input or {},
+                goal=task.title or "",
+                input=task.input_data or {},
                 user_id=task.user_id,
             ),
             websocket,

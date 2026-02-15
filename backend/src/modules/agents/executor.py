@@ -29,8 +29,8 @@ class TaskCreate(BaseModel):
     """Schema for creating new agent tasks."""
 
     agent_id: str
-    goal: str
-    input: Dict[str, Any]
+    goal: str  # maps to tasks.title
+    input: Dict[str, Any]  # maps to tasks.input_data
     user_id: str
 
 
@@ -38,24 +38,19 @@ class TaskResponse(BaseModel):
     """Schema for task response."""
 
     id: str
-    user_id: str
-    agent_id: str
-    goal: Optional[str]
-    input: Optional[Dict[str, Any]]
-    status: str
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    error_message: Optional[str]
-    result: Optional[Dict[str, Any]]
-    created_at: datetime
+    user_id: str = ""
+    agent_id: str = ""
+    goal: Optional[str] = None  # sourced from tasks.title
+    input: Optional[Dict[str, Any]] = None  # sourced from tasks.input_data
+    status: str = "pending"
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    result: Optional[Dict[str, Any]] = None  # sourced from tasks.output_data
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
 
 
 class AgentExecutor:
@@ -74,11 +69,10 @@ class AgentExecutor:
 
         # Create task record
         task = models.Task(
-            id=task_id,
             user_id=task_data.user_id,
             agent_id=task_data.agent_id,
-            goal=task_data.goal,
-            input=task_data.input,
+            title=task_data.goal,
+            input_data=task_data.input,
             status=TaskStatus.QUEUED,
         )
         self.db.add(task)
@@ -112,7 +106,7 @@ class AgentExecutor:
                 {
                     "status": TaskStatus.COMPLETED,
                     "completed_at": datetime.utcnow(),
-                    "result": result,
+                    "output_data": result,
                 }
             )
             self.db.commit()
@@ -128,16 +122,16 @@ class AgentExecutor:
             self.db.refresh(task)
 
             return TaskResponse(
-                id=task.id,
+                id=str(task.id),
                 user_id=task.user_id,
                 agent_id=task.agent_id,
-                goal=task.goal,
-                input=task.input,
+                goal=task.title,
+                input=task.input_data,
                 status=task.status,
                 started_at=task.started_at,
                 completed_at=task.completed_at,
                 error_message=task.error_message,
-                result=task.result,
+                result=task.output_data,
                 created_at=task.created_at,
             )
 

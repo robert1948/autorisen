@@ -486,13 +486,13 @@ def get_task_status(
         )
 
     return TaskResponse(
-        id=task.id,
+        id=str(task.id),
         status=task.status,
         agent_id=task.agent_id,
-        goal=task.goal,
+        goal=task.title,
         created_at=task.created_at,
         started_at=task.started_at,
         completed_at=task.completed_at,
-        result=task.result,
+        result=task.output_data,
         error_message=task.error_message,
     )

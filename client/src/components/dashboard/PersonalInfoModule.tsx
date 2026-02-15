@@ -1,7 +1,19 @@
+/**
+ * PersonalInfoModule — manage personal and preference data.
+ *
+ * Per spec §3.3: minimal GDPR-friendly section with
+ * data export request and privacy policy link.
+ */
+
 import { useCallback, useEffect, useState } from "react";
 
 import { dashboardModulesApi, type PersonalInfo } from "../../services/dashboardModulesApi";
 import { useAuth } from "../../features/auth/AuthContext";
+import type { UserProfile } from "../../types/user";
+
+interface PersonalInfoModuleProps {
+  user?: UserProfile;
+}
 
 const emptyInfo: PersonalInfo = {
   phone: "",
@@ -11,7 +23,7 @@ const emptyInfo: PersonalInfo = {
   avatar_url: "",
 };
 
-export const PersonalInfoModule = () => {
+export const PersonalInfoModule = ({ user }: PersonalInfoModuleProps) => {
   const { state } = useAuth();
   const [info, setInfo] = useState<PersonalInfo>(emptyInfo);
   const [loading, setLoading] = useState(true);
@@ -56,8 +68,16 @@ export const PersonalInfoModule = () => {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">Loading personal info…</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm" role="status" aria-label="Loading personal info" aria-busy="true">
+        <div className="animate-pulse">
+          <div className="mb-4 h-5 w-1/3 rounded bg-slate-200" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="h-10 rounded bg-slate-200" />
+            <div className="h-10 rounded bg-slate-200" />
+            <div className="h-10 rounded bg-slate-200" />
+            <div className="h-10 rounded bg-slate-200" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -78,8 +98,8 @@ export const PersonalInfoModule = () => {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">Personal information</h3>
+    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="personal-info-heading">
+      <h3 id="personal-info-heading" className="text-lg font-semibold text-slate-900">Personal information</h3>
       {error && <p className="mt-2 text-sm text-slate-600">{error}</p>}
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
@@ -133,11 +153,27 @@ export const PersonalInfoModule = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          aria-busy={saving}
         >
           {saving ? "Saving…" : "Save changes"}
         </button>
       </div>
-    </div>
+
+      {/* GDPR §3.3: Data export and privacy */}
+      <div className="mt-6 border-t border-slate-100 pt-4">
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <button className="font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline">
+            Request a copy of your data
+          </button>
+          <a
+            href="/privacy"
+            className="text-slate-500 hover:text-slate-700"
+          >
+            Privacy Policy
+          </a>
+        </div>
+      </div>
+    </section>
   );
 };

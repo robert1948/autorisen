@@ -145,12 +145,14 @@ def get_personal_info(
         db.refresh(profile)
 
     info = (profile.profile or {}).get("personal_info", {})
+    prefs = (profile.profile or {}).get("preferences", {})
     return schemas.PersonalInfo(
         phone=info.get("phone"),
         location=info.get("location"),
         timezone=info.get("timezone"),
         bio=info.get("bio"),
         avatar_url=info.get("avatar_url"),
+        currency=prefs.get("currency", "ZAR"),
         updated_at=profile.updated_at,
     )
 
@@ -170,24 +172,73 @@ def update_personal_info(
         db.commit()
         db.refresh(profile)
 
+    update_data = payload.model_dump(exclude_none=True)
+    currency_val = update_data.pop("currency", None)
+
     info = dict((profile.profile or {}).get("personal_info", {}))
-    for key, value in payload.model_dump(exclude_none=True).items():
+    for key, value in update_data.items():
         info[key] = value
 
     updated_profile = dict(profile.profile or {})
     updated_profile["personal_info"] = info
+
+    if currency_val is not None:
+        prefs = dict(updated_profile.get("preferences", {}))
+        prefs["currency"] = currency_val
+        updated_profile["preferences"] = prefs
+
     profile.profile = updated_profile
     db.add(profile)
     db.commit()
     db.refresh(profile)
 
+    prefs = (profile.profile or {}).get("preferences", {})
     return schemas.PersonalInfo(
         phone=info.get("phone"),
         location=info.get("location"),
         timezone=info.get("timezone"),
         bio=info.get("bio"),
         avatar_url=info.get("avatar_url"),
+        currency=prefs.get("currency", "ZAR"),
         updated_at=profile.updated_at,
+    )
+
+
+@router.post("/projects", response_model=schemas.ProjectStatusItem, status_code=status.HTTP_201_CREATED)
+def create_project(
+    payload: schemas.ProjectCreate,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ProjectStatusItem:
+    """Create a new project (stored as a task)."""
+    # Pick a default agent — use the first available or the Onboarding Guide
+    agent = db.scalars(select(models.Agent).limit(1)).first()
+    if not agent:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No agents available")
+
+    task = models.Task(
+        title=payload.title,
+        description=payload.description,
+        user_id=current_user.id,
+        agent_id=agent.id,
+        status="pending",
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+
+    # Auto-complete onboarding step
+    try:
+        from backend.src.modules.onboarding import service as onboarding_svc
+        onboarding_svc.set_step_status(db, current_user, "checklist_create_first_project", "completed")
+    except Exception:
+        pass  # Non-critical
+
+    return schemas.ProjectStatusItem(
+        id=str(task.id),
+        title=task.title,
+        status=task.status,
+        created_at=task.created_at,
     )
 
 
@@ -205,7 +256,7 @@ def get_projects_mine(
     return [
         schemas.ProjectStatusItem(
             id=str(task.id),
-            title=task.goal or "Task",
+            title=task.title or "Task",
             status=task.status,
             created_at=task.created_at,
         )
@@ -227,15 +278,102 @@ def get_project_status_summary(
     projects = [
         schemas.ProjectStatusItem(
             id=str(task.id),
-            title=task.goal or "Task",
+            title=task.title or "Task",
             status=task.status,
             created_at=task.created_at,
         )
         for task in tasks
     ]
-    # Provide a safe default when the user has no tasks.
     value = projects[0].status if projects else "Not set"
     return schemas.ProjectStatusSummary(value=value, total=len(projects), projects=projects)
+
+
+@router.get("/projects/{project_id}", response_model=schemas.ProjectDetail)
+def get_project_detail(
+    project_id: int,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ProjectDetail:
+    """Get full project details."""
+    task = db.scalars(
+        select(models.Task).where(
+            models.Task.id == project_id,
+            models.Task.user_id == current_user.id,
+        )
+    ).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    return schemas.ProjectDetail(
+        id=str(task.id),
+        title=task.title,
+        description=task.description,
+        status=task.status,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+        started_at=task.started_at,
+        completed_at=task.completed_at,
+    )
+
+
+@router.patch("/projects/{project_id}", response_model=schemas.ProjectDetail)
+def update_project(
+    project_id: int,
+    payload: schemas.ProjectUpdate,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ProjectDetail:
+    """Update a project's title, description, or status."""
+    task = db.scalars(
+        select(models.Task).where(
+            models.Task.id == project_id,
+            models.Task.user_id == current_user.id,
+        )
+    ).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    if "status" in updates:
+        new_status = updates["status"]
+        if new_status == "in-progress" and not task.started_at:
+            task.started_at = datetime.now(timezone.utc)
+        elif new_status in ("completed", "cancelled") and not task.completed_at:
+            task.completed_at = datetime.now(timezone.utc)
+
+    for key, value in updates.items():
+        setattr(task, key, value)
+
+    db.commit()
+    db.refresh(task)
+    return schemas.ProjectDetail(
+        id=str(task.id),
+        title=task.title,
+        description=task.description,
+        status=task.status,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+        started_at=task.started_at,
+        completed_at=task.completed_at,
+    )
+
+
+@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project(
+    project_id: int,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> None:
+    """Delete a project."""
+    task = db.scalars(
+        select(models.Task).where(
+            models.Task.id == project_id,
+            models.Task.user_id == current_user.id,
+        )
+    ).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    db.delete(task)
+    db.commit()
 
 
 @router.get("/billing/balance", response_model=schemas.AccountBalance)
@@ -262,8 +400,16 @@ def get_billing_balance(
         or 0
     )
 
+    # Determine currency from user profile preferences, default ZAR
+    profile = db.scalar(
+        select(models.UserProfile).where(models.UserProfile.user_id == current_user.id),
+    )
+    currency = "ZAR"
+    if profile and profile.profile:
+        currency = profile.profile.get("preferences", {}).get("currency", "ZAR")
+
     return schemas.AccountBalance(
         total_paid=float(total_paid),
         total_pending=float(total_pending),
-        currency="ZAR",
+        currency=currency,
     )

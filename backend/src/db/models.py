@@ -489,22 +489,39 @@ class Task(Base):
 
     __tablename__ = "tasks"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
-    agent_id = Column(String(36), ForeignKey("agents.id"), nullable=False, index=True)
-    goal = Column(Text, nullable=True)
-    input = Column(JSON, nullable=True)
-    status = Column(String(32), nullable=False, server_default="queued", index=True)
-    started_at = Column(DateTime(timezone=True), nullable=True)
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    agent_id = Column(String(36), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(String(50), nullable=False, server_default="pending", index=True)
+    input_data = Column(JSON, nullable=True)
+    output_data = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
-    result = Column(JSON, nullable=True)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
     )
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User")
     agent = relationship("Agent")
+
+    # Convenience aliases for backward compatibility with code using old names
+    @property
+    def goal(self) -> str:
+        return self.title
+
+    @property
+    def input(self):
+        return self.input_data
+
+    @property
+    def result(self):
+        return self.output_data
 
 
 class AgentRun(Base):

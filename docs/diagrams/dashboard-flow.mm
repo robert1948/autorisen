@@ -19,9 +19,10 @@
         <node TEXT="Session invalidations"/>
     </node>
     <node TEXT="Rate limits on auth endpoints">
-        <node TEXT="Login: max 5 attempts / 15 min"/>
-        <node TEXT="Profile fetch: max 60 req / min"/>
-        <node TEXT="Password reset: max 3 / hour"/>
+        <node TEXT="Login: max 5 attempts / 5 min (300s sliding window, 300s block)"/>
+        <node TEXT="Auth endpoints: 5 req / min per IP (SlowAPI)"/>
+        <node TEXT="Global API: 200 req / min per IP (DDoS middleware)"/>
+        <node TEXT="Password reset token: single-use, 30 min TTL"/>
     </node>
     <node TEXT="Input sanitization + CSRF policy">
         <node TEXT="All form inputs sanitized server-side"/>
