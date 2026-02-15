@@ -934,14 +934,16 @@ def _verification_url(token: str) -> str:
 
 
 def _dispatch_verification_email(user: Any) -> str:
+    email = getattr(user, "email", "unknown")
     token_version = int(getattr(user, "token_version", 0))
     token = issue_email_token(getattr(user, "id"), token_version)
     url = _verification_url(token)
     send_verification_email(
-        getattr(user, "email"),
+        email,
         url,
         first_name=getattr(user, "first_name", None),
     )
+    log.info("verification_email_dispatched email=%s", email)
     return token
 
 
@@ -1241,12 +1243,9 @@ async def register_step2(
                         user_obj, "is_email_verified", False
                     ):
                         _dispatch_verification_email(user_obj)
-                except Exception as exc:  # pragma: no cover - SMTP issues
+                except Exception:  # pragma: no cover - SMTP issues
                     log.exception("verification_email_failed email=%s", user_email)
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Unable to send verification email",
-                    ) from exc
+                    # Continue registration — user can request resend later
             raw_access_token = result.get("access_token")
             access_token = str(raw_access_token) if raw_access_token else ""
 

@@ -142,6 +142,7 @@ def send_verification_email(
             "Verification email failed",
             extra={"email": email, "verify_url": verify_url},
         )
+        raise
     else:
         logger.info(
             "Verification email dispatched",
