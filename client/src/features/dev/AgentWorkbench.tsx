@@ -22,7 +22,7 @@ const AgentWorkbench = ({ onLaunchChat }: Props) => (
       <button type="button" className="btn btn--ghost" onClick={onLaunchChat}>
         Open Agent Workbench
       </button>
-      <a className="btn btn--link" href="#docs">
+      <a className="btn btn--link" href="/developers">
         View developer docs →
       </a>
     </div>

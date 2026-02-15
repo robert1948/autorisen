@@ -289,9 +289,9 @@ const Home = () => {
                 <li>Team access with roles and permissions</li>
                 <li>Ops insights and automation tuning</li>
               </ul>
-              <a href="#contact" className="btn btn--primary">
+              <button type="button" onClick={() => launchChat("support")} className="btn btn--primary">
                 Talk to Sales
-              </a>
+              </button>
             </article>
             <article>
               <p className="pricing__badge">Enterprise</p>
@@ -301,9 +301,9 @@ const Home = () => {
                 <li>Custom tool adapters and integrations</li>
                 <li>24/7 support &amp; SLAs</li>
               </ul>
-              <a href="#contact" className="btn btn--ghost">
+              <button type="button" onClick={() => launchChat("support")} className="btn btn--ghost">
                 Contact Us
-              </a>
+              </button>
             </article>
           </div>
         </section>
