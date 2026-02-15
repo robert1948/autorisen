@@ -12,7 +12,7 @@ from backend.src.core.mailer import MailerError, send_email
 
 logger = logging.getLogger(__name__)
 
-LOGIN_NOTIFY_RECIPIENT = "support@cape-control.com"
+LOGIN_NOTIFY_RECIPIENT = "capecontrol.app@gmail.com"
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "email_templates"
 
