@@ -686,15 +686,38 @@ def _oauth_callback(
 
 
 async def _google_exchange_code(_code: str, _redirect_uri: str) -> Dict[str, Any]:
-    """Exchange OAuth code for tokens (currently disabled)."""
+    """Exchange OAuth authorization code for Google tokens."""
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
 
-    # Google OAuth integration is currently disabled
-    # This is a placeholder for future implementation
-    raise HTTPException(
-        status_code=501, detail="Google OAuth integration is not yet implemented."
-    )
+    payload = {
+        "code": _code,
+        "client_id": settings.google_client_id,
+        "client_secret": settings.google_client_secret,
+        "redirect_uri": _redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(_GOOGLE_TOKEN_ENDPOINT, data=payload)
+    except httpx.HTTPError as exc:
+        log.error("google_token_exchange_http_error err=%s", exc)
+        raise HTTPException(
+            status_code=502, detail="Failed to contact Google token endpoint."
+        ) from exc
+
+    if resp.status_code != 200:
+        log.warning(
+            "google_token_exchange_failed status=%s body=%s",
+            resp.status_code,
+            resp.text[:512],
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Google rejected the authorization code. Please try again.",
+        )
+
+    return resp.json()
 
 
 async def _google_fetch_profile(
@@ -766,15 +789,47 @@ async def _google_fetch_profile(
 
 
 async def _linkedin_exchange_code(_code: str, _redirect_uri: str) -> str:
-    """Exchange OAuth code for access token (currently disabled)."""
+    """Exchange OAuth authorization code for LinkedIn access token."""
     if not settings.linkedin_client_id or not settings.linkedin_client_secret:
         raise HTTPException(status_code=500, detail="LinkedIn OAuth is not configured.")
 
-    # LinkedIn OAuth integration is currently disabled
-    # This is a placeholder for future implementation
-    raise HTTPException(
-        status_code=501, detail="LinkedIn OAuth integration is not yet implemented."
-    )
+    payload = {
+        "grant_type": "authorization_code",
+        "code": _code,
+        "client_id": settings.linkedin_client_id,
+        "client_secret": settings.linkedin_client_secret,
+        "redirect_uri": _redirect_uri,
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                _LINKEDIN_TOKEN_ENDPOINT, data=payload, headers=headers
+            )
+    except httpx.HTTPError as exc:
+        log.error("linkedin_token_exchange_http_error err=%s", exc)
+        raise HTTPException(
+            status_code=502, detail="Failed to contact LinkedIn token endpoint."
+        ) from exc
+
+    if resp.status_code != 200:
+        log.warning(
+            "linkedin_token_exchange_failed status=%s body=%s",
+            resp.status_code,
+            resp.text[:512],
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="LinkedIn rejected the authorization code. Please try again.",
+        )
+
+    data = resp.json()
+    access_token = data.get("access_token")
+    if not access_token:
+        raise HTTPException(
+            status_code=400, detail="LinkedIn did not return an access token."
+        )
+    return access_token
 
 
 async def _linkedin_fetch_profile(access_token: str) -> Dict[str, Any]:
