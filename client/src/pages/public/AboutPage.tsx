@@ -117,7 +117,7 @@ const AboutPage: React.FC = () => {
           <div className="bg-blue-50 rounded-lg shadow p-8 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
             <p className="text-lg text-gray-600 mb-6">
-              Join thousands of users who are already automating their workflows with CapeControl.
+              Start automating your workflows with CapeControl today.
             </p>
             <div className="space-x-4">
               <Link

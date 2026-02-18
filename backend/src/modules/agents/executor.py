@@ -161,32 +161,118 @@ class AgentExecutor:
         input_data: Dict[str, Any],
         websocket: Optional[WebSocket] = None,
     ) -> Dict[str, Any]:
-        """Execute the actual agent logic - to be implemented per agent type."""
+        """Execute the actual agent logic by dispatching to the appropriate agent service."""
+        import os
+        from backend.src.core.config import get_settings
 
-        # Placeholder implementation
-        await asyncio.sleep(2)  # Simulate processing time
-
-        if websocket:
-            await websocket.send_text(
-                json.dumps({"message": "Processing step 1 of 3", "progress": 33})
-            )
-
-        await asyncio.sleep(1)
+        settings = get_settings()
 
         if websocket:
             await websocket.send_text(
-                json.dumps({"message": "Processing step 2 of 3", "progress": 66})
+                json.dumps({"message": "Initializing agent...", "progress": 10})
             )
 
-        await asyncio.sleep(1)
+        query = input_data.get("query") or input_data.get("goal", "")
+        agent_slug = str(agent_id).lower().strip()
 
-        if websocket:
-            await websocket.send_text(
-                json.dumps({"message": "Processing step 3 of 3", "progress": 100})
-            )
+        try:
+            # Dispatch to the appropriate agent service
+            if agent_slug in ("cape-ai-guide", "cape_ai_guide"):
+                from .cape_ai_guide.service import CapeAIGuideService
+                from .cape_ai_guide.schemas import CapeAIGuideTaskInput
+                service = CapeAIGuideService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                task_input = CapeAIGuideTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in CapeAIGuideTaskInput.__fields__})
+                result = await service.process_query(task_input)
+                return result.dict()
 
-        return {
-            "message": "Task completed successfully",
-            "timestamp": datetime.utcnow().isoformat(),
-            "processed_data": input_data,
-        }
+            elif agent_slug in ("cape-ai-domain-specialist", "cape_ai_domain_specialist"):
+                from .cape_ai_domain_specialist.service import DomainSpecialistService
+                from .cape_ai_domain_specialist.schemas import DomainSpecialistTaskInput
+                service = DomainSpecialistService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("DOMAIN_SPECIALIST_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                task_input = DomainSpecialistTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in DomainSpecialistTaskInput.__fields__})
+                result = await service.process_query(task_input)
+                return result.dict()
+
+            elif agent_slug in ("customer-agent", "customer_agent"):
+                from .customer_agent.service import CustomerAgentService
+                from .customer_agent.schemas import CustomerAgentTaskInput
+                service = CustomerAgentService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("CUSTOMER_AGENT_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                task_input = CustomerAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in CustomerAgentTaskInput.__fields__})
+                result = await service.process_query(task_input)
+                return result.dict()
+
+            elif agent_slug in ("dev-agent", "dev_agent"):
+                from .dev_agent.service import DevAgentService
+                from .dev_agent.schemas import DevAgentTaskInput
+                service = DevAgentService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("DEV_AGENT_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                task_input = DevAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in DevAgentTaskInput.__fields__})
+                result = await service.process_query(task_input)
+                return result.dict()
+
+            elif agent_slug in ("finance-agent", "finance_agent"):
+                from .finance_agent.service import FinanceAgentService
+                from .finance_agent.schemas import FinanceAgentTaskInput
+                service = FinanceAgentService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("FINANCE_AGENT_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                task_input = FinanceAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in FinanceAgentTaskInput.__fields__})
+                result = await service.process_query(task_input)
+                return result.dict()
+
+            elif agent_slug in ("content-agent", "content_agent"):
+                from .content_agent.service import ContentAgentService
+                from .content_agent.schemas import ContentAgentTaskInput
+                service = ContentAgentService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("CONTENT_AGENT_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                task_input = ContentAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in ContentAgentTaskInput.__fields__})
+                result = await service.process_query(task_input)
+                return result.dict()
+
+            else:
+                # Fallback for unknown/custom agents
+                if websocket:
+                    await websocket.send_text(
+                        json.dumps({"message": f"Executing agent '{agent_slug}'...", "progress": 50})
+                    )
+                await asyncio.sleep(1)
+                return {
+                    "message": f"Task executed by agent '{agent_slug}'",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "input_data": input_data,
+                    "agent_id": agent_slug,
+                }
+
+        except Exception as e:
+            return {
+                "message": f"Agent execution error: {str(e)}",
+                "timestamp": datetime.utcnow().isoformat(),
+                "error": str(e),
+                "agent_id": agent_slug,
+            }
+
+        finally:
+            if websocket:
+                await websocket.send_text(
+                    json.dumps({"message": "Processing complete", "progress": 100})
+                )

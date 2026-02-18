@@ -159,7 +159,7 @@ const HomePage: React.FC = () => {
         </Link>
         
         <p className="mt-10 text-sm text-gray-400">
-          Trusted by 500+ enterprises in finance & energy | © 2025 CapeControl
+          Built for finance & energy professionals | © 2025 CapeControl
         </p>
       </section>
 

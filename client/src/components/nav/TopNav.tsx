@@ -6,7 +6,7 @@ type Props = {
   onOpenSupport: () => void;
 };
 
-const TopNav = ({ onOpenSupport }: Props) => {
+const TopNav = ({ onOpenSupport: _onOpenSupport }: Props) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { search } = useLocation();
   const registerHref = `/auth/register${search}`;
@@ -45,11 +45,6 @@ const TopNav = ({ onOpenSupport }: Props) => {
       </button>
 
       <div className={`top-nav__actions ${isMenuOpen ? 'top-nav__actions--open' : ''}`}>
-        <nav className="top-nav__nav-links">
-          <a href="#home" onClick={closeMenu}>Home</a>
-          <a href="#features" onClick={closeMenu}>Features</a>
-          <a href="#experiences" onClick={closeMenu}>Experiences</a>
-        </nav>
         <div className="top-nav__auth">
           <Link className="link" to="/auth/login" onClick={closeMenu}>
             Login
@@ -57,9 +52,6 @@ const TopNav = ({ onOpenSupport }: Props) => {
           <Link className="btn btn--ghost" to={registerHref} onClick={closeMenu}>
             Register
           </Link>
-          <button type="button" onClick={() => { onOpenSupport(); closeMenu(); }} className="btn btn--primary">
-            Support
-          </button>
         </div>
       </div>
     </header>

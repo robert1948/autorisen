@@ -19,6 +19,59 @@ from .config import PayFastSettings
 log = logging.getLogger(__name__)
 
 
+def _activate_subscription_on_payment(db: Session, invoice: models.Invoice) -> None:
+    """
+    Post-payment hook: activate a user's subscription when payment completes.
+
+    Looks up the user's subscription and transitions it from 'pending' or
+    'trialing' to 'active' with proper period dates.
+    """
+    try:
+        if not invoice.user_id:
+            log.warning("Invoice %s has no user_id, skipping subscription activation", invoice.id)
+            return
+
+        sub = (
+            db.query(models.Subscription)
+            .filter(models.Subscription.user_id == invoice.user_id)
+            .first()
+        )
+
+        if sub is None:
+            log.info("No subscription found for user %s after payment", invoice.user_id)
+            return
+
+        if sub.status in ("pending", "trialing"):
+            now = datetime.now()
+            sub.status = "active"
+            sub.current_period_start = now
+            # Set period end based on plan interval
+            if sub.plan_id in ("pro", "enterprise"):
+                sub.current_period_end = now + _timedelta_30_days()
+            sub.cancel_at_period_end = False
+            sub.cancelled_at = None
+            db.commit()
+            log.info(
+                "Subscription activated for user %s on plan %s after payment on invoice %s",
+                invoice.user_id, sub.plan_id, invoice.id,
+            )
+        else:
+            log.info(
+                "Subscription for user %s already in status %s, no activation needed",
+                invoice.user_id, sub.status,
+            )
+
+    except Exception as e:
+        log.error("Failed to activate subscription after payment: %s", e)
+        # Don't fail the payment processing — subscription activation is best-effort
+
+
+def _timedelta_30_days():
+    """Return a timedelta of 30 days."""
+    from datetime import timedelta
+    return timedelta(days=30)
+
+
 def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str, str]:
     """Return PayFast-ready key/value pairs (excludes None/empty values)."""
 
@@ -291,7 +344,8 @@ def process_itn(
         # Only mark invoice paid if it wasn't already
         if invoice.status != "paid":
             invoice.status = "paid"
-            # TODO: Trigger post-payment hooks (e.g. allocate credits)
+            # Post-payment hooks: activate subscription if linked
+            _activate_subscription_on_payment(db, invoice)
 
     elif payment_status == "FAILED":
         transaction.status = "failed"

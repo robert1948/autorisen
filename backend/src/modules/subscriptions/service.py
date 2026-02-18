@@ -59,8 +59,12 @@ def get_subscription(db: Session, user_id: str) -> models.Subscription | None:
     )
 
 
+# Trial duration in days
+TRIAL_DURATION_DAYS = 14
+
+
 def ensure_subscription(db: Session, user_id: str) -> models.Subscription:
-    """Return existing subscription or auto-create a Starter one."""
+    """Return existing subscription or auto-create a Free one."""
     sub = get_subscription(db, user_id)
     if sub:
         return sub
@@ -68,7 +72,7 @@ def ensure_subscription(db: Session, user_id: str) -> models.Subscription:
     sub = models.Subscription(
         id=str(uuid.uuid4()),
         user_id=user_id,
-        plan_id="starter",
+        plan_id="free",
         status="active",
         current_period_start=now,
         current_period_end=None,
@@ -101,11 +105,6 @@ def subscribe(
     if plan is None:
         raise ValueError(f"Unknown plan: {plan_id}")
 
-    if plan_id == "enterprise":
-        raise ValueError(
-            "Enterprise plans are provisioned via the enterprise inquiry process."
-        )
-
     sub = get_subscription(db, user.id)
     now = _utcnow()
 
@@ -121,8 +120,8 @@ def subscribe(
 
     checkout_url: str | None = None
 
-    if plan_id == "starter":
-        sub.plan_id = "starter"
+    if plan_id == "free":
+        sub.plan_id = "free"
         sub.status = "active"
         sub.current_period_start = now
         sub.current_period_end = None
@@ -130,20 +129,31 @@ def subscribe(
         sub.cancelled_at = None
         sub.payment_provider = None
         sub.provider_subscription_id = None
-        msg = "Starter plan activated. Welcome!"
+        msg = "Free plan activated. Welcome!"
 
-    elif plan_id == "growth":
-        sub.plan_id = "growth"
+    elif plan_id == "pro":
+        sub.plan_id = "pro"
+        # Start with a 14-day free trial, no credit card required
+        sub.status = "trialing"
+        sub.current_period_start = now
+        sub.current_period_end = now + timedelta(days=TRIAL_DURATION_DAYS)
+        sub.cancel_at_period_end = False
+        sub.cancelled_at = None
+        sub.payment_provider = "payfast"
+        # After trial ends, user will need to complete payment
+        checkout_url = "/api/payments/payfast/checkout"
+        msg = f"Pro plan trial activated! You have {TRIAL_DURATION_DAYS} days to explore all Pro features. No credit card required."
+
+    elif plan_id == "enterprise":
+        sub.plan_id = "enterprise"
         sub.status = "pending"
         sub.current_period_start = now
         sub.current_period_end = _period_end(now, "month")
         sub.cancel_at_period_end = False
         sub.cancelled_at = None
         sub.payment_provider = "payfast"
-        # In production this would create a PayFast recurring checkout session.
-        # For now return a placeholder; the ITN webhook will activate on payment.
         checkout_url = "/api/payments/payfast/checkout"
-        msg = "Growth plan selected. Complete payment to activate."
+        msg = "Enterprise plan selected. Our team will reach out to finalize setup."
 
     else:
         raise ValueError(f"Unsupported plan: {plan_id}")
@@ -170,8 +180,8 @@ def cancel_subscription(
     if sub is None:
         raise ValueError("No active subscription found.")
 
-    if sub.plan_id == "starter":
-        raise ValueError("Cannot cancel the free Starter plan.")
+    if sub.plan_id == "free":
+        raise ValueError("Cannot cancel the free plan.")
 
     if sub.status == "cancelled":
         raise ValueError("Subscription is already cancelled.")
@@ -182,11 +192,11 @@ def cancel_subscription(
         sub.status = "cancelled"
         sub.cancelled_at = now
         sub.cancel_at_period_end = False
-        # Downgrade to Starter
-        sub.plan_id = "starter"
+        # Downgrade to Free
+        sub.plan_id = "free"
         sub.current_period_end = None
         sub.payment_provider = None
-        msg = "Subscription cancelled. You've been moved to the Starter plan."
+        msg = "Subscription cancelled. You've been moved to the Free plan."
     else:
         sub.cancel_at_period_end = True
         sub.cancelled_at = now

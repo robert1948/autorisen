@@ -3,15 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import ChatModal, { type ChatPlacement } from "../components/chat/ChatModal";
 import TopNav from "../components/nav/TopNav";
-import OnboardingChat from "../features/chat/OnboardingChat";
-import OnboardingHistory from "../features/chat/OnboardingHistory";
-import AgentWorkbench from "../features/dev/AgentWorkbench";
-import AgentRegistryPanel from "../features/dev/AgentRegistryPanel";
-import MarketplaceShowcase from "../features/marketplace/MarketplaceShowcase";
-import AuthGate from "../features/auth/AuthGate";
 import { useAuth } from "../features/auth/AuthContext";
 import logoUrl from "../assets/capecontrol-logo.png";
 import BuildBadge from "../components/version/BuildBadge";
+import { useLandingAnalytics } from "../hooks/useLandingAnalytics";
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 
@@ -62,6 +57,75 @@ const chatConfig: Record<Exclude<ActiveChat, null>, ChatView> = {
   },
 };
 
+/* ── SVG Icon Components for "AI Magic" Feature Illustrations ── */
+
+const IconShield = () => (
+  <svg className="magic-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="shield-grad" x1="0" y1="0" x2="64" y2="64">
+        <stop offset="0%" stopColor="#667eea" />
+        <stop offset="100%" stopColor="#60a5fa" />
+      </linearGradient>
+    </defs>
+    <path d="M32 4L6 16v16c0 14.4 11.1 27.8 26 32 14.9-4.2 26-17.6 26-32V16L32 4z" stroke="url(#shield-grad)" strokeWidth="2.5" fill="url(#shield-grad)" fillOpacity="0.15" />
+    <path d="M22 32l6 6 14-14" stroke="url(#shield-grad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="48" cy="12" r="2" fill="#fbbf24" opacity="0.9" />
+    <circle cx="52" cy="20" r="1.2" fill="#fbbf24" opacity="0.7" />
+    <circle cx="14" cy="10" r="1.5" fill="#a78bfa" opacity="0.8" />
+  </svg>
+);
+
+const IconSparkle = () => (
+  <svg className="magic-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="sparkle-grad" x1="0" y1="0" x2="64" y2="64">
+        <stop offset="0%" stopColor="#764ba2" />
+        <stop offset="100%" stopColor="#a78bfa" />
+      </linearGradient>
+    </defs>
+    <path d="M32 4l4 12 12 4-12 4-4 12-4-12-12-4 12-4 4-12z" fill="url(#sparkle-grad)" fillOpacity="0.2" stroke="url(#sparkle-grad)" strokeWidth="2" />
+    <path d="M48 36l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z" fill="#fbbf24" fillOpacity="0.8" />
+    <path d="M14 40l1.5 4.5 4.5 1.5-4.5 1.5L14 52l-1.5-4.5L8 46l4.5-1.5L14 40z" fill="#60a5fa" fillOpacity="0.7" />
+    <circle cx="32" cy="20" r="6" fill="url(#sparkle-grad)" fillOpacity="0.35" />
+  </svg>
+);
+
+const IconRocket = () => (
+  <svg className="magic-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="rocket-grad" x1="0" y1="0" x2="64" y2="64">
+        <stop offset="0%" stopColor="#ff6b6b" />
+        <stop offset="100%" stopColor="#fbbf24" />
+      </linearGradient>
+    </defs>
+    <path d="M36 8c-8 4-14 12-16 22l8 8c10-2 18-8 22-16l-2-2c2-6 2-10 2-10s-4 0-10 2l-4-4z" stroke="url(#rocket-grad)" strokeWidth="2.5" fill="url(#rocket-grad)" fillOpacity="0.15" />
+    <circle cx="38" cy="26" r="4" stroke="url(#rocket-grad)" strokeWidth="2" fill="none" />
+    <path d="M20 30c-4 4-6 12-6 12s8-2 12-6" stroke="url(#rocket-grad)" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="16" cy="48" r="2" fill="#fbbf24" opacity="0.9" />
+    <circle cx="12" cy="52" r="1.5" fill="#ff6b6b" opacity="0.7" />
+    <circle cx="20" cy="54" r="1" fill="#a78bfa" opacity="0.6" />
+  </svg>
+);
+
+const IconWand = () => (
+  <svg className="magic-icon magic-icon--lg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="wand-grad" x1="0" y1="0" x2="80" y2="80">
+        <stop offset="0%" stopColor="#667eea" />
+        <stop offset="50%" stopColor="#764ba2" />
+        <stop offset="100%" stopColor="#ff6b6b" />
+      </linearGradient>
+    </defs>
+    <line x1="16" y1="64" x2="56" y2="24" stroke="url(#wand-grad)" strokeWidth="3.5" strokeLinecap="round" />
+    <circle cx="56" cy="24" r="6" fill="url(#wand-grad)" fillOpacity="0.35" stroke="url(#wand-grad)" strokeWidth="2" />
+    <path d="M60 12l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z" fill="#fbbf24" />
+    <path d="M70 30l1.5 3.5 3.5 1.5-3.5 1.5L70 40l-1.5-3.5L65 35l3.5-1.5L70 30z" fill="#60a5fa" opacity="0.8" />
+    <path d="M44 10l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" fill="#a78bfa" opacity="0.7" />
+    <circle cx="24" cy="52" r="1.5" fill="#fbbf24" opacity="0.6" />
+    <circle cx="36" cy="44" r="1" fill="#ff6b6b" opacity="0.5" />
+  </svg>
+);
+
 const Home = () => {
   const { search } = useLocation();
   const navigate = useNavigate();
@@ -70,6 +134,9 @@ const Home = () => {
   const registerHref = `/auth/register${search}`;
   const [state, setState] = useState<HealthState>({ loading: true });
   const [activeChat, setActiveChat] = useState<ActiveChat>(null);
+
+  /* Analytics: auto-track CTA clicks + section visibility */
+  useLandingAnalytics();
 
   const fetchHealth = async () => {
     setState({ loading: true });
@@ -105,7 +172,6 @@ const Home = () => {
 
   const launchChat = (placement: Exclude<ActiveChat, null>) => {
     if (!isAuthenticated) {
-      // Redirect unauthenticated users to register (onboarding) or login (support)
       navigate(placement === "support" ? "/auth/login" : registerHref);
       return;
     }
@@ -116,40 +182,49 @@ const Home = () => {
     <div className="landing">
       <TopNav onOpenSupport={() => launchChat("support")} />
       <main className="landing__main">
-        {/* HERO */}
-        <section className="hero" id="home">
+
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 1 — HERO (Above the Fold)
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="hero magic-hero"
+          id="home"
+          data-analytics-section="hero"
+        >
           <div className="hero__content">
-            <span className="badge badge--accent">Built for small business ops</span>
+            <div className="magic-hero__wand" aria-hidden="true">
+              <IconWand />
+            </div>
             <h1>
-              AI that learns how your business runs—
+              Reframe Your AI Journey:
               <br />
-              then quietly removes the busywork.
+              <span className="magic-gradient-text">From Overwhelm to Effortless Magic.</span>
             </h1>
-            <p>
-              If you&apos;re the founder or operations lead, you&apos;re probably the one holding
-              everything together: spreadsheets, emails, follow-ups, and approvals. CapeControl
-              listens first, maps how your day really works, then deploys AI-powered workflows that
-              reduce manual tasks without forcing you into a rigid new system.
+            <p className="hero__sub">
+              In a landscape of complex integrations and compliance risks, CapeControl transforms AI
+              into your intuitive, secure ally. Say goodbye to &ldquo;range anxiety&rdquo;&mdash;embrace
+              seamless onboarding, secure data querying, and compliant agents that operate like a
+              genius whisper in your ear.
             </p>
+
             <div className="hero__actions">
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => launchChat("onboarding")}
+              <Link
+                to={registerHref}
+                className="btn btn--primary btn--magic"
+                data-analytics-cta="hero-primary"
               >
-                Start a workflow-mapping session
-              </button>
+                Start Your Free Magic Trial
+              </Link>
               <button
                 type="button"
                 className="btn btn--ghost"
                 onClick={() => launchChat("support")}
+                data-analytics-cta="hero-secondary"
               >
                 Talk to our team
               </button>
-              <a className="btn btn--link" href="#demo">
-                See a real workflow →
-              </a>
             </div>
+
             <div className="hero__status">
               <span className={`status status--${statusBadge.tone}`}>
                 {statusBadge.label}
@@ -159,226 +234,263 @@ const Home = () => {
             </div>
           </div>
 
-          {/* HERO VISUAL */}
+          {/* HERO VISUAL — Animated magic illustration */}
           <div className="hero__visual" aria-hidden="true">
-            <div className="hero__pane">
-              <header>
-                <div>
-                  <p className="hero__pane-eyebrow">CapeAI Assistant</p>
-                  <h3>Daily operations checklist</h3>
+            <div className="magic-hero__illustration">
+              <div className="magic-orb magic-orb--1" />
+              <div className="magic-orb magic-orb--2" />
+              <div className="magic-orb magic-orb--3" />
+              <div className="magic-hero__card">
+                <header>
+                  <p className="hero__pane-eyebrow">CapeAI</p>
+                  <span className="hero__badge">Magic</span>
+                </header>
+                <p className="magic-hero__tagline">
+                  &ldquo;Compliance paths illuminated. Setup dread reduced by 70%.&rdquo;
+                </p>
+                <div className="magic-hero__sparkles">
+                  <span>✦</span><span>✧</span><span>✦</span>
                 </div>
-                <span className="hero__badge">Live</span>
-              </header>
-              <ul>
-                <li>
-                  <span>✓</span>Capture today&apos;s incoming requests and tasks
-                </li>
-                <li>
-                  <span>✓</span>Route work to the right person with clear next steps
-                </li>
-                <li>
-                  <span>•</span>Summarise what&apos;s blocking progress before the day ends
-                </li>
-              </ul>
-              <footer>
-                <button
-                  type="button"
-                  className="btn btn--mini"
-                  onClick={() => launchChat("energy")}
-                >
-                  Show me where time was lost
-                </button>
-                <p>AI responses are logged with audit trails and safety guardrails.</p>
-              </footer>
-            </div>
-          </div>
-        </section>
-
-        {/* HIGHLIGHTS */}
-        <section className="section highlights" id="features">
-          <h2>Built for founders and ops teams who need their day back.</h2>
-          <div className="highlights__grid">
-            <article>
-              <h3>Workflow Mapping &amp; Onboarding</h3>
-              <p>
-                Start with one live workflow, like client onboarding or job intake. CapeControl
-                turns it into step-by-step progress you can track, with clear "next step" guidance.
-                Capture blockers as they happen and improve the flow over time.
-              </p>
-            </article>
-            <article>
-              <h3>Operations Command Center</h3>
-              <p>
-                Get decision-ready answers, not raw tables. Use guided, plain-language questions to
-                see current status, recurring blockers, and trends. Each response is backed by your
-                live system data and a clear summary.
-              </p>
-            </article>
-            <article>
-              <h3>Developers When You&apos;re Ready</h3>
-              <p>
-                Start simple with a no-code setup. When you&apos;re ready, enable published agents and
-                integrations with reviewed manifests, permissions, and audit logs, so every
-                extension stays governed and traceable.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        {/* SHOWCASE */}
-        <section className="section showcase" id="demo">
-          <div className="showcase__content">
-            <h2>From messy process to clear, assisted workflow.</h2>
-            <p>
-              Pick one process—like quoting, onboarding, or job handover. CapeControl turns the
-              existing emails and spreadsheets into a guided flow, with AI agents nudging the next
-              step and surfacing what needs your attention.
-            </p>
-            <ul>
-              <li>Keep the tools you use today; add structure and automation on top.</li>
-              <li>One conversation that follows your customer from first contact to follow-up.</li>
-              <li>Ops visibility with audit-grade event logging and clear owners for each step.</li>
-            </ul>
-          </div>
-          <div className="showcase__panel" aria-hidden="true">
-            <div className="chart">
-              <p>Manual hours per week</p>
-              <div className="chart__bars">
-                <div style={{ height: "85%" }} />
-                <div style={{ height: "70%" }} />
-                <div style={{ height: "45%" }} />
-                <div style={{ height: "30%" }} />
-              </div>
-            </div>
-            <div className="showcase__stats">
-              <div>
-                <span>40%</span>
-                Less time spent on repetitive admin
-              </div>
-              <div>
-                <span>2×</span>
-                Faster from request to completed workflow
               </div>
             </div>
           </div>
         </section>
 
-        {/* PRICING */}
-        <section className="section pricing" id="pricing">
-          <h2>Start small, grow as your workflows mature.</h2>
-          <div className="pricing__tiers">
-            <article>
-              <p className="pricing__badge">Starter</p>
-              <h3>$0</h3>
-              <ul>
-                <li>One guided workflow-mapping session</li>
-                <li>CapeAI assistant for a single process</li>
-                <li>Basic reporting and history</li>
-              </ul>
-              <Link to={registerHref} className="btn btn--ghost">
-                Get Started Free
-              </Link>
-            </article>
-            <article className="pricing__featured">
-              <p className="pricing__badge">Growth</p>
-              <h3>
-                $249<span>/mo</span>
-              </h3>
-              <ul>
-                <li>Multiple workflows across your business</li>
-                <li>Team access with roles and permissions</li>
-                <li>Ops insights and automation tuning</li>
-              </ul>
-              <button type="button" onClick={() => launchChat("support")} className="btn btn--primary">
-                Talk to Sales
-              </button>
-            </article>
-            <article>
-              <p className="pricing__badge">Enterprise</p>
-              <h3>Let&apos;s talk</h3>
-              <ul>
-                <li>Dedicated environment &amp; governance</li>
-                <li>Custom tool adapters and integrations</li>
-                <li>24/7 support &amp; SLAs</li>
-              </ul>
-              <button type="button" onClick={() => launchChat("support")} className="btn btn--ghost">
-                Contact Us
-              </button>
-            </article>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="section faq" id="faq">
-          <h2>Frequently asked questions</h2>
-          <div className="faq__grid">
-            <article>
-              <h3>Do I need technical skills to get value?</h3>
-              <p>
-                No. We start with a conversation about how your business runs today and help you map
-                one workflow. You don&apos;t need to design prompts, write code, or rebuild your
-                stack to see results.
-              </p>
-            </article>
-            <article>
-              <h3>Will I have to change all my tools?</h3>
-              <p>
-                Not at all. CapeControl layers on top of your existing tools wherever possible,
-                using AI agents and workflows to connect the dots and reduce manual steps.
-              </p>
-            </article>
-            <article>
-              <h3>Is our data secure and auditable?</h3>
-              <p>
-                Yes. Workflows run with audit logs, role-based access, and environment separation.
-                You can see who did what, when—and which agents were involved in each action.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        {/* AUTH-GATED EXPERIENCE SECTIONS */}
-        <AuthGate
-          fallback={
-            <section className="section experiences" id="experiences">
-              <h2>Experience CapeControl right now</h2>
-              <p>Please log in to access guided workflows and developer tools.</p>
-            </section>
-          }
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 2 — CORE PHILOSOPHY / THE "WHY US?"
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="section magic-philosophy"
+          id="philosophy"
+          data-analytics-section="philosophy"
         >
-          <section className="section experiences" id="experiences">
-            <h2>Experience CapeControl right now</h2>
-            <div className="experiences__grid">
-              <OnboardingChat onLaunchChat={() => launchChat("onboarding")} />
-              <AgentWorkbench onLaunchChat={() => launchChat("developer")} />
-              <OnboardingHistory />
-            </div>
-          </section>
-          <section className="section developer" id="developers">
-            <AgentRegistryPanel />
-          </section>
-          <MarketplaceShowcase />
-        </AuthGate>
-
-        {/* ABOUT */}
-        <section className="section about" id="about">
-          <h2>About CapeControl</h2>
-          <div className="about__content">
-            <p>
-              CapeControl is built by Cape Craft Projects CC with a single goal: give small
-              businesses and lean teams enterprise-grade AI workflows without enterprise complexity.
-              We blend guided onboarding, transparent automation, and developer tooling so you can
-              move from messy processes to reliable flows in days—not quarters.
+          <div className="magic-section__header">
+            <h2>The Alchemy of AI: Why Rationality Falls Short</h2>
+            <p className="magic-section__subhead">
+              Rationality Gets You Bronze. <span className="magic-gradient-text">Magic Gets You Gold.</span>
             </p>
-            <ul className="about__list">
-              <li>Headquarters: Cape Town, South Africa (VAT: 4270105119)</li>
-              <li>Focus: Secure AI agents, operational intelligence, and workflow automation</li>
-              <li>Mission: Help operators reclaim their day and scale responsibly with AI</li>
-            </ul>
+          </div>
+          <div className="magic-philosophy__body">
+            <p>
+              Inspired by Rory Sutherland&apos;s <em>Alchemy</em>, we recognize that engineering
+              alone is insufficient for business transformation. The real driver of adoption is the
+              psychological spark&mdash;the reframing, the element of surprise. CapeControl offers
+              more than just faster AI; it delivers an AI experience that feels truly{" "}
+              <strong>liberating</strong>.
+            </p>
           </div>
         </section>
 
-        {/* LEGAL SECTIONS (unchanged structure) */}
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 3 — KEY FEATURES / SOLUTIONS
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="section magic-features"
+          id="features"
+          data-analytics-section="features"
+        >
+          <div className="magic-section__header">
+            <h2>What We Do</h2>
+          </div>
+          <div className="magic-features__grid">
+            <article
+              className="magic-feature-card"
+              data-analytics-block="feature-tame"
+            >
+              <div className="magic-feature-card__icon">
+                <IconShield />
+              </div>
+              <h3>Tame AI Anxiety</h3>
+              <p>
+                Our guided onboarding illuminates compliance paths, dramatically reducing setup dread
+                (by 70%), much like neon-lit charging stations guide EV owners.
+              </p>
+            </article>
+
+            <article
+              className="magic-feature-card"
+              data-analytics-block="feature-query"
+            >
+              <div className="magic-feature-card__icon">
+                <IconSparkle />
+              </div>
+              <h3>Query with Magic</h3>
+              <p>
+                Intuitive data chats designed for energy and finance professionals, transforming
+                complex spreadsheets into instant &ldquo;aha!&rdquo; moments&mdash;no PhD required.
+              </p>
+            </article>
+
+            <article
+              className="magic-feature-card"
+              data-analytics-block="feature-agents"
+            >
+              <div className="magic-feature-card__icon">
+                <IconRocket />
+              </div>
+              <h3>Agents That Delight</h3>
+              <p>
+                Secure, modular AI agents for developers. Build compliant bots that surprise with
+                their efficiency, not their errors.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 4 — USP / REVERSE BENCHMARK
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="section magic-usp"
+          id="usp"
+          data-analytics-section="usp"
+        >
+          <div className="magic-section__header">
+            <h2>
+              Reverse Benchmark: We Fix the Worst, We Don&apos;t Copy the Best
+            </h2>
+            <p className="magic-section__subhead">
+              We Don&apos;t Copy the Best. <span className="magic-gradient-text">We Fix the Worst.</span>
+            </p>
+          </div>
+
+          <div className="magic-usp__grid">
+            <article
+              className="magic-usp-card"
+              data-analytics-block="usp-onboarding"
+            >
+              <span className="magic-usp-card__badge">Solved</span>
+              <h3>Clunky Onboarding?</h3>
+              <p>
+                Our &ldquo;Guided Onboarding Theater&rdquo; offers a personalized, witty concierge
+                experience, accelerating adoption by <strong>4x</strong>.
+              </p>
+            </article>
+
+            <article
+              className="magic-usp-card"
+              data-analytics-block="usp-compliance"
+            >
+              <span className="magic-usp-card__badge">Think Again</span>
+              <h3>Boring Compliance?</h3>
+              <p>
+                Experience &ldquo;Compliance as Comedy&rdquo;: tools and videos that make red tape
+                feel like an engaging spy thriller. It&apos;s secure, but surprisingly fun.
+              </p>
+            </article>
+
+            <article
+              className="magic-usp-card"
+              data-analytics-block="usp-playground"
+            >
+              <span className="magic-usp-card__badge">Playtime Awaits</span>
+              <h3>Rigid Tools?</h3>
+              <p>
+                The &ldquo;Agent Playground&rdquo; is a free sandbox for wild, compliant creation.
+                Devs are empowered to unlock innovation, even by building memes from finance data.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 5 — VISION / 80-20 STRATEGY
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="section magic-vision"
+          id="vision"
+          data-analytics-section="vision"
+        >
+          <div className="magic-section__header">
+            <h2>Explore the Magic: 20% Wild, 80% Wise</h2>
+            <p className="magic-section__subhead">
+              Balance the Hive: Exploit Efficiency, Explore Surprises.
+            </p>
+          </div>
+
+          <div className="magic-vision__content">
+            <p>
+              Like bees scouting new fields, we balance proven ROI (80% Exploit Efficiency) with
+              necessary lucky bets (20% Explore Magic). Your AI will thrive on fat-tailed
+              wins, rather than starving in local maxima.
+            </p>
+
+            <div className="magic-vision__orbs">
+              <div className="magic-vision__orb magic-vision__orb--exploit">
+                <span className="magic-vision__orb-pct">80%</span>
+                <span className="magic-vision__orb-label">Exploit</span>
+                <span className="magic-vision__orb-sub">Efficiency</span>
+              </div>
+              <div className="magic-vision__orb magic-vision__orb--explore">
+                <span className="magic-vision__orb-pct">20%</span>
+                <span className="magic-vision__orb-label">Explore</span>
+                <span className="magic-vision__orb-sub">Magic</span>
+              </div>
+            </div>
+
+            <div className="magic-vision__community">
+              <h3>Join our AI Alchemist Circles</h3>
+              <p>
+                Share &ldquo;magic moments&rdquo; with peers in finance and energy. A single
+                surprising insight can <strong>4x</strong> your processes.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 6 — SECONDARY CTA / HUMAN SPARK
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="section magic-spark"
+          id="spark"
+          data-analytics-section="secondary-cta"
+        >
+          <div className="magic-spark__inner">
+            <h2>The Human Spark in an AI World</h2>
+            <p>
+              Even as algorithms dominate, a genuine &ldquo;posty&rdquo; moment&mdash;a trusted chat
+              with our AI Whisperer&mdash;can create brand quakes that last.
+            </p>
+            <button
+              type="button"
+              className="btn btn--secondary btn--magic"
+              onClick={() => launchChat("support")}
+              data-analytics-cta="secondary-discovery"
+            >
+              Book a Surprise Discovery Chat
+            </button>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════
+            SECTION 7 — FINAL CTA
+            ═══════════════════════════════════════════════════════════ */}
+        <section
+          className="section magic-final-cta"
+          id="get-started"
+          data-analytics-section="final-cta"
+        >
+          <h2>Ready to Ignite Your Alchemy?</h2>
+          <p className="magic-final-cta__sub">
+            Perceptions shift. Behaviors follow. Worlds transform.
+          </p>
+          <Link
+            to={registerHref}
+            className="btn btn--primary btn--magic btn--lg"
+            data-analytics-cta="final-primary"
+          >
+            Get Started Free – No Card Needed
+          </Link>
+        </section>
+
+        {/* MOTTO BANNER */}
+        <div className="magic-motto" data-analytics-block="motto-banner">
+          <p>&ldquo;Ideas that don&apos;t make sense&hellip; until they do.&rdquo;</p>
+          <span>— Inspired by Rory Sutherland</span>
+        </div>
+
+        {/* LEGAL */}
         <section className="section legal" id="privacy">
           <h2>Privacy Policy</h2>
           <div className="legal__card">
@@ -403,7 +515,7 @@ const Home = () => {
             <p>
               By using CapeControl you agree to operate within applicable laws, respect platform
               rate limits, and protect credentials issued to your organization. CapeControl provides
-              the service “as is” with commercially reasonable availability targets.
+              the service &ldquo;as is&rdquo; with commercially reasonable availability targets.
             </p>
             <ul>
               <li>
@@ -419,8 +531,8 @@ const Home = () => {
         </section>
       </main>
 
-      {/* FOOTER (unchanged layout, copy slightly tuned above) */}
-      <footer className="footer">
+      {/* FOOTER */}
+      <footer className="footer" data-analytics-section="footer">
         <div className="footer__content">
           <div className="footer__main">
             <div className="footer__brand">
@@ -436,8 +548,8 @@ const Home = () => {
                 <h3>CapeControl</h3>
                 <div className="footer__legal-desktop">
                   <p>
-                    Workflow-first AI platform that helps small businesses and growing teams run more
-                    smoothly, with enterprise-grade security behind the scenes.
+                    AI Alchemy platform that transforms enterprises in finance &amp; energy with
+                    secure, intuitive, and surprisingly delightful AI workflows.
                   </p>
                   <p className="footer__brand-meta">Operated by Cape Craft Projects CC (VAT: 4270105119)</p>
                   <p className="footer__brand-meta">Trading as CapeControl</p>
@@ -452,48 +564,25 @@ const Home = () => {
             <div className="footer__column">
               <h4>Platform</h4>
               <ul className="footer__links-list">
-                <li>
-                  <a href="#home">Overview</a>
-                </li>
-                <li>
-                  <a href="#experiences">How It Works</a>
-                </li>
-                <li>
-                  <a href="#features">Workflows</a>
-                </li>
-                <li>
-                  <a href="#pricing">Pricing</a>
-                </li>
+                <li><a href="#home">Overview</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#usp">Why CapeControl</a></li>
+                <li><a href="#vision">Our Vision</a></li>
               </ul>
             </div>
 
             <div className="footer__column">
               <h4>Information</h4>
               <ul className="footer__links-list">
-                <li>
-                  <Link to="/customer-terms">Proposal Terms</Link>
-                </li>
-                <li>
-                  <Link to="/developers">Developer Info</Link>
-                </li>
-                <li>
-                  <Link to="/developer-terms">Developer T&amp;Cs</Link>
-                </li>
-                <li>
-                  <a href="#developers">Developer Hub</a>
-                </li>
-                <li>
-                  <a href="#experiences">Join as Developer</a>
-                </li>
+                <li><Link to="/customer-terms">Proposal Terms</Link></li>
+                <li><Link to="/developers">Developer Info</Link></li>
+                <li><Link to="/developer-terms">Developer T&amp;Cs</Link></li>
               </ul>
             </div>
 
             <div className="footer__column">
               <h4>Company</h4>
               <ul className="footer__links-list">
-                <li>
-                  <a href="#about">About Us</a>
-                </li>
                 <li>
                   <button
                     type="button"
@@ -503,20 +592,17 @@ const Home = () => {
                     Contact
                   </button>
                 </li>
-                <li>
-                  <a href="#privacy">Privacy Policy</a>
-                </li>
-                <li>
-                  <Link to="/terms-and-conditions">Customer T&amp;Cs</Link>
-                </li>
+                <li><a href="#privacy">Privacy Policy</a></li>
+                <li><Link to="/terms-and-conditions">Customer T&amp;Cs</Link></li>
               </ul>
             </div>
           </div>
 
           <div className="footer__bottom">
-            <p>© {new Date().getFullYear()} CapeControl. All rights reserved.</p>
+            <p>
+              © {new Date().getFullYear()} CapeControl. All rights reserved.
+            </p>
             <div className="footer__bottom-meta">
-              <span>Built with ❤️ for operators and their teams.</span>
               <span className="footer__status">
                 <span className="footer__status-dot" aria-hidden="true" />
                 All systems operational

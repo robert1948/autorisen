@@ -41,6 +41,30 @@ try:
 except ImportError:
     cape_ai_domain_specialist_router = None
 
+# Import Customer Agent router
+try:
+    from .customer_agent.router import router as customer_agent_router
+except ImportError:
+    customer_agent_router = None
+
+# Import Dev Agent router
+try:
+    from .dev_agent.router import router as dev_agent_router
+except ImportError:
+    dev_agent_router = None
+
+# Import Finance Agent router
+try:
+    from .finance_agent.router import router as finance_agent_router
+except ImportError:
+    finance_agent_router = None
+
+# Import Content Agent router
+try:
+    from .content_agent.router import router as content_agent_router
+except ImportError:
+    content_agent_router = None
+
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 # Include specialized agent routers
@@ -48,6 +72,14 @@ if cape_ai_guide_router:
     router.include_router(cape_ai_guide_router)
 if cape_ai_domain_specialist_router:
     router.include_router(cape_ai_domain_specialist_router)
+if customer_agent_router:
+    router.include_router(customer_agent_router)
+if dev_agent_router:
+    router.include_router(dev_agent_router)
+if finance_agent_router:
+    router.include_router(finance_agent_router)
+if content_agent_router:
+    router.include_router(content_agent_router)
 
 
 def _get_agent(db: Session, agent_id: str, owner: models.User) -> models.Agent:

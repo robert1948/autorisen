@@ -270,13 +270,13 @@ function SubscriptionsSection() {
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium text-gray-900">CapeControl Professional</h3>
+                <h3 className="text-lg font-medium text-gray-900">CapeControl Pro</h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Advanced automation and agent management
+                  50 AI agents, 2,500 monthly executions, all integrations
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-lg font-semibold text-gray-900">R 99.00/month</div>
+                <div className="text-lg font-semibold text-gray-900">$29.00/month</div>
                 <PaymentStatusIndicator status="paid" />
               </div>
             </div>
@@ -312,9 +312,9 @@ function SubscriptionsSection() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Plans</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { name: 'Starter', price: 29, features: ['5 Agents', 'Basic Support', '10GB Storage'] },
-              { name: 'Professional', price: 99, features: ['Unlimited Agents', 'Priority Support', '100GB Storage'], current: true },
-              { name: 'Enterprise', price: 299, features: ['Everything', 'Custom Integration', 'Dedicated Support'] },
+              { name: 'Free', price: 0, features: ['5 AI Agents', '100 Monthly Executions', 'Basic Integrations', 'Community Support'] },
+              { name: 'Pro', price: 29, features: ['50 AI Agents', '2,500 Monthly Executions', 'All Integrations', 'Priority Support', 'Custom Workflows', 'Analytics Dashboard'], current: true },
+              { name: 'Enterprise', price: 99, features: ['Unlimited AI Agents', 'Unlimited Executions', 'Custom Integrations', 'Dedicated Support', 'SLA Guarantees'] },
             ].map((plan) => (
               <div
                 key={plan.name}
@@ -324,8 +324,8 @@ function SubscriptionsSection() {
               >
                 <h4 className="font-medium text-gray-900">{plan.name}</h4>
                 <div className="mt-2">
-                  <span className="text-2xl font-bold">R {plan.price}</span>
-                  <span className="text-gray-500">/month</span>
+                  <span className="text-2xl font-bold">${plan.price}</span>
+                  <span className="text-gray-500">{plan.price > 0 ? '/month' : ' forever'}</span>
                 </div>
                 <ul className="mt-3 space-y-1 text-sm text-gray-600">
                   {plan.features.map((feature, index) => (

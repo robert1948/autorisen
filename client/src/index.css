@@ -1073,6 +1073,663 @@ a {
   padding: 24px;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   MAGIC / ALCHEMY Landing Page Styles
+   7-Section conversion-optimised layout
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Gradient text utility ── */
+.magic-gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 40%, #ff6b6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Section-wide header block ── */
+.magic-section__header {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.magic-section__subhead {
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  color: rgba(203, 213, 225, 0.9);
+  margin: 12px 0 0;
+  font-weight: 500;
+}
+
+/* ── SVG icon sizing ── */
+.magic-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.magic-icon--lg {
+  width: 72px;
+  height: 72px;
+}
+
+/* ── SECTION 1: HERO  ── */
+.magic-hero .hero__content {
+  position: relative;
+}
+
+.magic-hero__wand {
+  margin-bottom: 8px;
+}
+
+.hero__sub {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  max-width: 600px;
+  color: rgba(226, 232, 240, 0.88);
+  margin: 16px 0 0;
+}
+
+.hero__proof {
+  margin: 20px 0 0;
+  font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.hero__proof strong {
+  color: rgba(226, 232, 240, 0.95);
+}
+
+/* Magic CTA animation */
+.btn--magic {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn--magic::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4), rgba(255, 107, 107, 0.4));
+  z-index: -1;
+  filter: blur(12px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.btn--magic:hover::after {
+  opacity: 1;
+}
+
+.btn--lg {
+  padding: 18px 48px;
+  font-size: 1.15rem;
+}
+
+.btn--secondary {
+  background: transparent;
+  border: 2px solid rgba(102, 126, 234, 0.6);
+  color: #c7d2fe;
+  padding: 14px 32px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn--secondary:hover {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.9);
+  color: #e0e7ff;
+}
+
+/* Hero magic illustration */
+.magic-hero__illustration {
+  position: relative;
+  width: clamp(300px, 85%, 480px);
+  height: 340px;
+  margin: 0 auto;
+}
+
+.magic-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.5;
+  animation: magic-float 6s ease-in-out infinite;
+}
+
+.magic-orb--1 {
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.6), transparent 70%);
+  top: 10%;
+  left: 5%;
+}
+
+.magic-orb--2 {
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(118, 75, 162, 0.5), transparent 70%);
+  top: 40%;
+  right: 10%;
+  animation-delay: -2s;
+}
+
+.magic-orb--3 {
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.4), transparent 70%);
+  bottom: 10%;
+  left: 25%;
+  animation-delay: -4s;
+}
+
+@keyframes magic-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(12px, -18px) scale(1.08); }
+  66% { transform: translate(-8px, 10px) scale(0.95); }
+}
+
+.magic-hero__card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(160deg, rgba(15, 32, 70, 0.92), rgba(37, 99, 235, 0.7));
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 24px;
+  padding: 28px 32px;
+  box-shadow: 0 25px 65px rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: clamp(260px, 80%, 380px);
+  z-index: 2;
+}
+
+.magic-hero__card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.magic-hero__tagline {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(226, 232, 240, 0.9);
+  font-style: italic;
+  margin: 0;
+}
+
+.magic-hero__sparkles {
+  display: flex;
+  gap: 8px;
+  font-size: 1.1rem;
+  color: #fbbf24;
+  justify-content: center;
+  animation: magic-twinkle 2.5s ease-in-out infinite;
+}
+
+@keyframes magic-twinkle {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* ── SECTION 2: PHILOSOPHY ── */
+.magic-philosophy {
+  text-align: center;
+  padding: 80px 24px;
+  position: relative;
+}
+
+.magic-philosophy::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(118, 75, 162, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.magic-philosophy__body {
+  max-width: 780px;
+  margin: 0 auto;
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.magic-philosophy__body em {
+  color: #c4b5fd;
+}
+
+.magic-philosophy__body strong {
+  color: #e0e7ff;
+}
+
+/* ── SECTION 3: FEATURES ── */
+.magic-features {
+  padding: 80px 24px;
+}
+
+.magic-features__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  max-width: 1200px;
+  margin: 40px auto 0;
+}
+
+.magic-feature-card {
+  background: rgba(10, 22, 48, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 24px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.magic-feature-card::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #ff6b6b);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.magic-feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 70px rgba(8, 11, 23, 0.55);
+  border-color: rgba(102, 126, 234, 0.4);
+}
+
+.magic-feature-card:hover::before {
+  opacity: 1;
+}
+
+.magic-feature-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.magic-feature-card h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.magic-feature-card p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(203, 213, 225, 0.8);
+  margin: 0;
+}
+
+/* Colour-code each feature card's icon background */
+.magic-feature-card:nth-child(1) .magic-feature-card__icon {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.magic-feature-card:nth-child(2) .magic-feature-card__icon {
+  background: rgba(118, 75, 162, 0.1);
+  border-color: rgba(118, 75, 162, 0.2);
+}
+
+.magic-feature-card:nth-child(3) .magic-feature-card__icon {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.2);
+}
+
+/* ── SECTION 4: USP / REVERSE BENCHMARK ── */
+.magic-usp {
+  padding: 80px 24px;
+  position: relative;
+}
+
+.magic-usp::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 22, 48, 0.4) 0%, rgba(4, 10, 20, 0.6) 100%);
+  pointer-events: none;
+  border-radius: 32px;
+}
+
+.magic-usp__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+  max-width: 1200px;
+  margin: 40px auto 0;
+  position: relative;
+  z-index: 1;
+}
+
+.magic-usp-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 22px;
+  padding: 32px 28px;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.magic-usp-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 55px rgba(5, 12, 25, 0.5);
+}
+
+.magic-usp-card__badge {
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.25));
+  color: #6ee7b7;
+  padding: 4px 16px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.magic-usp-card h3 {
+  font-size: 1.25rem;
+  margin: 0 0 10px;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.magic-usp-card p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(203, 213, 225, 0.8);
+  margin: 0;
+}
+
+.magic-usp-card p strong {
+  color: #fbbf24;
+}
+
+/* ── SECTION 5: VISION / 80-20 ── */
+.magic-vision {
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.magic-vision__content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.magic-vision__content > p {
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: rgba(203, 213, 225, 0.85);
+  margin: 24px 0 48px;
+}
+
+.magic-vision__orbs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(32px, 8vw, 72px);
+  margin: 0 auto 48px;
+}
+
+.magic-vision__orb {
+  width: clamp(140px, 28vw, 220px);
+  height: clamp(140px, 28vw, 220px);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.3);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  cursor: default;
+}
+
+.magic-vision__orb:hover {
+  transform: scale(1.06);
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.4);
+}
+
+.magic-vision__orb--exploit {
+  background: linear-gradient(135deg, #667eea, #4f46e5);
+}
+
+.magic-vision__orb--explore {
+  background: linear-gradient(135deg, #ff6b6b, #ef4444);
+}
+
+.magic-vision__orb-pct {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.magic-vision__orb-label {
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.magic-vision__orb-sub {
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.magic-vision__community {
+  background: rgba(10, 22, 48, 0.6);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 20px;
+  padding: 28px 32px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.magic-vision__community h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #c7d2fe;
+}
+
+.magic-vision__community p {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: rgba(203, 213, 225, 0.8);
+  margin: 0;
+}
+
+/* ── SECTION 6: SECONDARY CTA / HUMAN SPARK ── */
+.magic-spark {
+  padding: 80px 24px;
+  text-align: center;
+  position: relative;
+}
+
+.magic-spark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 107, 107, 0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.magic-spark__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.magic-spark__inner h2 {
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  margin: 0 0 16px;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.magic-spark__inner > p {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: rgba(203, 213, 225, 0.85);
+  margin: 0 0 32px;
+}
+
+/* ── SECTION 7: FINAL CTA ── */
+.magic-final-cta {
+  text-align: center;
+  padding: 100px 24px 60px;
+  position: relative;
+}
+
+.magic-final-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at bottom center, rgba(102, 126, 234, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.magic-final-cta h2 {
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  margin: 0 0 12px;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+}
+
+.magic-final-cta__sub {
+  font-size: 1.2rem;
+  color: rgba(203, 213, 225, 0.85);
+  margin: 0 0 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.magic-final-cta .btn {
+  position: relative;
+  z-index: 1;
+}
+
+.magic-final-cta__proof {
+  margin: 28px 0 0;
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.7);
+  position: relative;
+  z-index: 1;
+}
+
+.magic-final-cta__proof strong {
+  color: rgba(203, 213, 225, 0.9);
+}
+
+/* ── MOTTO BANNER ── */
+.magic-motto {
+  text-align: center;
+  padding: 32px 24px;
+  background: rgba(20, 20, 30, 0.9);
+  border-top: 1px solid rgba(51, 65, 85, 0.3);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.magic-motto p {
+  font-size: 1.2rem;
+  font-style: italic;
+  color: rgba(226, 232, 240, 0.75);
+  margin: 0 0 4px;
+}
+
+.magic-motto span {
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.6);
+}
+
+/* ── RESPONSIVE: MAGIC SECTIONS ── */
+@media (max-width: 768px) {
+  .magic-philosophy,
+  .magic-features,
+  .magic-usp,
+  .magic-vision,
+  .magic-spark,
+  .magic-final-cta {
+    padding: 56px 16px;
+  }
+
+  .magic-features__grid,
+  .magic-usp__grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .magic-vision__orbs {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .magic-vision__orb {
+    width: 160px;
+    height: 160px;
+  }
+
+  .magic-hero__illustration {
+    height: 260px;
+  }
+
+  .magic-hero__card {
+    width: clamp(240px, 88%, 340px);
+    padding: 22px 24px;
+  }
+
+  .magic-hero__wand {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .magic-feature-card {
+    padding: 28px 22px;
+  }
+
+  .magic-usp-card {
+    padding: 24px 20px;
+  }
+
+  .magic-final-cta {
+    padding: 60px 16px 40px;
+  }
+
+  .magic-vision__community {
+    padding: 22px 20px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   END — Magic Landing Page Styles
+   ═══════════════════════════════════════════════════════════════ */
+
 .footer {
   width: 100%;
   display: flex;
