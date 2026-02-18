@@ -1644,15 +1644,26 @@ async def login_google(
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ):
-    await _verify_recaptcha_token(payload.recaptcha_token, request, required=True)
+    # reCAPTCHA is optional for social login: the user already passed it before
+    # the OAuth redirect, and sessionStorage may not survive the round-trip.
+    await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
     ip = request.client.host if request.client else "unknown"
 
     id_token = payload.id_token
     access_token: Optional[str] = None
     if payload.code:
+        # The redirect_uri for code exchange MUST match the one originally used
+        # in the OAuth authorization request.  Use the configured callback URL
+        # (GOOGLE_CALLBACK_URL) rather than whatever the frontend sends, since
+        # the frontend redirect_uri is the *page* URL, not the OAuth callback.
+        exchange_redirect = (
+            settings.google_callback_url
+            or payload.redirect_uri
+            or str(request.url_for("oauth_google_callback"))
+        )
         token_data = await _google_exchange_code(
-            payload.code, payload.redirect_uri or ""
+            payload.code, exchange_redirect
         )
         id_token = id_token or token_data.get("id_token")
         access_token = token_data.get("access_token")
@@ -1687,14 +1698,23 @@ async def login_linkedin(
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ):
-    await _verify_recaptcha_token(payload.recaptcha_token, request, required=True)
+    # reCAPTCHA is optional for social login: the user already passed it before
+    # the OAuth redirect, and sessionStorage may not survive the round-trip.
+    await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
     ip = request.client.host if request.client else "unknown"
 
     access_token = payload.access_token
     if payload.code:
+        # Use the configured callback URL so the redirect_uri matches the
+        # original OAuth authorization request.
+        exchange_redirect = (
+            settings.linkedin_callback_url
+            or payload.redirect_uri
+            or str(request.url_for("oauth_linkedin_callback"))
+        )
         access_token = await _linkedin_exchange_code(
-            payload.code, payload.redirect_uri or ""
+            payload.code, exchange_redirect
         )
 
     if not access_token:

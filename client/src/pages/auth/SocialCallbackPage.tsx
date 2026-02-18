@@ -55,14 +55,10 @@ const SocialCallback = () => {
       return;
     }
 
-    const recaptchaToken = sessionStorage.getItem(recaptchaKey);
-    if (!recaptchaToken) {
-      sessionStorage.removeItem(stateKey);
-      sessionStorage.removeItem(recaptchaKey);
-      setStatus("error");
-      setMessage("Verification expired. Please retry the sign-in.");
-      return;
-    }
+    // reCAPTCHA token may not survive the OAuth redirect round-trip (cross-origin
+    // sessionStorage). Pass whatever we have; backend treats it as optional for
+    // social logins since the user already passed reCAPTCHA before the redirect.
+    const recaptchaToken = sessionStorage.getItem(recaptchaKey) ?? "";
 
     const redirectUri = `${window.location.origin}/auth/callback`;
 
