@@ -36,11 +36,46 @@ function mapStatus(raw: string): SystemStatus {
 export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   const navigate = useNavigate();
   const [systemStatus, setSystemStatus] = useState<SystemStatus>("operational");
+  const [projectCount, setProjectCount] = useState<number | null>(null);
 
-  // TODO: fetch from /api/health or status endpoint
+  // Fetch system status from /api/health
   useEffect(() => {
-    // Placeholder — will connect to real status endpoint
-    setSystemStatus("operational");
+    const controller = new AbortController();
+    fetch("/api/health", { signal: controller.signal })
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error(`HTTP ${res.status}`);
+      })
+      .then((data: { status?: string }) => {
+        setSystemStatus(mapStatus(data.status ?? "operational"));
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setSystemStatus("partial");
+      });
+    return () => controller.abort();
+  }, []);
+
+  // Fetch active project count from /api/projects/status
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/projects/status", {
+      signal: controller.signal,
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error(`HTTP ${res.status}`);
+      })
+      .then((data: { total?: number }) => {
+        setProjectCount(data.total ?? 0);
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setProjectCount(0);
+      });
+    return () => controller.abort();
   }, []);
 
   const greeting = user.displayName || user.name || user.email.split("@")[0];
@@ -81,7 +116,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         {/* Quick stat cards */}
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {/* Active projects — all roles */}
-          <StatCard label="Active projects" value="0" />
+          <StatCard label="Active projects" value={projectCount !== null ? String(projectCount) : "…"} />
 
           {/* Account status — all roles */}
           <StatCard
