@@ -26,7 +26,7 @@ class DDoSProtectionMiddleware:
         app: ASGIApp,
         limit: int = 200,
         window: int = 60,
-        burst_limit: int = 30,
+        burst_limit: int = 50,
     ) -> None:
         self.app = app
         self.limit = limit
@@ -65,6 +65,13 @@ class DDoSProtectionMiddleware:
         # health checks through so the browser can always load fresh code.
         path = scope.get("path", "")
         if not path.startswith("/api/"):
+            await self.app(scope, receive, send)
+            return
+
+        # Exempt OAuth callback paths — these are one-shot redirects from
+        # identity providers that trigger a burst of follow-up API calls
+        # (CSRF, login, /me) which can trip burst detection.
+        if "/oauth/" in path and "/callback" in path:
             await self.app(scope, receive, send)
             return
 
