@@ -471,15 +471,20 @@ def _decode_oauth_state_token(token: str) -> Dict[str, Any]:
 def _issue_oauth_state(
     provider: str, *, return_to: str, next_path: Optional[str]
 ) -> Tuple[str, str]:
-    state_value = f"{provider}:{secrets.token_urlsafe(24)}"
+    nonce = secrets.token_urlsafe(24)
+    state_nonce = f"{provider}:{nonce}"
     payload = {
         "provider": provider,
-        "state": state_value,
+        "state": state_nonce,
         "return_to": return_to,
         "next_path": next_path,
         "issued": int(time.time()),
     }
-    return state_value, _sign_oauth_state(payload)
+    cookie_token = _sign_oauth_state(payload)
+    # Embed the signed token in the state value itself (pipe-separated) so the
+    # callback can recover it even when a domain mismatch drops the cookie.
+    state_value = f"{state_nonce}|{cookie_token}"
+    return state_value, cookie_token
 
 
 def _append_query_params(url: str, params: Dict[str, Optional[str]]) -> str:
@@ -541,15 +546,28 @@ def _normalize_next_path(value: Optional[str]) -> Optional[str]:
 def _consume_oauth_state(
     provider: str, request: Request, received_state: str
 ) -> Dict[str, Any]:
+    # Try cookie first (primary), then fall back to the signed token embedded
+    # in the state parameter.  The fallback handles domain mismatches between
+    # the /start host (e.g. raw Heroku URL) and the /callback host (custom domain).
     cookie_value = request.cookies.get(_state_cookie_name(provider))
-    if not cookie_value:
+    token_from_state: Optional[str] = None
+    state_nonce = received_state  # may be overwritten below
+
+    # Split the pipe-delimited state to extract the embedded signed token.
+    if "|" in received_state:
+        parts = received_state.split("|", 1)
+        state_nonce = parts[0]
+        token_from_state = parts[1]
+
+    token = cookie_value or token_from_state
+    if not token:
         raise HTTPException(
             status_code=400,
             detail="OAuth session expired. Please restart the sign-in process.",
         )
 
     try:
-        payload = _decode_oauth_state_token(cookie_value)
+        payload = _decode_oauth_state_token(token)
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
@@ -559,7 +577,7 @@ def _consume_oauth_state(
     if payload.get("provider") != provider:
         raise HTTPException(status_code=400, detail="OAuth provider mismatch.")
 
-    if payload.get("state") != received_state:
+    if payload.get("state") != state_nonce:
         raise HTTPException(status_code=400, detail="OAuth state mismatch.")
 
     issued = payload.get("issued")
