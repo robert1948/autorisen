@@ -836,12 +836,27 @@ def create_app() -> FastAPI:
                 name="icons",
             )
 
+        # Extensions that never belong to a React SPA — reject bot probes fast
+        _BLOCKED_EXTENSIONS = frozenset((
+            ".php", ".asp", ".aspx", ".cgi", ".jsp", ".env",
+            ".bak", ".sql", ".gz", ".tar", ".zip", ".rar",
+            ".yml", ".yaml", ".toml", ".ini", ".conf",
+        ))
+
         @application.get("/{client_path:path}", include_in_schema=False)
         def _spa_fallback(client_path: str):
             normalized_path = client_path.lstrip("/")
             # API routes are handled by the router mounted at /api
             if normalized_path == "api" or normalized_path.startswith("api/"):
                 raise HTTPException(status_code=404)
+
+            # Reject requests for non-SPA file extensions (PHP probes, etc.)
+            lower_path = normalized_path.lower()
+            if any(lower_path.endswith(ext) for ext in _BLOCKED_EXTENSIONS):
+                return PlainTextResponse(
+                    "Not found", status_code=404,
+                    headers={"Cache-Control": "no-store"},
+                )
 
             # Service worker is a static asset; never serve SPA HTML here.
             if normalized_path == "sw.js":

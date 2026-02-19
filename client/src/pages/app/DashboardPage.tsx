@@ -45,6 +45,13 @@ const Dashboard = () => {
     return search.get("preview") === "1" || localStorage.getItem("cc_preview_mode") === "true";
   }, [location.search]);
 
+  // If the user is authenticated, exit preview mode permanently
+  useEffect(() => {
+    if (!isLoading && user && isPreview) {
+      localStorage.removeItem("cc_preview_mode");
+    }
+  }, [isLoading, user, isPreview]);
+
   // Auth failure redirect (spec §1.4)
   useEffect(() => {
     if (error?.status === 401 || error?.status === 403) {
@@ -54,8 +61,8 @@ const Dashboard = () => {
     }
   }, [error, isPreview]);
 
-  // Preview mode — read-only placeholder
-  if (isPreview) {
+  // Preview mode — read-only placeholder (only when NOT authenticated)
+  if (isPreview && !user) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
         <div className="mb-6 rounded-md border border-slate-200 bg-white p-4" role="status">
