@@ -1,16 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { completeOnboardingStep, updateOnboardingProfile } from "../../api/onboarding";
+import { useAuth } from "../../features/auth/AuthContext";
 
 export default function OnboardingProfile() {
   const navigate = useNavigate();
+  const { state: authState } = useAuth();
+  const user = authState.user;
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [role, setRole] = useState("Customer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-fill from authenticated user profile (e.g. Google OAuth data)
+  useEffect(() => {
+    if (!user) return;
+    if (user.first_name) setFirstName(user.first_name);
+    if (user.last_name) setLastName(user.last_name);
+    if (user.role && user.role !== "user") setRole(user.role);
+  }, [user]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -32,57 +44,77 @@ export default function OnboardingProfile() {
     }
   };
 
+  const inputCls =
+    "w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white caret-white placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+  const labelCls = "text-sm font-medium text-white";
+
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-6 py-10">
-      <div className="w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">Confirm your profile</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Tell us a little about you so we can tailor your onboarding experience.
+      <div className="w-full rounded-2xl border border-slate-700 bg-slate-900 p-8 shadow-lg">
+        <h1 className="text-2xl font-semibold text-white">Confirm your profile</h1>
+        <p className="mt-2 text-sm text-slate-300">
+          Review and update your details below. Press <strong>Continue</strong> at any time to accept the current values.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 grid gap-4">
+          {/* Email (read-only, from auth) */}
+          {user?.email && (
+            <div className="grid gap-2">
+              <label className={labelCls} htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                className={`${inputCls} cursor-not-allowed opacity-70`}
+                value={user.email}
+                readOnly
+                tabIndex={-1}
+              />
+            </div>
+          )}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="first-name">
+            <label className={labelCls} htmlFor="first-name">
               First name
             </label>
             <input
               id="first-name"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
+              className={inputCls}
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
-              required
+              placeholder="Your first name"
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="last-name">
+            <label className={labelCls} htmlFor="last-name">
               Last name
             </label>
             <input
               id="last-name"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
+              className={inputCls}
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
-              required
+              placeholder="Your last name"
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="company-name">
+            <label className={labelCls} htmlFor="company-name">
               Company
             </label>
             <input
               id="company-name"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
+              className={inputCls}
               value={companyName}
               onChange={(event) => setCompanyName(event.target.value)}
+              placeholder="Optional"
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="role">
+            <label className={labelCls} htmlFor="role">
               Role
             </label>
             <select
               id="role"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 caret-slate-900 placeholder:text-slate-400 dark:text-slate-900 dark:caret-slate-900 dark:placeholder:text-slate-400"
+              className={inputCls}
               value={role}
               onChange={(event) => setRole(event.target.value)}
             >
@@ -91,10 +123,10 @@ export default function OnboardingProfile() {
               <option value="Operator">Operator</option>
             </select>
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <button
             type="submit"
-            className="mt-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="mt-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
             disabled={loading}
           >
             {loading ? "Saving…" : "Continue"}
