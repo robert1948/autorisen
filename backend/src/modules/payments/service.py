@@ -8,7 +8,6 @@ import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, Mapping, TypedDict
-from urllib.parse import quote_plus
 
 import httpx
 from sqlalchemy.orm import Session
@@ -91,10 +90,11 @@ def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str,
 def _encode_for_signature(data: Mapping[str, str], passphrase: str | None) -> str:
     """Build the PayFast signature string.
 
-    Per PayFast docs the fields must appear in the **same order** as they will
-    be POSTed (i.e. dict insertion order, NOT alphabetical).  Only values are
-    URL-encoded; keys are left as-is.  The `+` → space replacement matches
-    PayFast's official Python integration sample.
+    Despite PayFast's official sample using ``quote_plus``, the production
+    validation engine expects **raw (un-encoded) values**.  This matches the
+    behaviour of established libraries (``django-payfast``,
+    ``python-payfast``).  Fields appear in dict insertion order (same order
+    as the checkout form).
     """
 
     segments: list[str] = []
@@ -106,14 +106,12 @@ def _encode_for_signature(data: Mapping[str, str], passphrase: str | None) -> st
         value_str = str(value).strip()
         if value_str == "":
             continue
-        # PayFast sample: replace '+' with space before encoding
-        encoded_value = quote_plus(value_str.replace("+", " "), safe="")
-        segments.append(f"{key}={encoded_value}")
+        segments.append(f"{key}={value_str}")
 
     payload = "&".join(segments)
 
     if passphrase is not None and passphrase.strip() != "":
-        payload = f"{payload}&passphrase={quote_plus(passphrase.strip(), safe='')}"
+        payload = f"{payload}&passphrase={passphrase.strip()}"
     return payload
 
 
