@@ -29,10 +29,10 @@ const HomePage: React.FC = () => {
           </p>
           <div className="inline-block bg-white/10 p-2 rounded-xl backdrop-blur-sm">
             <Link 
-              to={isAuthenticated ? '/dashboard' : registerHref} 
+              to="/app/dashboard" 
               className="block bg-[#ff6b6b] hover:bg-[#ff5252] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg"
             >
-              {isAuthenticated ? 'Go to Dashboard' : 'Start Your Free Magic Trial'}
+              Go to Dashboard
             </Link>
           </div>
         </div>
