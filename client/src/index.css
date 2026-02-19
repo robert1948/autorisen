@@ -3966,11 +3966,15 @@ a {
   }
 
   .hero__content {
-    text-align: center;
+    text-align: left;
+  }
+
+  .hero__content p {
+    max-width: 100%;
   }
 
   .hero__actions {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .showcase {
@@ -3979,7 +3983,7 @@ a {
   }
 
   .showcase__content {
-    text-align: center;
+    text-align: left;
   }
 }
 
@@ -4222,18 +4226,19 @@ a {
   .hero {
     grid-template-columns: 1fr;
     gap: 48px;
-    text-align: center;
+    text-align: left;
   }
 
   .hero__actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     width: 100%;
   }
 
   .hero__actions .btn {
-    width: 100%;
-    max-width: 320px;
+    width: auto;
+    max-width: none;
   }
 
   .footer__content {
@@ -4293,7 +4298,7 @@ a {
   .hero {
     grid-template-columns: 1fr;
     gap: 48px;
-    text-align: center;
+    text-align: left;
   }
 
   .hero__content h1 {
@@ -4306,14 +4311,15 @@ a {
   }
 
   .hero__actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     width: 100%;
   }
 
   .hero__actions .btn {
-    width: 100%;
-    max-width: 300px;
+    width: auto;
+    max-width: none;
   }
 
   .hero__pane {
@@ -4326,7 +4332,7 @@ a {
 
   .section h2 {
     font-size: clamp(1.25rem, 6vw, 1.75rem);
-    text-align: center;
+    text-align: left;
   }
 
   .highlights__grid {
