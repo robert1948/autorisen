@@ -60,13 +60,20 @@ export default function PricingPage() {
     setError(null);
 
     try {
+      // Fetch CSRF token (required by global CSRFMiddleware for POST requests)
+      const csrfRes = await fetch('/api/auth/csrf', { credentials: 'include' });
+      const csrfData = await csrfRes.json().catch(() => ({}));
+      const csrfToken = csrfData.csrf_token || '';
+
       // Create/update subscription
       const res = await fetch('/api/payments/subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken,
         },
+        credentials: 'include',
         body: JSON.stringify({
           plan_id: plan.id,
           billing_cycle: billingCycle,
