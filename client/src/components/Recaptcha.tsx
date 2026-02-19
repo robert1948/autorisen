@@ -24,14 +24,8 @@ const Recaptcha = ({ onVerify, error }: RecaptchaProps) => {
   }, []);
 
   if (!siteKey) {
-    return (
-      <div className="recaptcha-placeholder">
-        <p className="recaptcha-placeholder__info">
-          reCAPTCHA is not configured. Set <code>VITE_RECAPTCHA_SITE_KEY</code> when you are ready to
-          enforce verification. A temporary bypass token has been supplied for local testing.
-        </p>
-      </div>
-    );
+    // Bypass token already supplied via useEffect; render nothing visible
+    return null;
   }
 
   return (
