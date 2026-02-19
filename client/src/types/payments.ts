@@ -3,6 +3,38 @@
  * Comprehensive TypeScript types for PayFast payment integration
  */
 
+// Plan catalog types
+export interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price_monthly_zar: string;
+  price_yearly_zar: string;
+  product_code_monthly: string | null;
+  product_code_yearly: string | null;
+  features: string[];
+  is_default: boolean;
+  is_enterprise: boolean;
+}
+
+export interface PlansResponse {
+  plans: Plan[];
+  currency: string;
+}
+
+// Subscription types
+export interface Subscription {
+  id: string;
+  plan_id: string;
+  plan_name: string;
+  status: 'active' | 'cancelled' | 'past_due' | 'trialing' | 'pending';
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  cancelled_at: string | null;
+  created_at: string | null;
+}
+
 // Core payment entities
 export interface PaymentMethod {
   id: string;

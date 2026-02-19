@@ -136,7 +136,10 @@ function useNavItems(): NavItem[] {
   items.push({ to: "/app/marketplace", label: "Marketplace", icon: MarketplaceIcon, mobile: false });
 
   if (features.payments) {
-    items.push({ to: "/app/billing", label: "Billing", icon: BillingIcon, mobile: false });
+    items.push(
+      { to: "/app/pricing", label: "Pricing", icon: MarketplaceIcon, mobile: false },
+      { to: "/app/billing", label: "Billing", icon: BillingIcon, mobile: false },
+    );
   }
 
   items.push({ to: "/app/settings", label: "Settings", icon: SettingsIcon, mobile: true });

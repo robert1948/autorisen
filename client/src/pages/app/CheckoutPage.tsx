@@ -34,6 +34,42 @@ export default function CheckoutPage() {
     
     return data;
   }, [searchParams]);
+
+  // If product code is provided (from PricingPage), auto-checkout
+  const productCode = searchParams.get('product');
+
+  React.useEffect(() => {
+    if (!productCode) return;
+
+    const doProductCheckout = async () => {
+      try {
+        const csrfRes = await fetch('/api/auth/csrf');
+        const csrfData = await csrfRes.json().catch(() => ({}));
+        const csrfToken = csrfData.csrf_token || '';
+
+        const res = await fetch('/api/payments/payfast/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ product_code: productCode }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Checkout failed');
+        }
+        const result = await res.json();
+        handleCheckoutComplete(result);
+      } catch (err) {
+        console.error('Product checkout error:', err);
+        // Fall through to normal checkout flow
+      }
+    };
+
+    doProductCheckout();
+  }, [productCode]);
   
   const handleCheckoutComplete = (result: PayFastCheckoutResponse) => {
     // Create PayFast form and auto-submit

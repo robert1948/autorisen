@@ -48,6 +48,8 @@ def _activate_subscription_on_payment(db: Session, invoice: models.Invoice) -> N
             # Set period end based on plan interval
             if sub.plan_id in ("pro", "enterprise"):
                 sub.current_period_end = now + _timedelta_30_days()
+            elif sub.plan_id == "free":
+                sub.current_period_end = None  # free tier has no expiry
             sub.cancel_at_period_end = False
             sub.cancelled_at = None
             db.commit()

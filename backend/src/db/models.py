@@ -1185,7 +1185,7 @@ class Subscription(Base):
         unique=True,
         index=True,
     )
-    plan_id = Column(String(32), nullable=False, server_default="starter")
+    plan_id = Column(String(32), nullable=False, server_default="free")
     status = Column(String(32), nullable=False, server_default="active")
     current_period_start = Column(DateTime(timezone=True), nullable=True)
     current_period_end = Column(DateTime(timezone=True), nullable=True)
@@ -1206,7 +1206,7 @@ class Subscription(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "plan_id IN ('starter', 'growth', 'enterprise')",
+            "plan_id IN ('free', 'pro', 'enterprise')",
             name="subscription_plan_check",
         ),
         CheckConstraint(

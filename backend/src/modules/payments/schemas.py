@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -59,3 +60,102 @@ class PayFastCheckoutResponse(BaseModel):
 
 class PayFastITNResponse(BaseModel):
     status: str
+
+
+# ---------------------------------------------------------------------------
+# Plan catalog
+# ---------------------------------------------------------------------------
+
+
+class PlanFeature(BaseModel):
+    text: str
+
+
+class PlanOut(BaseModel):
+    id: str
+    name: str
+    description: str
+    price_monthly_zar: str
+    price_yearly_zar: str
+    product_code_monthly: Optional[str] = None
+    product_code_yearly: Optional[str] = None
+    features: List[str]
+    is_default: bool = False
+    is_enterprise: bool = False
+
+
+class PlansResponse(BaseModel):
+    plans: List[PlanOut]
+    currency: str = "ZAR"
+
+
+# ---------------------------------------------------------------------------
+# Subscription
+# ---------------------------------------------------------------------------
+
+
+class SubscriptionOut(BaseModel):
+    id: str
+    plan_id: str
+    plan_name: str
+    status: str
+    current_period_start: Optional[datetime] = None
+    current_period_end: Optional[datetime] = None
+    cancel_at_period_end: bool = False
+    cancelled_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SubscriptionCreateRequest(BaseModel):
+    plan_id: str = Field(..., description="Plan to subscribe to: free, pro, enterprise")
+    billing_cycle: str = Field(
+        default="monthly",
+        description="monthly or yearly",
+    )
+
+    @field_validator("plan_id")
+    @classmethod
+    def validate_plan_id(cls, v: str) -> str:
+        if v.lower() not in ("free", "pro", "enterprise"):
+            raise ValueError("plan_id must be free, pro, or enterprise")
+        return v.lower()
+
+    @field_validator("billing_cycle")
+    @classmethod
+    def validate_billing_cycle(cls, v: str) -> str:
+        if v.lower() not in ("monthly", "yearly"):
+            raise ValueError("billing_cycle must be monthly or yearly")
+        return v.lower()
+
+
+class SubscriptionCancelResponse(BaseModel):
+    message: str
+    cancel_at_period_end: bool
+    current_period_end: Optional[datetime] = None
+
+
+# ---------------------------------------------------------------------------
+# Invoice
+# ---------------------------------------------------------------------------
+
+
+class InvoiceOut(BaseModel):
+    id: str
+    amount: str
+    currency: str
+    status: str
+    item_name: str
+    item_description: Optional[str] = None
+    payment_provider: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceListResponse(BaseModel):
+    invoices: List[InvoiceOut]
+    total: int

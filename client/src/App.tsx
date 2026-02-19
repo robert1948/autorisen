@@ -58,6 +58,7 @@ import Billing from "./pages/app/BillingPage";
 import Checkout from "./pages/app/CheckoutPage";
 import CheckoutSuccess from "./pages/app/CheckoutSuccessPage";
 import CheckoutCancel from "./pages/app/CheckoutCancelPage";
+import Pricing from "./pages/app/PricingPage";
 import ChatConsole from "./pages/app/ChatConsolePage";
 import LogoTestPage from "./pages/help/LogoTestPage";
 import SunbirdPilotMobile from "./pages/app/SunbirdPilotMobilePage";
@@ -230,6 +231,7 @@ export default function App() {
               {/* Payments */}
               {features.payments && (
                 <>
+                  <Route path="/app/pricing" element={<Pricing />} />
                   <Route path="/app/billing" element={<Billing />} />
                   <Route path="/app/checkout" element={<Checkout />} />
                   <Route path="/app/checkout/success" element={<CheckoutSuccess />} />
@@ -247,6 +249,7 @@ export default function App() {
         <Route path="/agents" element={<Navigate to="/app/agents" replace />} />
         <Route path="/developer" element={<Navigate to="/app/developer" replace />} />
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />
+        <Route path="/pricing" element={<Navigate to="/app/pricing" replace />} />
         <Route path="/checkout" element={<Navigate to="/app/checkout" replace />} />
         <Route path="/chat" element={<Navigate to="/app/chat" replace />} />
         <Route path="/chat/:threadId" element={<ChatThreadRedirect />} />
