@@ -1835,12 +1835,13 @@ a {
     width: calc(100% - 32px);
     margin: 24px auto 0 auto;
     padding: 16px 24px;
+    flex-wrap: nowrap;
   }
   
   .hero {
     grid-template-columns: 1fr;
     gap: 48px;
-    text-align: center;
+    text-align: left;
   }
 
   .hero__visual {
@@ -1850,6 +1851,20 @@ a {
   
   .hero__content h1 {
     font-size: clamp(2.2rem, 8vw, 3.2rem);
+  }
+
+  .hero__content p {
+    max-width: 100%;
+  }
+
+  .hero__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .hero__actions .btn {
+    width: auto;
+    max-width: none;
   }
   
   .hero__pane {
