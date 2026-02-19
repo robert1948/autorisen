@@ -9,7 +9,9 @@ import type { Plan, PlansResponse, Subscription } from '../../types/payments';
 
 export default function PricingPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuth();
+  const { state: authState } = useAuth();
+  const isAuthenticated = authState.status === 'authenticated';
+  const token = authState.accessToken;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');

@@ -5,6 +5,7 @@
 
 import React, { useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../features/auth/AuthContext';
 import CheckoutFlow from '../../components/payments/CheckoutFlow';
 import { PaymentErrorBoundary } from '../../components/payments/PaymentErrorBoundary';
 import type { PaymentFormData, PayFastCheckoutResponse } from '../../types/payments';
@@ -12,6 +13,8 @@ import type { PaymentFormData, PayFastCheckoutResponse } from '../../types/payme
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { state: authState } = useAuth();
+  const token = authState.accessToken;
   
   // Extract initial data from URL parameters
   const initialData = useMemo((): Partial<PaymentFormData> => {
@@ -35,42 +38,6 @@ export default function CheckoutPage() {
     return data;
   }, [searchParams]);
 
-  // If product code is provided (from PricingPage), auto-checkout
-  const productCode = searchParams.get('product');
-
-  React.useEffect(() => {
-    if (!productCode) return;
-
-    const doProductCheckout = async () => {
-      try {
-        const csrfRes = await fetch('/api/auth/csrf');
-        const csrfData = await csrfRes.json().catch(() => ({}));
-        const csrfToken = csrfData.csrf_token || '';
-
-        const res = await fetch('/api/payments/payfast/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken,
-          },
-          credentials: 'include',
-          body: JSON.stringify({ product_code: productCode }),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || 'Checkout failed');
-        }
-        const result = await res.json();
-        handleCheckoutComplete(result);
-      } catch (err) {
-        console.error('Product checkout error:', err);
-        // Fall through to normal checkout flow
-      }
-    };
-
-    doProductCheckout();
-  }, [productCode]);
-  
   const handleCheckoutComplete = (result: PayFastCheckoutResponse) => {
     // Create PayFast form and auto-submit
     const form = document.createElement('form');
@@ -93,9 +60,50 @@ export default function CheckoutPage() {
   };
   
   const handleCheckoutCancel = () => {
-    navigate('/billing');
+    navigate('/app/billing');
   };
-  
+
+  // If product code is provided (from PricingPage), auto-checkout
+  const productCode = searchParams.get('product');
+
+  React.useEffect(() => {
+    if (!productCode) return;
+
+    const doProductCheckout = async () => {
+      try {
+        const csrfRes = await fetch('/api/auth/csrf');
+        const csrfData = await csrfRes.json().catch(() => ({}));
+        const csrfToken = csrfData.csrf_token || '';
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const res = await fetch('/api/payments/payfast/checkout', {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ product_code: productCode }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Checkout failed');
+        }
+        const result = await res.json();
+        handleCheckoutComplete(result);
+      } catch (err) {
+        console.error('Product checkout error:', err);
+        // Fall through to normal checkout flow
+      }
+    };
+
+    doProductCheckout();
+  }, [productCode, token]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -104,7 +112,7 @@ export default function CheckoutPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link 
-                to="/billing" 
+                to="/app/billing" 
                 className="text-gray-500 hover:text-gray-700"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +164,7 @@ export default function CheckoutPage() {
                     Try Again
                   </button>
                   <Link
-                    to="/billing"
+                    to="/app/billing"
                     className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
                   >
                     Return to Billing
