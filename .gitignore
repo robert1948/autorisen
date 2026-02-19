@@ -1,86 +1,63 @@
 # AutoLocal/CapeControl .gitignore
-# Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
-# Updated: November 14, 2025
+# Production-ready FastAPI + React SaaS platform
+# Consolidated: 2026-02-19 (was 408 lines with duplicates → ~200 unique rules)
 
-# Python
+# ──────────────────────────────────────────────
+# Python runtime
+# ──────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.pyc
-*.log
-*.sqlite
-*.sqlite3
-*.db
-.coverage
-*.coverage
-coverage/
-
-# Python tooling caches
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
 .tox/
 .cache/
 pip-wheel-metadata/
+=*
 
-# Virtualenv / local env
+# Virtualenv
 .venv/
 .venv_*/
 venv/
 env/
 ENV/
 
-# Environment files - be specific about what we allow
-.env
-.env.*
-.envrc
-!.env.example
-!client/.env.example
-.env.local
-.env.dev
-.env.test
-.env.sandbox
+# Coverage
+.coverage
+.coverage.*
+*.coverage
+coverage/
+coverage.xml
+htmlcov/
+.nyc_output/
 
-# Production secrets (never commit)
-.env.production
-.env.prod
-*.pem
-*.key
-secrets/
-config/secrets/
-
-# Payment provider secrets and keys
-payfast_*.key
-stripe_*.key
-payment_secrets/
-webhooks/secrets/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Build / dist
-dist/
-build/
-*.egg-info/
-*.egg-info/*
-
-# Node / frontend
+# ──────────────────────────────────────────────
+# Node / Frontend
+# ──────────────────────────────────────────────
 node_modules/
 */node_modules/
 **/node_modules/
-client/node_modules/
-client/dist/
-client/.cache/
-client/.turbo/
-client/coverage/
+dist/
+**/dist/
+build/
+.vite/
+**/.vite/
+*.tsbuildinfo
+.npm/
+.pnpm-store/
+.eslintcache
+.stylelintcache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-# Local-only npm lockfiles (repo uses pnpm; avoid committing accidental npm locks)
+storybook-static/
+bundle-analyzer-report.html
+webpack-bundle-analyzer.json
+
+# Lock files: repo uses pnpm; ignore accidental npm/yarn locks
 package-lock.json
 client/package-lock.json
 client/client/package-lock.json
@@ -88,142 +65,162 @@ CapeControl_React_Starter_Dark/package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 
-# Release protocol artifacts (local)
-.release/
-
-# React/Vite specific
-.vite/
-**/.vite/
-dist/
-**/dist/
-*.tsbuildinfo
-
-# TypeScript build outputs
+# Client-specific
+client/.cache/
+client/.turbo/
+client/coverage/
 client/src/**/*.js.map
 client/src/**/*.d.ts.map
 
-# WebSocket development and testing artifacts
-websocket-test-logs/
-client/src/services/websocket-debug.log
-client/src/hooks/websocket-test-*.ts
-websocket_performance_*.json
+# ──────────────────────────────────────────────
+# Environment / Secrets
+# ──────────────────────────────────────────────
+.env
+.env.*
+.envrc
+.env.local
+.env.dev
+.env.test
+.env.sandbox
+.env.production
+.env.prod
+!.env.example
+!.env.sample
+!client/.env.example
+*.pem
+*.key
+secrets/
+config/secrets/
 
-# Payment system development artifacts
-client/src/components/payments/test-*.tsx
-client/src/components/payments/*Demo.tsx
-payment-test-data/
-payfast-sandbox-logs/
-payment_validation_*.json
+# Payment provider secrets
+payfast_*.key
+stripe_*.key
+payment_secrets/
+webhooks/secrets/
 
-# Backup and temporary files
-*.backup
-*.tmp
-*.temp
-*.bak
-*.orig
+# ──────────────────────────────────────────────
+# IDE / OS
+# ──────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
 *~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+.nfs*
 
-# Keep logo assets and favicons in version control
-# (they are optimized build outputs needed for deployment)
-
-# Local test artifacts
-coverage.xml
-htmlcov/
+# ──────────────────────────────────────────────
+# Databases / Local data
+# ──────────────────────────────────────────────
 *.db
+*.sqlite
+*.sqlite3
 dev.db
 test.db
 test_*.db
 tmp_*.db
-.coverage.*
 autolocal_test.db
+*.dump
+*.sql.backup
+*_migration_backup.sql
+payment_migration_backup_*.sql
+database_backups/
+db_snapshots/
 
-# Alembic migration artifacts
-backend/migrations/versions/temp_*.py
-backend/migrations/versions/*_temp.py
-
-# Generated/backup artifacts - Updated for November 2025 structure
-docs/PLAYBOOK_OVERVIEW.md
-
-# Track authoritative project plan files
-!docs/Master_ProjectPlan.md
-!docs/project-plan.csv
-
-# Development artifacts and analysis
-client/src/components/generated/
-client/src/App.tsx.backup
-tools/generated/
-scripts/temp/
-docs/checklists/temp/
-docs/playbooks/design/temp/
-
-# Figma integration artifacts (completely removed from project)
-docs/figma/
-figma_*/
-*.figma
-figma-cache/
-design-tokens/figma/
-docs/CapeWire_Tokens_Typography_Board.json
-docs/Typography_Reference_Frame_Simple.json
-
-# Generated documentation (development artifacts)
-docs/GITHUB_UPDATE_COMPLETE_251107.md
-docs/PRODUCTION_READINESS_CHECKLIST.md
-docs/pages_overview.md
-docs/playbooks/design/06-target-frame.md
-
-# Generated/demo pages (development only)
-client/src/pages/Demo*.tsx
-client/src/pages/Test*.tsx
-client/src/pages/*Demo.tsx
-client/src/pages/payments/Demo*.tsx
-client/src/pages/chat/Demo*.tsx
-
-# Logo files in root (should be in proper assets directory)
-LogoW.png
-
-# Keep optimized logo assets in client/public for deployment
-!client/public/LogoW.png
-!client/public/*.png
-!client/public/*.ico
-!client/public/*.svg
-
-# Production logs and monitoring
-logs/
-ship_autorisen_*.log
-*.access.log
-*.error.log
-monitoring/temp/
-metrics/temp/
-websocket-metrics/
-payment-logs/
-
-# Heroku specific
-.heroku/
-
-# Docker
+# ──────────────────────────────────────────────
+# Build / Deploy / Docker
+# ──────────────────────────────────────────────
+*.egg-info/
 docker-data/
 .docker/
 docker-compose.override.yml
+.heroku/
+.release/
 
+# ──────────────────────────────────────────────
+# Logs / Temporary / Backup
+# ──────────────────────────────────────────────
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.backup
+logs/
+tmp/
+temp/
+archive/local/
+
+# ──────────────────────────────────────────────
 # Testing artifacts
+# ──────────────────────────────────────────────
 .testcache/
 test-results/
 playwright-report/
 e2e-test-results/
 integration-test-logs/
 
-# Agent framework development
-agents/temp/
-config/temp/
-backend/src/modules/*/temp/
+# ──────────────────────────────────────────────
+# Media / Large assets
+# ──────────────────────────────────────────────
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+*.zip
+*.tar.gz
+*.rar
+*.7z
 
-# ChatKit development and WebSocket artifacts
+# Keep optimized logo assets for deployment
+!client/public/LogoW.png
+!client/public/*.png
+!client/public/*.ico
+!client/public/*.svg
+LogoW.png
+
+# ──────────────────────────────────────────────
+# Development artifacts
+# ──────────────────────────────────────────────
+
+# Generated / demo pages
+client/src/components/generated/
+client/src/pages/Demo*.tsx
+client/src/pages/Test*.tsx
+client/src/pages/*Demo.tsx
+client/src/pages/payments/Demo*.tsx
+client/src/pages/chat/Demo*.tsx
+client/src/App.tsx.backup
+
+# WebSocket dev artifacts
+websocket-test-logs/
+client/src/services/websocket-debug.log
+client/src/hooks/websocket-test-*.ts
+websocket_performance_*.json
 chatkit-cache/
 chat-session-logs/
 websocket-connection-logs/
 client/src/services/websocket-debug/
+websocket-metrics/
 
-# Payment system development
+# Payment dev artifacts
+client/src/components/payments/test-*.tsx
+client/src/components/payments/*Demo.tsx
+payment-test-data/
+payfast-sandbox-logs/
+payment_validation_*.json
 payment-integration-logs/
 payfast-webhook-logs/
 stripe-webhook-logs/
@@ -235,166 +232,74 @@ invoice-generation-temp/
 *.joblib
 models/temp/
 
-# Development and temporary files
-*.tmp
-*.temp
-*.bak
-*.orig
-*.backup
-*~
-*.swp
-*.swo
+# Agent / module temp
+agents/temp/
+config/temp/
+backend/src/modules/*/temp/
+tools/generated/
+scripts/temp/
+docs/checklists/temp/
+docs/playbooks/design/temp/
 
-# OS junk
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Figma (removed from project)
+docs/figma/
+figma_*/
+*.figma
+figma-cache/
+design-tokens/figma/
+docs/CapeWire_Tokens_Typography_Board.json
+docs/Typography_Reference_Frame_Simple.json
 
-# Windows
-desktop.ini
+# Generated documentation (dev-only)
+docs/GITHUB_UPDATE_COMPLETE_251107.md
+docs/PRODUCTION_READINESS_CHECKLIST.md
+docs/pages_overview.md
+docs/playbooks/design/06-target-frame.md
+docs/PLAYBOOK_OVERVIEW.md
 
-# Linux
-*~
-.nfs*
+# Alembic temp migrations
+backend/migrations/versions/temp_*.py
+backend/migrations/versions/*_temp.py
 
-# Media files (large files that shouldn't be in git)
-*.mp4
-*.avi
-*.mov
-*.wmv
-*.flv
-*.webm
-
-# Large assets (use Git LFS if needed)
-*.zip
-*.tar.gz
-*.rar
-*.7z
-
-# Development reports and logs
+# Dev reports
 voice_demo_report_*.json
 audit_reports/
 performance_reports/
 websocket_performance_reports/
 payment_integration_reports/
+ship_autorisen_*.log
+*.access.log
+*.error.log
+monitoring/temp/
+metrics/temp/
+payment-logs/
 
-# Pip install artifacts
-=*
-
-# Temporary migration files
-*_migration_backup.sql
-payment_migration_backup_*.sql
-
-# Security scanning and analysis artifacts
+# Security scanning
 security-scan-results/
 vulnerability-reports/
 penetration-test-logs/
 
-# Performance and load testing
+# Performance / load testing
 load-test-results/
 performance-benchmarks/
 stress-test-logs/
 
-# Development database backups
-database_backups/
-db_snapshots/
-*.dump
-*.sql.backup
-
-# Temporary project plan files (keep current versions only)
+# ──────────────────────────────────────────────
+# Project plan backups
+# ──────────────────────────────────────────────
 docs/project-plan-backup-*.csv
 docs/project-plan-old.csv
 docs/project-plan.csv.backup
 docs/Master_Projectplan.md
 docs/Master_ProjectPlan_Updated.md
 
-# Node.js tools and artifacts
-.npm/
-.eslintcache
-.stylelintcache
+# Track authoritative plan files
+!docs/Master_ProjectPlan.md
+!docs/project-plan.csv
 
-# Storybook build outputs
-storybook-static/
-
-# Coverage reports
-coverage/
-.nyc_output/
-
-# Bundle analyzer reports
-bundle-analyzer-report.html
-webpack-bundle-analyzer.json
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-.ruff_cache/
-
-# Node
-node_modules/
-dist/
-build/
-
-# Local databases / scratch
-*.db
-*.sqlite
-*.sqlite3
-tmp/
-archive/local/
-
-# OS / editor
-.DS_Store
-.vscode/settings.json.tmp
-
-# Local artifacts
-/os
-
-# Python
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-.venv/
-venv/
-
-# Node / frontend
-node_modules/
-dist/
-build/
-.vite/
-.npm/
-.pnpm-store/
-
-# Logs / runtime
-*.log
-logs/
-tmp/
-temp/
-
-# OS / IDE
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/*
-!.vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/launch.json
-
-# Secrets
-.env
-.env.*
-!.env.example
-!.env.sample
-
-# Evidence raw (keep summaries in Git, raw heavy ignored)
+# ──────────────────────────────────────────────
+# Evidence policy: keep summaries, ignore raw/heavy
+# ──────────────────────────────────────────────
 docs/evidence/_raw/
 docs/evidence/**/screenshots/
 docs/evidence/**/video/
@@ -405,3 +310,6 @@ docs/evidence/**/*.har
 # Allow evidence logs to be committed (governance evidence packs)
 !docs/evidence/**/logs/
 !docs/evidence/**/logs/**
+
+# Local-only
+/os

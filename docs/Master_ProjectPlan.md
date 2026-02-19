@@ -163,8 +163,8 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | DOCS-001 | Derive downstream management artifacts from SYSTEM_SPEC | docs | done | P0 | 2026-01-06 |
 | SPEC-001 | Fill in Auth Flows details (login/refresh/logout) to match implementation | docs | done | P0 | 2026-02-10 |
 | SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | done | P0 | 2026-02-12 |
-| SPEC-003 | Define Session Guarantees and non-guarantees | docs | planned | P1 |  |
-| SPEC-004 | Define Frozen vs Flexible areas in spec | docs | planned | P1 |  |
+| SPEC-003 | Define Session Guarantees and non-guarantees | docs | done | P1 | 2026-02-19 |
+| SPEC-004 | Define Frozen vs Flexible areas in spec | docs | done | P1 | 2026-02-19 |
 | SPEC-005 | Define Testing determinism requirements (time/email/rate-limiting) | docs | planned | P1 |  |
 | SPEC-006 | Define 'green CI' guarantees + mocking boundaries | docs | planned | P1 |  |
 | SPEC-007 | Define development rules (branching/merge/commit discipline) | docs | planned | P2 |  |
@@ -173,7 +173,7 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | done | P2 | 2026-02-03 |
 | SPEC-011 | Define change control process (who may edit/review/versioning) | docs | planned | P1 |  |
 | MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | done | P0 | 2026-02-19 |
-| MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | planned | P0 |  |
+| MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | done | P0 | 2026-02-19 |
 | DB-001 | Establish Postgres MVP data scope as system-of-record | docs | done | P0 | 2026-01-06 |
 | DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | done | P0 | 2026-02-19 |
 | DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | done | P1 | 2026-02-13 |
@@ -186,8 +186,8 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | CHORE-REPO-001 | Update ignore files for repo hygiene | engineering | done | P2 | 2026-02-10 |
 | CI-DOCKER-001 | Add manual Docker Hub publish workflow | engineering | done | P2 | 2026-02-10 |
 | DOC-OPS-DOCKER-001 | Update Docker Hub repo General page metadata | ops | done | P2 | 2026-02-10 |
-| WO-OPS-REPO-HYGIENE-001 | Repo hygiene: declutter autorisen (gitignore + cleanup tools + evidence policy) + clean docs/project-plan.csv formatting | VS_Chat | Planned | P0 |  |
-| WO-DASH-PROJECT-STATUS-VAL-001 | Dashboard: project status returns non-null value | VS_Chat | In Review | P0 | 2026-02-12 |
+| WO-OPS-REPO-HYGIENE-001 | Repo hygiene: declutter autorisen (gitignore + cleanup tools + evidence policy) + clean docs/project-plan.csv formatting | VS_Chat | done | P0 | 2026-02-19 |
+| WO-DASH-PROJECT-STATUS-VAL-001 | Dashboard: project status returns non-null value | VS_Chat | done | P0 | 2026-02-19 |
 | FEAT-AGENTS-001 | Create 4 AI agent modules (code-review/security-scan/perf-opt/doc-gen) + wire into router | engineering | done | P0 | 2026-02-18 |
 | FEAT-PAY-ALIGN-001 | Align payment plans to Free/Pro/Enterprise with ZAR pricing | engineering | done | P0 | 2026-02-18 |
 | FEAT-LANDING-001 | Fix landing page CTAs and feature promises | engineering | done | P1 | 2026-02-18 |
