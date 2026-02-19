@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, Mapping, TypedDict
+from urllib.parse import quote_plus
 
 import httpx
 from sqlalchemy.orm import Session
@@ -90,14 +91,14 @@ def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str,
 def _encode_for_signature(data: Mapping[str, str], passphrase: str | None) -> str:
     """Build the PayFast signature string.
 
-    Despite PayFast's official sample using ``quote_plus``, the production
-    validation engine expects **raw (un-encoded) values**.  This matches the
-    behaviour of established libraries (``django-payfast``,
-    ``python-payfast``).  Fields appear in dict insertion order (same order
-    as the checkout form).
+    Follows PayFast's official Python integration sample exactly:
+    - Iterate fields in dict insertion order (same as the checkout form)
+    - URL-encode each value with ``quote_plus`` (spaces → +)
+    - Replace literal ``+`` in values with space before encoding
+    - Append passphrase (also URL-encoded) at the end
     """
 
-    segments: list[str] = []
+    payload = ""
     for key, value in data.items():
         if key == "signature":
             continue
@@ -106,12 +107,14 @@ def _encode_for_signature(data: Mapping[str, str], passphrase: str | None) -> st
         value_str = str(value).strip()
         if value_str == "":
             continue
-        segments.append(f"{key}={value_str}")
+        payload += key + "=" + quote_plus(value_str.replace("+", " ")) + "&"
 
-    payload = "&".join(segments)
+    # Remove trailing &
+    if payload.endswith("&"):
+        payload = payload[:-1]
 
     if passphrase is not None and passphrase.strip() != "":
-        payload = f"{payload}&passphrase={passphrase.strip()}"
+        payload += f"&passphrase={quote_plus(passphrase.strip())}"
     return payload
 
 
@@ -119,12 +122,32 @@ def generate_signature(data: Mapping[str, str], passphrase: str | None) -> str:
     """Generate the PayFast signature for the provided fields."""
 
     encoded = _encode_for_signature(data, passphrase)
-    return hashlib.md5(encoded.encode("utf-8")).hexdigest()
+    log.info("PayFast signature string: %s", encoded)
+    sig = hashlib.md5(encoded.encode("utf-8")).hexdigest()
+    log.info("PayFast generated signature: %s", sig)
+    return sig
 
 
 def _format_amount(amount: Decimal | float | str) -> str:
     dec = Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     return f"{dec:.2f}"
+
+
+import re
+
+_PAYFAST_SAFE_RE = re.compile(r"[^a-zA-Z0-9 \-]")
+
+
+def _sanitize_for_payfast(value: str | None, max_len: int = 100) -> str | None:
+    """Strip characters not allowed by PayFast (alpha-numeric, hyphens, spaces only)."""
+    if value is None:
+        return None
+    # Replace em/en dashes with hyphens, then strip everything else
+    cleaned = value.replace("\u2014", "-").replace("\u2013", "-")
+    cleaned = _PAYFAST_SAFE_RE.sub("", cleaned)
+    # Collapse multiple spaces
+    cleaned = " ".join(cleaned.split())
+    return cleaned[:max_len] if cleaned else None
 
 
 def build_checkout_fields(
@@ -158,8 +181,8 @@ def build_checkout_fields(
         # 4 – Transaction details
         "m_payment_id": m_payment_id,
         "amount": _format_amount(amount),
-        "item_name": item_name,
-        "item_description": item_description,
+        "item_name": _sanitize_for_payfast(item_name, 100),
+        "item_description": _sanitize_for_payfast(item_description, 255),
     }
 
     if metadata:

@@ -46,36 +46,36 @@ ENTERPRISE_YEARLY = "ENTERPRISE_YEARLY"
 LIVE_VERIFY_R5_PRODUCT = PayFastProduct(
     code=LIVE_VERIFY_R5,
     amount_zar=Decimal("5.00"),
-    item_name="Live Verification (R5)",
-    item_description="Live PayFast payment verification only (R5.00).",
+    item_name="Live Verification R5",
+    item_description="Live PayFast payment verification only R5",
 )
 
 PRO_MONTHLY_PRODUCT = PayFastProduct(
     code=PRO_MONTHLY,
     amount_zar=Decimal("529.00"),
-    item_name="CapeControl Pro — Monthly",
-    item_description="CapeControl Pro plan: 50 AI agents, 2500 monthly executions, all integrations, priority support.",
+    item_name="CapeControl Pro - Monthly",
+    item_description="CapeControl Pro plan - 50 AI agents 2500 monthly executions all integrations priority support",
 )
 
 ENTERPRISE_MONTHLY_PRODUCT = PayFastProduct(
     code=ENTERPRISE_MONTHLY,
     amount_zar=Decimal("1799.00"),
-    item_name="CapeControl Enterprise — Monthly",
-    item_description="CapeControl Enterprise plan: unlimited agents, custom integrations, dedicated support, SLA guarantees.",
+    item_name="CapeControl Enterprise - Monthly",
+    item_description="CapeControl Enterprise plan - unlimited agents custom integrations dedicated support SLA guarantees",
 )
 
 PRO_YEARLY_PRODUCT = PayFastProduct(
     code=PRO_YEARLY,
     amount_zar=Decimal("4990.00"),
-    item_name="CapeControl Pro — Yearly",
-    item_description="CapeControl Pro plan (annual): Save 20%. 50 AI agents, 2500 monthly executions, all integrations.",
+    item_name="CapeControl Pro - Yearly",
+    item_description="CapeControl Pro plan annual - Save 20 percent 50 AI agents 2500 monthly executions all integrations",
 )
 
 ENTERPRISE_YEARLY_PRODUCT = PayFastProduct(
     code=ENTERPRISE_YEARLY,
     amount_zar=Decimal("17190.00"),
-    item_name="CapeControl Enterprise — Yearly",
-    item_description="CapeControl Enterprise plan (annual): Save 20%. Unlimited agents, custom integrations, dedicated support.",
+    item_name="CapeControl Enterprise - Yearly",
+    item_description="CapeControl Enterprise plan annual - Save 20 percent unlimited agents custom integrations dedicated support",
 )
 
 
