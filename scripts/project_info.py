@@ -29,16 +29,16 @@ def main():
         print("⚠️  Plan CSV has no task rows")
         sys.exit(0)
 
-    status_counts = Counter(row["status"] for row in rows)
+    status_counts = Counter(row["status"].strip().lower() for row in rows)
     total = len(rows)
-    done = status_counts.get("completed", 0)
-    in_progress = status_counts.get("in-progress", 0)
-    todo = status_counts.get("todo", 0)
+    done = status_counts.get("done", 0) + status_counts.get("completed", 0)
+    in_progress = status_counts.get("in-progress", 0) + status_counts.get("in review", 0)
+    todo = status_counts.get("todo", 0) + status_counts.get("planned", 0)
 
     pct_done = (done / total) * 100 if total else 0
 
     print(
-        "📈 Tasks: {} total | {} completed | {} in-progress | {} todo".format(
+        "📈 Tasks: {} total | {} done | {} in-progress | {} planned".format(
             total, done, in_progress, todo
         )
     )
@@ -48,7 +48,7 @@ def main():
     active = [
         row
         for row in rows
-        if row["status"] in {"in-progress", "todo"}
+        if row["status"].strip().lower() in {"in-progress", "in review", "todo", "planned"}
         and row.get("priority") in {"P0", "P1"}
     ]
     active.sort(

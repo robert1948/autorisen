@@ -161,26 +161,42 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | Id | Task | Owner | Status | Priority | Completion_date |
 | --- | --- | --- | --- | --- | --- |
 | DOCS-001 | Derive downstream management artifacts from SYSTEM_SPEC | docs | done | P0 | 2026-01-06 |
-| SPEC-001 | Fill in Auth Flows details (login/refresh/logout) to match implementation | docs | planned | P0 |  |
-| SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | planned | P0 |  |
+| SPEC-001 | Fill in Auth Flows details (login/refresh/logout) to match implementation | docs | done | P0 | 2026-02-10 |
+| SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | done | P0 | 2026-02-12 |
 | SPEC-003 | Define Session Guarantees and non-guarantees | docs | planned | P1 |  |
 | SPEC-004 | Define Frozen vs Flexible areas in spec | docs | planned | P1 |  |
 | SPEC-005 | Define Testing determinism requirements (time/email/rate-limiting) | docs | planned | P1 |  |
 | SPEC-006 | Define 'green CI' guarantees + mocking boundaries | docs | planned | P1 |  |
 | SPEC-007 | Define development rules (branching/merge/commit discipline) | docs | planned | P2 |  |
 | SPEC-008 | Define deployment rules (approvals/rollback expectations) | docs | planned | P1 |  |
-| SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | planned | P0 |  |
-| SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | planned | P2 |  |
+| SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | done | P0 | 2026-02-12 |
+| SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | done | P2 | 2026-02-03 |
 | SPEC-011 | Define change control process (who may edit/review/versioning) | docs | planned | P1 |  |
 | MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | planned | P0 |  |
 | MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | planned | P0 |  |
 | DB-001 | Establish Postgres MVP data scope as system-of-record | docs | done | P0 | 2026-01-06 |
 | DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | planned | P0 |  |
-| DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | planned | P1 |  |
-| NEXT-003 | Execute PayFast production transaction | management | blocked | P0 |  |
+| DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | done | P1 | 2026-02-13 |
+| NEXT-003 | Execute PayFast production transaction | management | in-progress | P0 | 2026-02-15 |
 | PAY-INTENT-001 | Maintain payments intent-only scope (no implementation in MVP) | management | done | P0 | 2026-01-06 |
 | GOV-001 | Publish auth changes playbook (guardrails for auth/csrf edits) | docs | planned | P0 |  |
-| GOV-002 | Publish release & deploy playbook (deploy rules + rollback) | docs | planned | P1 |  |
+| GOV-002 | Publish release & deploy playbook (deploy rules + rollback) | docs | done | P1 | 2026-02-13 |
 | GOV-003 | Perform management freeze review and publish results | management | planned | P0 |  |
+| ROUTING-SPA-API-001 | Fix SPA fallback intercepting /api and /sw.js (autorisen) | engineering | done | P0 | 2026-02-09 |
+| CHORE-REPO-001 | Update ignore files for repo hygiene | engineering | done | P2 | 2026-02-10 |
+| CI-DOCKER-001 | Add manual Docker Hub publish workflow | engineering | done | P2 | 2026-02-10 |
+| DOC-OPS-DOCKER-001 | Update Docker Hub repo General page metadata | ops | done | P2 | 2026-02-10 |
+| WO-OPS-REPO-HYGIENE-001 | Repo hygiene: declutter autorisen (gitignore + cleanup tools + evidence policy) + clean docs/project-plan.csv formatting | VS_Chat | Planned | P0 |  |
+| WO-DASH-PROJECT-STATUS-VAL-001 | Dashboard: project status returns non-null value | VS_Chat | In Review | P0 | 2026-02-12 |
+| FEAT-AGENTS-001 | Create 4 AI agent modules (code-review/security-scan/perf-opt/doc-gen) + wire into router | engineering | done | P0 | 2026-02-18 |
+| FEAT-PAY-ALIGN-001 | Align payment plans to Free/Pro/Enterprise with ZAR pricing | engineering | done | P0 | 2026-02-18 |
+| FEAT-LANDING-001 | Fix landing page CTAs and feature promises | engineering | done | P1 | 2026-02-18 |
+| FEAT-OAUTH-001 | Activate Google and LinkedIn OAuth login (end-to-end) | engineering | done | P0 | 2026-02-18 |
+| FEAT-DASH-WELCOME-001 | Wire dashboard WelcomeHeader to live API data | engineering | done | P0 | 2026-02-18 |
+| FEAT-ONBOARD-PROFILE-001 | Onboarding profile page: dark theme + pre-fill from OAuth + optional fields | engineering | done | P1 | 2026-02-19 |
+| FEAT-TRIAL-BTN-001 | Smart trial button: check auth status before redirect | engineering | done | P1 | 2026-02-19 |
+| FEAT-LOGIN-NOTIFY-001 | Send login email notification for all providers (Google/LinkedIn/email) | engineering | done | P0 | 2026-02-19 |
+| FIX-DDOS-OAUTH-001 | Exempt OAuth callbacks from DDoS burst detection | engineering | done | P1 | 2026-02-18 |
+| FIX-DASH-PREVIEW-001 | Fix dashboard stuck in read-only preview mode | engineering | done | P0 | 2026-02-19 |
 
 <!-- PLAN:END -->
