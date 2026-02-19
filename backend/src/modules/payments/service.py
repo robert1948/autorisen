@@ -89,24 +89,31 @@ def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str,
 
 
 def _encode_for_signature(data: Mapping[str, str], passphrase: str | None) -> str:
+    """Build the PayFast signature string.
+
+    Per PayFast docs the fields must appear in the **same order** as they will
+    be POSTed (i.e. dict insertion order, NOT alphabetical).  Only values are
+    URL-encoded; keys are left as-is.  The `+` → space replacement matches
+    PayFast's official Python integration sample.
+    """
+
     segments: list[str] = []
-    for key in sorted(data.keys()):
+    for key, value in data.items():
         if key == "signature":
             continue
-        value = data.get(key, "")
         if value is None:
             continue
-        value_str = str(value)
+        value_str = str(value).strip()
         if value_str == "":
             continue
-        encoded_key = quote_plus(str(key), safe="")
-        encoded_value = quote_plus(value_str, safe="")
-        segments.append(f"{encoded_key}={encoded_value}")
+        # PayFast sample: replace '+' with space before encoding
+        encoded_value = quote_plus(value_str.replace("+", " "), safe="")
+        segments.append(f"{key}={encoded_value}")
 
     payload = "&".join(segments)
 
-    if passphrase is not None and passphrase != "":
-        payload = f"{payload}&passphrase={quote_plus(str(passphrase), safe='')}"
+    if passphrase is not None and passphrase.strip() != "":
+        payload = f"{payload}&passphrase={quote_plus(passphrase.strip(), safe='')}"
     return payload
 
 
@@ -136,19 +143,25 @@ def build_checkout_fields(
 ) -> Dict[str, str]:
     """Create a signed payload for the PayFast checkout form."""
 
+    # PayFast requires fields in a SPECIFIC order for signature generation.
+    # See: https://developers.payfast.co.za/docs#step_1_form_fields
     base_fields = {
+        # 1 – Merchant details
         "merchant_id": settings.merchant_id,
         "merchant_key": settings.merchant_key,
+        # 2 – Redirect URLs
         "return_url": settings.return_url,
         "cancel_url": settings.cancel_url,
         "notify_url": settings.notify_url,
+        # 3 – Buyer details
+        "name_first": customer_first_name,
+        "name_last": customer_last_name,
+        "email_address": customer_email,
+        # 4 – Transaction details
         "m_payment_id": m_payment_id,
         "amount": _format_amount(amount),
         "item_name": item_name,
         "item_description": item_description,
-        "email_address": customer_email,
-        "name_first": customer_first_name,
-        "name_last": customer_last_name,
     }
 
     if metadata:
