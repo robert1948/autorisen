@@ -198,5 +198,8 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | FEAT-LOGIN-NOTIFY-001 | Send login email notification for all providers (Google/LinkedIn/email) | engineering | done | P0 | 2026-02-19 |
 | FIX-DDOS-OAUTH-001 | Exempt OAuth callbacks from DDoS burst detection | engineering | done | P1 | 2026-02-18 |
 | FIX-DASH-PREVIEW-001 | Fix dashboard stuck in read-only preview mode | engineering | done | P0 | 2026-02-19 |
+| FIX-SCAFFOLD-REDIRECT-001 | Replace scaffold route stubs with Navigate redirects and real LogoutAction | engineering | done | P1 | 2026-02-19 |
+| FEAT-PAYMENTS-FLAG-001 | Enable payments feature flag by default (opt-out pattern) | engineering | done | P1 | 2026-02-19 |
+| GOV-FREEZE-UPDATE-001 | Update FREEZE_REVIEW §3.3 and §3.4 from PLACEHOLDER to FROZEN | docs | done | P2 | 2026-02-19 |
 
 <!-- PLAN:END -->
