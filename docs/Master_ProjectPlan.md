@@ -201,5 +201,6 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | FIX-SCAFFOLD-REDIRECT-001 | Replace scaffold route stubs with Navigate redirects and real LogoutAction | engineering | done | P1 | 2026-02-19 |
 | FEAT-PAYMENTS-FLAG-001 | Enable payments feature flag by default (opt-out pattern) | engineering | done | P1 | 2026-02-19 |
 | GOV-FREEZE-UPDATE-001 | Update FREEZE_REVIEW §3.3 and §3.4 from PLACEHOLDER to FROZEN | docs | done | P2 | 2026-02-19 |
+| FEAT-DASHBOARD-OVERHAUL-001 | Dashboard overhaul with AppShell sidebar and mobile bottom nav | engineering | done | P1 | 2026-02-19 |
 
 <!-- PLAN:END -->
