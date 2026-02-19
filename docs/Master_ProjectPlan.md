@@ -172,16 +172,16 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | done | P0 | 2026-02-12 |
 | SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | done | P2 | 2026-02-03 |
 | SPEC-011 | Define change control process (who may edit/review/versioning) | docs | planned | P1 |  |
-| MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | planned | P0 |  |
+| MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | done | P0 | 2026-02-19 |
 | MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | planned | P0 |  |
 | DB-001 | Establish Postgres MVP data scope as system-of-record | docs | done | P0 | 2026-01-06 |
-| DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | planned | P0 |  |
+| DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | done | P0 | 2026-02-19 |
 | DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | done | P1 | 2026-02-13 |
 | NEXT-003 | Execute PayFast production transaction | management | in-progress | P0 | 2026-02-15 |
 | PAY-INTENT-001 | Maintain payments intent-only scope (no implementation in MVP) | management | done | P0 | 2026-01-06 |
-| GOV-001 | Publish auth changes playbook (guardrails for auth/csrf edits) | docs | planned | P0 |  |
+| GOV-001 | Publish auth changes playbook (guardrails for auth/csrf edits) | docs | done | P0 | 2026-02-19 |
 | GOV-002 | Publish release & deploy playbook (deploy rules + rollback) | docs | done | P1 | 2026-02-13 |
-| GOV-003 | Perform management freeze review and publish results | management | planned | P0 |  |
+| GOV-003 | Perform management freeze review and publish results | management | done | P0 | 2026-02-19 |
 | ROUTING-SPA-API-001 | Fix SPA fallback intercepting /api and /sw.js (autorisen) | engineering | done | P0 | 2026-02-09 |
 | CHORE-REPO-001 | Update ignore files for repo hygiene | engineering | done | P2 | 2026-02-10 |
 | CI-DOCKER-001 | Add manual Docker Hub publish workflow | engineering | done | P2 | 2026-02-10 |

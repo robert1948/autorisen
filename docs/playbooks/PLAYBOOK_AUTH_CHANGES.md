@@ -24,8 +24,9 @@ surfaces must follow this playbook without exception.
 
 This playbook applies to any modification that touches:
 
-1. **Auth endpoints** — `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`,
-   `/api/auth/me`, `/api/auth/csrf`, or any new `/api/auth/*` route.
+1. **Auth endpoints** — `/api/auth/login`, `/api/auth/login/google`, `/api/auth/login/linkedin`,
+   `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/me`, `/api/auth/csrf`,
+   `/api/auth/oauth/*/start`, `/api/auth/oauth/*/callback`, or any new `/api/auth/*` route.
 2. **CSRF middleware** — Token issuance, validation, cookie/header names, exemption list.
 3. **Session/token lifecycle** — JWT signing, access/refresh token TTL, token rotation,
    cookie attributes (`HttpOnly`, `Secure`, `SameSite`, `Path`, `Domain`).
@@ -59,6 +60,8 @@ Changes that do **not** trigger this playbook:
 | Adjust cookie attributes | Must not weaken security posture (e.g., removing `HttpOnly` from refresh cookie) |
 | Add/adjust auth tests | Only in a separately approved engineering work order |
 | Add a CSRF exemption | Only for server-to-server webhook endpoints; must be documented in §3.2 |
+| Modify OAuth provider config | Callback URLs, client IDs, scopes — must match GCP/LinkedIn console settings |
+| Add a new OAuth provider | Requires full playbook review; must follow existing Google/LinkedIn pattern |
 
 ## Explicit Stop Conditions
 
@@ -149,3 +152,31 @@ Every auth/CSRF change must produce:
 - Evidence of passing auth tests (CI or local log).
 - Updated spec documents if behavior changed.
 - Entry in `docs/project-plan.csv` linking to the work order and artifacts.
+
+## OAuth-Specific Considerations (added 2026-02-19)
+
+The following details apply to changes involving the Google or LinkedIn OAuth flows:
+
+### Current OAuth Architecture
+- **State parameter**: Embeds an HMAC-signed token (pipe-delimited `provider:nonce|signedtoken`)
+  to survive cookie domain mismatches between OAuth start and callback URLs.
+- **reCAPTCHA**: Optional for social login endpoints (`required=False`) because the token
+  cannot survive the OAuth redirect round-trip via `sessionStorage`.
+- **Login notifications**: `send_login_notification` fires for all login methods (email,
+  Google, LinkedIn) via `BackgroundTasks`.
+- **DDoS exemptions**: OAuth callback paths (`/api/auth/oauth/*/callback`) are exempt from
+  burst detection in `app/middleware/ddos_protection.py`.
+
+### CSRF Exemption Note
+The CSRF exemption list in code (`backend/src/modules/auth/csrf.py`) currently only exempts
+`POST /api/payments/payfast/itn`. The `POST /api/payments/payfast/checkout` exemption noted
+in `SECURITY_CSRF.md` was removed from code (checkout now requires CSRF + JWT auth).
+Update `SECURITY_CSRF.md` if this discrepancy needs resolution.
+
+### OAuth Change Checklist
+Before modifying OAuth flows, verify:
+- [ ] Callback URLs in code match the provider console (GCP / LinkedIn Developer Portal).
+- [ ] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` Heroku config vars are set.
+- [ ] `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_CALLBACK_URL` Heroku config vars are set.
+- [ ] HMAC signing key (`SECRET_KEY`) is consistent across environments.
+- [ ] Login notification fires after successful social login.
