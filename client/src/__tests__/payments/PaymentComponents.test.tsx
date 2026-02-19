@@ -308,7 +308,7 @@ describe('Checkout Flow Integration', () => {
 
   it('handles form submission', () => {
     mockPaymentsApi.createCheckout.mockResolvedValue({
-      processUrl: 'https://sandbox.payfast.co.za/eng/process',
+      process_url: 'https://sandbox.payfast.co.za/eng/process',
       fields: {
         merchant_id: '10000100',
         amount: '99.00'
@@ -872,7 +872,7 @@ describe('Integration Tests', () => {
   it('completes full checkout flow', async () => {
     const user = userEvent.setup();
     mockPaymentsApi.createCheckout.mockResolvedValue({
-      processUrl: 'https://sandbox.payfast.co.za/eng/process',
+      process_url: 'https://sandbox.payfast.co.za/eng/process',
       fields: {
         merchant_id: '10000100',
         merchant_key: 'test_key',

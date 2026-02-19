@@ -99,11 +99,12 @@ export interface CheckoutRequest {
 }
 
 export interface PayFastCheckoutResponse {
-  merchantId: string;
-  merchantKey: string;
-  processUrl: string;
+  process_url: string;
   fields: Record<string, string>;
-  signature: string;
+  /** Optional — present when returned by some endpoints */
+  merchantId?: string;
+  merchantKey?: string;
+  signature?: string;
 }
 
 // Security and validation types

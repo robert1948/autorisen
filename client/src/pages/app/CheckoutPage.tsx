@@ -42,7 +42,7 @@ export default function CheckoutPage() {
     // Create PayFast form and auto-submit
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = result.processUrl;
+    form.action = result.process_url;
     form.style.display = 'none';
     
     // Add all form fields
