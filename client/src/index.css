@@ -1859,12 +1859,14 @@ a {
 
   .hero__actions {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 14px;
   }
 
   .hero__actions .btn {
     width: auto;
     max-width: none;
+    white-space: nowrap;
   }
   
   .hero__pane {
