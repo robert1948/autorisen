@@ -1641,6 +1641,7 @@ async def login_google(
     payload: GoogleLoginIn,
     request: Request,
     response: Response,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ):
@@ -1649,6 +1650,7 @@ async def login_google(
     await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
     ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent")
 
     id_token = payload.id_token
     access_token: Optional[str] = None
@@ -1684,6 +1686,9 @@ async def login_google(
             ip=ip,
         )
         record_login_attempt(ip, email, success=True)
+        background_tasks.add_task(
+            send_login_notification, email, ip_address=ip, user_agent=user_agent
+        )
         return tokens
     except HTTPException:
         record_login_attempt(ip, email, success=False)
@@ -1695,6 +1700,7 @@ async def login_linkedin(
     payload: LinkedInLoginIn,
     request: Request,
     response: Response,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _: None = Depends(require_csrf_token),
 ):
@@ -1703,6 +1709,7 @@ async def login_linkedin(
     await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
     ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent")
 
     access_token = payload.access_token
     if payload.code:
@@ -1736,6 +1743,9 @@ async def login_linkedin(
             ip=ip,
         )
         record_login_attempt(ip, email, success=True)
+        background_tasks.add_task(
+            send_login_notification, email, ip_address=ip, user_agent=user_agent
+        )
         return tokens
     except HTTPException:
         record_login_attempt(ip, email, success=False)

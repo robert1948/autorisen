@@ -209,11 +209,11 @@ const Home = () => {
 
             <div className="hero__actions">
               <Link
-                to={registerHref}
+                to={isAuthenticated ? '/dashboard' : registerHref}
                 className="btn btn--primary btn--magic"
                 data-analytics-cta="hero-primary"
               >
-                Start Your Free Magic Trial
+                {isAuthenticated ? 'Go to Dashboard' : 'Start Your Free Magic Trial'}
               </Link>
               <button
                 type="button"
@@ -476,11 +476,11 @@ const Home = () => {
             Perceptions shift. Behaviors follow. Worlds transform.
           </p>
           <Link
-            to={registerHref}
+            to={isAuthenticated ? '/dashboard' : registerHref}
             className="btn btn--primary btn--magic btn--lg"
             data-analytics-cta="final-primary"
           >
-            Get Started Free – No Card Needed
+            {isAuthenticated ? 'Go to Dashboard' : 'Get Started Free – No Card Needed'}
           </Link>
         </section>
 

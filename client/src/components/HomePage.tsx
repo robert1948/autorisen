@@ -2,9 +2,12 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import TopNav from './nav/TopNav';
 import Footer from './Footer';
+import { useAuth } from '../features/auth/AuthContext';
 
 const HomePage: React.FC = () => {
   const { search } = useLocation();
+  const { state: authState } = useAuth();
+  const isAuthenticated = Boolean(authState.accessToken);
   const registerHref = `/auth/register${search}`;
   const handleOpenSupport = () => {
     console.log("Open support chat");
@@ -26,10 +29,10 @@ const HomePage: React.FC = () => {
           </p>
           <div className="inline-block bg-white/10 p-2 rounded-xl backdrop-blur-sm">
             <Link 
-              to={registerHref} 
+              to={isAuthenticated ? '/dashboard' : registerHref} 
               className="block bg-[#ff6b6b] hover:bg-[#ff5252] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg"
             >
-              Start Your Free Magic Trial
+              {isAuthenticated ? 'Go to Dashboard' : 'Start Your Free Magic Trial'}
             </Link>
           </div>
         </div>
