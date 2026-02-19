@@ -70,6 +70,9 @@ import MFAEnroll from "./pages/auth/MfaEnrollPage";
 // Canonical app entry redirect
 import AppEntryRedirect from "./pages/app/AppEntryRedirectPage";
 
+// Shared app shell with sidebar + bottom nav
+import { AppShell } from "./components/layout/AppShell";
+
 /**
  * Redirect legacy /verify-email/:token → /auth/verify-email/:token
  */
@@ -187,7 +190,7 @@ export default function App() {
           <Route element={<RequireOnboarding />}>
             <Route path="/app" element={<AppEntryRedirect />} />
 
-            {/* Onboarding canonical entry */}
+            {/* Onboarding canonical entry (no AppShell — full-screen flow) */}
             {features.onboarding && (
               <>
                 <Route path="/app/onboarding" element={<OnboardingGuide />} />
@@ -204,37 +207,39 @@ export default function App() {
               </>
             )}
 
-            {/* Core app pages */}
-            <Route path="/app/dashboard" element={<Dashboard />} />
-            <Route path="/app/projects/new" element={<CreateProjectPage />} />
-            <Route path="/app/projects/:projectId" element={<ProjectDetailPage />} />
-            <Route path="/app/settings" element={<Settings />} />
+            {/* App pages inside shared shell (sidebar + bottom nav) */}
+            <Route element={<AppShell />}>
+              <Route path="/app/dashboard" element={<Dashboard />} />
+              <Route path="/app/projects/new" element={<CreateProjectPage />} />
+              <Route path="/app/projects/:projectId" element={<ProjectDetailPage />} />
+              <Route path="/app/settings" element={<Settings />} />
 
-            {features.sunbirdPilot && (
-              <Route path="/app/sunbird-pilot" element={<SunbirdPilotMobile />} />
-            )}
+              {features.sunbirdPilot && (
+                <Route path="/app/sunbird-pilot" element={<SunbirdPilotMobile />} />
+              )}
 
-            {features.agentsShell && (
-              <>
-                <Route path="/app/agents" element={<Agents />} />
-                <Route path="/app/developer" element={<Developer />} />
-                <Route path="/app/chat" element={<ChatConsole />} />
-                <Route path="/app/chat/:threadId" element={<ChatConsole />} />
-              </>
-            )}
+              {features.agentsShell && (
+                <>
+                  <Route path="/app/agents" element={<Agents />} />
+                  <Route path="/app/developer" element={<Developer />} />
+                  <Route path="/app/chat" element={<ChatConsole />} />
+                  <Route path="/app/chat/:threadId" element={<ChatConsole />} />
+                </>
+              )}
 
-            {/* Payments */}
-            {features.payments && (
-              <>
-                <Route path="/app/billing" element={<Billing />} />
-                <Route path="/app/checkout" element={<Checkout />} />
-                <Route path="/app/checkout/success" element={<CheckoutSuccess />} />
-                <Route path="/app/checkout/cancel" element={<CheckoutCancel />} />
-              </>
-            )}
+              {/* Payments */}
+              {features.payments && (
+                <>
+                  <Route path="/app/billing" element={<Billing />} />
+                  <Route path="/app/checkout" element={<Checkout />} />
+                  <Route path="/app/checkout/success" element={<CheckoutSuccess />} />
+                  <Route path="/app/checkout/cancel" element={<CheckoutCancel />} />
+                </>
+              )}
 
-            {/* Marketplace (can be feature-flagged next) */}
-            <Route path="/app/marketplace" element={<Marketplace />} />
+              {/* Marketplace */}
+              <Route path="/app/marketplace" element={<Marketplace />} />
+            </Route>
           </Route>
         </Route>
 

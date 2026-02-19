@@ -48,40 +48,12 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navigation Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="text-blue-600 hover:text-blue-700">
-              ← Back to Dashboard
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
-          </div>
-          <nav className="flex space-x-4">
-            <Link 
-              to="/dashboard" 
-              className="text-gray-600 hover:text-gray-700"
-            >
-              Dashboard
-            </Link>
-            {features.agentsShell && (
-              <Link 
-                to="/agents" 
-                className="text-gray-600 hover:text-gray-700"
-              >
-                My Agents
-              </Link>
-            )}
-          </nav>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Settings</h2>
+    <div className="min-h-full bg-slate-50 dark:bg-slate-950">
+      <div className="flex flex-col lg:flex-row">
+        {/* Sidebar Navigation — hidden on mobile, inline on desktop */}
+        <aside className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
+          <div className="sticky top-0 p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4 dark:text-white">Settings</h2>
             <nav className="space-y-2">
               {tabs.map((tab) => (
                 <button
@@ -89,11 +61,11 @@ const Settings: React.FC = () => {
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
-                  <div className={activeTab === tab.id ? 'text-blue-600' : 'text-gray-400'}>
+                  <div className={activeTab === tab.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}>
                     {getTabIcon(tab.icon)}
                   </div>
                   <span className="font-medium">{tab.label}</span>
@@ -102,24 +74,24 @@ const Settings: React.FC = () => {
             </nav>
 
             {/* Quick Links */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">Quick Links</h3>
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700">
+              <h3 className="text-sm font-medium text-gray-500 mb-3 dark:text-slate-400">Quick Links</h3>
               <div className="space-y-2">
                 <Link
                   to="/onboarding/checklist"
-                  className="block text-sm text-gray-600 hover:text-gray-900"
+                  className="block text-sm text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   Onboarding Status
                 </Link>
                 <Link
-                  to="/marketplace"
-                  className="block text-sm text-gray-600 hover:text-gray-900"
+                  to="/app/marketplace"
+                  className="block text-sm text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   Browse Marketplace
                 </Link>
                 <Link
-                  to="/about"
-                  className="block text-sm text-gray-600 hover:text-gray-900"
+                  to="/help"
+                  className="block text-sm text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   Help & Support
                 </Link>
@@ -127,6 +99,28 @@ const Settings: React.FC = () => {
             </div>
           </div>
         </aside>
+
+        {/* Mobile tab selector */}
+        <div className="border-b border-gray-200 bg-white px-4 py-3 lg:hidden dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex gap-2 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                }`}
+              >
+                <div className={activeTab === tab.id ? 'text-white' : ''}>
+                  {getTabIcon(tab.icon)}
+                </div>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Main Content */}
         <main className="flex-1 p-8">
