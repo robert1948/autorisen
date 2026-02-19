@@ -1,6 +1,6 @@
 # AutoLocal/CapeControl .dockerignore
-# Production-ready FastAPI + React SaaS platform with enhanced ChatKit & Payment integration
-# Updated: November 14, 2025
+# Production-ready FastAPI + React SaaS platform
+# Updated: 2026-02-19
 
 # Git and IDE
 .git
@@ -251,7 +251,7 @@ emergency_*.py
 *_migration_backup.sql
 payment_migration_backup_*.sql
 
-# Development and maintenance scripts
+# Development scripts and tools (not needed in Docker image)
 debug_*.py
 validate_*.py
 quick_*.py
@@ -270,6 +270,7 @@ migrate_auth.py
 migrate_payment.py
 migrate_phase2_profile.py
 migrate_stripe_fields.py
+=*
 
 # Development reports and analysis
 audit_reports/

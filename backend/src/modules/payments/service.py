@@ -284,13 +284,27 @@ def verify_itn_signature(
 ) -> bool:
     """Validate the ITN payload signature (does not perform remote verification)."""
 
-    sanitized = _serialize_fields(payload)
-    remote_signature = sanitized.pop("signature", None)
+    # Work with a mutable copy — keep insertion order from PayFast
+    data: Dict[str, str] = {}
+    for key, value in payload.items():
+        if key == "signature":
+            continue
+        if value is None or str(value).strip() == "":
+            continue
+        data[key] = str(value).strip()
+
+    remote_signature = payload.get("signature")
     if not remote_signature:
         log.warning("Missing PayFast signature in ITN payload")
         return False
 
-    local_signature = generate_signature(sanitized, settings.passphrase)
+    local_signature = generate_signature(data, settings.passphrase)
+    if local_signature != remote_signature:
+        log.warning(
+            "ITN signature mismatch: local=%s remote=%s",
+            local_signature,
+            remote_signature,
+        )
     return local_signature == remote_signature
 
 

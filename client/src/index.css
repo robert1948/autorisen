@@ -359,7 +359,8 @@ a {
 }
 
 .form-input__control input,
-.form-input__control select {
+.form-input__control select,
+.form-input__control textarea {
   width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
@@ -422,6 +423,263 @@ a {
   padding: 2px 6px;
   border-radius: 6px;
 }
+
+/* ----------------------------------------------------------------
+   Checkout Flow & PayFast Checkout Step
+---------------------------------------------------------------- */
+
+.checkout-flow {
+  color: #f8fafc;
+}
+
+.checkout-flow__content {
+  padding: 8px 0;
+}
+
+/* Progress indicator */
+.checkout-progress {
+  margin-bottom: 24px;
+}
+
+.checkout-progress__steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  gap: 8px;
+}
+
+.checkout-progress__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.checkout-progress__step--active,
+.checkout-progress__step--completed {
+  opacity: 1;
+}
+
+.checkout-progress__step-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: rgba(30, 58, 138, 0.5);
+  border: 2px solid rgba(96, 165, 250, 0.3);
+  color: #93c5fd;
+}
+
+.checkout-progress__step--active .checkout-progress__step-indicator {
+  background: rgba(37, 99, 235, 0.7);
+  border-color: #60a5fa;
+  color: #fff;
+}
+
+.checkout-progress__step--completed .checkout-progress__step-indicator {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.checkout-progress__step-label {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.8);
+  text-align: center;
+}
+
+.checkout-progress__step--active .checkout-progress__step-label {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+/* PayFast checkout step (form) */
+.payfast-checkout-step {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.payfast-checkout-step__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.payfast-checkout-step__header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.payfast-checkout-step__header p {
+  color: rgba(148, 163, 184, 0.85);
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+.payfast-checkout-step__summary {
+  text-align: right;
+}
+
+.payfast-checkout-step__summary span {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payfast-checkout-step__summary strong {
+  font-size: 1.5rem;
+  color: #60a5fa;
+}
+
+/* Security info bar */
+.payfast-checkout-step__security {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(15, 32, 64, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  font-size: 0.85rem;
+}
+
+.payfast-checkout-step__security > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payfast-checkout-step__security small {
+  color: rgba(148, 163, 184, 0.6);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payfast-checkout-step__security strong {
+  color: #4ade80;
+}
+
+.payfast-checkout-step__security span {
+  color: #e2e8f0;
+}
+
+.payfast-checkout-step__security .link {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+
+.payfast-checkout-step__security .link:hover {
+  color: #93c5fd;
+}
+
+/* Validation alerts */
+.payfast-checkout-step__validation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payfast-checkout-step__validation .alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.payfast-checkout-step__validation .alert strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.payfast-checkout-step__validation .alert ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.payfast-checkout-step__validation .alert-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.payfast-checkout-step__validation .alert-warning {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  color: #fde68a;
+}
+
+/* Form */
+.payfast-checkout-step__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payfast-checkout-step__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .payfast-checkout-step__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Actions */
+.payfast-checkout-step__actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+/* Form input description */
+.form-input__description {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+/* Checkbox styling */
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #3b82f6;
+  flex-shrink: 0;
+}
+
+/* Buttons */
+/* (btn, btn--primary, btn--ghost defined globally above) */
 
 .role-card {
   background: rgba(15, 32, 64, 0.8);

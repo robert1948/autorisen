@@ -195,6 +195,25 @@ LogoW.png
 # Development artifacts
 # ──────────────────────────────────────────────
 
+# Dev scripts and standalone tools
+auth_api_standalone.py
+debug_ddl.py
+codex.prompt.md
+codex.*.md
+config_comparison.md
+merged-requirements.txt
+Copy_app.py
+Makefile.bak
+heroku_production_fix.py
+fix_database_relationships.py
+fix_enum_constraint.py
+fix_registration_performance.py
+emergency_production_patch.py
+migrate_auth.py
+migrate_payment.py
+migrate_phase2_profile.py
+migrate_stripe_fields.py
+
 # Generated / demo pages
 client/src/components/generated/
 client/src/pages/Demo*.tsx

@@ -305,11 +305,15 @@ async def handle_itn(
     payload = dict(parse_qsl(decoded, keep_blank_values=True))
 
     if not payload:
+        log.warning("ITN received with empty payload")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Empty ITN payload"
         )
 
+    log.info("ITN payload received: %s", {k: v for k, v in payload.items() if k != "signature"})
+
     if not service.verify_itn_signature(payload, settings=settings):
+        log.warning("ITN signature verification failed")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid PayFast signature",
@@ -317,6 +321,7 @@ async def handle_itn(
 
     # Server-to-server validation
     if not await service.validate_itn_with_server(payload, settings=settings):
+        log.warning("ITN server-to-server validation failed")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="PayFast server validation failed",

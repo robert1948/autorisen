@@ -424,10 +424,10 @@ function CheckoutProcessingStep() {
   return (
     <div className="checkout-processing">
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Processing your payment...</h3>
-        <p className="text-gray-600">Please wait while we prepare your secure checkout.</p>
-        <p className="text-sm text-gray-500 mt-2">This may take a few moments.</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <h3 className="text-lg font-semibold text-white mb-2">Processing your payment...</h3>
+        <p className="text-slate-400">Please wait while we prepare your secure checkout.</p>
+        <p className="text-sm text-slate-500 mt-2">This may take a few moments.</p>
       </div>
     </div>
   );
@@ -474,27 +474,75 @@ function CheckoutDetailsStep(props: CheckoutDetailsStepProps) {
 
 function CheckoutReviewStep(props: CheckoutReviewStepProps) {
   return (
-    <div className="checkout-review-placeholder">
-      <h3>Review Order Step</h3>
-      <p>Codex: Implement review and confirmation UI</p>
+    <div className="py-6">
+      <h3 className="text-xl font-semibold text-white mb-6">Review Your Order</h3>
+      <div className="space-y-4 mb-8">
+        <div className="flex justify-between items-center py-3 border-b border-slate-700/50">
+          <span className="text-slate-400">Item</span>
+          <span className="text-white font-medium">{props.formData.itemName}</span>
+        </div>
+        <div className="flex justify-between items-center py-3 border-b border-slate-700/50">
+          <span className="text-slate-400">Email</span>
+          <span className="text-white">{props.formData.customerEmail}</span>
+        </div>
+        <div className="flex justify-between items-center py-3 border-b border-slate-700/50">
+          <span className="text-slate-400">Name</span>
+          <span className="text-white">{props.formData.customerFirstName} {props.formData.customerLastName}</span>
+        </div>
+        <div className="flex justify-between items-center py-3 border-b border-slate-700/50">
+          <span className="text-slate-400 text-lg">Total</span>
+          <span className="text-white text-lg font-bold">{props.formattedAmount}</span>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          className="btn btn--primary flex-1"
+          onClick={props.onConfirm}
+          disabled={props.isProcessing}
+        >
+          {props.isProcessing ? 'Processing...' : 'Confirm & Pay'}
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={props.onBack}>
+          Back
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={props.onCancel}>
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
 
 function CheckoutSuccessStep(props: CheckoutSuccessStepProps) {
   return (
-    <div className="checkout-success-placeholder">
-      <h3>Success Step</h3>
-      <p>Codex: Implement success state with PayFast redirect</p>
+    <div className="py-8 text-center">
+      <div className="text-green-400 text-5xl mb-4">&#10003;</div>
+      <h3 className="text-xl font-semibold text-white mb-2">Payment Initiated</h3>
+      <p className="text-slate-400 mb-6">
+        You will be redirected to PayFast to complete your payment.
+      </p>
+      <button type="button" className="btn btn--primary" onClick={props.onContinue}>
+        Continue to Dashboard
+      </button>
     </div>
   );
 }
 
 function CheckoutErrorStep(props: CheckoutErrorStepProps) {
   return (
-    <div className="checkout-error-placeholder">
-      <h3>Error Step</h3>
-      <p>Codex: Implement error handling UI</p>
+    <div className="py-8 text-center">
+      <div className="text-red-400 text-5xl mb-4">&#10007;</div>
+      <h3 className="text-xl font-semibold text-white mb-2">Payment Error</h3>
+      <p className="text-slate-400 mb-6">{props.error}</p>
+      <div className="flex gap-3 justify-center">
+        <button type="button" className="btn btn--primary" onClick={props.onRetry}>
+          Try Again
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={props.onCancel}>
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
