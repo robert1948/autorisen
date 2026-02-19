@@ -3,26 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 
 import { features } from "./config/features";
 
-// MVP scaffold routes (Spec-driven)
+// Route guards
 import RequireAuth from "./routes/guards/RequireAuth";
-import RequireMvpAuth from "./routes/guards/RequireMvpAuth";
 import RequireOnboarding from "./routes/guards/RequireOnboarding";
-import RequireMvpGuest from "./routes/guards/RequireMvpGuest";
+
+// MVP scaffold pages (content-only stubs — auth/settings routes now redirect to canonical)
 import {
   MvpAbout,
   MvpDocs,
-  MvpLogin,
-  MvpRegister,
-  MvpResetPassword,
-  MvpResetPasswordConfirm,
-  MvpRegisterStep1,
-  MvpRegisterStep2,
-  MvpLogout,
-  MvpDashboard,
-  MvpSettings,
-  MvpSettingsProfile,
-  MvpSettingsSecurity,
-  MvpSettingsBilling,
   MvpHelp,
   MvpKnowledgeBase,
 } from "./pages/mvp/MvpPages";
@@ -44,6 +32,8 @@ import ForgotPassword from "./pages/auth/ForgotPasswordPage";
 import ResetPassword from "./pages/auth/ResetPasswordPage";
 import SocialCallback from "./pages/auth/SocialCallbackPage";
 import VerifyEmail from "./pages/public/VerifyEmailPage";
+
+import { useAuth } from "./features/auth/AuthContext";
 
 // Onboarding pages
 import OnboardingCustomer from "./pages/onboarding/OnboardingCustomerPage";
@@ -96,6 +86,29 @@ function ChatThreadRedirect() {
   return <Navigate to={`/app/chat/${threadId ?? ""}`} replace />;
 }
 
+/**
+ * Logout route — clears auth state and redirects to login.
+ * Calls POST /api/auth/logout via useAuth().logout().
+ */
+function LogoutAction() {
+  const { logout } = useAuth();
+  const [done, setDone] = React.useState(false);
+
+  React.useEffect(() => {
+    logout().then(() => setDone(true)).catch(() => setDone(true));
+  }, [logout]);
+
+  if (done) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
+      <p>Signing out…</p>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -107,15 +120,13 @@ export default function App() {
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/docs" element={<MvpDocs />} />
 
-        {/* Auth flow pages (guest-only stub) */}
-        <Route element={<RequireMvpGuest />}>
-          <Route path="/login" element={<MvpLogin />} />
-          <Route path="/register" element={<MvpRegister />} />
-          <Route path="/reset-password" element={<MvpResetPassword />} />
-          <Route path="/reset-password/confirm" element={<MvpResetPasswordConfirm />} />
-          <Route path="/register/step-1" element={<MvpRegisterStep1 />} />
-          <Route path="/register/step-2" element={<MvpRegisterStep2 />} />
-        </Route>
+        {/* Auth flow aliases — redirect to canonical /auth/* routes */}
+        <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+        <Route path="/register" element={<Navigate to="/auth/register" replace />} />
+        <Route path="/reset-password" element={<Navigate to="/auth/forgot-password" replace />} />
+        <Route path="/reset-password/confirm" element={<Navigate to="/auth/reset-password" replace />} />
+        <Route path="/register/step-1" element={<Navigate to="/auth/register" replace />} />
+        <Route path="/register/step-2" element={<Navigate to="/auth/register" replace />} />
 
         {/* Email verification — outside auth guards so links always work */}
         <Route path="/verify-email/:token" element={<VerifyEmailRedirect />} />
@@ -128,18 +139,15 @@ export default function App() {
           <Route path="/onboarding/trust" element={<OnboardingTrust />} />
         </Route>
 
-        {/* App pages (require auth stub) */}
-        <Route element={<RequireMvpAuth />}>
-          {/* App core */}
-          <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
-          <Route path="/settings" element={<MvpSettings />} />
-          <Route path="/settings/profile" element={<MvpSettingsProfile />} />
-          <Route path="/settings/security" element={<MvpSettingsSecurity />} />
-          <Route path="/settings/billing" element={<MvpSettingsBilling />} />
+        {/* App aliases — redirect to canonical /app/* routes */}
+        <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+        <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+        <Route path="/settings/profile" element={<Navigate to="/app/settings" replace />} />
+        <Route path="/settings/security" element={<Navigate to="/app/settings" replace />} />
+        <Route path="/settings/billing" element={<Navigate to="/app/settings" replace />} />
 
-          {/* Logout (action route; placeholder only) */}
-          <Route path="/logout" element={<MvpLogout />} />
-        </Route>
+        {/* Logout — real action: clears tokens and redirects to login */}
+        <Route path="/logout" element={<LogoutAction />} />
 
         {/* Help pages (read-only; public accessible) */}
         <Route path="/help" element={<MvpHelp />} />

@@ -26,8 +26,8 @@ capstone governance artifact that other playbooks and work orders reference.
 | §3 Authentication & Security Model | FROZEN | Stability required; auth/CSRF must not churn during MVP. | SPEC-001 filled §3.1 auth flows (PR #42). SPEC-002 filled §3.2 CSRF policy (PR #52). GOV-001 playbook published (PR #55). Google & LinkedIn OAuth fully activated (2026-02-18). OAuth state uses HMAC-signed token for domain mismatch resilience. |
 | §3.1 Auth Flows | FROZEN | Fully specified: login, refresh, logout, me, csrf bootstrap, OAuth (Google/LinkedIn). | SPEC-001 completed 2026-02-10. FEAT-OAUTH-001 activated Google & LinkedIn (2026-02-18). |
 | §3.2 CSRF Policy | FROZEN | Fully specified: double-submit pattern, cookie/header requirements, exemptions. | SPEC-002 completed 2026-02-12. SECURITY_CSRF.md is canonical detail reference. Note: /checkout exemption was removed from code (now requires CSRF + JWT). |
-| §3.3 Session Guarantees | PLACEHOLDER | Section exists but content is placeholder ("What the system guarantees / does not guarantee"). | SPEC-003 is planned (P1). |
-| §3.4 Frozen vs Flexible Areas | PLACEHOLDER | Section exists but content is placeholder ("Frozen: to be defined / Flexible: to be defined"). | SPEC-004 is planned (P1). This freeze review partially satisfies the intent. |
+| §3.3 Session Guarantees | FROZEN | Fully specified: token lifecycle (HS256/opaque refresh/HMAC CSRF), TTLs, rotation, logout, persistence, non-guarantees. | SPEC-003 completed 2026-02-19. Content verified in §3.3.1–§3.3.2. |
+| §3.4 Frozen vs Flexible Areas | FROZEN | Fully specified: frozen items (auth contract, CSRF, migration approval, audit, SPA fallback) and flexible areas (TTLs, rate limits, OAuth config). | SPEC-004 completed 2026-02-19. Content verified in §3.4. |
 | §4 Payments — Intent Only | IN PROGRESS | Intent constraints defined; PayFast integration unblocked and in-progress. | PAY-INTENT-001 confirmed intent-only scope (2026-01-06). NEXT-003 unblocked 2026-02-15; PayFast checkout endpoint active. |
 | §4.4 NEXT-003 Preconditions | UNBLOCKED | All preconditions met as of 2026-02-15. | Auth/CSRF frozen. Management approval granted. PayFast feature flag enabled. |
 | §5 Testing Strategy | FLEXIBLE | Strategy can be refined while staying within determinism guardrails. | §5.1 and §5.2 remain placeholder. SPEC-005, SPEC-006 are planned (P1). |
@@ -52,8 +52,6 @@ capstone governance artifact that other playbooks and work orders reference.
 
 | Section | Gap | Planned WO |
 |---|---|---|
-| §3.3 Session Guarantees | Content is placeholder | SPEC-003 (P1) |
-| §3.4 Frozen vs Flexible Areas | Content is placeholder | SPEC-004 (P1) |
 | §6.1 Development Rules | High-level only | SPEC-007 (P2) |
 | §6.2 Deployment Rules | High-level only | SPEC-008 (P1) |
 | §6.3 Migration Rules | High-level only (detail is in §2.6.3) | — (covered by SPEC-009) |
