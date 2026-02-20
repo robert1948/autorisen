@@ -72,6 +72,67 @@ export type AccountBalance = {
   currency: string;
 };
 
+/* ── Developer API types ──────────────────────────── */
+
+export type ApiCredential = {
+  id: string;
+  client_id: string;
+  label: string | null;
+  is_active: boolean;
+  created_at: string;
+  revoked_at: string | null;
+};
+
+export type ApiCredentialCreated = {
+  id: string;
+  client_id: string;
+  client_secret: string;
+  label: string;
+  created_at: string;
+  message: string;
+};
+
+export type DeveloperUsage = {
+  total_api_keys: number;
+  active_api_keys: number;
+  revoked_api_keys: number;
+  account_created_at: string | null;
+  email_verified: boolean;
+};
+
+export type DeveloperProfile = {
+  user_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  organization: string | null;
+  use_case: string | null;
+  website_url: string | null;
+  github_url: string | null;
+  developer_terms_accepted_at: string | null;
+  developer_terms_version: string | null;
+  created_at: string;
+  email_verified: boolean;
+};
+
+/* ── Admin API types ──────────────────────────────── */
+
+export type AdminInvite = {
+  id: string;
+  target_email: string;
+  invited_by: string;
+  created_at: string;
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+};
+
+export type AdminInviteCreated = {
+  invite_id: string;
+  target_email: string;
+  expires_at: string;
+};
+
 export const dashboardModulesApi = {
   getAccountDetails(): Promise<AccountDetails> {
     return apiFetch<AccountDetails>("/account/me");
@@ -108,5 +169,44 @@ export const dashboardModulesApi = {
   },
   deleteAccount(): Promise<{ status: string; message: string }> {
     return apiFetch<{ status: string; message: string }>("/account/me", { method: "DELETE" });
+  },
+
+  /* ── Developer endpoints (/api/dev/*) ── */
+
+  getDevApiKeys(): Promise<ApiCredential[]> {
+    return apiFetch<ApiCredential[]>("/dev/api-keys");
+  },
+  createDevApiKey(label: string): Promise<ApiCredentialCreated> {
+    return apiFetch<ApiCredentialCreated>("/dev/api-keys", { method: "POST", body: { label } });
+  },
+  revokeDevApiKey(id: string): Promise<{ message: string }> {
+    return apiFetch<{ message: string }>(`/dev/api-keys/${id}`, { method: "DELETE" });
+  },
+  getDevUsage(): Promise<DeveloperUsage> {
+    return apiFetch<DeveloperUsage>("/dev/usage");
+  },
+  getDevProfile(): Promise<DeveloperProfile> {
+    return apiFetch<DeveloperProfile>("/dev/profile");
+  },
+
+  /* ── Admin endpoints (/api/admin/*) ── */
+
+  getAdminInvites(): Promise<AdminInvite[]> {
+    return apiFetch<AdminInvite[]>("/admin/invites");
+  },
+  createAdminInvite(target_email: string, expiry_hours?: number): Promise<AdminInviteCreated> {
+    return apiFetch<AdminInviteCreated>("/admin/invite", {
+      method: "POST",
+      body: { target_email, expiry_hours: expiry_hours ?? 72 },
+    });
+  },
+  revokeAdminInvite(id: string): Promise<{ message: string }> {
+    return apiFetch<{ message: string }>(`/admin/invite/${id}`, { method: "DELETE" });
+  },
+
+  /* ── Health ── */
+
+  getHealthStatus(): Promise<{ status: string; database?: string }> {
+    return apiFetch<{ status: string; database?: string }>("/health", { auth: false });
   },
 };
