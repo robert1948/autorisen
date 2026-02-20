@@ -60,6 +60,7 @@ import CheckoutSuccess from "./pages/app/CheckoutSuccessPage";
 import CheckoutCancel from "./pages/app/CheckoutCancelPage";
 import Pricing from "./pages/app/PricingPage";
 import ChatConsole from "./pages/app/ChatConsolePage";
+import CompliancePage from "./pages/app/CompliancePage";
 import LogoTestPage from "./pages/help/LogoTestPage";
 import SunbirdPilotMobile from "./pages/app/SunbirdPilotMobilePage";
 
@@ -241,6 +242,9 @@ export default function App() {
 
               {/* Marketplace */}
               <Route path="/app/marketplace" element={<Marketplace />} />
+
+              {/* Compliance */}
+              <Route path="/app/compliance" element={<CompliancePage />} />
             </Route>
           </Route>
         </Route>
