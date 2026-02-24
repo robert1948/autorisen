@@ -1259,7 +1259,7 @@ class Organization(Base):
     name = Column(String(255), nullable=False, index=True)
     industry = Column(String(100), nullable=True)
     size_bucket = Column(String(50), nullable=True)
-    is_active = Column(Boolean, nullable=False, server_default="1")
+    is_active = Column(Boolean, nullable=False, server_default="true")
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
