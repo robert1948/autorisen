@@ -221,6 +221,16 @@ db_snapshots/
 *.dump
 *.sql.backup
 
+# RAG / embeddings temp data
+rag_cache/
+embeddings_cache/
+*.faiss
+*.index
+rag_uploads/
+
+# Beta program temp
+beta_exports/
+
 # Heroku specific
 .heroku/
 
@@ -285,6 +295,10 @@ docs/Master_ProjectPlan_Updated.md
 
 # Deployment scripts
 scripts/deploy-heroku.sh
+
+# Playbook temp / draft files
+docs/playbooks/temp/
+docs/playbooks/*.draft.md
 
 # Include essential client source and assets for Docker build
 !client/src/

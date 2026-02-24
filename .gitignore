@@ -280,6 +280,16 @@ docs/PLAYBOOK_OVERVIEW.md
 backend/migrations/versions/temp_*.py
 backend/migrations/versions/*_temp.py
 
+# RAG / embeddings temp data
+rag_cache/
+embeddings_cache/
+*.faiss
+*.index
+rag_uploads/
+
+# Beta program temp
+beta_exports/
+
 # Dev reports
 voice_demo_report_*.json
 audit_reports/
@@ -329,6 +339,10 @@ docs/evidence/**/*.har
 # Allow evidence logs to be committed (governance evidence packs)
 !docs/evidence/**/logs/
 !docs/evidence/**/logs/**
+
+# Playbook temp
+docs/playbooks/temp/
+docs/playbooks/*.draft.md
 
 # Local-only
 /os
