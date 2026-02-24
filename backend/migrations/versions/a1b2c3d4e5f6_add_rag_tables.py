@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "a1b2c3d4e5f6"
-down_revision = None  # will be set by alembic merge if needed
-branch_labels = ("rag",)
+down_revision = "20260219_plan_align"
+branch_labels = None
 depends_on = None
 
 
