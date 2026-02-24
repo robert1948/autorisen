@@ -197,6 +197,7 @@ class RegisterStep1In(BaseModel):
     role: RoleStr
     terms_accepted: Optional[bool] = None
     recaptcha_token: Optional[str] = None
+    beta_code: Optional[str] = None
 
     @field_validator("password", "confirm_password")
     @classmethod
@@ -237,6 +238,7 @@ class RegisterIn(BaseModel):
     company_name: CompanyNameStr = ""
     profile: Profile = Field(default_factory=Profile)
     recaptcha_token: Optional[str] = None
+    beta_code: Optional[str] = None
 
     @field_validator("password", "confirm_password")
     @classmethod
@@ -1247,6 +1249,20 @@ async def register_step1(
     email = _normalize_email(payload.email)
     role = _normalize_role(payload.role)
 
+    # --- Beta gating ---
+    from backend.src.modules.auth.beta_service import is_beta_gated, validate_beta_invite
+
+    if is_beta_gated():
+        if not payload.beta_code:
+            raise HTTPException(
+                status_code=403,
+                detail="Registration is currently invite-only. Please provide a beta invite code.",
+            )
+        try:
+            validate_beta_invite(db, raw_token=payload.beta_code, email=email)
+        except ValueError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+
     await _verify_recaptcha_token(payload.recaptcha_token, request)
 
     if payload.terms_accepted is not True:
@@ -1376,6 +1392,27 @@ async def register_single(
     email = _normalize_email(payload.email)
     role = _normalize_role(payload.role) or payload.role
 
+    # --- Beta gating ---
+    from backend.src.modules.auth.beta_service import (
+        consume_beta_invite,
+        is_beta_gated,
+        validate_beta_invite,
+    )
+
+    _beta_invite = None
+    if is_beta_gated():
+        if not payload.beta_code:
+            raise HTTPException(
+                status_code=403,
+                detail="Registration is currently invite-only. Please provide a beta invite code.",
+            )
+        try:
+            _beta_invite = validate_beta_invite(
+                db, raw_token=payload.beta_code, email=email
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+
     await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
 
     if payload.terms_accepted is not True:
@@ -1428,6 +1465,14 @@ async def register_single(
             db.commit()
     except Exception as exc:  # pragma: no cover
         log.exception("register_single_finalize email=%s err=%s", email, exc)
+
+    # --- Consume beta invite after successful registration ---
+    if _beta_invite and user_obj:
+        try:
+            consume_beta_invite(db, invite=_beta_invite, user_id=str(user_obj.id))
+            log.info("beta_invite_consumed email=%s", email)
+        except Exception as exc:  # pragma: no cover
+            log.warning("beta_consume_failed email=%s err=%s", email, exc)
 
     return LoginResponse(
         access_token=access_token, refresh_token=refresh_token, email_verified=True

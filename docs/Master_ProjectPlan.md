@@ -165,19 +165,19 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | SPEC-002 | Fill in CSRF policy details (token source/cookie/header/protected endpoints) | docs | done | P0 | 2026-02-12 |
 | SPEC-003 | Define Session Guarantees and non-guarantees | docs | done | P1 | 2026-02-19 |
 | SPEC-004 | Define Frozen vs Flexible areas in spec | docs | done | P1 | 2026-02-19 |
-| SPEC-005 | Define Testing determinism requirements (time/email/rate-limiting) | docs | planned | P1 |  |
-| SPEC-006 | Define 'green CI' guarantees + mocking boundaries | docs | planned | P1 |  |
-| SPEC-007 | Define development rules (branching/merge/commit discipline) | docs | planned | P2 |  |
-| SPEC-008 | Define deployment rules (approvals/rollback expectations) | docs | planned | P1 |  |
+| SPEC-005 | Define Testing determinism requirements (time/email/rate-limiting) | docs | done | P1 | 2026-02-20 |
+| SPEC-006 | Define 'green CI' guarantees + mocking boundaries | docs | done | P1 | 2026-02-20 |
+| SPEC-007 | Define development rules (branching/merge/commit discipline) | docs | done | P2 | 2026-02-20 |
+| SPEC-008 | Define deployment rules (approvals/rollback expectations) | docs | done | P1 | 2026-02-20 |
 | SPEC-009 | Define migration rules (approvals required; no implicit migrations) | docs | done | P0 | 2026-02-12 |
 | SPEC-010 | Define roadmap unlock criteria (NEXT-003 + production launch) | docs | done | P2 | 2026-02-03 |
-| SPEC-011 | Define change control process (who may edit/review/versioning) | docs | planned | P1 |  |
+| SPEC-011 | Define change control process (who may edit/review/versioning) | docs | done | P1 | 2026-02-20 |
 | MVP-ROUTES-001 | Publish MVP pages & routes checklist (no code scaffolding) | docs | done | P0 | 2026-02-19 |
 | MVP-ROUTES-002 | Define onboarding gate rules (cannot skip onboarding) | docs | done | P0 | 2026-02-19 |
 | DB-001 | Establish Postgres MVP data scope as system-of-record | docs | done | P0 | 2026-01-06 |
 | DB-002 | Publish DB migrations playbook (approval gate; no manual prod changes) | docs | done | P0 | 2026-02-19 |
 | DB-003 | Document DB observability/maintenance expectations (health/logging/backups/local reset) | docs | done | P1 | 2026-02-13 |
-| NEXT-003 | Execute PayFast production transaction | management | in-progress | P0 | 2026-02-15 |
+| NEXT-003 | Execute PayFast production transaction | management | done | P0 | 2026-02-19 |
 | PAY-INTENT-001 | Maintain payments intent-only scope (no implementation in MVP) | management | done | P0 | 2026-01-06 |
 | GOV-001 | Publish auth changes playbook (guardrails for auth/csrf edits) | docs | done | P0 | 2026-02-19 |
 | GOV-002 | Publish release & deploy playbook (deploy rules + rollback) | docs | done | P1 | 2026-02-13 |
@@ -189,7 +189,7 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | WO-OPS-REPO-HYGIENE-001 | Repo hygiene: declutter autorisen (gitignore + cleanup tools + evidence policy) + clean docs/project-plan.csv formatting | VS_Chat | done | P0 | 2026-02-19 |
 | WO-DASH-PROJECT-STATUS-VAL-001 | Dashboard: project status returns non-null value | VS_Chat | done | P0 | 2026-02-19 |
 | FEAT-AGENTS-001 | Create 4 AI agent modules (code-review/security-scan/perf-opt/doc-gen) + wire into router | engineering | done | P0 | 2026-02-18 |
-| FEAT-PAY-ALIGN-001 | Align payment plans to Free/Pro/Enterprise with ZAR pricing | engineering | done | P0 | 2026-02-18 |
+| FEAT-PAY-ALIGN-001 | Align payment plans to Free/Pro/Enterprise with ZAR pricing | engineering | done | P0 | 2026-02-19 |
 | FEAT-LANDING-001 | Fix landing page CTAs and feature promises | engineering | done | P1 | 2026-02-18 |
 | FEAT-OAUTH-001 | Activate Google and LinkedIn OAuth login (end-to-end) | engineering | done | P0 | 2026-02-18 |
 | FEAT-DASH-WELCOME-001 | Wire dashboard WelcomeHeader to live API data | engineering | done | P0 | 2026-02-18 |
@@ -202,5 +202,16 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | FEAT-PAYMENTS-FLAG-001 | Enable payments feature flag by default (opt-out pattern) | engineering | done | P1 | 2026-02-19 |
 | GOV-FREEZE-UPDATE-001 | Update FREEZE_REVIEW §3.3 and §3.4 from PLACEHOLDER to FROZEN | docs | done | P2 | 2026-02-19 |
 | FEAT-DASHBOARD-OVERHAUL-001 | Dashboard overhaul with AppShell sidebar and mobile bottom nav | engineering | done | P1 | 2026-02-19 |
+| BP-RAG-001 | Design and implement controlled RAG pipeline (approved-doc-only retrieval) | engineering | done | P0 | 2026-02-24 |
+| BP-RAG-002 | Implement evidence output layer (citations + source trace + timestamps) | engineering | done | P0 | 2026-02-24 |
+| BP-RAG-003 | Implement unsupported policy enforcement (refuse ungrounded answers) | engineering | done | P0 | 2026-02-24 |
+| BP-CAPSULE-001 | Design and implement workflow capsule engine | engineering | done | P1 | 2026-02-24 |
+| BP-TENANT-001 | Implement tenant isolation and granular RBAC | engineering | done | P1 | 2026-02-24 |
+| BP-AUDIT-001 | Implement audit export and evidence pack generation | engineering | done | P1 | 2026-02-24 |
+| BP-STRIPE-001 | Integrate Stripe for international payment rails | engineering | todo | P2 |  |
+| BP-BETA-001 | Launch closed beta with 10–20 compliance-heavy SMBs | management | done | P0 | 2026-02-24 |
+| BP-MONITOR-001 | Implement monitoring and alerting infrastructure (runbooks + backups) | engineering | done | P1 | 2026-02-24 |
+| BP-SECURITY-DOC-001 | Publish security posture documentation for buyer due diligence | docs | done | P1 | 2026-02-24 |
+| BP-DOCS-ALIGN-001 | Audit and align docs/agents.md with actual codebase | docs | done | P2 | 2026-02-24 |
 
 <!-- PLAN:END -->

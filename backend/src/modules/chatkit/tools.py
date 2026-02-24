@@ -195,6 +195,49 @@ def _payments_checkout(
     }
 
 
+def _rag_search(
+    db: Session,
+    user: models.User,
+    _thread: models.ChatThread,
+    payload: ToolPayload,
+) -> ToolResult:
+    """Synchronous wrapper — runs the async RAG query in a new event loop."""
+    import asyncio
+
+    from backend.src.modules.rag.service import RAGService
+    from backend.src.modules.rag.schemas import RAGQueryRequest, UnsupportedPolicy
+
+    query = payload.get("query", "")
+    if not query:
+        return {"error": "query is required"}
+
+    service = RAGService()
+    request = RAGQueryRequest(
+        query=query,
+        doc_types=payload.get("doc_types"),
+        top_k=payload.get("top_k", 5),
+        similarity_threshold=payload.get("similarity_threshold", 0.25),
+        unsupported_policy=payload.get("unsupported_policy", UnsupportedPolicy.FLAG),
+        include_response=payload.get("include_response", True),
+    )
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            result = pool.submit(
+                asyncio.run, service.query(db, user, request)
+            ).result()
+    else:
+        result = asyncio.run(service.query(db, user, request))
+
+    return result.dict()
+
+
 TOOLS: Dict[str, ToolSpec] = {
     "onboarding.plan": ToolSpec(
         name="onboarding.plan",
@@ -279,6 +322,24 @@ TOOLS: Dict[str, ToolSpec] = {
                 "metadata": {"type": "object"},
             },
             "required": ["amount"],
+        },
+    ),
+    "rag.search": ToolSpec(
+        name="rag.search",
+        placement="rag",
+        description="Search approved business documents and return evidence-backed answers with citations.",
+        handler=_rag_search,
+        schema={
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The question to answer from approved documents"},
+                "doc_types": {"type": "array", "items": {"type": "string"}, "description": "Filter by document type"},
+                "top_k": {"type": "integer", "minimum": 1, "maximum": 20, "description": "Max chunks to retrieve"},
+                "similarity_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+                "unsupported_policy": {"type": "string", "enum": ["refuse", "flag", "allow"]},
+                "include_response": {"type": "boolean"},
+            },
+            "required": ["query"],
         },
     ),
 }

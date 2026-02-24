@@ -101,6 +101,9 @@ class AgentExecutor:
                 task_data.agent_id, task_data.input, websocket
             )
 
+            # Apply unsupported-policy enforcement to RAG-aware responses
+            result = self._apply_unsupported_policy(result, task_data.input)
+
             # Update task as completed
             self.db.query(models.Task).filter(models.Task.id == task_id).update(
                 {
@@ -249,6 +252,48 @@ class AgentExecutor:
                 result = await service.process_query(task_input)
                 return result.dict()
 
+            elif agent_slug in ("rag-agent", "rag_agent", "rag"):
+                from backend.src.modules.rag.service import RAGService
+                from backend.src.modules.rag.schemas import RAGQueryRequest, UnsupportedPolicy
+                service = RAGService(
+                    openai_api_key=settings.openai_api_key,
+                    anthropic_api_key=settings.anthropic_api_key,
+                    model=os.getenv("RAG_LLM_MODEL", "claude-3-5-haiku-20241022"),
+                )
+                rag_request = RAGQueryRequest(
+                    query=query,
+                    doc_types=input_data.get("doc_types"),
+                    top_k=input_data.get("top_k", 5),
+                    similarity_threshold=input_data.get("similarity_threshold", 0.25),
+                    unsupported_policy=input_data.get("unsupported_policy", UnsupportedPolicy.FLAG),
+                    include_response=input_data.get("include_response", True),
+                )
+                user = self.db.query(models.User).filter(
+                    models.User.id == input_data.get("user_id")
+                ).first()
+                if not user:
+                    return {"error": "User not found for RAG query"}
+                result = await service.query(self.db, user, rag_request)
+                return result.dict()
+
+            elif agent_slug in ("capsule-agent", "capsule_agent", "capsule"):
+                from backend.src.modules.capsules.service import CapsuleService
+                from backend.src.modules.capsules.schemas import CapsuleRunRequest
+                service = CapsuleService()
+                capsule_request = CapsuleRunRequest(
+                    capsule_id=input_data.get("capsule_id", "sop-answering"),
+                    query=query,
+                    context=input_data.get("context"),
+                    unsupported_policy=input_data.get("unsupported_policy", "flag"),
+                )
+                user = self.db.query(models.User).filter(
+                    models.User.id == input_data.get("user_id")
+                ).first()
+                if not user:
+                    return {"error": "User not found for capsule run"}
+                result = await service.run(self.db, user, capsule_request)
+                return result.dict()
+
             else:
                 # Fallback for unknown/custom agents
                 if websocket:
@@ -276,3 +321,51 @@ class AgentExecutor:
                 await websocket.send_text(
                     json.dumps({"message": "Processing complete", "progress": 100})
                 )
+
+    @staticmethod
+    def _apply_unsupported_policy(
+        result: Dict[str, Any],
+        input_data: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Run the unsupported-policy gate on any agent result.
+
+        RAG-aware results contain a ``grounded`` flag. Non-RAG agents
+        are treated as grounded by default (they don't claim doc backing).
+        """
+        try:
+            from backend.src.modules.rag.policy import (
+                check_response_grounding,
+                enforce_policy,
+                apply_policy_to_response,
+            )
+
+            grounded = check_response_grounding(result)
+            policy = input_data.get("unsupported_policy", "flag")
+            response_text = result.get("response") or result.get("message", "")
+
+            decision = enforce_policy(
+                grounded=grounded,
+                policy=str(policy),
+                response_text=response_text,
+            )
+
+            if decision.refused:
+                result["refused"] = True
+                result["refusal_reason"] = decision.reason
+                result["response"] = None
+            elif decision.flagged and decision.banner:
+                if "response" in result:
+                    result["response"] = f"{decision.banner}\n\n{result['response']}"
+                elif "message" in result:
+                    result["message"] = f"{decision.banner}\n\n{result['message']}"
+
+            result["policy_decision"] = decision.to_dict()
+
+        except Exception:
+            # Policy enforcement is non-critical; log and proceed
+            import logging
+            logging.getLogger(__name__).exception(
+                "Unsupported policy enforcement failed — proceeding without gate"
+            )
+
+        return result

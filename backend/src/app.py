@@ -34,6 +34,7 @@ from backend.src.db.session import SessionLocal
 from backend.src.modules.auth.csrf import CSRFMiddleware
 from backend.src.middleware.cache_headers import CacheHeadersMiddleware
 from backend.src.middleware.read_only import ReadOnlyModeMiddleware
+from backend.src.middleware.monitoring import MonitoringMiddleware, metrics_store
 
 try:
     from app.middleware.ddos_protection import DDoSProtectionMiddleware  # type: ignore
@@ -133,6 +134,16 @@ dev_dashboard_router = _safe_import(
 subscriptions_router = _safe_import(
     "subscriptions",
     "backend.src.modules.subscriptions.router",
+    "router",
+)
+rag_router = _safe_import(
+    "rag",
+    "backend.src.modules.rag.router",
+    "router",
+)
+capsules_router = _safe_import(
+    "capsules",
+    "backend.src.modules.capsules.router",
     "router",
 )
 
@@ -510,6 +521,9 @@ def create_app() -> FastAPI:
     # Cache headers middleware for production cache-correctness (runs LAST to override any defaults)
     application.add_middleware(CacheHeadersMiddleware)
 
+    # Monitoring middleware — request metrics collection (runs outermost)
+    application.add_middleware(MonitoringMiddleware)
+
     # Rate limiting (idempotent even if slowapi is absent/falls back)
     try:
         configure_rate_limit(application)
@@ -676,6 +690,11 @@ def create_app() -> FastAPI:
     def api_health_ping():
         return {"ping": "pong", "version": os.getenv("APP_VERSION", "dev")}
 
+    @application.get("/api/metrics", include_in_schema=False)
+    def api_metrics():
+        """Return request metrics snapshot (latency, error rates, status codes)."""
+        return JSONResponse(metrics_store.snapshot())
+
     @application.get("/api/version", include_in_schema=False)
     def api_version():
         app_name = os.getenv("APP_NAME", "autorisen").strip() or "autorisen"
@@ -762,6 +781,12 @@ def create_app() -> FastAPI:
     if subscriptions_router:
         # → /api/subscriptions/plans, /current, /subscribe, /cancel, etc.
         api.include_router(subscriptions_router)
+    if rag_router:
+        # → /api/rag/documents, /api/rag/query, /api/rag/health
+        api.include_router(rag_router)
+    if capsules_router:
+        # → /api/capsules/, /api/capsules/{id}, /api/capsules/run
+        api.include_router(capsules_router)
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")

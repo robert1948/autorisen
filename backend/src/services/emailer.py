@@ -198,3 +198,64 @@ def send_login_notification(
             LOGIN_NOTIFY_RECIPIENT,
             email,
         )
+
+
+def send_beta_invite_email(
+    email: str,
+    *,
+    invite_token: str,
+    company_name: str | None = None,
+) -> None:
+    """Send a closed-beta invite with a registration link. Soft-fail."""
+
+    from backend.src.core.config import settings
+
+    app_origin = getattr(settings, "APP_ORIGIN", "https://dev.cape-control.com")
+    register_url = (
+        f"{app_origin}/register?beta_code={invite_token}&email={email}"
+    )
+
+    company_line = f" ({company_name})" if company_name else ""
+    subject = "You're invited to the CapeControl Beta"
+    text_body = (
+        f"Hi{company_line},\n\n"
+        "You've been invited to join the CapeControl closed beta — an AI-powered\n"
+        "compliance and audit platform built for SMBs.\n\n"
+        f"Use the link below to create your account:\n{register_url}\n\n"
+        "This invite expires in 7 days.\n\n"
+        "If you have questions, reply to this email.\n\n"
+        "— The CapeControl Team"
+    )
+    html_body = f"""
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+      <h2 style="color:#1a1a2e;">You're invited to the CapeControl Beta</h2>
+      <p>Hi{company_line},</p>
+      <p>You've been invited to join the <strong>CapeControl closed beta</strong>
+         — an AI-powered compliance and audit platform built for SMBs.</p>
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{register_url}"
+           style="background:#4f46e5;color:#fff;padding:14px 28px;
+                  border-radius:8px;text-decoration:none;font-weight:bold;">
+          Accept Invite &amp; Register
+        </a>
+      </p>
+      <p style="font-size:13px;color:#666;">
+        Or paste this URL in your browser:<br>
+        <code style="word-break:break-all;">{register_url}</code>
+      </p>
+      <p style="font-size:13px;color:#888;">This invite expires in 7 days.</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <p style="font-size:12px;color:#999;">— CapeControl Platform</p>
+    </div>
+    """
+
+    try:
+        send_email(
+            subject=subject, to=[email], text_body=text_body, html_body=html_body
+        )
+    except MailerError:
+        logger.warning(
+            "Beta invite email delivery failed", extra={"email": email}
+        )
+    else:
+        logger.info("Beta invite email sent to %s", email)

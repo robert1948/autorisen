@@ -1,109 +1,106 @@
-# Agents Overview (CapeControl / AutoLocal / Autorisen)
+# Agents & Modules Registry (CapeControl)
 
-Concise snapshot of agents in the codebase. Paths reflect the current structure.
-If a filename differs in your repo, adjust the **Path** column (see the Quick Verify block).
-
----
-
-## Core System Agents (Active)
-
-| Category | Agent | Purpose | Status | Path |
-|---|---|---|---|---|
-| Core | **AuthAgent** | Registration, login, refresh, `/me`, role-based JWT | ✅ Active | `backend/src/modules/agents/auth_agent.py` |
-| Core | **OnboardAgent** | Onboarding checklist + role/profile setup | ✅ Active | `backend/src/modules/agents/onboard_agent.py` |
-| Core | **AuditAgent** | Request/audit event capture; cooperates with middleware | ✅ Active | `backend/src/modules/agents/audit_agent.py` |
-| Core | **MonitoringAgent** | Health/metrics (`/api/health`, `/api/metrics`) | ✅ Active | `backend/src/modules/agents/monitoring_agent.py` |
-| Core | **SecurityAgent** | Rate limiting, input checks, abuse controls | ✅ Active | `backend/src/modules/agents/security_agent.py` |
-| Core | **Agents Router** | REST surface for agents | ✅ Active | `backend/src/modules/agents/router.py` |
+> **Last verified:** 2026-02-24
+> **Source of truth:** This document reflects the actual codebase structure.
 
 ---
 
-## AI-Assisted Agents (Active)
+## AI Agent Sub-Packages (Active)
 
-| Category | Agent | Purpose | Status | Path |
-|---|---|---|---|---|
-| AI | **CapeAI Guide Agent** | Persistent in-app guide for onboarding/help (Claude 3.5 Haiku) | ✅ Active | `backend/src/modules/agents/cape_ai_guide/` |
-| AI | **CapeAI Domain Specialist** | Domain-specific advice (workflows, analytics, security) | ✅ Active | `backend/src/modules/agents/cape_ai_domain_specialist/` |
-| AI | **Customer Agent** | Helps customers express goals → suggests workflows & plans | ✅ Active | `backend/src/modules/agents/customer_agent/` |
-| AI | **Dev Agent** | Assists developers with build/test/publish of agents | ✅ Active | `backend/src/modules/agents/dev_agent/` |
-| AI | **Finance Agent** | AI-powered financial analysis, budgeting, compliance | ✅ Active | `backend/src/modules/agents/finance_agent/` |
-| AI | **Content Agent** | Multi-channel content generation (blog, social, email, docs) | ✅ Active | `backend/src/modules/agents/content_agent/` |
-| AI | **ChatAgentKit Runtime** | Multi-step chat workflows (ChatKit/Codex layer) | 🔄 In progress | `backend/src/modules/agents/chatkit_runtime.py` |
-| AI | **EnergyAgent** | Tuya smart-meter → usage dashboard | 🧪 Prototype | `backend/src/modules/agents/energy_agent.py` |
+All AI agents live under `backend/src/modules/agents/` as sub-packages with
+`router.py`, `service.py`, `schemas.py`, and optional `knowledge_base.py` / `prompts.py`.
 
-**AI Provider:** Anthropic Claude 3.5 Haiku (claude-3-5-haiku-20241022)  
-**Capabilities:** Basic completions, system prompts, temperature/token control  
-**Available but not implemented:** Streaming, tool use, vision, conversation history  
-**Test:** `python3 scripts/test_anthropic_api.py` (5/5 tests passing)
+| Agent | Purpose | Provider | Path |
+|---|---|---|---|
+| **CapeAI Guide** | In-app assistant for onboarding/help | Claude 3.5 Haiku | `backend/src/modules/agents/cape_ai_guide/` |
+| **CapeAI Domain Specialist** | Domain-specific advice (workflows, analytics, security) | Claude 3.5 Haiku | `backend/src/modules/agents/cape_ai_domain_specialist/` |
+| **Customer Agent** | Help customers express goals, suggest workflows & plans | Claude 3.5 Haiku | `backend/src/modules/agents/customer_agent/` |
+| **Dev Agent** | Assist developers with build/test/publish of agents | Claude 3.5 Haiku | `backend/src/modules/agents/dev_agent/` |
+| **Finance Agent** | AI-powered financial analysis, budgeting, compliance | Claude 3.5 Haiku | `backend/src/modules/agents/finance_agent/` |
+| **Content Agent** | Multi-channel content generation (blog, social, email) | Claude 3.5 Haiku | `backend/src/modules/agents/content_agent/` |
 
----
+**Shared infrastructure:**
 
-## Middleware-Bound (Support Agents)
-
-| Category | Middleware / Delegate | Purpose | Status | Path |
-|---|---|---|---|---|
-| Support | **AuditLoggingMiddleware** → AuditAgent | Request/actor logging | ✅ Active | `backend/src/middleware/audit_logging.py` |
-| Support | **MonitoringMiddleware** → MonitoringAgent | Uptime/metrics | ✅ Active | `backend/src/middleware/monitoring.py` |
-| Support | **DDoSProtectionMiddleware** | Basic DDoS/rate protections | ✅ Active | `backend/src/middleware/ddos_protection.py` |
-| Support | **InputSanitizationMiddleware** | Input cleansing/validation | ✅ Active | `backend/src/middleware/input_sanitization.py` |
-| Support | **ContentModerationMiddleware** | Blocks disallowed content | ✅ Active | `backend/src/middleware/content_moderation.py` |
+| File | Purpose |
+|---|---|
+| `backend/src/modules/agents/router.py` | REST surface for agent CRUD + marketplace + WebSocket |
+| `backend/src/modules/agents/executor.py` | Agent dispatch engine (slug-based task execution) |
+| `backend/src/modules/agents/schemas.py` | Pydantic models for agent registry |
+| `backend/src/modules/agents/tool_use.py` | Tool-use utilities |
 
 ---
 
-## Build/Docs Utility “Agents” (Repo Automation)
+## Domain Modules (Non-Agent)
 
-These aren’t FastAPI agents, but they automate quality gates and docs.
+Business logic organized as FastAPI modules. Each has a `router.py` imported
+by the app factory via `_safe_import()`.
 
-| Category | Agent/Tool | Purpose | Status | Path |
-|---|---|---|---|---|
-| Utility | **TestGuardianAgent** | Runs pytest and deterministically “heals” fixtures | ✅ Active (local/CI) | `scripts/regenerate_fixtures.py`, `pytest.ini` |
-| Utility | **DocWeaver** | Keeps docs/playbooks/sitemaps tidy (format/check) | 🧪 Prototype | `tools/docweaver.py` *(or your chosen path)* |
-
-> If your DocWeaver script lives elsewhere, update the path above.
+| Module | Purpose | Path |
+|---|---|---|
+| **Auth** | Registration, login, JWT, OAuth (Google/LinkedIn), CSRF, RBAC | `backend/src/modules/auth/` |
+| **Onboarding** | Onboarding checklist & role/profile setup | `backend/src/modules/onboarding/` |
+| **ChatKit** | Multi-step chat workflows, tool registry | `backend/src/modules/chatkit/` |
+| **RAG** | Controlled document retrieval, evidence trace, query pipeline | `backend/src/modules/rag/` |
+| **Capsules** | Template-driven workflow runs (SOP, audit, clause, compliance) | `backend/src/modules/capsules/` |
+| **Flows** | Workflow / automation flow definitions | `backend/src/modules/flows/` |
+| **Marketplace** | Agent/workflow marketplace listings | `backend/src/modules/marketplace/` |
+| **Payments** | PayFast integration, invoices, subscriptions | `backend/src/modules/payments/` |
+| **Subscriptions** | Plan management, subscribe/cancel | `backend/src/modules/subscriptions/` |
+| **User** | User profile management | `backend/src/modules/user/` |
+| **Account** | Account settings, preferences | `backend/src/modules/account/` |
+| **Ops** | Operational endpoints | `backend/src/modules/ops/` |
+| **Support** | Support ticket management | `backend/src/modules/support/` |
+| **Dev Dashboard** | Developer portal (API keys, usage stats) | `backend/src/modules/dev/` |
+| **AI Router** | AI provider routing/abstraction | `backend/src/modules/ai_router/` |
+| **Health** | Monitoring & health check router | `backend/src/modules/health/` |
 
 ---
 
-### Quick Verify — copy/paste
+## Middleware Stack
 
-Use these from the repo root to sanity-check files and surface any gaps.
+Middleware follows the pure ASGI pattern (`__init__(app)` + `__call__(scope, receive, send)`).
+
+| Middleware | Purpose | Location |
+|---|---|---|
+| **CSRFMiddleware** | CSRF token validation on state-changing requests | `backend/src/modules/auth/csrf.py` |
+| **CacheHeadersMiddleware** | Cache-Control headers for static assets | `backend/src/middleware/cache_headers.py` |
+| **ReadOnlyModeMiddleware** | Block writes when `READ_ONLY_MODE=1` | `backend/src/middleware/read_only.py` |
+| **MonitoringMiddleware** | Request metrics (latency, status codes, error rates) | `backend/src/middleware/monitoring.py` |
+| **DDoSProtectionMiddleware** | IP-based rate/abuse blocking (optional) | `app/middleware/ddos_protection.py` |
+| **InputSanitizationMiddleware** | Request body injection scanning (optional) | `app/utils/input_sanitization.py` |
+
+---
+
+## Build / Utility Scripts
+
+| Tool | Purpose | Path |
+|---|---|---|
+| **TestGuardian** | `pytest` fixture regeneration | `scripts/regenerate_fixtures.py` |
+| **Plan Sync** | Syncs `project-plan.csv` to `Master_ProjectPlan.md` | `scripts/plan_sync.py` |
+| **Build Docs Index** | Documentation indexing | `tools/build_docs_index.py` |
+| **Sitemap Crawler** | Crawl and validate sitemaps | `tools/crawl_sitemap.py` |
+| **Route Lister** | Extract routes from source code | `tools/list_routes_from_source.py` |
+| **Dashboard Updater** | Update control dashboard data | `tools/update_dashboard.py` |
+
+---
+
+### Quick Verify
 
 ```bash
 set -euo pipefail
 
-printf "\n▶ Listing agent files...\n"
-ls -1 backend/src/modules/agents | sort || true
+printf "\n>>> Agent sub-packages...\n"
+ls -1d backend/src/modules/agents/*/  2>/dev/null | sort || true
 
-printf "\n▶ Flagging missing expected agent files...\n"
-## Update this list if you rename files
-EXPECT=(
-  auth_agent.py onboard_agent.py audit_agent.py monitoring_agent.py security_agent.py router.py
-  capeai_guide.py dev_agent.py customer_agent.py chatkit_runtime.py finance_agent.py energy_agent.py
-  task_chain_agent.py billing_agent.py marketplace_agent.py auto_deploy_agent.py
-)
-for name in "${EXPECT[@]}"; do
-  [[ -f "backend/src/modules/agents/$name" ]] || echo "⚠️ Missing: backend/src/modules/agents/$name"
-done
+printf "\n>>> Agent shared files...\n"
+ls -1 backend/src/modules/agents/*.py 2>/dev/null | sort || true
 
-printf "\n▶ Grepping for FastAPI routers and route decorators...\n"
-rg -n "APIRouter|@router\(|@app\.get\(|@app\.post\(" backend/src/modules/agents || true
+printf "\n>>> Domain modules...\n"
+ls -1d backend/src/modules/*/  2>/dev/null | sort || true
 
-printf "\n▶ Listing middlewares...\n"
-ls -1 backend/src/middleware | sort || true
+printf "\n>>> Middleware...\n"
+ls -1 backend/src/middleware/*.py app/middleware/*.py 2>/dev/null | sort || true
 
-printf "\n▶ Checking utility agents...\n"
-[[ -f "scripts/regenerate_fixtures.py" ]] || echo "⚠️ Missing: scripts/regenerate_fixtures.py (TestGuardianAgent)"
-[[ -f "tools/docweaver.py" ]] || echo "ℹ️ DocWeaver path differs — update docs/agents.md Path column"
-
-printf "\n▶ (Optional) Dumping registered /api/agents routes if the app factory is importable...\n"
-python3 - <<'PY'
-try:
-    from backend.src.app import create_app  # adjust if your factory has a different name
-    app = create_app()
-    for r in app.router.routes:
-        path = getattr(r, 'path', '')
-        methods = sorted(getattr(r, 'methods', []) or [])
-        if path.startswith('/api/agents'):
-            print(f"{path}  {methods}")
-except Exception as e:
-    print(f"(skip) Could not import app to introspect routes: {e}")
-PY
+printf "\n>>> Utility scripts...\n"
+ls -1 scripts/*.py tools/*.py 2>/dev/null | sort || true
+```

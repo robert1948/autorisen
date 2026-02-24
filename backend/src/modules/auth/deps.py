@@ -179,6 +179,13 @@ async def get_verified_user(
 
 def require_roles(*allowed_roles: str) -> Callable:
     """
+    Role guard that checks BOTH the scalar ``User.role`` column
+    AND the many-to-many ``user_roles`` table.
+
+    A user passes if *any* of the following match an allowed role:
+    - ``user.role`` (legacy scalar column)
+    - Names of ``Role`` objects linked via ``user.roles`` relationship
+
     Usage:
         @router.get("/admin")
         async def admin_only(user=Depends(require_roles("admin"))):
@@ -187,9 +194,106 @@ def require_roles(*allowed_roles: str) -> Callable:
     allowed = {r.lower().strip() for r in allowed_roles}
 
     async def _dep(user=Depends(get_verified_user)):
-        role = _normalize_role(getattr(user, "role", None))
-        if not role or role not in allowed:
+        # 1. Check scalar column (fast path)
+        scalar_role = _normalize_role(getattr(user, "role", None))
+        if scalar_role and scalar_role in allowed:
+            return user
+
+        # 2. Check many-to-many roles relationship
+        m2m_roles = getattr(user, "roles", None)
+        if m2m_roles:
+            for role_obj in m2m_roles:
+                role_name = _normalize_role(getattr(role_obj, "name", None))
+                if role_name and role_name in allowed:
+                    return user
+
+        raise FORBIDDEN
+
+    return _dep
+
+
+def require_permissions(*required_codes: str) -> Callable:
+    """
+    Permission guard that checks if the user has ALL specified
+    permission codes via the many-to-many ``user → roles → permissions``
+    chain.
+
+    Usage:
+        @router.delete("/documents/{id}")
+        async def delete_doc(user=Depends(require_permissions("rag.document.delete"))):
+            ...
+    """
+    required = {c.lower().strip() for c in required_codes}
+
+    async def _dep(user=Depends(get_verified_user)):
+        user_perms: set[str] = set()
+
+        # Collect from many-to-many
+        m2m_roles = getattr(user, "roles", None)
+        if m2m_roles:
+            for role_obj in m2m_roles:
+                for perm in getattr(role_obj, "permissions", []):
+                    code = getattr(perm, "code", "")
+                    if code:
+                        user_perms.add(code.lower().strip())
+
+        if not required.issubset(user_perms):
             raise FORBIDDEN
         return user
+
+    return _dep
+
+
+def get_org_context() -> Callable:
+    """
+    Dependency that extracts the tenant/organization context from
+    the ``X-Organization-Id`` header and validates the user is a
+    member.
+
+    Returns ``(user, organization_id)`` tuple.
+
+    Usage:
+        @router.get("/data")
+        async def scoped(ctx=Depends(get_org_context())):
+            user, org_id = ctx
+            ...
+    """
+
+    async def _dep(
+        request: Request,
+        user=Depends(get_verified_user),
+        db: Session = Depends(get_db),
+    ):
+        org_id = request.headers.get("X-Organization-Id")
+        if not org_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="X-Organization-Id header is required",
+            )
+
+        # Import lazily to avoid circular imports
+        try:
+            from backend.src.db.models import OrganizationMember
+        except ImportError:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Organization support not configured",
+            )
+
+        membership = (
+            db.query(OrganizationMember)
+            .filter(
+                OrganizationMember.organization_id == org_id,
+                OrganizationMember.user_id == user.id,
+            )
+            .one_or_none()
+        )
+        if membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not a member of this organization",
+            )
+
+        return user, org_id
 
     return _dep

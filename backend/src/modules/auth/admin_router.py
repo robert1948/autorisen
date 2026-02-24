@@ -287,3 +287,114 @@ async def register_admin(
         refresh_token=refresh_token,
         email_verified=True,
     )
+
+
+# ===================================================================
+# Beta Invite Management (admin-only)
+# ===================================================================
+
+
+@admin_router.post("/beta/invite", status_code=201)
+async def create_beta_invite_endpoint(
+    request: Request,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: Any = Depends(require_roles("admin")),
+):
+    """Create a beta invite for a prospective pilot user (admin-only).
+
+    Body: { "target_email": str, "company_name"?: str, "plan_override"?: str, "note"?: str }
+    """
+    from backend.src.modules.auth.beta_service import create_beta_invite
+
+    target_email = payload.get("target_email")
+    if not target_email:
+        raise HTTPException(status_code=400, detail="target_email is required")
+
+    try:
+        raw_token, invite = create_beta_invite(
+            db,
+            target_email=target_email,
+            invited_by_user_id=current_user.id,
+            company_name=payload.get("company_name"),
+            plan_override=payload.get("plan_override", "pro"),
+            note=payload.get("note"),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+    # Send beta invite email
+    try:
+        from backend.src.services.emailer import send_beta_invite_email
+
+        send_beta_invite_email(
+            email=target_email,
+            invite_token=raw_token,
+            company_name=payload.get("company_name"),
+        )
+    except Exception as exc:
+        log.warning("beta_invite_email_failed target=%s: %s", target_email, exc)
+
+    return {
+        "invite_id": invite.id,
+        "target_email": invite.target_email,
+        "company_name": invite.company_name,
+        "plan_override": invite.plan_override,
+        "expires_at": invite.expires_at.isoformat(),
+        "token": raw_token,
+    }
+
+
+@admin_router.get("/beta/invites")
+async def list_beta_invites_endpoint(
+    include_used: bool = False,
+    include_revoked: bool = False,
+    db: Session = Depends(get_db),
+    current_user: Any = Depends(require_roles("admin")),
+):
+    """List beta invites (admin-only)."""
+    from backend.src.modules.auth.beta_service import list_beta_invites
+
+    invites = list_beta_invites(
+        db, include_used=include_used, include_revoked=include_revoked
+    )
+    return [
+        {
+            "id": inv.id,
+            "target_email": inv.target_email,
+            "company_name": inv.company_name,
+            "plan_override": inv.plan_override,
+            "note": inv.note,
+            "invited_by": inv.invited_by,
+            "created_at": inv.created_at.isoformat() if inv.created_at else None,
+            "expires_at": inv.expires_at.isoformat() if inv.expires_at else None,
+            "used_at": inv.used_at.isoformat() if inv.used_at else None,
+            "revoked_at": inv.revoked_at.isoformat() if inv.revoked_at else None,
+        }
+        for inv in invites
+    ]
+
+
+@admin_router.delete("/beta/invite/{invite_id}")
+async def revoke_beta_invite_endpoint(
+    invite_id: str,
+    db: Session = Depends(get_db),
+    current_user: Any = Depends(require_roles("admin")),
+):
+    """Revoke a pending beta invite (admin-only)."""
+    from backend.src.modules.auth.beta_service import revoke_beta_invite
+
+    if not revoke_beta_invite(db, invite_id=invite_id):
+        raise HTTPException(status_code=404, detail="Invite not found or already used/revoked.")
+    return {"message": "Beta invite revoked."}
+
+
+@admin_router.get("/beta/stats")
+async def beta_stats_endpoint(
+    db: Session = Depends(get_db),
+    current_user: Any = Depends(require_roles("admin")),
+):
+    """Return beta program statistics (admin-only)."""
+    from backend.src.modules.auth.beta_service import get_beta_stats
+
+    return get_beta_stats(db)

@@ -1248,3 +1248,94 @@ class EnterpriseInquiry(Base):
     )
 
     user = relationship("User")
+
+
+class Organization(Base):
+    """Tenant / organization for multi-tenant data isolation."""
+
+    __tablename__ = "organizations"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(255), nullable=False, index=True)
+    industry = Column(String(100), nullable=True)
+    size_bucket = Column(String(50), nullable=True)
+    is_active = Column(Boolean, nullable=False, server_default="1")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    members = relationship(
+        "OrganizationMember", back_populates="organization", cascade="all, delete-orphan"
+    )
+
+
+class OrganizationMember(Base):
+    """Association linking a user to an organization with an org-level role."""
+
+    __tablename__ = "organization_members"
+
+    organization_id = Column(
+        String(36),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    org_role = Column(String(50), nullable=False, server_default="member")
+    joined_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    organization = relationship("Organization", back_populates="members")
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("ix_org_members_user_id", "user_id"),
+        Index("ix_org_members_org_id", "organization_id"),
+    )
+
+
+class BetaInvite(Base):
+    """Invite token for closed-beta registration gating."""
+
+    __tablename__ = "beta_invites"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    target_email = Column(String(320), nullable=False, index=True)
+    company_name = Column(String(255), nullable=True)
+    invited_by = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    token_hash = Column(String(255), unique=True, nullable=False)
+    plan_override = Column(String(32), nullable=True, server_default="pro")
+    note = Column(Text, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    used_by = Column(String(36), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    inviter = relationship("User", foreign_keys=[invited_by])
+
+
+# ---------------------------------------------------------------------------
+# RAG models — imported here so Alembic's env.py picks them up via Base
+# ---------------------------------------------------------------------------
+from backend.src.modules.rag.models import (  # noqa: E402, F401
+    ApprovedDocument,
+    DocumentChunk,
+    RAGQueryLog,
+)
