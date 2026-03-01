@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://cape-control.com/</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/about</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/login</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/register</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/register?role=user</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/register?role=developer</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/forgot-password</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/reset-password</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/auth/callback</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/onboarding/customer</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/onboarding/developer</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/verify-email/:token</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/auth/login</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/auth/mfa</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/account/mfa-enroll</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/test/logo</loc><lastmod>2025-11-08</lastmod></url>
-  <url><loc>https://cape-control.com/subscribe</loc><lastmod>2025-11-08</lastmod></url>
+  <!-- Public pages (crawlable) -->
+  <url><loc>https://cape-control.com/</loc><lastmod>2026-03-01</lastmod><priority>1.00</priority></url>
+  <url><loc>https://cape-control.com/about</loc><lastmod>2026-03-01</lastmod><priority>0.80</priority></url>
+  <url><loc>https://cape-control.com/auth/login</loc><lastmod>2026-03-01</lastmod><priority>0.80</priority></url>
+  <url><loc>https://cape-control.com/auth/register</loc><lastmod>2026-03-01</lastmod><priority>0.80</priority></url>
+  <url><loc>https://cape-control.com/auth/register?role=user</loc><lastmod>2026-03-01</lastmod><priority>0.70</priority></url>
+  <url><loc>https://cape-control.com/auth/register?role=developer</loc><lastmod>2026-03-01</lastmod><priority>0.70</priority></url>
+  <url><loc>https://cape-control.com/subscribe</loc><lastmod>2026-03-01</lastmod><priority>0.64</priority></url>
+  <url><loc>https://cape-control.com/terms-and-conditions</loc><lastmod>2026-03-01</lastmod><priority>0.30</priority></url>
+  <url><loc>https://cape-control.com/customer-terms</loc><lastmod>2026-03-01</lastmod><priority>0.30</priority></url>
+  <url><loc>https://cape-control.com/developers</loc><lastmod>2026-03-01</lastmod><priority>0.50</priority></url>
+  <url><loc>https://cape-control.com/developer-terms</loc><lastmod>2026-03-01</lastmod><priority>0.30</priority></url>
 </urlset>

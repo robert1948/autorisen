@@ -158,11 +158,15 @@ SPA_INDEX = CLIENT_DIST / "index.html"
 EXPECTED_ROUTES = [
     "/",
     "/about",
-    "/login",
-    "/register",
-    "/register?role=user",
-    "/register?role=developer",
+    "/auth/login",
+    "/auth/register",
+    "/auth/register?role=user",
+    "/auth/register?role=developer",
     "/subscribe",
+    "/terms-and-conditions",
+    "/customer-terms",
+    "/developers",
+    "/developer-terms",
 ]
 
 
@@ -583,7 +587,23 @@ def create_app() -> FastAPI:
 
     @application.get("/robots.txt", include_in_schema=False)
     def robots_txt():
-        body = "User-agent: *\nDisallow: /\n"
+        base = os.getenv("PUBLIC_BASE_URL", "https://cape-control.com")
+        body = (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "\n"
+            "# Protected app routes\n"
+            "Disallow: /app/\n"
+            "Disallow: /api/\n"
+            "Disallow: /auth/callback\n"
+            "Disallow: /auth/mfa\n"
+            "Disallow: /account/\n"
+            "Disallow: /onboarding/\n"
+            "Disallow: /verify-email/\n"
+            "Disallow: /reset-password\n"
+            "\n"
+            f"Sitemap: {base.rstrip('/')}/sitemap.xml\n"
+        )
         return Response(
             content=body,
             media_type="text/plain",
