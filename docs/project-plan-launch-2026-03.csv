@@ -23,45 +23,45 @@ INF-010,Publish Google OAuth to production,engineering,done,P0,2026-03-01,Phase 
 INF-011,Submit Google branding verification,engineering,done,P0,2026-03-01,Phase 0,Auth,"All 3 checks passed; under Trust & Safety review (3–5 days first contact; up to 4–6 weeks)",INF-007,"Google Cloud → Verification centre"
 
 # ──────────────────────────────────────────────────────────────
-# PHASE 1: PRE-LAUNCH HARDENING (Week of Mar 3–7)
+# PHASE 1: PRE-LAUNCH HARDENING (Week of Mar 2–6)
 # ──────────────────────────────────────────────────────────────
-HARD-001,Fix MFA stub (remove hardcoded 123456),engineering,not-started,P0,2026-03-05,Phase 1,Security,"MFA verification currently accepts hardcoded code. Must use real TOTP validation.",—,"pytest backend/tests/ -k mfa"
-HARD-002,Remove hardcoded marketplace stats,engineering,not-started,P1,2026-03-05,Phase 1,Frontend,"Landing page shows '25+ agents' and '1.2k deployments' with no real data. Replace with actual counts or remove.",—,"Manual review: marketplace section"
-HARD-003,Seed RAG knowledge base with 3–5 approved documents,engineering,not-started,P0,2026-03-05,Phase 1,AI,"RAG pipeline is built but has no production documents. Upload company SOPs / compliance docs / product docs.",BP-RAG-001,"curl /api/rag/documents"
-HARD-004,Verify PayFast ITN webhook in production,engineering,not-started,P0,2026-03-05,Phase 1,Payments,"Confirm ITN endpoint receives + processes PayFast notifications. Test with R1 transaction.",NEXT-003,"Check capecraft logs for ITN receipt"
-HARD-005,Add privacy policy page (separate from T&Cs),engineering,not-started,P1,2026-03-07,Phase 1,Legal,"Google branding links to /terms-and-conditions for privacy. Should have a dedicated /privacy-policy route.",—,"Visit https://cape-control.com/privacy-policy"
-HARD-006,Run full test suite and fix failures,engineering,not-started,P1,2026-03-05,Phase 1,Quality,"50 tests currently disabled. Re-enable and fix as many as practical.",—,"make codex-test — target ≥90% pass"
-HARD-007,Add error tracking (Sentry or equivalent),engineering,not-started,P1,2026-03-07,Phase 1,Monitoring,"No production error tracking currently. Essential before public traffic.",—,"Trigger test error → appears in Sentry"
-HARD-008,Set up database backup schedule,engineering,not-started,P1,2026-03-07,Phase 1,Ops,"Verify Heroku Postgres automated backups are on. Set up pg:backups:schedule if not.",—,"heroku pg:backups --app capecraft"
+HARD-001,Fix MFA stub (remove hardcoded 123456),engineering,not-started,P0,2026-03-04,Phase 1,Security,"MFA verification currently accepts hardcoded code. Must use real TOTP validation.",—,"pytest backend/tests/ -k mfa"
+HARD-002,Remove hardcoded marketplace stats,engineering,not-started,P1,2026-03-04,Phase 1,Frontend,"Landing page shows '25+ agents' and '1.2k deployments' with no real data. Replace with actual counts or remove.",—,"Manual review: marketplace section"
+HARD-003,Seed RAG knowledge base with 3–5 approved documents,engineering,not-started,P0,2026-03-04,Phase 1,AI,"RAG pipeline is built but has no production documents. Upload company SOPs / compliance docs / product docs.",BP-RAG-001,"curl /api/rag/documents"
+HARD-004,Verify PayFast ITN webhook in production,engineering,not-started,P0,2026-03-04,Phase 1,Payments,"Confirm ITN endpoint receives + processes PayFast notifications. Test with R1 transaction.",NEXT-003,"Check capecraft logs for ITN receipt"
+HARD-005,Add privacy policy page (separate from T&Cs),engineering,not-started,P1,2026-03-06,Phase 1,Legal,"Google branding links to /terms-and-conditions for privacy. Should have a dedicated /privacy-policy route.",—,"Visit https://cape-control.com/privacy-policy"
+HARD-006,Run full test suite and fix failures,engineering,not-started,P1,2026-03-04,Phase 1,Quality,"50 tests currently disabled. Re-enable and fix as many as practical.",—,"make codex-test — target ≥90% pass"
+HARD-007,Add error tracking (Sentry or equivalent),engineering,not-started,P1,2026-03-06,Phase 1,Monitoring,"No production error tracking currently. Essential before public traffic.",—,"Trigger test error → appears in Sentry"
+HARD-008,Set up database backup schedule,engineering,not-started,P1,2026-03-06,Phase 1,Ops,"Verify Heroku Postgres automated backups are on. Set up pg:backups:schedule if not.",—,"heroku pg:backups --app capecraft"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 2: LINKEDIN PROFILE SETUP (Mar 1–2)
 # ──────────────────────────────────────────────────────────────
 LI-001,Update LinkedIn profile headline + Featured section,Robert,done,P0,2026-03-01,Phase 2,LinkedIn,"Headline: 'Founder CapeControl — AI that feels calm first | Workflow automation for compliance-heavy teams | cape-control.com'. Featured: 3 links (website + pricing + video).",—,"Manual: LinkedIn profile updated"
-LI-002,Update LinkedIn About section,Robert,not-started,P0,2026-03-02,Phase 2,LinkedIn,"Replace current About with CapeControl founder narrative. Emphasise evidence-oriented AI for regulated SMBs. Include cape-control.com CTA.",—,"Manual: About section updated"
-LI-003,Add CapeControl to LinkedIn Experience,Robert,not-started,P0,2026-03-02,Phase 2,LinkedIn,"Title: Founder & CEO. Company: CapeControl. Start: Aug 2025. Description: platform capabilities + tech stack + entity details.",—,"Manual: Experience entry added"
-LI-004,Create CapeControl LinkedIn Company Page,Robert,not-started,P1,2026-03-02,Phase 2,LinkedIn,"Name: CapeControl. Tagline: AI-powered workflow automation for compliance-heavy teams. Logo + cover image + website link.",—,"Company page live at linkedin.com/company/capecontrol"
-LI-005,Daily engagement routine (5–10 comments/day),Robert,not-started,P0,2026-03-03,Phase 2,LinkedIn,"Comment on posts from property managers / compliance officers / finance ops / legal tech. Build visibility before and after each post. Non-negotiable for organic reach.",—,"Manual: daily activity"
+LI-002,Update LinkedIn About section,Robert,done,P0,2026-03-01,Phase 2,LinkedIn,"Replace current About with CapeControl founder narrative. Emphasise evidence-oriented AI for regulated SMBs. Include cape-control.com CTA.",—,"Manual: About section updated"
+LI-003,Add CapeControl to LinkedIn Experience,Robert,done,P0,2026-03-01,Phase 2,LinkedIn,"Title: Founder & CEO. Company: CapeControl. Start: Aug 2025. Description: platform capabilities + tech stack + entity details.",—,"Manual: Experience entry added"
+LI-004,Create CapeControl LinkedIn Company Page,Robert,done,P1,2026-03-01,Phase 2,LinkedIn,"Name: CapeControl. Tagline: AI-powered workflow automation for compliance-heavy teams. Logo + cover image + website link.",—,"Company page live at linkedin.com/company/capecontrol"
+LI-005,Daily engagement routine (5–10 comments/day),Robert,not-started,P0,2026-03-02,Phase 2,LinkedIn,"Comment on posts from property managers / compliance officers / finance ops / legal tech. Build visibility before and after each post. Non-negotiable for organic reach.",—,"Manual: daily activity"
 
 # ──────────────────────────────────────────────────────────────
-# PHASE 3: LINKEDIN CONTENT CALENDAR — 4-WEEK LAUNCH (Mar 3–28)
+# PHASE 3: LINKEDIN CONTENT CALENDAR — 4-WEEK LAUNCH (Mar 2–27)
 # ──────────────────────────────────────────────────────────────
 # Week 1: Hook & Humanise
-LI-W1-MON,Week 1 Mon — Teaser: The 'Black Box' Problem,Robert,not-started,P0,2026-03-03,Phase 3,LinkedIn,"Post type: Teaser. Visual: 15s Server Room Loop (Noir Style). Goal: Hook interest and address AI anxiety. Theme: Most AI tools are black boxes — what if yours wasn't?",—,"Post live on LinkedIn"
-LI-W1-WED,Week 1 Wed — Founder Story: The Project Manager's Battle,Robert,not-started,P0,2026-03-05,Phase 3,LinkedIn,"Post type: Founder Story. Visual: Personal Photo or 'PM to Founder' Graphic. Goal: Build empathy and human trust. Theme: From managing projects to building the tool I wished existed.",—,"Post live on LinkedIn"
-LI-W1-FRI,Week 1 Fri — Educational: What is an SOP-Anchored Reality?,Robert,not-started,P1,2026-03-07,Phase 3,LinkedIn,"Post type: Educational. Visual: Text/infographic only. Goal: Define technical 'Sovereignty' in plain language. Theme: Why approved-document-only answers matter for regulated teams.",—,"Post live on LinkedIn"
+LI-W1-MON,Week 1 Mon — Teaser: The 'Black Box' Problem,Robert,not-started,P0,2026-03-02,Phase 3,LinkedIn,"Post type: Teaser. Visual: 15s Server Room Loop (Noir Style). Goal: Hook interest and address AI anxiety. Theme: Most AI tools are black boxes — what if yours wasn't?",—,"Post live on LinkedIn"
+LI-W1-WED,Week 1 Wed — Founder Story: The Project Manager's Battle,Robert,not-started,P0,2026-03-04,Phase 3,LinkedIn,"Post type: Founder Story. Visual: Personal Photo or 'PM to Founder' Graphic. Goal: Build empathy and human trust. Theme: From managing projects to building the tool I wished existed.",—,"Post live on LinkedIn"
+LI-W1-FRI,Week 1 Fri — Educational: What is an SOP-Anchored Reality?,Robert,not-started,P1,2026-03-06,Phase 3,LinkedIn,"Post type: Educational. Visual: Text/infographic only. Goal: Define technical 'Sovereignty' in plain language. Theme: Why approved-document-only answers matter for regulated teams.",—,"Post live on LinkedIn"
 # Week 2: Vision & Engage
-LI-W2-TUE,Week 2 Tue — Main Vision: CapeControl The Alchemy of AI,Robert,not-started,P0,2026-03-11,Phase 3,LinkedIn,"Post type: Main Vision. Visual: Full Avatar Intro Video (9:16). Goal: Primary launch of the brand vision. Theme: AI that starts calm and scales powerfully.",—,"Post live with video"
-LI-W2-THU,Week 2 Thu — Interactive Poll: Biggest AI hurdle in your industry?,Robert,not-started,P1,2026-03-13,Phase 3,LinkedIn,"Post type: Interactive. Visual: LinkedIn Native Poll. Goal: Engage algorithm and gather market intelligence. 4 options: Trust/Compliance/Cost/Complexity.",—,"Poll live on LinkedIn"
-LI-W2-SAT,Week 2 Sat — Value Drop: 80% Wise / 20% Wild Explained,Robert,not-started,P1,2026-03-15,Phase 3,LinkedIn,"Post type: Value Drop. Visual: 80/20 Shimmering Graphic. Goal: Explain the brand philosophy — structured reliability with creative edge.",—,"Post live on LinkedIn"
+LI-W2-TUE,Week 2 Tue — Main Vision: CapeControl The Alchemy of AI,Robert,not-started,P0,2026-03-10,Phase 3,LinkedIn,"Post type: Main Vision. Visual: Full Avatar Intro Video (9:16). Goal: Primary launch of the brand vision. Theme: AI that starts calm and scales powerfully.",—,"Post live with video"
+LI-W2-THU,Week 2 Thu — Interactive Poll: Biggest AI hurdle in your industry?,Robert,not-started,P1,2026-03-12,Phase 3,LinkedIn,"Post type: Interactive. Visual: LinkedIn Native Poll. Goal: Engage algorithm and gather market intelligence. 4 options: Trust/Compliance/Cost/Complexity.",—,"Poll live on LinkedIn"
+LI-W2-SAT,Week 2 Sat — Value Drop: 80% Wise / 20% Wild Explained,Robert,not-started,P1,2026-03-14,Phase 3,LinkedIn,"Post type: Value Drop. Visual: 80/20 Shimmering Graphic. Goal: Explain the brand philosophy — structured reliability with creative edge.",—,"Post live on LinkedIn"
 # Week 3: Proof & Credibility
-LI-W3-TUE,Week 3 Tue — Technical Proof: The Evidence-First Trace,Robert,not-started,P0,2026-03-18,Phase 3,LinkedIn,"Post type: Technical Proof. Visual: Screen Record of Citation UI. Goal: Show 'Proof of Work' to skeptical devs and ops managers. Theme: Every answer cites its source.",—,"Post live on LinkedIn"
-LI-W3-THU,Week 3 Thu — Compliance: Making Red Tape a Spy Thriller,Robert,not-started,P0,2026-03-20,Phase 3,LinkedIn,"Post type: Compliance. Visual: 'Tools Off by Default' Toggle Demo. Goal: Highlight security and control features. Theme: Tools off by default, audit on everything.",—,"Post live on LinkedIn"
-LI-W3-FRI,Week 3 Fri — Social Proof: Beta Alchemist Feedback Loop,Robert,not-started,P1,2026-03-21,Phase 3,LinkedIn,"Post type: Social Proof. Visual: Quote Card from early tester. Goal: Validate the platform via peers. Theme: What our first users are saying.",BETA-002,"Post live on LinkedIn"
+LI-W3-TUE,Week 3 Tue — Technical Proof: The Evidence-First Trace,Robert,not-started,P0,2026-03-17,Phase 3,LinkedIn,"Post type: Technical Proof. Visual: Screen Record of Citation UI. Goal: Show 'Proof of Work' to skeptical devs and ops managers. Theme: Every answer cites its source.",—,"Post live on LinkedIn"
+LI-W3-THU,Week 3 Thu — Compliance: Making Red Tape a Spy Thriller,Robert,not-started,P0,2026-03-19,Phase 3,LinkedIn,"Post type: Compliance. Visual: 'Tools Off by Default' Toggle Demo. Goal: Highlight security and control features. Theme: Tools off by default, audit on everything.",—,"Post live on LinkedIn"
+LI-W3-FRI,Week 3 Fri — Social Proof: Beta Alchemist Feedback Loop,Robert,not-started,P1,2026-03-20,Phase 3,LinkedIn,"Post type: Social Proof. Visual: Quote Card from early tester. Goal: Validate the platform via peers. Theme: What our first users are saying.",BETA-002,"Post live on LinkedIn"
 # Week 4: Convert & Close
-LI-W4-MON,Week 4 Mon — Direct Access: The Guided Onboarding Theater,Robert,not-started,P0,2026-03-24,Phase 3,LinkedIn,"Post type: Direct Access. Visual: Video of the Signup Flow. Goal: Drive high-intent Beta signups. Theme: See exactly what happens when you sign up.",BETA-001,"Post live with video"
-LI-W4-WED,Week 4 Wed — Q&A/FAQ: Is this just another ChatGPT wrapper?,Robert,not-started,P1,2026-03-26,Phase 3,LinkedIn,"Post type: Q&A/FAQ. Visual: Short 'Headless' Video response. Goal: Handle objections with authority. Theme: 6 agents, approved-source-only RAG, evidence export ≠ wrapper.",—,"Post live on LinkedIn"
-LI-W4-FRI,Week 4 Fri — Closing: Mission Briefing — The Month Ahead,Robert,not-started,P0,2026-03-28,Phase 3,LinkedIn,"Post type: Closing. Visual: Candid Founder Video/Photo. Goal: Maintain momentum for the closed Beta. Theme: What we shipped, what's next, join us.",BP-BETA-001,"Post live + registrations tracked"
+LI-W4-MON,Week 4 Mon — Direct Access: The Guided Onboarding Theater,Robert,not-started,P0,2026-03-23,Phase 3,LinkedIn,"Post type: Direct Access. Visual: Video of the Signup Flow. Goal: Drive high-intent Beta signups. Theme: See exactly what happens when you sign up.",BETA-001,"Post live with video"
+LI-W4-WED,Week 4 Wed — Q&A/FAQ: Is this just another ChatGPT wrapper?,Robert,not-started,P1,2026-03-25,Phase 3,LinkedIn,"Post type: Q&A/FAQ. Visual: Short 'Headless' Video response. Goal: Handle objections with authority. Theme: 6 agents, approved-source-only RAG, evidence export ≠ wrapper.",—,"Post live on LinkedIn"
+LI-W4-FRI,Week 4 Fri — Closing: Mission Briefing — The Month Ahead,Robert,not-started,P0,2026-03-27,Phase 3,LinkedIn,"Post type: Closing. Visual: Candid Founder Video/Photo. Goal: Maintain momentum for the closed Beta. Theme: What we shipped, what's next, join us.",BP-BETA-001,"Post live + registrations tracked"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 4: LINKEDIN SUSTAINED CADENCE (Apr onwards)
@@ -73,20 +73,20 @@ LI-017,First LinkedIn performance review,Robert,not-started,P1,2026-04-14,Phase 
 # ──────────────────────────────────────────────────────────────
 # PHASE 5: BETA PROGRAM (Mar–Apr)
 # ──────────────────────────────────────────────────────────────
-BETA-001,Identify 20 target beta users (compliance-heavy SMBs),Robert,not-started,P0,2026-03-07,Phase 5,GTM,"Source from: LinkedIn network, existing contacts, property management, accounting, maintenance, legal. Mix of SA-based and international.",—,"List of 20 names + companies"
-BETA-002,Send beta invite emails (batch 1: 10 users),Robert,not-started,P0,2026-03-14,Phase 5,GTM,"Personal email + platform invite. Offer: 'First evidence pack in 14 days' program.",BETA-001,"10 invites sent; track acceptance"
-BETA-003,Send beta invite emails (batch 2: 10 users),Robert,not-started,P1,2026-03-21,Phase 5,GTM,"Second batch based on first batch learnings.",BETA-002,"10 invites sent"
-BETA-004,Set up beta feedback survey (Typeform),Robert,not-started,P1,2026-03-14,Phase 5,GTM,"Questions: onboarding experience, first value moment, evidence quality, security perception, willingness to pay.",—,"Survey link active"
-BETA-005,Weekly beta check-ins (4 weeks),Robert,not-started,P1,2026-03-21,Phase 5,GTM,"15-min calls with active beta users. Track: activation, retention, feature requests, blockers.",BETA-002,"Check-in notes documented"
+BETA-001,Identify 20 target beta users (compliance-heavy SMBs),Robert,not-started,P0,2026-03-06,Phase 5,GTM,"Source from: LinkedIn network, existing contacts, property management, accounting, maintenance, legal. Mix of SA-based and international.",—,"List of 20 names + companies"
+BETA-002,Send beta invite emails (batch 1: 10 users),Robert,not-started,P0,2026-03-13,Phase 5,GTM,"Personal email + platform invite. Offer: 'First evidence pack in 14 days' program.",BETA-001,"10 invites sent; track acceptance"
+BETA-003,Send beta invite emails (batch 2: 10 users),Robert,not-started,P1,2026-03-20,Phase 5,GTM,"Second batch based on first batch learnings.",BETA-002,"10 invites sent"
+BETA-004,Set up beta feedback survey (Typeform),Robert,not-started,P1,2026-03-13,Phase 5,GTM,"Questions: onboarding experience, first value moment, evidence quality, security perception, willingness to pay.",—,"Survey link active"
+BETA-005,Weekly beta check-ins (4 weeks),Robert,not-started,P1,2026-03-20,Phase 5,GTM,"15-min calls with active beta users. Track: activation, retention, feature requests, blockers.",BETA-002,"Check-in notes documented"
 BETA-006,First beta cohort review (30-day),Robert,not-started,P0,2026-04-14,Phase 5,GTM,"Metrics review: activation rate, 7-day retention, evidence packs generated, NPS, conversion intent.",BETA-005,"Review document with metrics"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 6: PRODUCT IMPROVEMENTS (Mar–May)
 # ──────────────────────────────────────────────────────────────
-PROD-001,Marketplace agent UI shell — real data,engineering,not-started,P1,2026-03-14,Phase 6,Frontend,"Connect marketplace page to actual agent registry API. Remove hardcoded data.",CHAT-005,"Visit /app/marketplace — real agent list"
-PROD-002,Developer agent builder UI,engineering,not-started,P2,2026-03-28,Phase 6,Frontend,"Agent editor interface for developer role users.",CHAT-006,"Create test agent via UI"
-PROD-003,Onboarding checklist sync with backend,engineering,not-started,P1,2026-03-14,Phase 6,Frontend,"Connect onboarding steps to real completion tracking API.",CHAT-007,"Complete onboarding flow end-to-end"
-PROD-004,Evidence pack export (PDF),engineering,not-started,P0,2026-03-21,Phase 6,Backend,"Generate downloadable PDF evidence packs from audit + RAG citation data. Core beta promise.",BP-AUDIT-001,"curl /api/audit/export?format=pdf"
+PROD-001,Marketplace agent UI shell — real data,engineering,not-started,P1,2026-03-13,Phase 6,Frontend,"Connect marketplace page to actual agent registry API. Remove hardcoded data.",CHAT-005,"Visit /app/marketplace — real agent list"
+PROD-002,Developer agent builder UI,engineering,not-started,P2,2026-03-27,Phase 6,Frontend,"Agent editor interface for developer role users.",CHAT-006,"Create test agent via UI"
+PROD-003,Onboarding checklist sync with backend,engineering,not-started,P1,2026-03-13,Phase 6,Frontend,"Connect onboarding steps to real completion tracking API.",CHAT-007,"Complete onboarding flow end-to-end"
+PROD-004,Evidence pack export (PDF),engineering,not-started,P0,2026-03-20,Phase 6,Backend,"Generate downloadable PDF evidence packs from audit + RAG citation data. Core beta promise.",BP-AUDIT-001,"curl /api/audit/export?format=pdf"
 PROD-005,Landing page demo video embed,engineering,not-started,P2,2026-04-01,Phase 6,Frontend,"Embed 30-second product demo video below hero section on landing page.",—,"Visit cape-control.com — video visible"
 PROD-006,Add social proof section to landing page,engineering,not-started,P2,2026-04-14,Phase 6,Frontend,"Testimonial quotes from beta users (once available). Trust badges: GDPR-ready / Audit logging / SA-hosted.",BETA-006,"Manual review: landing page social proof section"
 PROD-007,Dashboard V2 — real usage metrics,engineering,not-started,P1,2026-04-01,Phase 6,Frontend,"Wire dashboard stat cards to real usage data: runs, documents, evidence packs generated.",—,"Dashboard shows non-zero real data"
@@ -116,9 +116,9 @@ SCALE-007,Hire contract engineer #1,Robert,not-started,P2,2026-06-01,Phase 8,Tea
 # KEY MILESTONES & METRICS
 # ──────────────────────────────────────────────────────────────
 KPI-001,Google branding verification approved,management,in-progress,P0,2026-03-15,Milestone,Auth,"Submitted 2026-03-01. Expected 3–5 days for first contact. Up to 4–6 weeks for full approval.",INF-011,"Google Cloud → Verification centre shows Approved"
-KPI-002,First 100 LinkedIn post impressions,Robert,not-started,P0,2026-03-05,Milestone,LinkedIn,"Baseline metric from first 2 posts.",LI-W1-MON,"LinkedIn analytics"
-KPI-003,500+ impressions per post average,Robert,not-started,P1,2026-03-21,Milestone,LinkedIn,"Week 3 target. Indicates content resonance.",LI-005,"LinkedIn analytics"
-KPI-004,First 10 beta registrations,Robert,not-started,P0,2026-03-28,Milestone,GTM,"From LinkedIn + direct outreach.",BETA-002,"cape-control.com registration count"
+KPI-002,First 100 LinkedIn post impressions,Robert,not-started,P0,2026-03-04,Milestone,LinkedIn,"Baseline metric from first 2 posts.",LI-W1-MON,"LinkedIn analytics"
+KPI-003,500+ impressions per post average,Robert,not-started,P1,2026-03-20,Milestone,LinkedIn,"Week 3 target. Indicates content resonance.",LI-005,"LinkedIn analytics"
+KPI-004,First 10 beta registrations,Robert,not-started,P0,2026-03-27,Milestone,GTM,"From LinkedIn + direct outreach.",BETA-002,"cape-control.com registration count"
 KPI-005,First evidence pack generated by beta user,Robert,not-started,P0,2026-04-07,Milestone,Product,"Core value proposition validated.",PROD-004,"Audit log shows export"
 KPI-006,First paying customer (Pro plan),Robert,not-started,P0,2026-04-14,Milestone,Revenue,"R529/mo MRR milestone.",PAY-013,"PayFast transaction confirmed"
 KPI-007,5 paying customers — R2645 MRR,Robert,not-started,P0,2026-04-30,Milestone,Revenue,"Business Plan Month 6 proxy target.",PAY-014,"5 active subscriptions"
