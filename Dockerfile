@@ -30,6 +30,7 @@ COPY client/postcss.config.js* ./
 ENV VITE_FF_PAYMENTS=true
 ENV VITE_FF_ONBOARDING=true
 ENV VITE_FF_AGENTS_SHELL=true
+ENV VITE_ENABLE_CHATKIT=true
 
 # Build frontend with npm
 RUN npm run build
