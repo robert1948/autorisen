@@ -338,6 +338,7 @@ class ChatThread(Base):
         index=True,
     )
     placement = Column(String(64), nullable=False)
+    title = Column(String(200), nullable=True)
     context = Column(JSON, nullable=True)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

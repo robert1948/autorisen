@@ -99,6 +99,7 @@ def _safe_import(description: str, dotted_path: str, attr: str) -> Optional[APIR
 auth_router = _safe_import("auth", "backend.src.modules.auth.router", "router")
 auth_v2_router = _safe_import("auth_v2", "app.routes.auth_v2", "router")
 agents_router = _safe_import("agents", "backend.src.modules.agents.router", "router")
+chat_router = _safe_import("chat", "backend.src.modules.chat.router", "router")
 chatkit_router = _safe_import("chatkit", "backend.src.modules.chatkit.router", "router")
 flows_router = _safe_import("flows", "backend.src.modules.flows.router", "router")
 onboarding_router = _safe_import(
@@ -771,6 +772,8 @@ def create_app() -> FastAPI:
         api.include_router(auth_v2_router, prefix="/auth/v2")
     if agents_router:
         api.include_router(agents_router)
+    if chat_router:
+        api.include_router(chat_router)
     if chatkit_router:
         api.include_router(chatkit_router)
     if flows_router:

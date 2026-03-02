@@ -55,6 +55,11 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
     enabled: open,
   });
 
+  const placementLabel = useMemo(
+    () => PLACEMENT_LABELS[placement] ?? "Chat",
+    [placement],
+  );
+
   useEffect(() => {
     if (!token) {
       return;
@@ -66,15 +71,6 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
       return { ...prev, [placement]: token.threadId };
     });
   }, [token, placement]);
-
-  if (!open) {
-    return null;
-  }
-
-  const placementLabel = useMemo(
-    () => PLACEMENT_LABELS[placement] ?? "Chat",
-    [placement],
-  );
 
   useEffect(() => {
     if (placement !== "onboarding" || !token) {
@@ -101,6 +97,10 @@ const ChatModal = ({ open, onClose, placement, title, description }: Props) => {
       mounted = false;
     };
   }, [placement, token]);
+
+  if (!open) {
+    return null;
+  }
 
   return (
     <div className="chat-modal-overlay" role="dialog" aria-modal="true">

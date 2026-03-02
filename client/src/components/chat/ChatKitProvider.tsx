@@ -33,8 +33,9 @@ type Props = { children: React.ReactNode };
  */
 export const ChatKitProvider = ({ children }: Props) => {
   // Disabled → return a stubbed provider (no network calls)
-  if (!CHATKIT_ENABLED) {
-    const value = useMemo<ChatKitContextValue>(() => {
+  // Single unconditional useMemo — branches on the immutable CHATKIT_ENABLED flag
+  const value = useMemo<ChatKitContextValue>(() => {
+    if (!CHATKIT_ENABLED) {
       return {
         requestToken: async () =>
           ({
@@ -45,65 +46,54 @@ export const ChatKitProvider = ({ children }: Props) => {
             allowedTools: [],
           }) as ChatToken,
       };
-    }, []);
-    return (
-      <ChatKitContext.Provider value={value}>
-        {children}
-      </ChatKitContext.Provider>
-    );
-  }
+    }
 
-  // Enabled → real implementation
-  const value = useMemo<ChatKitContextValue>(
-    () => {
-      const buildUrl = (placement: string, threadId?: string | null) => {
-        if (!placement) {
-          throw new Error("ChatKit placement is required.");
+    const buildUrl = (placement: string, threadId?: string | null) => {
+      if (!placement) {
+        throw new Error("ChatKit placement is required.");
+      }
+      const params = new URLSearchParams({ placement });
+      if (threadId) {
+        params.set("thread_id", threadId);
+      }
+      return `${API_BASE}/chatkit/token?${params.toString()}`;
+    };
+
+    return {
+      requestToken: async (placement: string, threadId?: string | null) => {
+        const res = await fetch(buildUrl(placement, threadId), {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          throw new Error(
+            `Failed to fetch ChatKit token (HTTP ${res.status})${
+              detail ? `: ${detail}` : ""
+            }`
+          );
         }
-        const params = new URLSearchParams({ placement });
-        if (threadId) {
-          params.set("thread_id", threadId);
+        const data = (await res.json()) as {
+          token: string;
+          placement: string;
+          thread_id: string;
+          expires_at: string;
+          allowed_tools?: string[];
+        };
+        if (!data?.token || !data.thread_id) {
+          throw new Error("ChatKit token response missing fields.");
         }
-        return `${API_BASE}/chatkit/token?${params.toString()}`;
-      };
-
-      return {
-        requestToken: async (placement: string, threadId?: string | null) => {
-          const res = await fetch(buildUrl(placement, threadId), {
-            method: "GET",
-            credentials: "include",
-          });
-
-          if (!res.ok) {
-            const detail = await res.text().catch(() => "");
-            throw new Error(
-              `Failed to fetch ChatKit token (HTTP ${res.status})${
-                detail ? `: ${detail}` : ""
-              }`
-            );
-          }
-          const data = (await res.json()) as {
-            token: string;
-            placement: string;
-            thread_id: string;
-            expires_at: string;
-            allowed_tools?: string[];
-          };
-          if (!data?.token || !data.thread_id) {
-            throw new Error("ChatKit token response missing fields.");
-          }
-          return {
-            token: data.token,
-            placement: data.placement,
-            threadId: data.thread_id,
-            expiresAt: data.expires_at,
-            allowedTools: data.allowed_tools ?? [],
-          };
-        },
-      };
-    },
-    []
-  );
+        return {
+          token: data.token,
+          placement: data.placement,
+          threadId: data.thread_id,
+          expiresAt: data.expires_at,
+          allowedTools: data.allowed_tools ?? [],
+        };
+      },
+    };
+  }, []);
 
   return (
     <ChatKitContext.Provider value={value}>{children}</ChatKitContext.Provider>

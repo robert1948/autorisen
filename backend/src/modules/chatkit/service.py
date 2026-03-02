@@ -45,11 +45,12 @@ def _now() -> datetime:
 
 
 def _load_config() -> ChatKitConfig:
-    app_id = os.getenv("CHATKIT_APP_ID")
-    signing_key = os.getenv("CHATKIT_SIGNING_KEY")
-    if not app_id or not signing_key:
-        raise ChatKitConfigError(
-            "CHATKIT_APP_ID and CHATKIT_SIGNING_KEY must be configured."
+    app_id = os.getenv("CHATKIT_APP_ID", "capecontrol-chatkit")
+    signing_key = os.getenv("CHATKIT_SIGNING_KEY", "")
+    if not signing_key:
+        # Fallback: derive a signing key from SECRET_KEY or use a default
+        signing_key = os.getenv("SECRET_KEY", "") or os.getenv(
+            "JWT_SECRET_KEY", "chatkit-dev-signing-key-change-me"
         )
     issuer = os.getenv("CHATKIT_ISSUER", "autorisen-chatkit")
     audience = os.getenv("CHATKIT_AUDIENCE") or None

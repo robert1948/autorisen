@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ChatModal, { type ChatPlacement } from "./ChatModal";
 import { useAuth } from "../../features/auth/AuthContext";
@@ -63,6 +63,27 @@ const ChatLauncher = () => {
   };
 
   const activePlacement = useMemo(() => activeOption.placement, [activeOption]);
+
+  // Close panel when clicking outside
+  useEffect(() => {
+    if (!panelOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setPanelOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPanelOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [panelOpen]);
 
   return (
     <>
