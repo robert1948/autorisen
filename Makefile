@@ -371,7 +371,18 @@ deploy-autorisen: ## Build/push/release to staging (autorisen) with build args
 	echo "GIT_SHA=$$GIT_SHA"; \
 	echo "BUILD_EPOCH=$$BUILD_EPOCH"; \
 	heroku container:push web -a autorisen --arg "GIT_SHA=$$GIT_SHA" --arg "BUILD_EPOCH=$$BUILD_EPOCH"; \
-	heroku container:release web -a autorisen
+	heroku container:release web -a autorisen; \
+	echo "⏳ Waiting for deploy to stabilise..."; \
+	sleep 8; \
+	AUTO_BASE="$$(heroku apps:info -a autorisen | awk -F': ' '/Web URL/{print $$2}' | tr -d ' ')"; \
+	AUTO_BASE="$${AUTO_BASE%/}"; \
+	NEW_BUILD=$$(curl -sS "$${AUTO_BASE}/api/version?ts=$$(date +%s)" | python3 -c "import sys,json; print(json.load(sys.stdin).get('buildNumber',''))") || true; \
+	if [ -n "$$NEW_BUILD" ] && [ "$$NEW_BUILD" != "None" ]; then \
+		echo "$$NEW_BUILD" > VERSION; \
+		echo "✅ VERSION synced to $$NEW_BUILD"; \
+		git add VERSION && git diff --cached --quiet VERSION || \
+			(git commit -m "chore: sync VERSION to Build $$NEW_BUILD [skip ci]" && git push origin main) || true; \
+	fi
 
 verify-autorisen: ## Verify autorisen release, version, and DB revision
 	@set -euo pipefail; \

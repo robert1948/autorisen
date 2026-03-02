@@ -161,12 +161,12 @@ def _onboarding_checklist(
 
 
 def _payments_checkout(
-    _db: Session,
+    db: Session,
     user: models.User,
     _thread: models.ChatThread,
     payload: ToolPayload,
 ) -> ToolResult:
-    del _db, _thread
+    del _thread
     settings = get_payfast_settings()
     amount = payload.get("amount")
     item_name = payload.get("item_name") or "CapeControl Subscription"
@@ -180,6 +180,7 @@ def _payments_checkout(
 
     session = payments_service.create_checkout_session(
         settings=settings,
+        db=db,
         amount=amount,
         item_name=item_name,
         item_description=payload.get("item_description"),
