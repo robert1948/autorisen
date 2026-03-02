@@ -1413,7 +1413,7 @@ async def register_single(
         except ValueError as exc:
             raise HTTPException(status_code=403, detail=str(exc)) from exc
 
-    await _verify_recaptcha_token(payload.recaptcha_token, request, required=False)
+    await _verify_recaptcha_token(payload.recaptcha_token, request, required=True)
 
     if payload.terms_accepted is not True:
         raise HTTPException(status_code=400, detail="Terms must be accepted")

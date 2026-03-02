@@ -65,8 +65,9 @@ async def verify_detailed(
     if DISABLED:
         return True, "captcha disabled", None
 
-    # 2) Dev bypass token short-circuit
-    if token and token == DEV_BYPASS:
+    # 2) Dev bypass token short-circuit (only in non-production environments)
+    _env = os.getenv("ENV", "development").lower()
+    if token and token == DEV_BYPASS and _env not in ("prod", "production"):
         return True, "dev bypass token", 1.0
 
     # 3) Basic validation
