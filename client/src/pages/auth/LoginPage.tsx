@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../../components/Auth/auth.css';
 import Logo from '../../components/Logo';
-import Recaptcha from '../../components/Recaptcha';
+import { recaptchaToken as getRecaptchaToken } from '../../lib/recaptcha';
 import { useAuth } from '../../features/auth/AuthContext';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
@@ -34,17 +34,14 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?:string, password?:string }>({});
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
 
   const startOAuth = useCallback(async (provider: 'google' | 'linkedin') => {
-    if (!recaptchaToken) {
-      setSocialError('Please complete the verification first.');
-      return;
-    }
     setSocialError(null);
+    let token = '';
+    try { token = await getRecaptchaToken('oauth_' + provider); } catch { /* best-effort */ }
     // Store recaptcha token for the callback page
-    sessionStorage.setItem(`oauth:recaptcha:${provider}`, recaptchaToken);
+    sessionStorage.setItem(`oauth:recaptcha:${provider}`, token);
     const oauthBase = `${API_BASE}/api/auth/oauth/${provider}/start`;
     const params = new URLSearchParams({ next: redirectTo, format: 'json' });
     try {
@@ -65,7 +62,7 @@ const LoginPage: React.FC = () => {
       console.error(`Failed to start ${provider} OAuth flow`, err);
       setSocialError(`Unable to connect to ${provider}. Please try again.`);
     }
-  }, [recaptchaToken, redirectTo]);
+  }, [redirectTo]);
 
   const validate = () => {
     const errs: { email?:string, password?:string } = {};
@@ -82,7 +79,9 @@ const LoginPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await loginUser(email.trim(), password, recaptchaToken);
+      let captchaToken: string | null = null;
+      try { captchaToken = await getRecaptchaToken('login'); } catch { /* best-effort */ }
+      await loginUser(email.trim(), password, captchaToken);
       navigate(redirectTo, { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Network error';
@@ -117,8 +116,6 @@ const LoginPage: React.FC = () => {
             </div>
             {validationErrors.password && <div id="pass-error" className="cc-error">{validationErrors.password}</div>}
           </div>
-
-          <Recaptcha onVerify={setRecaptchaToken} />
 
           {(error || authError) && (
             <div className="cc-error" role="alert">{error || authError}</div>

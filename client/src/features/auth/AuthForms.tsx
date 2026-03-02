@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 
-import Recaptcha from "../../components/Recaptcha";
+import { recaptchaToken as getRecaptchaToken } from "../../lib/recaptcha";
 import { useAuth } from "./AuthContext";
 import { resendVerification } from "../../lib/authApi";
 
@@ -15,8 +15,6 @@ const AuthForms = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
   const [resendStatus, setResendStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [resendMessage, setResendMessage] = useState<string | null>(null);
@@ -24,24 +22,9 @@ const AuthForms = () => {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
   const linkedinClientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID as string | undefined;
 
-  const oauthRecaptchaKey = (provider: SocialProvider) => `oauth:recaptcha:${provider}`;
   const oauthStateKey = (provider: SocialProvider) => `oauth:state:${provider}`;
 
-  const handleRecaptcha = (token: string | null) => {
-    setRecaptchaToken(token);
-    if (!token) {
-      setRecaptchaError("Please complete the verification");
-      SOCIAL_PROVIDERS.forEach((provider) => sessionStorage.removeItem(oauthRecaptchaKey(provider)));
-    } else {
-      setRecaptchaError(null);
-    }
-  };
-
   const startOAuth = async (provider: SocialProvider) => {
-    if (!recaptchaToken) {
-      setRecaptchaError("Please complete the verification");
-      return;
-    }
     const clientId = provider === "google" ? googleClientId : linkedinClientId;
     if (!clientId) {
       setSocialError(
@@ -52,7 +35,9 @@ const AuthForms = () => {
       return;
     }
     setSocialError(null);
-    sessionStorage.setItem(oauthRecaptchaKey(provider), recaptchaToken);
+    let token = '';
+    try { token = await getRecaptchaToken('oauth_' + provider); } catch { /* best-effort */ }
+    sessionStorage.setItem(`oauth:recaptcha:${provider}`, token);
     const oauthBase = `${API_BASE}/api/auth/oauth/${provider}/start`;
     const params = new URLSearchParams({
       next: "/dashboard",
@@ -105,11 +90,9 @@ const AuthForms = () => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSocialError(null);
-    if (!recaptchaToken) {
-      setRecaptchaError("Please complete the verification");
-      return;
-    }
-    await loginUser(email, password, recaptchaToken);
+    let captchaToken: string | null = null;
+    try { captchaToken = await getRecaptchaToken('login'); } catch { /* best-effort */ }
+    await loginUser(email, password, captchaToken);
   };
 
   const handleResend = async () => {
@@ -224,7 +207,6 @@ const AuthForms = () => {
             </button>
           </div>
         </label>
-        <Recaptcha onVerify={handleRecaptcha} error={recaptchaError ?? undefined} />
         <p className="auth-terms">
           By clicking Log in, you agree to CapeControl&apos;s <a href="#terms">terms</a>,
           <a href="#privacy"> privacy policy</a>, and <a href="#privacy">cookie policy</a>.

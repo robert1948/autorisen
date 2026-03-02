@@ -7,7 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import FormInput from "../../components/FormInput";
 import PasswordMeter from "../../components/PasswordMeter";
-import Recaptcha from "../../components/Recaptcha";
+import { recaptchaToken as getRecaptchaToken } from "../../lib/recaptcha";
 import RoleCard from "../../components/RoleCard";
 import SkillMultiSelect from "../../components/SkillMultiSelect";
 import {
@@ -49,7 +49,7 @@ const step1Schema = z
       message: "You must accept the terms and privacy policy.",
     }),
     role: z.enum(["Customer", "Developer"]),
-    recaptcha_token: z.string().min(1, "Complete the reCAPTCHA"),
+    recaptcha_token: z.string(),  // acquired automatically via Enterprise invisible reCAPTCHA
   })
   .refine((data) => data.password === data.confirm_password, {
     path: ["confirm_password"],
@@ -121,6 +121,7 @@ const Register = () => {
   }, []);
 
   const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
+  const recaptchaEnabled = !!recaptchaSiteKey;
 
   const registrationContext = useMemo(() => {
     const params = new URLSearchParams(search);
@@ -149,19 +150,13 @@ const Register = () => {
       confirm_password: "",
       terms_accepted: false,
       role: defaultRole,
-      recaptcha_token: recaptchaSiteKey ? "" : "dev-bypass-token",
+      recaptcha_token: "",
     },
   });
 
   useEffect(() => {
     step1Form.register("recaptcha_token");
-    if (!recaptchaSiteKey) {
-      step1Form.setValue("recaptcha_token", "dev-bypass-token", {
-        shouldValidate: false,
-        shouldDirty: false,
-      });
-    }
-  }, [recaptchaSiteKey, step1Form]);
+  }, [step1Form]);
 
   const step1Role = step1Form.watch("role");
 
@@ -204,11 +199,7 @@ const Register = () => {
       registerStep2(payload, token),
   });
 
-  const handleRecaptchaVerify = useCallback(
-    (token: string | null) =>
-      step1Form.setValue("recaptcha_token", token ?? "", { shouldValidate: true }),
-    [step1Form],
-  );
+
 
   const handleRoleSelect = (role: UserRole) => {
     step1Form.setValue("role", role, { shouldValidate: true });
@@ -229,6 +220,17 @@ const Register = () => {
   const onStep1Submit = async (values: Step1Values) => {
     setApiError(null);
     try {
+      // Acquire Enterprise reCAPTCHA token at submit time (best-effort)
+      if (recaptchaEnabled) {
+        try {
+          const captchaToken = await getRecaptchaToken('register');
+          values.recaptcha_token = captchaToken;
+        } catch {
+          values.recaptcha_token = '';
+        }
+      } else {
+        values.recaptcha_token = 'dev-bypass-token';
+      }
       if (values.terms_accepted) {
         setTermsAcceptedAt(new Date().toISOString());
       }
@@ -433,12 +435,7 @@ const Register = () => {
             <input type="hidden" {...step1Form.register("role")}
               value={step1Role} />
 
-            {recaptchaSiteKey ? (
-              <Recaptcha
-                onVerify={handleRecaptchaVerify}
-                error={step1Form.formState.errors.recaptcha_token?.message}
-              />
-            ) : (
+            {!recaptchaEnabled && (
               <div className="recaptcha-placeholder">
                 <p className="recaptcha-placeholder__info">
                   reCAPTCHA is not configured. Set <code>VITE_RECAPTCHA_SITE_KEY</code> when you are ready to
