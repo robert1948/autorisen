@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  HEROKU_APP: autorisen-dac8e65796e7
+  HEROKU_APP: capecraft
 
 jobs:
   deploy:
@@ -131,7 +131,7 @@ jobs:
         run: |
           echo "🗃️ Running database migrations..."
           heroku run -a "$HEROKU_APP" -- \
-            python -m alembic -c backend/alembic.ini upgrade head || echo "⚠️ Migration failed or not needed"
+            python -m alembic -c backend/alembic.ini upgrade heads || echo "⚠️ Migration failed or not needed"
 
       - name: Verify deployment health
         run: |

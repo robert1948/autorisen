@@ -8,7 +8,7 @@
  *   - Responsive: sidebar expanded (lg+), collapsed icons (md), hidden + bottom nav (sm)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
 import { useProfile } from "../../hooks/useProfile";
@@ -202,6 +202,23 @@ export function AppShell() {
   const greeting = user?.displayName || user?.name || user?.email?.split("@")[0] || "User";
   const initials = greeting.slice(0, 2).toUpperCase();
 
+  /* ── User dropdown state ── */
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [userMenuOpen]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* ── Mobile sidebar overlay ── */}
@@ -331,6 +348,52 @@ export function AppShell() {
             >
               <SettingsIcon className="h-5 w-5" />
             </Link>
+
+            {/* User avatar + dropdown menu */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white ring-2 ring-transparent transition-shadow hover:ring-blue-300 dark:hover:ring-blue-700"
+                title={greeting}
+                aria-label="User menu"
+                aria-expanded={userMenuOpen}
+                aria-haspopup="true"
+              >
+                {initials}
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  {/* User info */}
+                  <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-200">{greeting}</p>
+                    {user?.email && (
+                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                    )}
+                  </div>
+                  {/* Settings link */}
+                  <Link
+                    to="/app/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    <SettingsIcon className="h-4 w-4" />
+                    Settings
+                  </Link>
+                  {/* Logout button */}
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    <LogoutIcon className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

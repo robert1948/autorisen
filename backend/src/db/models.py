@@ -93,6 +93,9 @@ class User(Base):
     subscription = relationship(
         "Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    mfa_factors = relationship(
+        "MfaFactor", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Credential(Base):
@@ -120,6 +123,28 @@ class Credential(Base):
     )
 
     user = relationship("User", back_populates="credentials")
+
+
+class MfaFactor(Base):
+    """MFA factor for a user (TOTP authenticator app)."""
+
+    __tablename__ = "mfa_factors"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    type = Column(String(16), nullable=False, server_default="totp")
+    secret_encrypted = Column(Text, nullable=True)
+    enabled_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    user = relationship("User", back_populates="mfa_factors")
 
 
 class Role(Base):
@@ -289,7 +314,7 @@ class AppBuild(Base):
     __tablename__ = "app_builds"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    app_name = Column(String(64), nullable=False, server_default="autorisen")
+    app_name = Column(String(64), nullable=False, server_default="capecontrol")
     version_label = Column(String(128), nullable=False)
     build_number = Column(Integer, nullable=True)
     git_sha = Column(String(64), nullable=False)
@@ -1330,6 +1355,44 @@ class BetaInvite(Base):
     )
 
     inviter = relationship("User", foreign_keys=[invited_by])
+
+
+# ---------------------------------------------------------------------------
+# Usage tracking — per-event cost/token accounting for customer billing
+# ---------------------------------------------------------------------------
+
+
+class UsageLog(Base):
+    """Records each billable event (AI call, tool invocation, RAG query) with
+    token counts and computed cost so we can aggregate per-user per-period."""
+
+    __tablename__ = "usage_logs"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    thread_id = Column(String(36), nullable=True, index=True)
+    event_type = Column(
+        String(32), nullable=False, server_default="chat"
+    )  # chat | tool | rag | upload
+    model = Column(String(64), nullable=True)
+    tokens_in = Column(Integer, nullable=False, server_default="0")
+    tokens_out = Column(Integer, nullable=False, server_default="0")
+    cost_usd = Column(Numeric(12, 6), nullable=False, server_default="0")
+    detail = Column(JSON, nullable=True)  # extra context (tool_name, doc_id, etc.)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_usage_logs_user_period", "user_id", "created_at"),
+    )
+
+    user = relationship("User", backref="usage_logs")
 
 
 # ---------------------------------------------------------------------------

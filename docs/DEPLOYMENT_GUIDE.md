@@ -3,8 +3,8 @@
 ## 🚀 Current Production Status
 
 **Environment**: Production Ready ✅  
-**URL**: https://autorisen-dac8e65796e7.herokuapp.com  
-**Last Deployed**: November 7, 2025  
+**URL**: https://cape-control.com  
+**Heroku App**: capecraft  
 **Status**: Live and fully functional
 
 ## 🔒 Security Configuration
@@ -33,11 +33,11 @@ The application uses Heroku's Container Registry for optimized deployment:
 
 ```bash
 ## Set Heroku stack to container
-heroku stack:set container -a autorisen
+heroku stack:set container -a capecraft
 
-## Deploy using container registry
-heroku container:push web -a autorisen
-heroku container:release web -a autorisen
+## Deploy using container registry (or use: make deploy ALLOW_PROD=1)
+heroku container:push web -a capecraft
+heroku container:release web -a capecraft
 ```text
 ### Multi-Stage Build Process
 
@@ -69,7 +69,7 @@ heroku container:release web -a autorisen
 ### Production Environment Variables
 
 ```bash
-heroku config:set ENV=prod DEBUG=false DISABLE_RECAPTCHA=false -a autorisen
+heroku config:set ENV=prod DEBUG=false DISABLE_RECAPTCHA=false -a capecraft
 ```text
 ### Database Configuration
 
@@ -89,13 +89,13 @@ If issues arise during deployment:
 
 ```bash
 ## Check logs
-heroku logs --tail -a autorisen
+heroku logs --tail -a capecraft
 
 ## Rollback to previous release
-heroku releases:rollback -a autorisen
+heroku releases:rollback -a capecraft
 
 ## Emergency environment reset
-heroku config:set DEBUG=true ENV=dev -a autorisen
+heroku config:set DEBUG=true ENV=dev -a capecraft
 ```text
 ## 📊 Performance Metrics
 

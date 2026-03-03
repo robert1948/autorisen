@@ -1,4 +1,5 @@
 import { getConfig } from "../config";
+import { getCsrfToken } from "./authApi";
 
 function getApiBase(): string {
   const config = getConfig();
@@ -63,6 +64,19 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     const token = getAccessToken();
     if (token) {
       requestHeaders.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  // Attach CSRF token for state-changing requests
+  const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "TRACE"]);
+  if (!SAFE_METHODS.has(method.toUpperCase())) {
+    try {
+      const csrfToken = await getCsrfToken();
+      if (csrfToken) {
+        requestHeaders["X-CSRF-Token"] = csrfToken;
+      }
+    } catch {
+      // CSRF fetch may fail in unauthenticated flows; continue without it
     }
   }
 

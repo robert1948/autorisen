@@ -69,9 +69,8 @@ body:
       label: Environment
       description: What environment did this occur in?
       options:
-        - Production (https://autorisen-dac8e65796e7.herokuapp.com)
-        - Development (Local)
-        - Staging
+        - Production (https://cape-control.com)
+        - Development (Local Docker)
     validations:
       required: true
 

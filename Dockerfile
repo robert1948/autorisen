@@ -1,6 +1,6 @@
-# Production-Ready Docker Image for AutoLocal/CapeControl
+# Production-Ready Docker Image for CapeControl
 # Multi-stage optimized build for Heroku deployment
-# Updated: November 9, 2025
+# Updated: March 3, 2026
 
 ARG NODE_VERSION=20
 ARG PYTHON_VERSION=3.12
@@ -32,6 +32,8 @@ ENV VITE_FF_ONBOARDING=true
 ENV VITE_FF_AGENTS_SHELL=true
 ENV VITE_ENABLE_CHATKIT=true
 ENV VITE_RECAPTCHA_SITE_KEY=6LfVw3wsAAAAAJcR_Ae8YgL-cSTERQ2QvFioLRgE
+# WebSocket connects directly to Heroku (bypasses CloudFlare which may block WS upgrades)
+ENV VITE_CHAT_WS_URL=wss://capecraft-65eeb6ddf78b.herokuapp.com/api
 
 # Build frontend with npm
 RUN npm run build

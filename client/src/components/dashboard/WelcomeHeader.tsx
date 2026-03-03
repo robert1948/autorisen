@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "../../types/user";
 import { ROLE_LABELS } from "../../constants/roles";
 import { hasPermission } from "../../utils/permissions";
+import { dashboardModulesApi } from "../../services/dashboardModulesApi";
 
 interface WelcomeHeaderProps {
   user: UserProfile;
@@ -57,32 +58,24 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
     return () => controller.abort();
   }, []);
 
-  // Fetch active project count from /api/projects/status
+  // Fetch project count using authenticated API client
   useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/projects/status", {
-      signal: controller.signal,
-      credentials: "include",
-      headers: { Accept: "application/json" },
-    })
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error(`HTTP ${res.status}`);
+    let cancelled = false;
+    dashboardModulesApi
+      .getProjectStatus()
+      .then((data) => {
+        if (!cancelled) setProjectCount(data.total ?? 0);
       })
-      .then((data: { total?: number }) => {
-        setProjectCount(data.total ?? 0);
-      })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setProjectCount(0);
+      .catch(() => {
+        if (!cancelled) setProjectCount(0);
       });
-    return () => controller.abort();
+    return () => { cancelled = true; };
   }, []);
 
   const greeting = user.displayName || user.name || user.email.split("@")[0];
   const roleLabel = ROLE_LABELS[user.role] ?? "User";
   const badge = STATUS_BADGES[systemStatus];
-  const isNewUser = user.account.balance === 0 && !user.developerProfile;
+  const isNewUser = projectCount === 0 && user.account.balance === 0 && !user.developerProfile;
 
   // Time-based greeting
   const hour = new Date().getHours();
@@ -133,7 +126,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         {/* Stat cards — gradient accented */}
         <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <GradientStatCard
-            label="Active projects"
+            label="Projects"
             value={projectCount !== null ? String(projectCount) : "…"}
             gradient="from-blue-500 to-blue-600"
             icon={

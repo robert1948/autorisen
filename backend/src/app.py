@@ -1,4 +1,4 @@
-"""Application factory for the autorisen backend."""
+"""Application factory for the CapeControl backend."""
 
 from __future__ import annotations
 
@@ -98,6 +98,7 @@ def _safe_import(description: str, dotted_path: str, attr: str) -> Optional[APIR
 
 auth_router = _safe_import("auth", "backend.src.modules.auth.router", "router")
 auth_v2_router = _safe_import("auth_v2", "app.routes.auth_v2", "router")
+mfa_router = _safe_import("mfa", "backend.src.modules.auth.mfa", "router")
 agents_router = _safe_import("agents", "backend.src.modules.agents.router", "router")
 chat_router = _safe_import("chat", "backend.src.modules.chat.router", "router")
 chatkit_router = _safe_import("chatkit", "backend.src.modules.chatkit.router", "router")
@@ -145,6 +146,11 @@ rag_router = _safe_import(
 capsules_router = _safe_import(
     "capsules",
     "backend.src.modules.capsules.router",
+    "router",
+)
+usage_router = _safe_import(
+    "usage",
+    "backend.src.modules.usage.router",
     "router",
 )
 
@@ -331,7 +337,7 @@ def _fetch_latest_build_from_db(app_name: str) -> dict[str, str | int] | None:
 
 
 def record_build_if_new() -> None:
-    app_name = os.getenv("APP_NAME", "autorisen").strip() or "autorisen"
+    app_name = os.getenv("APP_NAME", "capecontrol").strip() or "capecontrol"
     env_info = _get_env_build_info()
     git_sha = env_info.get("git_sha")
     build_epoch_raw = env_info.get("build_epoch")
@@ -452,7 +458,7 @@ def record_build_if_new() -> None:
 # App factory
 # ------------------------------------------------------------------------------
 def create_app() -> FastAPI:
-    application = FastAPI(title="autorisen", version=os.getenv("APP_VERSION", "dev"))
+    application = FastAPI(title="CapeControl", version=os.getenv("APP_VERSION", "dev"))
     test_mode = _is_test_mode()
 
     @application.middleware("http")
@@ -543,7 +549,7 @@ def create_app() -> FastAPI:
     landing_html = (
         "<!doctype html><html lang='en'><head><meta charset='utf-8'/>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
-        "<title>autorisen</title><style>body{font-family:system-ui,-apple-system,"
+        "<title>CapeControl</title><style>body{font-family:system-ui,-apple-system,"
         "BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;padding:0;background:#0f172a;"
         "color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;}"
         "main{max-width:640px;padding:3rem 1.5rem;text-align:center;background:rgba(15,23,42,0.85);"
@@ -556,8 +562,8 @@ def create_app() -> FastAPI:
         "nav{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;}"
         "nav a{padding:0.75rem 1.5rem;border-radius:999px;background:#1e293b;transition:background 0.2s ease;}"
         "nav a:hover{background:#334155;}"
-        "</style></head><body><main><h1>autorisen Platform API</h1>"
-        "<p>Welcome! This deployment powers authentication, agent tooling, and ChatKit capabilities for the autorisen platform.</p>"
+        "</style></head><body><main><h1>CapeControl Platform API</h1>"
+        "<p>Welcome! This deployment powers authentication, agent tooling, and ChatKit capabilities for the CapeControl platform.</p>"
         "<p>Use the quick links below to inspect the live API and health checks.</p>"
         "<nav><a href='/docs'>Interactive Docs</a><a href='/redoc'>ReDoc Spec</a>"
         "<a href='/api/health'>API Health</a></nav>"
@@ -718,7 +724,7 @@ def create_app() -> FastAPI:
 
     @application.get("/api/version", include_in_schema=False)
     def api_version():
-        app_name = os.getenv("APP_NAME", "autorisen").strip() or "autorisen"
+        app_name = os.getenv("APP_NAME", "capecontrol").strip() or "capecontrol"
         db_info = _fetch_latest_build_from_db(app_name)
         if db_info is not None:
             payload = {
@@ -770,6 +776,9 @@ def create_app() -> FastAPI:
         api.include_router(auth_router, prefix="/auth")
     if auth_v2_router:
         api.include_router(auth_v2_router, prefix="/auth/v2")
+    if mfa_router:
+        # → /api/auth/mfa/*
+        api.include_router(mfa_router, prefix="/auth")
     if agents_router:
         api.include_router(agents_router)
     if chat_router:
@@ -810,6 +819,9 @@ def create_app() -> FastAPI:
     if capsules_router:
         # → /api/capsules/, /api/capsules/{id}, /api/capsules/run
         api.include_router(capsules_router)
+    if usage_router:
+        # → /api/usage/summary
+        api.include_router(usage_router)
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")
@@ -927,7 +939,7 @@ def create_app() -> FastAPI:
 app = create_app()
 
 logging.getLogger("uvicorn.error").info(
-    "autorisen boot: origin=%s version=%s",
+    "CapeControl boot: origin=%s version=%s",
     APP_ORIGIN or "(unset)",
     os.getenv("APP_VERSION", "dev"),
 )

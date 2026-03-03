@@ -42,7 +42,7 @@ def _create_task(db, user_id: str, agent_id: str) -> models.Task:
     task = models.Task(
         user_id=user_id,
         agent_id=agent_id,
-        goal="Demo task",
+        title="Demo task",
         status="running",
     )
     db.add(task)

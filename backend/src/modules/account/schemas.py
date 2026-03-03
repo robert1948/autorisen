@@ -75,6 +75,7 @@ class ProjectDetail(BaseModel):
     title: str
     description: Optional[str] = None
     status: str
+    estimated_response_time: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     started_at: Optional[datetime] = None

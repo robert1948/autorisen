@@ -5,8 +5,8 @@
 set -euo pipefail
 
 # Configuration
-HEROKU_APP_NAME="${HEROKU_APP_NAME:-autorisen-dac8e65796e7}"
-IMAGE_NAME="autorisen:local"
+HEROKU_APP_NAME="${HEROKU_APP_NAME:-capecraft}"
+IMAGE_NAME="capecontrol:local"
 
 # Colors for output
 RED='\033[0;31m'

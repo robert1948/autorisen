@@ -1,0 +1,31 @@
+# docker-compose.test.yml — Local integration tests with real Postgres
+# Replaces the need for a staging Heroku environment.
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d
+#   make codex-test-pg          # Run tests against Postgres
+#   docker compose -f docker-compose.test.yml down -v
+#
+services:
+  testdb:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - "5434:5432"
+    tmpfs:
+      - /var/lib/postgresql/data    # RAM-backed for speed; data is ephemeral
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    tmpfs:
+      - /data

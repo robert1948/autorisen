@@ -124,7 +124,7 @@ jobs:
       - name: Test Docker build
         run: |
           echo "🐳 Building Docker image..."
-          docker build -t autorisen-test:${{ github.sha }} . --progress=plain
+          docker build -t capecontrol-test:${{ github.sha }} . --progress=plain
           
       - name: Verify Docker image
         run: |
@@ -135,7 +135,7 @@ jobs:
             -e ENV=test \
             -e DATABASE_URL=sqlite:///test.db \
             -e DISABLE_RECAPTCHA=true \
-            autorisen-test:${{ github.sha }}
+            capecontrol-test:${{ github.sha }}
           
           # Give it time to start
           sleep 15

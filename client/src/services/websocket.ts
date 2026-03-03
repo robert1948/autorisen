@@ -31,14 +31,12 @@ const toAbsoluteHttpBase = (base: string): string => {
   if (base.startsWith("http://") || base.startsWith("https://") || base.startsWith("ws")) {
     return base.replace(/\/$/, "");
   }
+  // Normalise so base always starts with exactly one "/"
+  const normalisedBase = base.startsWith("/") ? base : `/${base}`;
   if (typeof window !== "undefined" && window.location) {
-    const prefix = base.startsWith("/") ? "" : "/";
-    return `${window.location.origin}${prefix}${base.replace(/^\//, "")}`.replace(/\/$/, "");
+    return `${window.location.origin}${normalisedBase}`.replace(/\/$/, "");
   }
-  return `http://localhost${base.startsWith("/") ? "" : "/"}${base.replace(/^\//, "")}`.replace(
-    /\/$/,
-    "",
-  );
+  return `http://localhost${normalisedBase}`.replace(/\/$/, "");
 };
 
 const httpToWs = (base: string): string => {

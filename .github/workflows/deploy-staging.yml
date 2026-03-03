@@ -1,15 +1,13 @@
-name: Deploy to Staging
+name: Deploy to Staging (DISABLED)
+
+# DISABLED: Staging environment (autorisen) eliminated March 2026.
+# Deploy directly to production via deploy-heroku.yml or `make deploy ALLOW_PROD=1`.
+# Kept for reference only — this workflow will not trigger.
 
 on:
-  push:
-    branches: [ develop, staging ]
-    paths:
-      - "backend/**"
-      - "client/**" 
-      - "requirements*.txt"
-      - "Dockerfile*"
-      - ".github/workflows/deploy-staging.yml"
   workflow_dispatch: {}
+
+# Removed: push triggers on develop/staging branches
 
 permissions:
   contents: read

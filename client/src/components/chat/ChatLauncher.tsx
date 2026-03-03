@@ -62,6 +62,18 @@ const ChatLauncher = () => {
     setPanelOpen(false);
   };
 
+  // Listen for programmatic open events from other components
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ placement?: string }>).detail;
+      if (!canLaunch || !detail?.placement) return;
+      const match = OPTIONS.find((o) => o.id === detail.placement);
+      if (match) handleLaunch(match);
+    };
+    window.addEventListener("capeai:open", handler);
+    return () => window.removeEventListener("capeai:open", handler);
+  });
+
   const activePlacement = useMemo(() => activeOption.placement, [activeOption]);
 
   // Close panel when clicking outside

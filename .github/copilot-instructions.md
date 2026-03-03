@@ -11,7 +11,7 @@ This is a **production-ready FastAPI + React SaaS platform** deployed as contain
 - **Dual App Structure**: Both `app/main.py` (shim fallback) and `backend/src/app.py` (main factory) exist for import flexibility
 - **Agent-Centric Design**: Business logic organized in `backend/src/modules/*/` as domain agents (auth, chatkit, flows, marketplace)
 - **Environment Cascade**: Settings load from `.env` → environment vars → Pydantic defaults with validation
-- **Container-First Deployment**: Multi-stage Docker builds with Heroku Container Registry for staging/production
+- **Container-First Deployment**: Multi-stage Docker builds with Heroku Container Registry direct to production
 - **Quality Automation**: Comprehensive CI/CD with GitHub Actions, automated linting, and security scanning
 
 ## Critical Development Workflows
@@ -21,22 +21,23 @@ This is a **production-ready FastAPI + React SaaS platform** deployed as contain
 ```bash
 make install        # Bootstrap Python venv + dependencies
 make project-info   # Print live roadmap stats from docs/project-plan.csv
-make codex-test     # CI-safe pytest with test database isolation
-make docker-build   # Build autorisen:local with retries
-make deploy-heroku  # Full build → push → release to Heroku (with retry logic)
+make codex-test     # CI-safe pytest with test database isolation (SQLite)
+make codex-test-pg  # Integration tests against real Postgres (docker-compose.test.yml)
+make docker-build   # Build capecontrol:local with retries
+make deploy         # Full build → push → release to Capecraft (requires ALLOW_PROD=1)
 make heroku-logs    # Live log tailing
 ```
 
 ### Environment Configuration
 
 - **Local**: `docker-compose.yml` with PostgreSQL on `:5433`, Redis `:6379`, Vite dev server `:5173`
-- **Staging**: `autorisen` Heroku app (`https://dev.cape-control.com`)
-- **Production**: Live at `https://autorisen-dac8e65796e7.herokuapp.com`
+- **Local Tests**: `docker-compose.test.yml` with ephemeral Postgres on `:5434` (RAM-backed)
+- **Production**: `capecraft` Heroku app at `https://cape-control.com`
 
 ### Database Patterns
 
 - **Migration Path**: Alembic with auto-upgrade disabled (`RUN_DB_MIGRATIONS_ON_STARTUP=0` in production)
-- **Test Isolation**: Uses `sqlite:////tmp/autolocal_test.db` with environment variable overrides
+- **Test Isolation**: Uses `sqlite:////tmp/autolocal_test.db` for fast CI; `docker-compose.test.yml` for Postgres integration tests
 - **Connection Settings**: Pydantic `Settings` class in `backend/src/core/config.py` with legacy name compatibility
 
 ## Project-Specific Conventions
@@ -99,6 +100,7 @@ service.py        # Business logic implementation
 - `backend/src/app.py`: Main application factory with safe router imports
 - `backend/src/core/config.py`: Environment configuration with Pydantic validation
 - `docker-compose.yml`: Local development stack definition
+- `docker-compose.test.yml`: Postgres-backed integration test stack
 - `docs/agents.md`: Current agent registry and status
 - `pytest.ini`: Test configuration (only runs `tests_enabled/`)
 
@@ -109,4 +111,4 @@ service.py        # Business logic implementation
 - **Test Failures**: Use `make codex-test-heal` to regenerate fixtures before investigating
 - **Database Issues**: Verify `DATABASE_URL` format and check if manual migration needed via `make heroku-run-migrate`
 
-When modifying this codebase, always test locally with `make docker-build && make docker-run` before deploying, and ensure any new modules follow the safe import pattern used in the app factory.
+When modifying this codebase, always test locally with `make docker-build && make docker-run` before deploying, and ensure any new modules follow the safe import pattern used in the app factory. Run `make codex-test-pg` to validate against real Postgres before production deploys.

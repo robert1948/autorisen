@@ -35,11 +35,13 @@ def create_ticket(
     user_id: str,
     subject: str,
     body: str,
+    priority: str | None = None,
 ) -> models.SupportTicket:
     ticket = models.SupportTicket(
         user_id=support_user_id(user_id),
         title=subject,
         description=body,
+        priority=priority or "normal",
         status="open",
     )
     db.add(ticket)

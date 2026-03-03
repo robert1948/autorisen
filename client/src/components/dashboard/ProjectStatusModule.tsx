@@ -113,7 +113,14 @@ export const ProjectStatusModule = ({ title, user }: ProjectStatusModuleProps) =
                 completed: "bg-green-100 text-green-800",
                 cancelled: "bg-slate-100 text-slate-500",
               };
+              const statusHint: Record<string, { text: string; icon: string }> = {
+                pending: { text: "Click to begin your project setup", icon: "\u2794" },
+                "in-progress": { text: "Click to access the main workspace", icon: "\u26A1" },
+                completed: { text: "View project results", icon: "\u2705" },
+                cancelled: { text: "View archived project", icon: "\u2014" },
+              };
               const color = statusColor[project.status] ?? "bg-slate-100 text-slate-600";
+              const hint = statusHint[project.status];
               return (
                 <li key={project.id} className="cursor-pointer rounded-md border border-slate-100 p-3 transition-colors hover:border-blue-200 hover:bg-blue-50" onClick={() => navigate(`/app/projects/${project.id}`)}>
                   <div className="flex items-center justify-between">
@@ -122,6 +129,11 @@ export const ProjectStatusModule = ({ title, user }: ProjectStatusModuleProps) =
                       <p className="text-xs text-slate-500">
                         Created {new Date(project.created_at).toLocaleDateString()}
                       </p>
+                      {hint && (
+                        <p className="mt-1 text-sm font-semibold text-blue-600">
+                          {hint.icon} {hint.text}
+                        </p>
+                      )}
                     </div>
                     <span className={`rounded-full px-2 py-1 text-xs font-medium ${color}`}>
                       {project.status}

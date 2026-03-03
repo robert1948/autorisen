@@ -8,6 +8,7 @@
 
 import type { UserProfile } from "../../types/user";
 import { hasPermission } from "../../utils/permissions";
+import { useUsageSummary } from "../../hooks/useUsageSummary";
 
 interface UsageProgressCardProps {
   user: UserProfile;
@@ -94,13 +95,14 @@ function CircularProgress({ value, max, size = 80, strokeWidth = 6, color = "#3b
 
 export function UsageProgressCard({ user }: UsageProgressCardProps) {
   const isDeveloper = hasPermission(user, "apikeys:manage");
+  const { data: usage, isLoading } = useUsageSummary();
 
-  const apiUsed = user.developerProfile?.usageQuota.apiCallsUsed ?? 0;
-  const apiLimit = user.developerProfile?.usageQuota.apiCallsLimit ?? 1000;
+  const apiUsed = usage.apiCallsUsed;
+  const apiLimit = usage.apiCallsLimit;
 
   const items: ProgressItem[] = [];
 
-  if (isDeveloper && user.developerProfile) {
+  if (isDeveloper) {
     items.push({
       label: "API Calls",
       current: apiUsed,
@@ -110,11 +112,10 @@ export function UsageProgressCard({ user }: UsageProgressCardProps) {
     });
   }
 
-  // Storage (placeholder — to be wired to real endpoint)
   items.push({
     label: "Storage Used",
-    current: 0,
-    max: 1024,
+    current: usage.storageUsedMb,
+    max: usage.storageLimitMb,
     color: "bg-emerald-500",
     bgColor: "bg-emerald-100",
   });

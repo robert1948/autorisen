@@ -5,6 +5,18 @@ import React, { createContext, useContext, useMemo } from "react";
  */
 const CHATKIT_ENABLED = import.meta.env.VITE_ENABLE_CHATKIT === "true";
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const AUTH_STORAGE_KEY = "autorisen-auth";
+
+function getStoredAccessToken(): string | null {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { accessToken?: string | null };
+    return parsed.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /** Token shape returned by the backend token endpoint */
 export type ChatToken = {
@@ -61,9 +73,15 @@ export const ChatKitProvider = ({ children }: Props) => {
 
     return {
       requestToken: async (placement: string, threadId?: string | null) => {
+        const headers: Record<string, string> = {};
+        const token = getStoredAccessToken();
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
         const res = await fetch(buildUrl(placement, threadId), {
           method: "GET",
           credentials: "include",
+          headers,
         });
 
         if (!res.ok) {

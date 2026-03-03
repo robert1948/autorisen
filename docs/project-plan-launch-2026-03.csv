@@ -25,14 +25,19 @@ INF-011,Submit Google branding verification,engineering,done,P0,2026-03-01,Phase
 # ──────────────────────────────────────────────────────────────
 # PHASE 1: PRE-LAUNCH HARDENING (Week of Mar 2–6)
 # ──────────────────────────────────────────────────────────────
-HARD-001,Fix MFA stub (remove hardcoded 123456),engineering,not-started,P0,2026-03-04,Phase 1,Security,"MFA verification currently accepts hardcoded code. Must use real TOTP validation.",—,"pytest backend/tests/ -k mfa"
+HARD-001,Fix MFA stub (remove hardcoded 123456),engineering,done,P0,2026-03-04,Phase 1,Security,"Real TOTP via pyotp — backend endpoints + frontend wired. Deployed 2026-03-03.",—,"pytest backend/tests/ -k mfa"
 HARD-002,Remove hardcoded marketplace stats,engineering,not-started,P1,2026-03-04,Phase 1,Frontend,"Landing page shows '25+ agents' and '1.2k deployments' with no real data. Replace with actual counts or remove.",—,"Manual review: marketplace section"
 HARD-003,Seed RAG knowledge base with 3–5 approved documents,engineering,not-started,P0,2026-03-04,Phase 1,AI,"RAG pipeline is built but has no production documents. Upload company SOPs / compliance docs / product docs.",BP-RAG-001,"curl /api/rag/documents"
 HARD-004,Verify PayFast ITN webhook in production,engineering,not-started,P0,2026-03-04,Phase 1,Payments,"Confirm ITN endpoint receives + processes PayFast notifications. Test with R1 transaction.",NEXT-003,"Check capecraft logs for ITN receipt"
 HARD-005,Add privacy policy page (separate from T&Cs),engineering,not-started,P1,2026-03-06,Phase 1,Legal,"Google branding links to /terms-and-conditions for privacy. Should have a dedicated /privacy-policy route.",—,"Visit https://cape-control.com/privacy-policy"
-HARD-006,Run full test suite and fix failures,engineering,not-started,P1,2026-03-04,Phase 1,Quality,"50 tests currently disabled. Re-enable and fix as many as practical.",—,"make codex-test — target ≥90% pass"
+HARD-006,Run full test suite and fix failures,engineering,done,P1,2026-03-03,Phase 1,Quality,"65 tests passing (100%). Fixed 4 failures (registration flow + CSRF). Enabled tests cover auth / onboarding / billing / CSRF / health / projects / support.",—,"make codex-test — 65 passed"
 HARD-007,Add error tracking (Sentry or equivalent),engineering,not-started,P1,2026-03-06,Phase 1,Monitoring,"No production error tracking currently. Essential before public traffic.",—,"Trigger test error → appears in Sentry"
 HARD-008,Set up database backup schedule,engineering,not-started,P1,2026-03-06,Phase 1,Ops,"Verify Heroku Postgres automated backups are on. Set up pg:backups:schedule if not.",—,"heroku pg:backups --app capecraft"
+HARD-009,Fix dashboard customer confusion (project count + banner),engineering,done,P0,2026-03-03,Phase 1,Frontend,"WelcomeHeader used raw fetch() without JWT → 401 → project count always 0. Fixed with authenticated API client. Also fixed isNewUser logic and added status-specific guidance hints.",—,"Login as customer → dashboard shows correct project count"
+HARD-010,Support ticketing with SLA response times,engineering,done,P1,2026-03-03,Phase 1,Backend,"Added SLA module (Free=48h/Pro=24h/Enterprise=4h). Support tickets now include priority + estimated_response_time. ProjectDetail also shows estimated response time.",—,"POST /api/support/tickets → response includes estimated_response_time"
+HARD-011,Fix CapeAI WebSocket connection (URL construction + CloudFlare),engineering,done,P0,2026-03-03,Phase 1,Backend,"toAbsoluteHttpBase() produced malformed URL (missing slash). CloudFlare also blocks WS upgrades. Fixed URL builder + set VITE_CHAT_WS_URL to connect directly to Heroku for WS.",—,"Open CapeAI → status shows Connected"
+HARD-012,Fix CSRF for all API mutations (chat + marketplace + agents),engineering,done,P0,2026-03-03,Phase 1,Security,"Generic apiRequest() in api.ts never included CSRF tokens. Added auto-fetch of X-CSRF-Token header for all POST/PUT/PATCH/DELETE requests via getCsrfToken().",—,"Send chat message → no CSRF error"
+HARD-013,Fix CapeAI token auth (401 on chatkit/token),engineering,done,P0,2026-03-03,Phase 1,Backend,"ChatKitProvider.requestToken() used raw fetch() without JWT Bearer header. Added getStoredAccessToken() helper + Authorization header.",—,"Open CapeAI → token request returns 200"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 2: LINKEDIN PROFILE SETUP (Mar 1–2)
@@ -90,7 +95,7 @@ PROD-004,Evidence pack export (PDF),engineering,not-started,P0,2026-03-20,Phase 
 PROD-005,Landing page demo video embed,engineering,not-started,P2,2026-04-01,Phase 6,Frontend,"Embed 30-second product demo video below hero section on landing page.",—,"Visit cape-control.com — video visible"
 PROD-006,Add social proof section to landing page,engineering,not-started,P2,2026-04-14,Phase 6,Frontend,"Testimonial quotes from beta users (once available). Trust badges: GDPR-ready / Audit logging / SA-hosted.",BETA-006,"Manual review: landing page social proof section"
 PROD-007,Dashboard V2 — real usage metrics,engineering,not-started,P1,2026-04-01,Phase 6,Frontend,"Wire dashboard stat cards to real usage data: runs, documents, evidence packs generated.",—,"Dashboard shows non-zero real data"
-PROD-008,ChatKit conversation history persistence,engineering,not-started,P1,2026-04-07,Phase 6,Backend,"Save ChatKit conversations to DB so users can resume sessions.",—,"Close and reopen ChatKit — history preserved"
+PROD-008,ChatKit conversation history persistence,engineering,in-progress,P1,2026-04-07,Phase 6,Backend,"WS connection working. CSRF fixed. Chat threads + events persist to DB. Remaining: agent-side response generation (messages acknowledged but no AI reply yet).",HARD-011 HARD-012,"Close and reopen ChatKit — history preserved"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 7: PAYMENTS & CONVERSION (Apr–May)
@@ -106,7 +111,7 @@ PAY-014,First 5 paying customers,Robert,not-started,P0,2026-04-30,Phase 7,GTM,"C
 # ──────────────────────────────────────────────────────────────
 SCALE-001,Stripe integration for international payments,engineering,not-started,P2,2026-06-01,Phase 8,Payments,"USD/EUR/GBP payment rails for non-ZAR customers. Business Plan target: Q3 2026.",BP-STRIPE-001,"Stripe test payment succeeds"
 SCALE-002,pgvector migration for production RAG,engineering,not-started,P1,2026-05-01,Phase 8,Backend,"Move from SQLite vector store to PostgreSQL pgvector for production-grade RAG.",BP-RAG-001,"RAG queries hit pgvector"
-SCALE-003,Re-enable disabled test suite (50 tests),engineering,not-started,P1,2026-05-01,Phase 8,Quality,"Move tests from tests_disabled/ to tests_enabled/. Fix and verify.",—,"make codex-test — all tests pass"
+SCALE-003,Re-enable disabled test suite (50 tests),engineering,in-progress,P1,2026-05-01,Phase 8,Quality,"65 tests passing as of 2026-03-03. Remaining ~50 in tests_disabled/ need review and migration.",HARD-006,"make codex-test — all tests pass"
 SCALE-004,Security penetration test,engineering,not-started,P1,2026-06-01,Phase 8,Security,"Third-party security assessment before mid-market push. Budget: ~R37,000.",—,"Pentest report received"
 SCALE-005,SOC 2 readiness assessment,management,not-started,P2,2026-08-01,Phase 8,Security,"Begin SOC 2 Type I preparation. Budget: ~R93,000. Required for mid-market enterprise buyers.",—,"Assessment report received"
 SCALE-006,Content marketing system (blog / case studies),Robert,not-started,P2,2026-05-15,Phase 8,GTM,"Publish 2 case studies from beta users. Set up /blog route or external blog (Hashnode/Substack).",BETA-006,"2 case studies published"

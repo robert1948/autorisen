@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user
+from backend.src.modules.support.sla import estimated_response_time
 
 from . import schemas
 
@@ -308,6 +309,7 @@ def get_project_detail(
         title=task.title,
         description=task.description,
         status=task.status,
+        estimated_response_time=estimated_response_time(db, current_user.id),
         created_at=task.created_at,
         updated_at=task.updated_at,
         started_at=task.started_at,
@@ -350,6 +352,7 @@ def update_project(
         title=task.title,
         description=task.description,
         status=task.status,
+        estimated_response_time=estimated_response_time(db, current_user.id),
         created_at=task.created_at,
         updated_at=task.updated_at,
         started_at=task.started_at,

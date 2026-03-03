@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Keep the autorisen repo lean, auditable, and CI-friendly.
+Keep the CapeControl repo lean, auditable, and CI-friendly.
 This document records the repo hygiene policy and actions taken.
 
 ---
@@ -93,4 +93,4 @@ Use `./scripts/clean.sh --branches` to prune future merged branches.
 
 ## Safety
 
-This repo is staging/sandbox (autorisen). Do not run production/capecraft commands unless explicitly instructed by Robert.
+Production deploys target `capecraft`. All deploy commands require `ALLOW_PROD=1` + `ALLOW_PROD_DEPLOY=YES` safety guards.

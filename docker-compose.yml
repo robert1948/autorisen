@@ -23,9 +23,9 @@ services:
       dockerfile: .devcontainer/Dockerfile
     command: uvicorn backend.src.app:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - .:/workspaces/autorisen
-      - backend_uploads:/workspaces/autorisen/backend/uploads
-    working_dir: /workspaces/autorisen
+      - .:/workspaces/capecontrol
+      - backend_uploads:/workspaces/capecontrol/backend/uploads
+    working_dir: /workspaces/capecontrol
     ports:
       - "8000:8000"
     depends_on:

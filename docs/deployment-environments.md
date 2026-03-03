@@ -2,20 +2,34 @@
 
 ## Environment Overview
 
-CapeControl uses a dual-deployment strategy with separate staging and production environments:
+CapeControl uses a **direct-to-production** deployment strategy:
 
-- **Staging**: `autorisen` app → https://autorisen-dac8e65796e7.herokuapp.com
-- **Production**: `capecraft` app → https://capecraft.herokuapp.com
+- **Local Development**: Docker Compose (`docker-compose.yml`) with PostgreSQL, Redis, MinIO
+- **Local Integration Tests**: `docker-compose.test.yml` with ephemeral Postgres on port 5434
+- **Production**: `capecraft` app → https://cape-control.com
+
+> **Note**: The staging environment (`autorisen` / `dev.cape-control.com`) was retired in March 2026.
+> Local Docker with real Postgres provides equivalent integration testing without the operational overhead.
 
 ## Database Configuration
 
-### Staging (autorisen)
+### Local Development
 
 ```yaml
-Database: d57k62hgqkugv9
-Cluster: c18qegamsgjut6.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com
-User: uee32fstkm38fh
-Environment: ENV=prod, DEBUG=false
+Database: devdb
+Host: localhost:5433
+User: devuser
+Password: devpass
+```
+
+### Local Integration Tests
+
+```yaml
+Database: testdb
+Host: localhost:5434
+User: testuser
+Password: testpass
+Engine: RAM-backed (tmpfs) — ephemeral, fast
 ```
 
 ### Production (capecraft)
@@ -27,107 +41,61 @@ User: u8h1en29rnu00
 Environment: ENV=prod, DEBUG=false
 ```
 
-## OpenAI Configuration
-
-### Staging Environment
-
-- **API Key**: sk-proj-TYJ0NJEVUfDc5Mg_...
-- **Model**: gpt-4o-mini
-- **Usage**: Development and testing
-
-### Production Environment
-
-- **API Key**: sk-proj-ySicmJpiL1X8Kgzkk-...
-- **Model**: gpt-4o-mini
-- **Usage**: Live customer environment
-
 ## Deployment Process
 
-### Single Command Deployment
+### Standard Workflow
 
-```bash
-make deploy-heroku
+```text
+Local Docker → make codex-test-pg → make deploy ALLOW_PROD=1
 ```
 
-This deploys to **both** environments:
-
-1. Builds Docker image locally
-1. Pushes to `autorisen` (staging)
-1. Pushes to `capecraft` (production)
-1. Runs release commands on production
-
-### Individual Environment Deployment
+### Step by Step
 
 ```bash
-# Staging only
-heroku container:push web --app autorisen
-heroku container:release web --app autorisen
+# 1. Build and test locally
+make docker-build
+make codex-test-pg          # Tests against real Postgres
 
-# Production only  
-heroku container:push web --app capecraft
-heroku container:release web --app capecraft
+# 2. Deploy to production (requires ALLOW_PROD=1)
+make deploy ALLOW_PROD=1
+
+# 3. Verify production
+make smoke-prod
+make verify-deploy
 ```
 
-## Agent System Status
+### Quick Deploy (aliases)
 
-### Current Implementation
+```bash
+make deploy-heroku ALLOW_PROD=1   # Alias for make deploy
+make ship ALLOW_PROD=1            # Test + build + deploy + verify
+```
 
-- ✅ **CapeAI Guide Agent**: Fully deployed and functional
-  - Health: `/api/agents/cape-ai-guide/health`
-  - Capabilities: `/api/agents/cape-ai-guide/capabilities`
-  - Ask: `/api/agents/cape-ai-guide/ask` (requires auth + OpenAI)
+### Full Release
 
-- ✅ **CapeAI Domain Specialist**: Deployed with 4 domains
-  - Health: `/api/agents/cape-ai-domain-specialist/health`
-  - Capabilities: `/api/agents/cape-ai-domain-specialist/capabilities`
-  - Ask: `/api/agents/cape-ai-domain-specialist/ask` (requires auth + OpenAI)
-
-### Marketplace System
-
-- ✅ **Analytics**: `/api/marketplace/analytics`
-- ✅ **Categories**: `/api/marketplace/categories`
-- ✅ **Search**: `/api/marketplace/search`
-- ✅ **Discovery**: Full agent discovery and installation flow
-
-## Environment Isolation
-
-### Benefits
-
-1. **Data Isolation**: Staging tests don't affect production data
-1. **API Usage Separation**: OpenAI usage tracked separately
-1. **Independent Scaling**: Different resource allocation per environment
-1. **Safe Testing**: Can test breaking changes in staging
-
-### Considerations
-
-- Marketplace agents published in staging won't appear in production
-- Database schemas must be migrated to both environments
-- Environment variables must be configured separately
-- Different OpenAI usage quotas and billing
+```bash
+make ops-release-all ALLOW_PROD=1
+# 1. Sync project plan
+# 2. Fix docs lint
+# 3. git push origin main
+# 4. Deploy to Capecraft
+# 5. Release to Docker Hub
+```
 
 ## Quick Reference Commands
 
 ### Environment Info
 
 ```bash
-# Check staging config
-heroku config --app autorisen | grep -E "(DATABASE_URL|OPENAI|ENV)"
-
-# Check production config  
+# Check production config
 heroku config --app capecraft | grep -E "(DATABASE_URL|OPENAI|ENV)"
 ```
 
 ### Logs and Debugging
 
 ```bash
-# Staging logs
-heroku logs --tail --app autorisen
-
 # Production logs
 heroku logs --tail --app capecraft
-
-# Run commands in staging
-heroku run --app autorisen "python -c 'print(\"Hello from staging\")'"
 
 # Run commands in production
 heroku run --app capecraft "python -c 'print(\"Hello from production\")'"
@@ -136,34 +104,40 @@ heroku run --app capecraft "python -c 'print(\"Hello from production\")'"
 ### Health Checks
 
 ```bash
-# Staging health
-curl https://autorisen-dac8e65796e7.herokuapp.com/api/health
-
 # Production health
-curl https://capecraft.herokuapp.com/api/health
+curl https://cape-control.com/api/health
 
-# Agent health (staging)
-curl https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-guide/health
+# Agent health
+curl https://cape-control.com/api/agents/cape-ai-guide/health
+
+# Local health
+curl http://localhost:8000/api/health
 ```
 
 ## Migration Strategy
 
 When making database changes:
 
-1. Test migrations locally first
-1. Apply to staging via `heroku run --app autorisen "alembic upgrade head"`
-1. Verify staging functionality
-1. Apply to production via `heroku run --app capecraft "alembic upgrade head"`
-1. Monitor production health
+1. Test migrations locally first: `make migrate-up`
+2. Test against local Postgres: `make codex-test-pg`
+3. Apply to production: `make heroku-run-migrate`
+4. Monitor production health: `make smoke-prod`
+
+## Safety Guards
+
+- Production deploys require `ALLOW_PROD=1`
+- `scripts/deploy_guard.sh` checks `ALLOW_PROD_DEPLOY=YES` for capecraft
+- All push/release commands have 3-attempt retry loops
+- Rollback available: `make heroku-rollback REL=vNNN ALLOW_PROD=1`
 
 ## Security Notes
 
-- Both environments use production-grade security settings
-- Different OpenAI API keys prevent cross-environment usage leaks
+- Production uses production-grade security settings (`ENV=prod`, `DEBUG=false`)
 - Database credentials are auto-rotated by Heroku PostgreSQL
 - All connections use SSL/TLS encryption
+- reCAPTCHA enabled in production
 
 ---
 
-**Last Updated**: November 11, 2025
-**Deployment Version**: v0.2.1
+**Last Updated**: March 2026
+**Deployment Version**: v0.2.5+

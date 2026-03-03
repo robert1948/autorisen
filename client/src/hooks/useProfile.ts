@@ -64,8 +64,9 @@ function mapMeToProfile(me: MeResponse): UserProfile {
           approvedWorkflowsCount: 0,
           webhookEndpoints: [],
           usageQuota: {
+            // Defaults — real values come from useUsageSummary hook
             apiCallsUsed: 0,
-            apiCallsLimit: 10_000,
+            apiCallsLimit: 50,
             resetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           },
         }

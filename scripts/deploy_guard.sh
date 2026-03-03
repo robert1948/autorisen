@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP="${1:-}"
 if [[ -z "$APP" ]]; then
-  echo "deploy_guard: missing app name (expected autorisen|capecraft)" >&2
+  echo "deploy_guard: missing app name (expected capecraft)" >&2
   exit 2
 fi
 

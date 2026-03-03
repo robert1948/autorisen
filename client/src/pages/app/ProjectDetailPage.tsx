@@ -16,6 +16,24 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-slate-100 text-slate-500",
 };
 
+/** Contextual next-step guidance per status */
+const STATUS_GUIDANCE: Record<string, { title: string; body: string; cta: string }> = {
+  pending: {
+    title: "Ready to begin your project setup?",
+    body: "Your project has been created and is waiting for you to get started. Click \"Edit project\" to add details, refine the description, and change the status to \"in-progress\" when you're ready to start working.",
+    cta: "Need help? Ask CapeAI for step-by-step guidance.",
+  },
+  "in-progress": {
+    title: "Your project is underway",
+    body: "Great progress! Track milestones, update your description as the scope evolves, and mark the project \"completed\" when you're done.",
+    cta: "Ask CapeAI for tips on managing your workflow.",
+  },
+};
+
+function openCapeAI(placement: string) {
+  window.dispatchEvent(new CustomEvent("capeai:open", { detail: { placement } }));
+}
+
 export default function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
@@ -200,6 +218,14 @@ export default function ProjectDetailPage() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 dark:border-slate-700">
+              {project.estimated_response_time && (
+                <div className="col-span-2 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
+                  <h3 className="text-xs font-medium uppercase text-blue-500 dark:text-blue-400">Estimated Response Time</h3>
+                  <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                    {project.estimated_response_time}
+                  </p>
+                </div>
+              )}
               <div>
                 <h3 className="text-xs font-medium uppercase text-slate-400">Created</h3>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
@@ -239,6 +265,28 @@ export default function ProjectDetailPage() {
                 Edit project
               </button>
             </div>
+
+            {/* Contextual guidance based on project status */}
+            {STATUS_GUIDANCE[project.status] && (
+              <div className="rounded-lg border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 p-5 dark:border-indigo-800 dark:from-indigo-900/20 dark:to-blue-900/20">
+                <h3 className="text-base font-bold text-indigo-900 dark:text-indigo-200">
+                  {STATUS_GUIDANCE[project.status].title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-indigo-800 dark:text-indigo-300">
+                  {STATUS_GUIDANCE[project.status].body}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => openCapeAI("onboarding")}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-[0.98]"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                  {STATUS_GUIDANCE[project.status].cta}
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -60,6 +60,7 @@ export type ProjectDetail = {
   title: string;
   description?: string | null;
   status: string;
+  estimated_response_time?: string | null;
   created_at: string;
   updated_at?: string | null;
   started_at?: string | null;
@@ -113,6 +114,28 @@ export type DeveloperProfile = {
   developer_terms_version: string | null;
   created_at: string;
   email_verified: boolean;
+};
+
+/* ── Support ticket types ─────────────────────────── */
+
+export type SupportTicketCreate = {
+  subject: string;
+  body: string;
+  priority?: "low" | "normal" | "high" | "urgent";
+};
+
+export type SupportTicket = {
+  id: string;
+  subject: string;
+  body: string;
+  status: string;
+  priority?: string | null;
+  estimated_response_time?: string | null;
+  created_at: string;
+};
+
+export type SupportTicketList = {
+  tickets: SupportTicket[];
 };
 
 /* ── Admin API types ──────────────────────────────── */
@@ -202,6 +225,18 @@ export const dashboardModulesApi = {
   },
   revokeAdminInvite(id: string): Promise<{ message: string }> {
     return apiFetch<{ message: string }>(`/admin/invite/${id}`, { method: "DELETE" });
+  },
+
+  /* ── Support endpoints (/api/support/*) ── */
+
+  getSupportTickets(): Promise<SupportTicketList> {
+    return apiFetch<SupportTicketList>("/support/tickets");
+  },
+  getSupportTicket(id: string): Promise<SupportTicket> {
+    return apiFetch<SupportTicket>(`/support/tickets/${id}`);
+  },
+  createSupportTicket(payload: SupportTicketCreate): Promise<SupportTicket> {
+    return apiFetch<SupportTicket>("/support/tickets", { method: "POST", body: payload });
   },
 
   /* ── Health ── */

@@ -233,7 +233,7 @@ def generate_ai_response(
         if not content:
             content = "I wasn't able to generate a response. Please try again."
 
-        return create_event(
+        event = create_event(
             db,
             thread_id=thread.id,
             role="assistant",
@@ -246,6 +246,24 @@ def generate_ai_response(
                 },
             },
         )
+
+        # ── Record billable usage ────────────────────────────────────
+        try:
+            from backend.src.modules.usage import service as usage_svc
+
+            usage_svc.record_usage(
+                db,
+                user_id=thread.user_id,
+                event_type="chat",
+                model=response.model,
+                tokens_in=response.usage.input_tokens,
+                tokens_out=response.usage.output_tokens,
+                thread_id=thread.id,
+            )
+        except Exception:  # noqa: BLE001
+            log.warning("Failed to record usage log", exc_info=True)
+
+        return event
     except Exception as exc:  # noqa: BLE001
         log.exception("Anthropic API call failed: %s", exc)
         error_content = (

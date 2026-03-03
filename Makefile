@@ -63,13 +63,11 @@ GIT_SHA := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
 BUILD_EPOCH := $(shell date +%s)
 APP_BUILD_VERSION := $(shell cat VERSION 2>/dev/null || echo $(GIT_SHA))
 
-IMAGE ?= autorisen:local
+IMAGE ?= capecontrol:local
 PORT ?= 8000
 
-HEROKU_APP_STG  ?= autorisen
-HEROKU_APP_PROD ?= capecraft
-HEROKU_APP_NAME ?= $(HEROKU_APP_STG)
-HEROKU_APP      ?= $(HEROKU_APP_STG)
+HEROKU_APP      ?= capecraft
+HEROKU_APP_NAME ?= $(HEROKU_APP)
 
 # ----------------------------------------------------------------------------- 
 # Safety gate: production operations require explicit opt-in
@@ -84,12 +82,10 @@ require-prod: ## Guard: require ALLOW_PROD=1 for production actions
 	fi
 
 # Domains
-DEV_BASE_URL  ?= https://dev.cape-control.com
 PROD_BASE_URL ?= https://cape-control.com
 PROD_URL      ?= https://cape-control.com
 
 # Docs inputs for sitemap
-SITEMAP_DEV_TXT  ?= docs/sitemap.dev.txt
 SITEMAP_PROD_TXT ?= docs/sitemap.prod.txt
 
 # Output static sitemap (served by Vite from / if present)
@@ -100,25 +96,23 @@ SITEMAP_XML ?= sitemap.xml
 CRAWL_OUT ?= docs/crawl
 CRAWL_TOOL ?= tools/crawl_sitemap.py
 
-# Staging smoke
-STAGING_URL ?= https://dev.cape-control.com
-
 # Test DB (single source of truth)
-TEST_DB_URL ?= sqlite:////tmp/autolocal_test.db
+TEST_DB_URL      ?= sqlite:////tmp/autolocal_test.db
+TEST_PG_DB_URL   ?= postgresql://testuser:testpass@localhost:5434/testdb
 
 # ----------------------------------------------------------------------------- 
 # PHONY index (single, authoritative)
 # -----------------------------------------------------------------------------
 .PHONY: help project-info venv install format lint test docker-build docker-run docker-push \
-	deploy-heroku deploy-autorisen deploy-capecraft heroku-deploy-stg heroku-deploy-prod heroku-logs heroku-run-migrate \
+	deploy deploy-heroku heroku-logs heroku-run-migrate \
 	github-update clean plan-validate plan-open \
 	migrate-up migrate-revision \
-	sitemap-generate-dev sitemap-generate-prod verify-sitemap verify-sitemap-dev verify-sitemap-prod \
-	crawl-local crawl-dev crawl-prod crawl sitemap-svg \
+	sitemap-generate-prod verify-sitemap verify-sitemap-prod \
+	crawl-local crawl-prod crawl sitemap-svg \
 	agents-new agents-validate agents-test agents-run \
 	codex-check codex-open codex-docs-lint codex-docs-fix codex-ci-validate \
-	codex-plan-diff codex-plan-apply codex-test-heal codex-test codex-test-cov codex-test-dry codex-run \
-	smoke-staging smoke-local csrf-probe-staging csrf-probe-local codex-smoke smoke-prod \
+	codex-plan-diff codex-plan-apply codex-test-heal codex-test codex-test-pg codex-test-cov codex-test-dry codex-run \
+	smoke-local smoke-prod \
 	payments-checkout websocket-test payment-test chatkit-dev \
 	dockerhub-login dockerhub-logout dockerhub-setup-builder dockerhub-build dockerhub-push dockerhub-build-push \
 	dockerhub-release dockerhub-update-description dockerhub-clean \
@@ -174,19 +168,18 @@ docs-workspace: ## Open VS Code workspace with documentation tasks
 
 project-info: ## Show current project version and status information
 	@echo ""
-	@echo "🚀 \033[1mAutoLocal/CapeControl Project Information\033[0m"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "📊 Version: $(APP_VERSION)"
-	@echo "🎯 Focus: Stripe billing, usage metering, ops hardening"
+	@echo "\U0001f680 \033[1mAutoLocal/CapeControl Project Information\033[0m"
+	@echo "\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501"
+	@echo "\U0001f4ca Version: $(APP_VERSION)"
+	@echo "\U0001f3af Focus: Stripe billing, usage metering, ops hardening"
 	@echo ""
-	@echo "🔗 \033[34mKey Links:\033[0m"
-	@echo "   • Staging (Heroku: $(HEROKU_APP_STG)): $(DEV_BASE_URL)"
-	@echo "   • Production (Heroku: $(HEROKU_APP_PROD)): $(PROD_BASE_URL)"
-	@echo "   • Docker Hub: stinkie/autorisen:$(APP_VERSION)"
+	@echo "\U0001f517 \033[34mKey Links:\033[0m"
+	@echo "   \u2022 Production (Heroku: $(HEROKU_APP)): $(PROD_BASE_URL)"
+	@echo "   \u2022 Docker Hub: stinkie/capecontrol:$(APP_VERSION)"
 	@echo ""
 	@$(PY) scripts/project_info.py
 	@echo ""
-	@git log --oneline -5 2>/dev/null || echo "📝 Git history: Not available"
+	@git log --oneline -5 2>/dev/null || echo "\U0001f4dd Git history: Not available"
 	@echo ""
 
 ops-release-all: ## Sync plan, fix docs, show info, push to git, and release to Heroku & DockerHub
@@ -201,14 +194,14 @@ ops-release-all: ## Sync plan, fix docs, show info, push to git, and release to 
 	@echo "    Ensure all changes are committed."
 	@echo "    This will:"
 	@echo "    1. git push origin main"
-	@echo "    2. make deploy-heroku (Staging only)"
+	@echo "    2. make deploy (Capecraft production)"
 	@echo "    3. make dockerhub-release"
 	@echo ""
 	@read -p "Press Enter to continue or Ctrl+C to cancel..." _
 	@echo "📦 Pushing to GitHub..."
 	@git push origin main
-	@echo "🚀 Deploying to Heroku..."
-	@$(MAKE) deploy-heroku
+	@echo "🚀 Deploying to Heroku (Capecraft)..."
+	@$(MAKE) deploy ALLOW_PROD=1
 	@echo "🐳 Releasing to DockerHub..."
 	@$(MAKE) dockerhub-release
 	@echo "✅ Full release sequence completed!"
@@ -334,13 +327,15 @@ docker-push: ## Push local image tag to $(REGISTRY) (set REGISTRY=…)
 	docker push $(REGISTRY)/$(IMAGE)
 
 # ----------------------------------------------------------------------------- 
-# Heroku container deploy (Enhanced)
+# Heroku container deploy (direct to Capecraft)
+# Workflow: Local Docker → CI green → Deploy to Capecraft (production)
+# Staging (autorisen) eliminated — use local Docker + Postgres for integration tests
 # -----------------------------------------------------------------------------
-deploy-heroku: deploy-autorisen ## Build/push/release to staging (autorisen) only
+deploy-heroku: deploy ## Alias: deploy to production (capecraft)
 
-.PHONY: deploy-autorisen verify-autorisen test-backend build-client ship-autorisen ship-autorisen-log
+.PHONY: deploy verify-deploy test-backend build-client ship ship-log
 
-# Where to write evidence logs (override: make ship-autorisen-log EVIDENCE_DIR=/path)
+# Where to write evidence logs (override: make ship-log EVIDENCE_DIR=/path)
 EVIDENCE_DIR ?= /tmp
 
 test-backend: ## Run backend tests (pytest)
@@ -352,50 +347,19 @@ build-client: ## Install client deps and build
 	npm -C client ci --no-audit --fund=false; \
 	npm -C client run build
 
-ship-autorisen: test-backend build-client deploy-autorisen verify-autorisen ## Test, build, deploy, and verify autorisen
-	@echo "ship-autorisen complete"
+ship: test-backend build-client deploy verify-deploy ## Test, build, deploy, and verify production
+	@echo "ship complete"
 
-ship-autorisen-log: ## Run ship-autorisen and tee output to a timestamped evidence log
+ship-log: ## Run ship and tee output to a timestamped evidence log
 	@set -euo pipefail; \
 	TS="$$(date +%Y%m%d_%H%M%S)"; \
-	LOG="$(EVIDENCE_DIR)/ship_autorisen_$${TS}.log"; \
+	LOG="$(EVIDENCE_DIR)/ship_capecraft_$${TS}.log"; \
 	echo "[evidence] writing $$LOG"; \
-	{ $(MAKE) ship-autorisen; } 2>&1 | tee "$$LOG"; \
+	{ $(MAKE) ship ALLOW_PROD=1; } 2>&1 | tee "$$LOG"; \
 	echo "[evidence] saved $$LOG"
 
-deploy-autorisen: ## Build/push/release to staging (autorisen) with build args
-	@set -euo pipefail; \
-	export HEROKU_PAGER=cat; \
-	GIT_SHA="$$(git rev-parse --short=12 HEAD)"; \
-	BUILD_EPOCH="$$(date +%s)"; \
-	echo "GIT_SHA=$$GIT_SHA"; \
-	echo "BUILD_EPOCH=$$BUILD_EPOCH"; \
-	heroku container:push web -a autorisen --arg "GIT_SHA=$$GIT_SHA" --arg "BUILD_EPOCH=$$BUILD_EPOCH"; \
-	heroku container:release web -a autorisen; \
-	echo "⏳ Waiting for deploy to stabilise..."; \
-	sleep 8; \
-	AUTO_BASE="$$(heroku apps:info -a autorisen | awk -F': ' '/Web URL/{print $$2}' | tr -d ' ')"; \
-	AUTO_BASE="$${AUTO_BASE%/}"; \
-	NEW_BUILD=$$(curl -sS "$${AUTO_BASE}/api/version?ts=$$(date +%s)" | python3 -c "import sys,json; print(json.load(sys.stdin).get('buildNumber',''))") || true; \
-	if [ -n "$$NEW_BUILD" ] && [ "$$NEW_BUILD" != "None" ]; then \
-		echo "$$NEW_BUILD" > VERSION; \
-		echo "✅ VERSION synced to $$NEW_BUILD"; \
-		git add VERSION && git diff --cached --quiet VERSION || \
-			(git commit -m "chore: sync VERSION to Build $$NEW_BUILD [skip ci]" && git push origin main) || true; \
-	fi
-
-verify-autorisen: ## Verify autorisen release, version, and DB revision
-	@set -euo pipefail; \
-	export HEROKU_PAGER=cat; \
-	timeout 30 heroku releases -a autorisen | head -n 8; \
-	AUTO_BASE="$$(heroku apps:info -a autorisen | awk -F': ' '/Web URL/{print $$2}' | tr -d ' ')"; \
-	AUTO_BASE="$${AUTO_BASE%/}"; \
-	echo "autorisen base: $$AUTO_BASE"; \
-	curl -sS -H "Cache-Control: no-cache" "$${AUTO_BASE}/api/version?ts=$$(date +%s)" | python3 -m json.tool || true; \
-	timeout 30 heroku pg:psql -a autorisen -c "SELECT version_num FROM alembic_version;"
-
-deploy-capecraft: require-prod docker-build ## Build/push/release to production (capecraft) with guardrails
-	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
+deploy: require-prod docker-build ## Build/push/release to production (capecraft) with guardrails
+	@scripts/deploy_guard.sh $(HEROKU_APP)
 	@echo "🔐 Logging in to Heroku Container Registry..."
 	@LOGIN_OK=0; \
 	for i in 1 2 3; do \
@@ -404,65 +368,58 @@ deploy-capecraft: require-prod docker-build ## Build/push/release to production 
 	done; \
 	if [ "$$LOGIN_OK" -ne 1 ]; then echo "❌ Login failed after retries"; exit 1; fi
 	@echo ""
-	@echo "🚀 === DEPLOYING TO PRODUCTION ($(HEROKU_APP_PROD)) ==="
+	@echo "🚀 === DEPLOYING TO PRODUCTION ($(HEROKU_APP)) ==="
 	@echo "🏷️  Tagging image for production registry..."
-	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP_PROD)/web
+	docker tag $(IMAGE) registry.heroku.com/$(HEROKU_APP)/web
 	@echo "📤 Pushing image to production registry..."
 	@for i in 1 2 3; do \
-		if docker push registry.heroku.com/$(HEROKU_APP_PROD)/web; then echo "✅ Production push successful"; break; fi; \
-		echo "⚠️  Production push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
-		[ $$i -eq 3 ] && { echo "❌ Production push failed after retries"; exit 1; } || true; \
+		if docker push registry.heroku.com/$(HEROKU_APP)/web; then echo "✅ Push successful"; break; fi; \
+		echo "⚠️  Push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Push failed after retries"; exit 1; } || true; \
 	done
-	@echo "🚀 Releasing container to production..."
+	@echo "🚀 Releasing container..."
 	@for i in 1 2 3; do \
-		if heroku container:release web --app $(HEROKU_APP_PROD); then echo "✅ Production release successful"; break; fi; \
-		echo "⚠️  Production release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
-		[ $$i -eq 3 ] && { echo "❌ Production release failed after retries"; exit 1; } || true; \
+		if heroku container:release web --app $(HEROKU_APP); then echo "✅ Release successful"; break; fi; \
+		echo "⚠️  Release failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
+		[ $$i -eq 3 ] && { echo "❌ Release failed after retries"; exit 1; } || true; \
 	done
 	@echo "✅ Production deployment completed! App URL: $(PROD_BASE_URL)"
 
-heroku-deploy-stg: ## Quick push/release to staging only ($(HEROKU_APP_STG))
-	@echo "🚀 Quick staging deployment to $(HEROKU_APP_STG)..."
-	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
-	heroku container:release web -a $(HEROKU_APP_STG)
-	@echo "✅ Staging deployment complete"
-	heroku open -a $(HEROKU_APP_STG)
+verify-deploy: ## Verify production release, version, and DB revision
+	@set -euo pipefail; \
+	export HEROKU_PAGER=cat; \
+	timeout 30 heroku releases -a $(HEROKU_APP) | head -n 8; \
+	PROD_BASE="$$(heroku apps:info -a $(HEROKU_APP) | awk -F': ' '/Web URL/{print $$2}' | tr -d ' ')"; \
+	PROD_BASE="$${PROD_BASE%/}"; \
+	echo "Production base: $$PROD_BASE"; \
+	curl -sS -H "Cache-Control: no-cache" "$${PROD_BASE}/api/version?ts=$$(date +%s)" | python3 -m json.tool || true; \
+	timeout 30 heroku pg:psql -a $(HEROKU_APP) -c "SELECT version_num FROM alembic_version;"
 
-heroku-deploy-prod: require-prod ## Quick push/release to production only ($(HEROKU_APP_PROD))
-	@echo "🚀 Quick production deployment to $(HEROKU_APP_PROD)..."
-	@scripts/deploy_guard.sh $(HEROKU_APP_PROD)
-	heroku container:login
-	heroku container:push web -a $(HEROKU_APP_PROD) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
-	heroku container:release web -a $(HEROKU_APP_PROD)
-	@echo "✅ Production deployment complete"
-	heroku open -a $(HEROKU_APP_PROD)
-
-heroku-logs: ## Tail Heroku logs for $(HEROKU_APP_NAME)
-	@echo "📋 Tailing logs for $(HEROKU_APP_NAME)..."
-	heroku logs --tail --app $(HEROKU_APP_NAME)
+heroku-logs: ## Tail Heroku logs for $(HEROKU_APP)
+	@echo "📋 Tailing logs for $(HEROKU_APP)..."
+	heroku logs --tail --app $(HEROKU_APP)
 
 heroku-shell: ## Open bash shell in Heroku container
-	@echo "🐚 Opening shell in $(HEROKU_APP_NAME)..."
-	heroku run bash --app $(HEROKU_APP_NAME)
+	@echo "🐚 Opening shell in $(HEROKU_APP)..."
+	heroku run bash --app $(HEROKU_APP)
 
 heroku-run-migrate: ## Run database migrations on Heroku
-	@echo "🗃️  Running migrations on $(HEROKU_APP_NAME)..."
-	heroku run --app $(HEROKU_APP_NAME) -- python -m alembic -c backend/alembic.ini upgrade head
+	@echo "🗃️  Running migrations on $(HEROKU_APP)..."
+	heroku run --app $(HEROKU_APP) -- python -m alembic -c backend/alembic.ini upgrade head
 
 heroku-config-push: ## Push local .env to Heroku config (be careful!)
 	@if [ ! -f .env ]; then echo "❌ .env file not found"; exit 1; fi
-	@echo "⚠️  Pushing .env to Heroku config for $(HEROKU_APP_NAME)..."
+	@echo "⚠️  Pushing .env to Heroku config for $(HEROKU_APP)..."
 	@read -p "Are you sure? This will overwrite Heroku config vars [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
-	heroku config:push --app $(HEROKU_APP_NAME)
+	heroku config:push --app $(HEROKU_APP)
 
 heroku-status: ## Check Heroku app status and health
-	@echo "🔍 Checking status of $(HEROKU_APP_NAME)..."
-	heroku ps --app $(HEROKU_APP_NAME)
+	@echo "🔍 Checking status of $(HEROKU_APP)..."
+	heroku ps --app $(HEROKU_APP)
 	@echo "🔍 Health check..."
-	@curl -f -s https://$(HEROKU_APP_NAME).herokuapp.com/api/health || echo "❌ Health check failed"
+	@curl -f -s $(PROD_BASE_URL)/api/health || echo "❌ Health check failed"
 	@echo ""
-	@curl -f -s https://$(HEROKU_APP_NAME).herokuapp.com/api/version || echo "⚠️  Version endpoint not available"
+	@curl -f -s $(PROD_BASE_URL)/api/version || echo "⚠️  Version endpoint not available"
 
 # ----------------------------------------------------------------------------- 
 # Git helpers
@@ -498,50 +455,6 @@ migrate-revision: venv ## Create Alembic revision: make migrate-revision message
 	@echo "Creating Alembic revision: $$message"
 	@$(VENV)/bin/python -m pip install -e backend >/dev/null 2>&1 || true
 	@$(VENV)/bin/python -m alembic -c backend/alembic.ini revision -m "$$message"
-
-certify-autorisen: ## Enforced: certify staging (autorisen) and write .release/autorisen_certified
-	@set -e; \
-	CERT_DIR=".release"; CERT_FILE="$$CERT_DIR/autorisen_certified"; \
-	APP="$(HEROKU_APP_STG)"; \
-	CERT_SHA="$(GIT_SHA)"; \
-	if [ "$$APP" != "autorisen" ]; then echo "❌ Refusing: HEROKU_APP_STG is not autorisen (got '$$APP')"; exit 2; fi; \
-	echo "== AUTORISEN CERTIFICATION (staging) =="; \
-	echo "1) Migrations (run 1/2)"; \
-	$(MAKE) heroku-run-migrate HEROKU_APP_NAME="$$APP"; \
-	echo "2) Migrations (run 2/2, idempotency)"; \
-	$(MAKE) heroku-run-migrate HEROKU_APP_NAME="$$APP"; \
-	WEB_URL=$$(heroku info -a "$$APP" -s | sed -n 's/^web_url=//p'); \
-	WEB_URL=$${WEB_URL%/}; \
-	if [ -z "$$WEB_URL" ]; then echo "❌ Could not resolve staging web_url"; exit 2; fi; \
-	ALEMBIC_HEAD=$$(heroku run --app "$$APP" -- python -m alembic -c backend/alembic.ini current 2>/dev/null | tail -n 1 | awk '{print $$1}'); \
-	if [ -z "$$ALEMBIC_HEAD" ]; then echo "❌ Could not determine Alembic head from runtime"; exit 2; fi; \
-	echo "3) Health + smoke"; \
-	HC=$$(curl -s -o /tmp/autorisen_cert_health.json -w '%{http_code}' "$$WEB_URL/api/health" || true); \
-	CS=$$(curl -s -o /tmp/autorisen_cert_csrf.json  -w '%{http_code}' "$$WEB_URL/api/auth/csrf" || true); \
-	ME=$$(curl -s -o /tmp/autorisen_cert_me.json    -w '%{http_code}' "$$WEB_URL/api/auth/me" || true); \
-	VER=$$(curl -s "$$WEB_URL/api/version" || true); \
-	[ "$$HC" = "200" ] || (echo "❌ /api/health expected 200, got $$HC"; exit 1); \
-	[ "$$CS" = "200" ] || (echo "❌ /api/auth/csrf expected 200, got $$CS"; exit 1); \
-	if [ "$$ME" != "401" ] && [ "$$ME" != "200" ]; then echo "❌ /api/auth/me expected 200 or 401, got $$ME"; exit 1; fi; \
-	if [ "$$ME" = "200" ]; then \
-		grep -q '"email"' /tmp/autorisen_cert_me.json || (echo "❌ /api/auth/me returned 200 but response missing expected fields"; exit 1); \
-	fi; \
-	if ! echo "$$VER" | grep -Fq "$$CERT_SHA"; then \
-		echo "❌ /api/version does not include certified SHA ($$CERT_SHA). Got: $$VER"; exit 1; \
-	fi; \
-	echo "4) Log scan (traceback/5xx)"; \
-	if heroku logs --app "$$APP" --num 200 | grep -Ei 'traceback|\s5[0-9][0-9]\s|error r' >/dev/null; then \
-		echo "❌ Found traceback/5xx markers in last 200 log lines"; exit 1; \
-	fi; \
-	mkdir -p "$$CERT_DIR"; \
-	CERT_AT=$$(date -u +"%Y-%m-%dT%H:%M:%SZ"); \
-	echo "CERTIFIED_APP=$$APP" > "$$CERT_FILE"; \
-	echo "CERTIFIED_SHA=$$CERT_SHA" >> "$$CERT_FILE"; \
-	echo "CERTIFIED_ALEMBIC_HEAD=$$ALEMBIC_HEAD" >> "$$CERT_FILE"; \
-	echo "CERTIFIED_AT=$$CERT_AT" >> "$$CERT_FILE"; \
-	echo "CERTIFIED_RUNTIME_VERSION=$$VER" >> "$$CERT_FILE"; \
-	echo "CERTIFIED_WEB_URL=$$WEB_URL" >> "$$CERT_FILE"; \
-	echo "✅ Certified: $$CERT_FILE";
 
 # ----------------------------------------------------------------------------- 
 # Sitemap generation & checks
@@ -579,10 +492,6 @@ print(f"Wrote {out} with {len(routes)} routes.")
 PYCODE
 endef
 
-sitemap-generate-dev: ## Generate $(PUBLIC_DIR)/$(SITEMAP_XML) from $(SITEMAP_DEV_TXT)
-	@BASE_URL="$(DEV_BASE_URL)"; \
-	$(call GEN_SITEMAP_XML,$(SITEMAP_DEV_TXT))
-
 sitemap-generate-prod: ## Generate $(PUBLIC_DIR)/$(SITEMAP_XML) from $(SITEMAP_PROD_TXT)
 	@BASE_URL="$(PROD_BASE_URL)"; \
 	$(call GEN_SITEMAP_XML,$(SITEMAP_PROD_TXT))
@@ -602,9 +511,6 @@ verify-sitemap: ## Verify routes from FILE=... at BASE=...
 	done < "$(FILE)"; \
 	exit $$FAIL
 
-verify-sitemap-dev: ## Curl-check all dev routes
-	@$(MAKE) verify-sitemap FILE="$(SITEMAP_DEV_TXT)" BASE="$(DEV_BASE_URL)"
-
 verify-sitemap-prod: ## Curl-check all prod routes
 	@$(MAKE) verify-sitemap FILE="$(SITEMAP_PROD_TXT)" BASE="$(PROD_BASE_URL)"
 
@@ -613,9 +519,6 @@ verify-sitemap-prod: ## Curl-check all prod routes
 # -----------------------------------------------------------------------------
 crawl-local: ## Run tools/crawl_sitemap.py against http://localhost:3000
 	$(PY) $(CRAWL_TOOL) --base-url http://localhost:3000 --outdir $(CRAWL_OUT) --label local
-
-crawl-dev: ## Run crawler against dev.cape-control.com
-	$(PY) $(CRAWL_TOOL) --base-url $(DEV_BASE_URL) --outdir $(CRAWL_OUT) --label dev
 
 crawl-prod: ## Run crawler against cape-control.com
 	$(PY) $(CRAWL_TOOL) --base-url https://www.cape-control.com --outdir $(CRAWL_OUT) --label prod
@@ -756,6 +659,21 @@ codex-test: ## Run pytest with CI-safe defaults
 	$(PIP) install -q -r "$(REQ)"; \
 	$(PY) -m pytest -q
 
+codex-test-pg: ## Run pytest against real Postgres (docker-compose.test.yml)
+	@echo "== Starting test Postgres container =="
+	@docker compose -f docker-compose.test.yml up -d --wait
+	@echo "== Running pytest against Postgres =="
+	@set -e; \
+	$(TEST_ENV_EXPORT) \
+	export DATABASE_URL="$(TEST_PG_DB_URL)"; \
+	export ALEMBIC_DATABASE_URL="$(TEST_PG_DB_URL)"; \
+	. "$(VENV)/bin/activate" 2>/dev/null || true; \
+	$(PIP) install -q -r "$(REQ)"; \
+	$(PY) -m alembic -c backend/alembic.ini upgrade head 2>/dev/null || true; \
+	$(PY) -m pytest -q; \
+	echo "== Stopping test containers =="; \
+	docker compose -f docker-compose.test.yml down -v
+
 codex-test-cov: ## Run pytest with coverage
 	@echo "== Running pytest with coverage =="
 	@set -e; \
@@ -800,56 +718,10 @@ test-agents: ## Run agent-specific tests
 # ----------------------------------------------------------------------------- 
 # Smoke & CSRF probes
 # -----------------------------------------------------------------------------
-smoke-staging: ## Health + CSRF discovery (OpenAPI) against $(STAGING_URL)
-	@echo "== Smoke test against $(STAGING_URL) =="
-	@curl -fsS "$(STAGING_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
-	@echo "Discovering CSRF probe path from OpenAPI..."
-	@set -e; \
-	if ! command -v jq >/dev/null 2>&1; then echo "⚠️  jq not found; install jq to use OpenAPI discovery"; exit 0; fi; \
-	OPENAPI_TMP="$$(mktemp)"; \
-	FOUND_SCHEMA=""; \
-	for candidate in "/api/openapi.json" "/openapi.json"; do \
-		if curl -fsS "$(STAGING_URL)$$candidate" -o "$$OPENAPI_TMP" >/dev/null 2>&1; then \
-			FOUND_SCHEMA="$$candidate"; \
-			break; \
-		fi; \
-	done; \
-	if [ -z "$$FOUND_SCHEMA" ]; then \
-		echo "⚠️  Unable to fetch OpenAPI schema (tried /api/openapi.json, /openapi.json). Skipping CSRF cookie check."; \
-		rm -f "$$OPENAPI_TMP"; \
-		exit 0; \
-	fi; \
-	echo "Using OpenAPI schema at $$FOUND_SCHEMA"; \
-	CSRF_PATHS="$$(jq -r '.paths | keys[]' "$$OPENAPI_TMP" | grep -i csrf || true)"; \
-	rm -f "$$OPENAPI_TMP"; \
-	if [ -z "$$CSRF_PATHS" ]; then \
-		echo "⚠️  No CSRF-like path advertised in OpenAPI. Skipping CSRF cookie check."; \
-		exit 0; \
-	fi; \
-	echo "Found CSRF candidate paths:" $$CSRF_PATHS; \
-	for p in $$CSRF_PATHS; do \
-		echo "→ Probing $$p ..."; \
-		curl -fsS -o /tmp/csrf_body.txt -D /tmp/csrf_headers.txt "$(STAGING_URL)$$p" >/dev/null 2>&1 || true; \
-		if grep -qi 'set-cookie' /tmp/csrf_headers.txt; then \
-			echo "✓ CSRF cookie present via $$p"; \
-			exit 0; \
-		fi; \
-	done; \
-	echo "✗ CSRF cookie missing on candidates: $$CSRF_PATHS"; \
-	exit 1
-
 smoke-local: ## Health + CSRF probe against localhost backend
 	@echo "== Smoke test against http://localhost:$(PORT) =="
 	@curl -fsS "http://localhost:$(PORT)/api/health" >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
 	@$(MAKE) csrf-probe-local || true
-
-csrf-probe-staging: ## Direct CSRF probe (staging)
-	@echo "== CSRF probe (staging) =="
-	@set -e; \
-	status=$$(curl -s -o /tmp/csrf_body.txt -D /tmp/csrf_headers.txt "$(STAGING_URL)/api/auth/csrf" -w "%{http_code}"); \
-	echo "Status: $$status"; \
-	if grep -qi 'set-cookie' /tmp/csrf_headers.txt; then echo "✓ Set-Cookie present"; else echo "✗ No Set-Cookie"; fi; \
-	cat /tmp/csrf_body.txt || true
 
 csrf-probe-local: ## Direct CSRF probe (local)
 	@echo "== CSRF probe (local) =="
@@ -859,11 +731,14 @@ csrf-probe-local: ## Direct CSRF probe (local)
 	if [ -f /tmp/csrf_headers.txt ] && grep -qi 'set-cookie' /tmp/csrf_headers.txt; then echo "✓ Set-Cookie present"; else echo "✗ No Set-Cookie"; fi; \
 	[ -f /tmp/csrf_body.txt ] && cat /tmp/csrf_body.txt || true
 
-codex-smoke: smoke-staging csrf-probe-staging ## Combined staging smoke & CSRF
-
-smoke-prod: ## Quick production health (no CSRF probe)
+smoke-prod: ## Quick production health + CSRF probe
 	@echo "== Smoke test against $(PROD_BASE_URL) =="
 	@curl -fsS "$(PROD_BASE_URL)/api/health" | jq . >/dev/null && echo "✓ /api/health OK" || { echo "✗ /api/health failed"; exit 1; }
+	@set -e; \
+	status=$$(curl -s -o /tmp/csrf_body.txt -D /tmp/csrf_headers.txt "$(PROD_BASE_URL)/api/auth/csrf" -w "%{http_code}" || true); \
+	if grep -qi 'set-cookie' /tmp/csrf_headers.txt 2>/dev/null; then echo "✓ CSRF cookie present"; else echo "⚠️  No CSRF cookie"; fi
+
+codex-smoke: smoke-prod ## Production smoke & CSRF
 
 # ----------------------------------------------------------------------------- 
 # Strict mode tests
@@ -881,18 +756,18 @@ codex-test-strict: ## Run pytest with warnings as errors
 # -----------------------------------------------------------------------------
 # Usage:
 #   make dockerhub-login
-#   make dockerhub-release APP=autorisen
+#   make dockerhub-release APP=capecontrol
 #   make dockerhub-release APP=capecraft VERSION=v0.3.0
-#   make dockerhub-release APP=autorisen PLATFORMS=linux/amd64
+#   make dockerhub-release APP=capecontrol PLATFORMS=linux/amd64
 #
 # Notes:
 # - Tags produced: :latest, :$(VERSION), :docker-<engine>, :git-<sha>
 # - Requires Docker Buildx
 # -----------------------------------------------------------------------------
 
-# Config (override on CLI, e.g. make dockerhub-release APP=autorisen)
+# Config (override on CLI, e.g. make dockerhub-release APP=capecontrol)
 DH_NAMESPACE ?= stinkie
-APP          ?= autorisen
+APP          ?= capecontrol
 CONTEXT      ?= .
 DOCKERFILE   ?= Dockerfile
 PLATFORMS    ?= linux/amd64,linux/arm64
@@ -1148,10 +1023,12 @@ playbook-sync: ## Sync PROJECT_PLAYBOOK_TRACKER docs from CSV
 	@python3 scripts/sync_playbooks_tracker.py
 
 # ===== Heroku Pipeline Targets =====
+# NOTE: Staging (autorisen) eliminated. Deploy directly to capecraft.
+# Use local Docker + Postgres (docker-compose.test.yml) for integration tests.
 
-.PHONY: heroku-login heroku-apps heroku-pipeline heroku-config-stg heroku-config-prod \
-deploy-staging heroku-smoke-staging promote-prod heroku-smoke-prod heroku-logs-stg heroku-logs-prod \
-heroku-open-stg heroku-open-prod heroku-rollback
+.PHONY: heroku-login heroku-config-prod \
+heroku-smoke-prod heroku-logs-prod \
+heroku-open-prod heroku-rollback
 
 
 heroku-login:
@@ -1159,67 +1036,27 @@ heroku-login:
 	@heroku container:login
 
 
-heroku-apps:
-	@heroku create $(HEROKU_APP_STG) --region eu || true
-	@heroku create $(HEROKU_APP_PROD) --region eu || true
-
-
-heroku-pipeline:
-	@heroku pipelines:create capecontrol -a $(HEROKU_APP_STG) -s staging || true
-	@heroku pipelines:add capecontrol -a $(HEROKU_APP_PROD) -s production || true
-
-
-heroku-config-stg:
-	@heroku config:set -a $(HEROKU_APP_STG) ENV=staging RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=true
-
-
 heroku-config-prod: require-prod
-	@heroku config:set -a $(HEROKU_APP_PROD) ENV=production RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=false
-
-
-# Build & release container to staging
-deploy-staging: heroku-login
-	@docker build -t $(HEROKU_APP_STG):local .
-	@heroku container:push web -a $(HEROKU_APP_STG) --arg GIT_SHA=$(GIT_SHA) --arg BUILD_EPOCH=$(BUILD_EPOCH) --arg APP_BUILD_VERSION=$(APP_BUILD_VERSION)
-	@heroku container:release web -a $(HEROKU_APP_STG)
-	@heroku ps:scale -a $(HEROKU_APP_STG) web=1
-
-
-heroku-smoke-staging:
-	@curl -fsS $(STAGING_URL)/api/health >/dev/null && echo "✓ health OK" || (echo "✗ health FAIL" && exit 1)
-	@curl -fsS $(STAGING_URL)/api/auth/csrf >/dev/null && echo "✓ csrf OK" || (echo "✗ csrf FAIL" && exit 1)
-	@heroku logs --tail -a $(HEROKU_APP_STG)
-
-
-promote-prod: require-prod
-	@heroku pipelines:promote -a $(HEROKU_APP_STG)
+	@heroku config:set -a $(HEROKU_APP) ENV=production RUN_DB_MIGRATIONS_ON_STARTUP=0 DISABLE_RECAPTCHA=false
 
 
 heroku-smoke-prod:
 	@curl -fsS $(PROD_URL)/api/health >/dev/null && echo "✓ prod health OK" || (echo "✗ prod health FAIL" && exit 1)
-	@heroku logs --tail -a $(HEROKU_APP_PROD)
-
-
-heroku-logs-stg:
-	@heroku logs --tail -a $(HEROKU_APP_STG)
+	@heroku logs --tail -a $(HEROKU_APP)
 
 
 heroku-logs-prod:
-	@heroku logs --tail -a $(HEROKU_APP_PROD)
-
-
-heroku-open-stg:
-	@heroku open -a $(HEROKU_APP_STG)
+	@heroku logs --tail -a $(HEROKU_APP)
 
 
 heroku-open-prod:
-	@heroku open -a $(HEROKU_APP_PROD)
+	@heroku open -a $(HEROKU_APP)
 
 
 # Usage: make heroku-rollback REL=v123
 heroku-rollback: require-prod
 	@if [ -z "$$REL" ]; then echo "Set REL=vNNN" && exit 1; fi
-	@heroku rollback -a $(HEROKU_APP_PROD) $$REL
+	@heroku rollback -a $(HEROKU_APP) $$REL
 
 ## codex-status: show Codex active files and playbook
 codex-status:
@@ -1301,7 +1138,7 @@ DESIGN_PLAYBOOKS_DIR ?= docs/playbooks/design
 
 # ---- Dashboard Auto-Refresh ---------------------------------------------------
 DASHBOARD_SUMMARY ?= docs/CONTROL_DASHBOARD_SUMMARY.md
-DASHBOARD_STAGING_URL ?= https://dev.cape-control.com
+DASHBOARD_PROD_URL ?= https://cape-control.com
 DASHBOARD_LOCAL_URL ?= http://localhost:8000
 DASHBOARD_RUNTIME_ENV ?= ENV=test DISABLE_RECAPTCHA=true RUN_DB_MIGRATIONS_ON_STARTUP=0 RATE_LIMIT_BACKEND=memory DATABASE_URL=sqlite:////tmp/autolocal_test.db
 
@@ -1315,17 +1152,17 @@ dashboard-refresh:
 	code=$$?; echo $$code >/tmp/pytest.code
 	@echo "==> Probing health endpoints…"
 	-@set +e; \
-	curl -sSf -o /dev/null "$(DASHBOARD_STAGING_URL)/api/auth/csrf"; \
+	curl -sSf -o /dev/null "$(DASHBOARD_PROD_URL)/api/auth/csrf"; \
 	code=$$?; echo $$code >/tmp/csrf.code
 	-@set +e; \
-	curl -sSf -o /dev/null "$(DASHBOARD_STAGING_URL)/api/health"; \
+	curl -sSf -o /dev/null "$(DASHBOARD_PROD_URL)/api/health"; \
 	code=$$?; echo $$code >/tmp/health.code
 	@echo "==> Updating dashboard badges…"
 	@mkdir -p tools
 	@chmod +x tools/update_dashboard.py || true
 	@$(DASHBOARD_RUNTIME_ENV) $(PY) tools/update_dashboard.py \
 		--dashboard "$(DASHBOARD_SUMMARY)" \
-		--staging "$(DASHBOARD_STAGING_URL)" \
+		--prod "$(DASHBOARD_PROD_URL)" \
 		--local "$(DASHBOARD_LOCAL_URL)" \
 		--pytest-exit "$$(cat /tmp/pytest.code || echo 1)" \
 		--csrf-exit  "$$(tail -n1 /tmp/csrf.code  || echo 1)" \
