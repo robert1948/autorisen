@@ -377,6 +377,13 @@ deploy: require-prod docker-build ## Build/push/release to production (capecraft
 		echo "⚠️  Push failed (attempt $$i/3). Retrying in 10s..."; sleep 10; \
 		[ $$i -eq 3 ] && { echo "❌ Push failed after retries"; exit 1; } || true; \
 	done
+	@echo "🏷️  Setting build metadata (GIT_SHA + BUILD_EPOCH)..."
+	@heroku config:set \
+		GIT_SHA=$$(git rev-parse --short=12 HEAD) \
+		BUILD_EPOCH=$$(date +%s) \
+		--app $(HEROKU_APP) >/dev/null 2>&1 \
+		&& echo "✅ Build metadata updated" \
+		|| echo "⚠️  Build metadata update failed (non-fatal)"
 	@echo "🚀 Releasing container..."
 	@for i in 1 2 3; do \
 		if heroku container:release web --app $(HEROKU_APP); then echo "✅ Release successful"; break; fi; \
