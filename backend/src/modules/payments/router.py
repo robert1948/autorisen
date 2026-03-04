@@ -390,3 +390,37 @@ async def handle_itn(
     service.process_itn(payload, db)
 
     return PlainTextResponse("OK", status_code=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Payment status lookup (for return pages)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/status/latest", response_model=schemas.InvoiceOut)
+def get_latest_payment_status(
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.InvoiceOut:
+    """Return the user's most recent invoice — used by the checkout return page
+    to verify whether the payment actually completed."""
+    invoice = (
+        db.query(models.Invoice)
+        .filter(models.Invoice.user_id == current_user.id)
+        .order_by(models.Invoice.created_at.desc())
+        .first()
+    )
+    if not invoice:
+        raise HTTPException(status_code=404, detail="No invoices found")
+
+    return schemas.InvoiceOut(
+        id=invoice.id,
+        invoice_number=invoice.invoice_number,
+        amount=str(invoice.amount),
+        currency=invoice.currency,
+        status=invoice.status,
+        item_name=invoice.item_name,
+        item_description=invoice.item_description,
+        payment_provider=invoice.payment_provider,
+        created_at=invoice.created_at,
+    )
