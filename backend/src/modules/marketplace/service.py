@@ -39,11 +39,16 @@ class MarketplaceService:
     ) -> MarketplaceSearchResponse:
         """Search for agents in the marketplace with filtering and pagination."""
 
-        # Build base query
+        # Build base query – only public agents with a published version
         query = (
             select(models.Agent)
             .join(models.AgentVersion)
-            .where(models.AgentVersion.status == AgentStatus.PUBLISHED.value)
+            .where(
+                and_(
+                    models.AgentVersion.status == AgentStatus.PUBLISHED.value,
+                    models.Agent.visibility == "public",
+                )
+            )
         )
 
         # Apply filters
@@ -118,7 +123,12 @@ class MarketplaceService:
         stmt = (
             select(models.Agent)
             .options(selectinload(models.Agent.versions))
-            .where(models.Agent.slug == agent_slug)
+            .where(
+                and_(
+                    models.Agent.slug == agent_slug,
+                    models.Agent.visibility == "public",
+                )
+            )
         )
 
         agent = self.db.scalar(stmt)
@@ -326,33 +336,60 @@ class MarketplaceService:
     async def get_marketplace_analytics(self) -> MarketplaceAnalytics:
         """Get marketplace analytics and statistics."""
 
-        # Count total published agents
+        # Count total published agents (public only)
         total_agents_stmt = (
             select(func.count(models.Agent.id.distinct()))
             .join(models.AgentVersion)
-            .where(models.AgentVersion.status == AgentStatus.PUBLISHED.value)
+            .where(
+                and_(
+                    models.AgentVersion.status == AgentStatus.PUBLISHED.value,
+                    models.Agent.visibility == "public",
+                )
+            )
         )
         total_agents = self.db.scalar(total_agents_stmt) or 0
 
-        # TODO: Implement proper download tracking
-        total_downloads = 0  # Placeholder
-        active_users = 0  # Placeholder
+        # Real download count = total installations
+        total_downloads = self.db.scalar(
+            select(func.count(models.AgentInstallation.id))
+        ) or 0
 
-        # Get popular categories (simplified for now)
-        # Note: JSON field access in SQLAlchemy needs careful handling
-        popular_categories = [
-            {"category": "automation", "count": 12},
-            {"category": "analytics", "count": 8},
-            {"category": "ai_assistant", "count": 6},
-            {"category": "integration", "count": 4},
-            {"category": "security", "count": 3},
-        ]
+        # Active users = distinct users with an active installation
+        active_users = self.db.scalar(
+            select(func.count(models.AgentInstallation.user_id.distinct()))
+            .where(models.AgentInstallation.status == "active")
+        ) or 0
 
-        # Get recent updates
+        # Real category counts from published public agents
+        popular_categories = []
+        published_agents_stmt = (
+            select(models.Agent, models.AgentVersion.manifest)
+            .join(models.AgentVersion)
+            .where(
+                and_(
+                    models.AgentVersion.status == AgentStatus.PUBLISHED.value,
+                    models.Agent.visibility == "public",
+                )
+            )
+        )
+        cat_counts: Dict[str, int] = {}
+        for row in self.db.execute(published_agents_stmt).fetchall():
+            manifest = row.manifest or {}
+            cat = manifest.get("category", "productivity")
+            cat_counts[cat] = cat_counts.get(cat, 0) + 1
+        for cat, count in sorted(cat_counts.items(), key=lambda x: -x[1]):
+            popular_categories.append({"category": cat, "count": count})
+
+        # Get recent updates (public agents only)
         recent_stmt = (
             select(models.Agent, models.AgentVersion)
             .join(models.AgentVersion)
-            .where(models.AgentVersion.status == AgentStatus.PUBLISHED.value)
+            .where(
+                and_(
+                    models.AgentVersion.status == AgentStatus.PUBLISHED.value,
+                    models.Agent.visibility == "public",
+                )
+            )
             .order_by(desc(models.AgentVersion.published_at))
             .limit(10)
         )

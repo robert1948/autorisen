@@ -315,6 +315,56 @@ export type MarketplaceAgent = {
   thumbnail_url?: string | null;
 };
 
+export type MarketplaceSearchResponse = {
+  agents: MarketplaceAgent[];
+  total: number;
+  page: number;
+  pages: number;
+  filters_applied: Record<string, unknown>;
+};
+
+export async function fetchMarketplaceAgents(): Promise<MarketplaceAgent[]> {
+  return request<MarketplaceAgent[]>("/agents?published=true");
+}
+
+/** Fetch agents via the dedicated marketplace search endpoint with pagination. */
+export async function searchMarketplace(params?: {
+  query?: string;
+  category?: string;
+  sort_by?: string;
+  page?: number;
+  limit?: number;
+}): Promise<MarketplaceSearchResponse> {
+  const qs = new URLSearchParams();
+  if (params?.query) qs.set("query", params.query);
+  if (params?.category) qs.set("category", params.category);
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return request<MarketplaceSearchResponse>(`/marketplace/search${suffix}`);
+}
+
+/** Fetch all available agent categories from the backend enum. */
+export async function fetchMarketplaceCategories(): Promise<string[]> {
+  return request<string[]>("/marketplace/categories");
+}
+
+/** Install an agent for the current user. */
+export async function installMarketplaceAgent(agentId: string, version?: string): Promise<{
+  success: boolean;
+  agent_id: string;
+  version: string;
+  installation_id: string;
+  message: string;
+  next_steps?: string[];
+}> {
+  return request(`/marketplace/agents/${agentId}/install`, {
+    method: "POST",
+    body: { agent_id: agentId, ...(version ? { version } : {}) },
+  });
+}
+
 export type AgentRun = {
   id: string;
   agent_id: string;
@@ -339,10 +389,6 @@ export type OpsInsight = {
   key_metrics: Array<Record<string, unknown>>;
   sources: Array<Record<string, unknown>>;
 };
-
-export async function fetchMarketplaceAgents(): Promise<MarketplaceAgent[]> {
-  return request<MarketplaceAgent[]>("/agents?published=true");
-}
 
 export type MarketplaceAgentDetail = MarketplaceAgent & {
   readme: string;

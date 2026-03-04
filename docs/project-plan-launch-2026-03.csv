@@ -88,7 +88,7 @@ BETA-006,First beta cohort review (30-day),Robert,not-started,P0,2026-04-14,Phas
 # ──────────────────────────────────────────────────────────────
 # PHASE 6: PRODUCT IMPROVEMENTS (Mar–May)
 # ──────────────────────────────────────────────────────────────
-PROD-001,Marketplace agent UI shell — real data,engineering,not-started,P1,2026-03-13,Phase 6,Frontend,"Connect marketplace page to actual agent registry API. Remove hardcoded data.",CHAT-005,"Visit /app/marketplace — real agent list"
+PROD-001,Marketplace agent UI shell — real data,engineering,done,P1,2026-03-13,Phase 6,Frontend,"Connected marketplace to real API: dynamic categories from /marketplace/categories, search with pagination via /marketplace/search, visibility enforcement (public only), real analytics (installs/active users), install button wired to /marketplace/agents/{id}/install. Removed all hardcoded category cards and filter options.",CHAT-005,"Visit /app/marketplace — real agent list"
 PROD-002,Developer agent builder UI,engineering,not-started,P2,2026-03-27,Phase 6,Frontend,"Agent editor interface for developer role users.",CHAT-006,"Create test agent via UI"
 PROD-003,Onboarding checklist sync with backend,engineering,not-started,P1,2026-03-13,Phase 6,Frontend,"Connect onboarding steps to real completion tracking API.",CHAT-007,"Complete onboarding flow end-to-end"
 PROD-004,Evidence pack export (PDF),engineering,not-started,P0,2026-03-20,Phase 6,Backend,"Generate downloadable PDF evidence packs from audit + RAG citation data. Core beta promise.",BP-AUDIT-001,"curl /api/audit/export?format=pdf"

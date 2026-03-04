@@ -1,20 +1,41 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import {
+  searchMarketplace,
+  fetchMarketplaceCategories,
   fetchMarketplaceAgentDetail,
-  fetchMarketplaceAgents,
   launchMarketplaceAgent,
   runMarketplaceAgentAction,
+  installMarketplaceAgent,
   type AgentRun,
   type MarketplaceAgent,
   type MarketplaceAgentDetail,
 } from "../../lib/api";
 
-const MarketplaceShowcase = () => {
+/** Human-friendly category labels. */
+const CATEGORY_LABELS: Record<string, string> = {
+  automation: "Automation",
+  analytics: "Analytics",
+  integration: "Integration",
+  security: "Security",
+  productivity: "Productivity",
+  ai_assistant: "AI Assistant",
+  workflow: "Workflow",
+  monitoring: "Monitoring",
+  communication: "Communication",
+  development: "Development",
+};
+
+interface MarketplaceShowcaseProps {
+  /** Pre-selected category from the parent page. */
+  categoryFilter?: string | null;
+}
+
+const MarketplaceShowcase = ({ categoryFilter }: MarketplaceShowcaseProps) => {
   const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
-  const [filtered, setFiltered] = useState<MarketplaceAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [detail, setDetail] = useState<MarketplaceAgentDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -31,44 +52,56 @@ const MarketplaceShowcase = () => {
   const [ticketSubject, setTicketSubject] = useState<string>("");
   const [ticketBody, setTicketBody] = useState<string>("");
   const [search, setSearch] = useState("");
-  const [placementFilter, setPlacementFilter] = useState("all");
+  const [localCategory, setLocalCategory] = useState("all");
+  const [installMsg, setInstallMsg] = useState<string | null>(null);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 20;
+
+  // Resolve effective category: prop overrides local dropdown
+  const effectiveCategory = categoryFilter ?? (localCategory === "all" ? undefined : localCategory);
+
+  // Fetch categories for filter dropdown
   useEffect(() => {
-    let mounted = true;
-    const fetchAgents = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchMarketplaceAgents();
-        if (mounted) {
-          setAgents(data);
-          setFiltered(data);
-          setError(null);
-        }
-      } catch (err) {
-        if (mounted) {
-          const message = err instanceof Error ? err.message : "Failed to load marketplace";
-          setError(message);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-    fetchAgents();
-    return () => {
-      mounted = false;
-    };
+    fetchMarketplaceCategories()
+      .then(setCategories)
+      .catch(() => setCategories(Object.keys(CATEGORY_LABELS)));
   }, []);
 
+  // Fetch agents via marketplace search API
+  const loadAgents = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await searchMarketplace({
+        query: search || undefined,
+        category: effectiveCategory || undefined,
+        page,
+        limit: PAGE_SIZE,
+        sort_by: "updated",
+      });
+      setAgents(result.agents);
+      setTotal(result.total);
+      setTotalPages(result.pages);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load marketplace";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, effectiveCategory, page]);
+
   useEffect(() => {
-    const next = agents.filter((agent) => {
-      const matchesSearch = agent.name.toLowerCase().includes(search.toLowerCase());
-      const matchesPlacement = placementFilter === "all" || agent.category === placementFilter;
-      return matchesSearch && matchesPlacement;
-    });
-    setFiltered(next);
-  }, [agents, search, placementFilter]);
+    loadAgents();
+  }, [loadAgents]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, effectiveCategory]);
 
   useEffect(() => {
     if (!activeSlug) {
@@ -167,16 +200,22 @@ const MarketplaceShowcase = () => {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <select value={placementFilter} onChange={(event) => setPlacementFilter(event.target.value)}>
-            <option value="all">All Categories</option>
-            <option value="communication">Communication</option>
-            <option value="productivity">Productivity</option>
-            <option value="analytics">Analytics</option>
-          </select>
+          {/* Only show local dropdown when parent hasn't pre-selected a category */}
+          {!categoryFilter && (
+            <select value={localCategory} onChange={(event) => setLocalCategory(event.target.value)}>
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {CATEGORY_LABELS[cat] ?? cat}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </header>
 
       {error && <p className="marketplace__error">{error}</p>}
+      {installMsg && <p className="marketplace__success" style={{ color: "green" }}>{installMsg}</p>}
       {loading && !error && <p className="marketplace__loading">Loading marketplace…</p>}
 
       {!loading && agents.length === 0 && !error && (
@@ -184,7 +223,7 @@ const MarketplaceShowcase = () => {
       )}
 
       <div className="marketplace__grid">
-        {filtered.map((agent) => (
+        {agents.map((agent) => (
           <article key={agent.id} className="marketplace__card">
             <header>
               <h4>{agent.name}</h4>
@@ -201,7 +240,7 @@ const MarketplaceShowcase = () => {
                 </li>
               )}
               <li>
-                Category: <strong>{agent.category}</strong>
+                Category: <strong>{CATEGORY_LABELS[agent.category] ?? agent.category}</strong>
               </li>
             </ul>
             <footer>
@@ -212,13 +251,52 @@ const MarketplaceShowcase = () => {
               >
                 View details
               </button>
-              <button type="button" className="btn btn--primary btn--small">
-                Launch agent
+              <button
+                type="button"
+                className="btn btn--primary btn--small"
+                onClick={async () => {
+                  try {
+                    const res = await installMarketplaceAgent(agent.id, agent.version);
+                    setInstallMsg(res.message);
+                    setTimeout(() => setInstallMsg(null), 4000);
+                  } catch (err) {
+                    const message = err instanceof Error ? err.message : "Install failed";
+                    setInstallMsg(message);
+                    setTimeout(() => setInstallMsg(null), 4000);
+                  }
+                }}
+              >
+                Install
               </button>
             </footer>
           </article>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav className="marketplace__pagination" style={{ display: "flex", gap: "0.5rem", justifyContent: "center", padding: "1rem 0" }}>
+          <button
+            type="button"
+            className="btn btn--ghost btn--small"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            ← Previous
+          </button>
+          <span style={{ lineHeight: "2rem" }}>
+            Page {page} of {totalPages} ({total} agent{total !== 1 ? "s" : ""})
+          </span>
+          <button
+            type="button"
+            className="btn btn--ghost btn--small"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next →
+          </button>
+        </nav>
+      )}
 
       {activeSlug && detail && (
         <div className="marketplace-modal-overlay" role="dialog" aria-modal="true">

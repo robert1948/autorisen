@@ -1,21 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../lib/apiFetch';
+import { fetchMarketplaceCategories } from '../../lib/api';
 import MarketplaceShowcase from '../../features/marketplace/MarketplaceShowcase';
 
 interface MarketplaceStats {
   total_agents: number;
   total_downloads: number;
   active_users: number;
+  popular_categories: { category: string; count: number }[];
 }
+
+/** Human-friendly labels and colour classes for each AgentCategory. */
+const CATEGORY_META: Record<string, { label: string; color: string }> = {
+  automation: { label: 'Automation', color: 'yellow' },
+  analytics: { label: 'Analytics', color: 'blue' },
+  integration: { label: 'Integration', color: 'indigo' },
+  security: { label: 'Security', color: 'red' },
+  productivity: { label: 'Productivity', color: 'green' },
+  ai_assistant: { label: 'AI Assistant', color: 'purple' },
+  workflow: { label: 'Workflow', color: 'orange' },
+  monitoring: { label: 'Monitoring', color: 'cyan' },
+  communication: { label: 'Communication', color: 'pink' },
+  development: { label: 'Development', color: 'slate' },
+};
 
 const Marketplace: React.FC = () => {
   const [stats, setStats] = useState<MarketplaceStats | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch('/marketplace/analytics')
       .then((data) => setStats(data as MarketplaceStats))
       .catch(() => setStats(null));
+    fetchMarketplaceCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]));
   }, []);
   return (
     <div className="min-h-screen bg-slate-50">
@@ -77,68 +98,45 @@ const Marketplace: React.FC = () => {
           </div>
         </section>
 
-        {/* Featured Categories */}
+        {/* Categories — fetched from /api/marketplace/categories */}
+        {categories.length > 0 && (
         <section className="mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Popular Categories</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Support</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Onboarding</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Automation</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Finance</p>
-                </div>
-              </div>
-            </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Browse Categories</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {categories.map((cat) => {
+              const meta = CATEGORY_META[cat] ?? { label: cat, color: 'gray' };
+              const isActive = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(isActive ? null : cat)}
+                  className={`rounded-lg border p-3 text-left transition-shadow hover:shadow-md ${
+                    isActive
+                      ? `bg-${meta.color}-100 border-${meta.color}-400 ring-2 ring-${meta.color}-300`
+                      : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <p className={`font-medium ${isActive ? `text-${meta.color}-700` : 'text-gray-900'}`}>
+                    {meta.label}
+                  </p>
+                  {stats?.popular_categories && (() => {
+                    const found = stats.popular_categories.find((c) => c.category === cat);
+                    return found ? (
+                      <p className="text-xs text-gray-500 mt-1">{found.count} agent{found.count !== 1 ? 's' : ''}</p>
+                    ) : null;
+                  })()}
+                </button>
+              );
+            })}
           </div>
         </section>
+        )}
 
         {/* Main Marketplace Component */}
         <section className="bg-white rounded-lg shadow">
           <div className="p-6">
-            <MarketplaceShowcase />
+            <MarketplaceShowcase categoryFilter={selectedCategory} />
           </div>
         </section>
       </main>
