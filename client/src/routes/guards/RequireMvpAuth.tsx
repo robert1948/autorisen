@@ -1,17 +1,18 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
+import { useOnboardingStatus } from "../../hooks/useOnboardingStatus";
 
 /**
  * MVP route guard (AuthContext-backed).
- * Enforces the SYSTEM_SPEC §2.5.7 linear flow using a minimal localStorage stub for onboarding completion.
- * TODO: replace onboarding completion stub with authoritative onboarding state when available.
+ * Enforces the SYSTEM_SPEC §2.5.7 linear flow using the real onboarding status API.
  */
 export default function RequireMvpAuth() {
-  const { state, loading } = useAuth();
+  const { state, loading: authLoading } = useAuth();
+  const { data: onboardingData, loading: onboardingLoading } = useOnboardingStatus();
   const location = useLocation();
 
-  if (loading) return null;
+  if (authLoading || onboardingLoading) return null;
 
   const authed = Boolean(state.accessToken);
   if (!authed) {
@@ -22,7 +23,7 @@ export default function RequireMvpAuth() {
   const path = location.pathname;
   const isOnboardingRoute = path.startsWith("/onboarding/");
 
-  const onboardingComplete = localStorage.getItem("onboarding_complete") === "true";
+  const onboardingComplete = onboardingData?.session?.onboarding_completed ?? false;
   if (!onboardingComplete && !isOnboardingRoute) {
     return <Navigate to="/onboarding/welcome" replace state={{ from: path }} />;
   }

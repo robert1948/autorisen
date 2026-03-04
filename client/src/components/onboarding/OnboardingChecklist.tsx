@@ -2,24 +2,31 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import {
-  fetchOnboardingChecklist,
-  updateOnboardingChecklist,
-  type ChecklistSummary,
-  type ChecklistTask,
-} from "../../lib/api";
+  getOnboardingStatus,
+  listOnboardingSteps,
+  completeOnboardingStep,
+  skipOnboardingStep,
+  type OnboardingStep,
+} from "../../api/onboarding";
 
-type TaskRow = {
-  id: string;
-  label: string;
-  done: boolean;
+type StepRow = {
+  step_key: string;
+  title: string;
+  order_index: number;
+  required: boolean;
+  status: string; // "pending" | "completed" | "skipped" | "blocked"
 };
 
-function toRows(tasks: Record<string, ChecklistTask>): TaskRow[] {
-  return Object.entries(tasks).map(([id, task]) => ({
-    id,
-    label: task.label,
-    done: Boolean(task.done),
-  }));
+function toRows(steps: OnboardingStep[]): StepRow[] {
+  return steps
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((s) => ({
+      step_key: s.step_key,
+      title: s.title,
+      order_index: s.order_index,
+      required: s.required,
+      status: s.state?.status ?? "pending",
+    }));
 }
 
 function setOnboardingComplete(complete: boolean) {
@@ -32,70 +39,73 @@ function setOnboardingComplete(complete: boolean) {
 
 const OnboardingChecklist: React.FC = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState<ChecklistSummary | null>(null);
+  const [rows, setRows] = useState<StepRow[]>([]);
+  const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<Record<string, boolean>>({});
 
-  const rows = useMemo(() => (data ? toRows(data.tasks) : []), [data]);
-  const percent = useMemo(() => {
-    if (!data || data.summary.total === 0) return 0;
-    return Math.round((data.summary.completed / data.summary.total) * 100);
-  }, [data]);
+  const totalSteps = rows.length;
+  const completedSteps = rows.filter((r) => r.status === "completed" || r.status === "skipped").length;
+  const percent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const complete = totalSteps > 0 && completedSteps === totalSteps;
 
-  const complete = Boolean(data && data.summary.total > 0 && data.summary.completed === data.summary.total);
-
-  useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-
-    const load = async () => {
-      try {
-        setLoading(true);
-        const checklist = await fetchOnboardingChecklist();
-        if (!mounted) return;
-        setData(checklist);
-        setError(null);
-        setOnboardingComplete(
-          checklist.summary.total > 0 && checklist.summary.completed === checklist.summary.total,
-        );
-      } catch (err) {
-        if (!mounted) return;
-        // Silently handle auth/rate-limit errors — global handler manages redirect
-        const status = (err as { status?: number }).status;
-        if (status === 401 || status === 403 || status === 429) {
-          return;
-        }
-        const message = err instanceof Error ? err.message : "Failed to load onboarding checklist";
-        setError(message);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    load();
-
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, []);
-
-  const toggle = async (task: TaskRow) => {
-    if (updating[task.id]) return;
-    setUpdating((prev) => ({ ...prev, [task.id]: true }));
+  const loadData = async () => {
     try {
-      const updated = await updateOnboardingChecklist(task.id, !task.done, task.label);
-      setData(updated);
+      setLoading(true);
+      const status = await getOnboardingStatus();
+      setRows(toRows(status.steps));
+      setProgress(status.progress);
+      setOnboardingComplete(status.session?.onboarding_completed ?? false);
       setError(null);
-      setOnboardingComplete(
-        updated.summary.total > 0 && updated.summary.completed === updated.summary.total,
-      );
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update onboarding step";
+      const statusCode = (err as { status?: number }).status;
+      if (statusCode === 401 || statusCode === 403 || statusCode === 429) return;
+      const message = err instanceof Error ? err.message : "Failed to load onboarding checklist";
       setError(message);
     } finally {
-      setUpdating((prev) => ({ ...prev, [task.id]: false }));
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const markComplete = async (step: StepRow) => {
+    if (updating[step.step_key]) return;
+    setUpdating((prev) => ({ ...prev, [step.step_key]: true }));
+    try {
+      const result = await completeOnboardingStep(step.step_key);
+      setProgress(result.progress);
+      // Refresh full list to get updated states
+      const status = await getOnboardingStatus();
+      setRows(toRows(status.steps));
+      setOnboardingComplete(status.session?.onboarding_completed ?? false);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to complete step";
+      setError(message);
+    } finally {
+      setUpdating((prev) => ({ ...prev, [step.step_key]: false }));
+    }
+  };
+
+  const markSkipped = async (step: StepRow) => {
+    if (updating[step.step_key] || step.required) return;
+    setUpdating((prev) => ({ ...prev, [step.step_key]: true }));
+    try {
+      const result = await skipOnboardingStep(step.step_key);
+      setProgress(result.progress);
+      const status = await getOnboardingStatus();
+      setRows(toRows(status.steps));
+      setOnboardingComplete(status.session?.onboarding_completed ?? false);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to skip step";
+      setError(message);
+    } finally {
+      setUpdating((prev) => ({ ...prev, [step.step_key]: false }));
     }
   };
 
@@ -124,7 +134,7 @@ const OnboardingChecklist: React.FC = () => {
     );
   }
 
-  if (!data) {
+  if (!rows.length && !loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -159,7 +169,7 @@ const OnboardingChecklist: React.FC = () => {
 
           <div className="flex justify-between text-sm text-gray-600">
             <span>
-              {data.summary.completed}/{data.summary.total} complete
+              {completedSteps}/{totalSteps} complete
             </span>
             {complete ? <span className="text-green-700">Onboarding complete</span> : <span />}
           </div>
@@ -169,26 +179,28 @@ const OnboardingChecklist: React.FC = () => {
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Steps</h3>
             <div className="space-y-3">
-              {rows.map((task) => (
+              {rows.map((step) => {
+                const isDone = step.status === "completed" || step.status === "skipped";
+                return (
                 <button
-                  key={task.id}
+                  key={step.step_key}
                   type="button"
-                  onClick={() => toggle(task)}
-                  disabled={Boolean(updating[task.id])}
+                  onClick={() => isDone ? undefined : markComplete(step)}
+                  disabled={Boolean(updating[step.step_key]) || isDone}
                   className={`w-full text-left p-4 border rounded-lg transition-colors ${
-                    task.done
+                    isDone
                       ? "border-green-200 bg-green-50"
                       : "border-gray-200 bg-white hover:border-gray-300"
-                  } ${updating[task.id] ? "opacity-60 cursor-not-allowed" : ""}`}
+                  } ${updating[step.step_key] ? "opacity-60 cursor-not-allowed" : ""}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start">
                       <div
                         className={`mt-1 h-5 w-5 rounded border flex items-center justify-center ${
-                          task.done ? "bg-green-600 border-green-600" : "bg-white border-gray-300"
+                          isDone ? "bg-green-600 border-green-600" : "bg-white border-gray-300"
                         }`}
                       >
-                        {task.done && (
+                        {isDone && (
                           <svg
                             className="h-4 w-4 text-white"
                             fill="none"
@@ -201,14 +213,36 @@ const OnboardingChecklist: React.FC = () => {
                         )}
                       </div>
                       <div className="ml-3">
-                        <p className="font-medium text-gray-900">{task.label}</p>
-                        <p className="text-sm text-gray-500">{task.id}</p>
+                        <p className="font-medium text-gray-900">{step.title}</p>
+                        <p className="text-sm text-gray-500">
+                          {step.required ? "Required" : "Optional"} · {step.step_key}
+                        </p>
                       </div>
                     </div>
-                    <span className="text-sm text-gray-500">{task.done ? "Done" : "Mark done"}</span>
+                    <div className="flex items-center gap-2">
+                      {isDone ? (
+                        <span className="text-sm text-green-600">
+                          {step.status === "skipped" ? "Skipped" : "Done"}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-sm text-gray-500">Mark done</span>
+                          {!step.required && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); markSkipped(step); }}
+                              className="text-xs text-gray-400 hover:text-gray-600 underline"
+                            >
+                              Skip
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

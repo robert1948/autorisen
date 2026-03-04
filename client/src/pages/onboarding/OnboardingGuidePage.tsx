@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getOnboardingStatus, type OnboardingStatus } from '../../api/onboarding';
 
 const OnboardingGuide: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [status, setStatus] = useState<OnboardingStatus | null>(null);
+
+  useEffect(() => {
+    getOnboardingStatus()
+      .then(setStatus)
+      .catch(() => {});
+  }, []);
 
   const steps = [
     {
@@ -114,12 +122,16 @@ const OnboardingGuide: React.FC = () => {
         <div className="mb-8">
           <div className="flex justify-between text-xs text-gray-500 mb-2">
             <span>Step {currentStep + 1} of {steps.length}</span>
-            <span>{Math.round(((currentStep + 1) / steps.length) * 100)}% Complete</span>
+            <span>
+              {status
+                ? `${status.progress}% onboarding complete`
+                : `${Math.round(((currentStep + 1) / steps.length) * 100)}% guide complete`}
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              style={{ width: `${status ? status.progress : ((currentStep + 1) / steps.length) * 100}%` }}
             />
           </div>
         </div>

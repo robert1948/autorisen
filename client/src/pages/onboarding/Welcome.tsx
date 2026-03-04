@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
-import { startOnboarding } from "../../api/onboarding";
+import { startOnboarding, type OnboardingStep } from "../../api/onboarding";
 import { useAuth } from "../../features/auth/AuthContext";
 
-const steps = [
+/** Fallback preview steps shown while the API loads. */
+const FALLBACK_STEPS = [
   "Confirm your profile",
-  "Choose your starting goal",
+  "Review onboarding checklist",
   "Activate your first dashboard",
 ];
 
@@ -16,6 +17,7 @@ export default function OnboardingWelcome() {
   const { state } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [steps, setSteps] = useState<string[]>(FALLBACK_STEPS);
   const [guideEnabled, setGuideEnabled] = useState(
     localStorage.getItem("onboarding_guide_enabled") !== "false",
   );
@@ -27,6 +29,16 @@ export default function OnboardingWelcome() {
     let mounted = true;
     setLoading(true);
     startOnboarding()
+      .then((status) => {
+        if (!mounted) return;
+        // Use real step titles from the API (skip first "welcome" step since user is on it)
+        const realTitles = status.steps
+          .filter((s) => s.step_key !== "welcome" && s.step_key !== "complete")
+          .sort((a, b) => a.order_index - b.order_index)
+          .slice(0, 4)
+          .map((s) => s.title);
+        if (realTitles.length > 0) setSteps(realTitles);
+      })
       .catch((err) => {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : "Unable to start onboarding");
