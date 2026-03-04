@@ -20,3 +20,4 @@ anyio>=4.4
 semver>=3.0.0
 openai>=1.0.0
 anthropic>=0.20.0
+sentry-sdk[fastapi]>=2.0

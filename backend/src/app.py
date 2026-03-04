@@ -36,6 +36,27 @@ from backend.src.middleware.cache_headers import CacheHeadersMiddleware
 from backend.src.middleware.read_only import ReadOnlyModeMiddleware
 from backend.src.middleware.monitoring import MonitoringMiddleware, metrics_store
 
+# ---------------------------------------------------------------------------
+# Sentry — initialise early so all exceptions are captured
+# ---------------------------------------------------------------------------
+try:
+    import sentry_sdk
+
+    if settings.sentry_dsn:
+        sentry_sdk.init(
+            dsn=settings.sentry_dsn,
+            environment=settings.env,
+            release=os.getenv("APP_VERSION", "dev"),
+            traces_sample_rate=0.2,  # 20 % of requests for performance monitoring
+            profiles_sample_rate=0.1,
+            send_default_pii=False,  # never send emails/IPs to Sentry
+        )
+        logging.getLogger("uvicorn.error").info(
+            "Sentry initialised (env=%s)", settings.env,
+        )
+except Exception:  # pragma: no cover – optional dependency
+    sentry_sdk = None  # type: ignore[assignment]
+
 try:
     from app.middleware.ddos_protection import DDoSProtectionMiddleware  # type: ignore
 except Exception:  # pragma: no cover
@@ -716,6 +737,16 @@ def create_app() -> FastAPI:
     @application.get("/api/health/ping", include_in_schema=False)
     def api_health_ping():
         return {"ping": "pong", "version": os.getenv("APP_VERSION", "dev")}
+
+    @application.get("/api/debug/sentry-test", include_in_schema=False)
+    def sentry_test():
+        """Raise a test error to verify Sentry integration. Admin-only in production."""
+        if sentry_sdk is None or not settings.sentry_dsn:
+            return JSONResponse(
+                {"error": "Sentry not configured (SENTRY_DSN not set)"},
+                status_code=501,
+            )
+        raise RuntimeError("Sentry integration test — if you see this in Sentry, it works!")
 
     @application.get("/api/metrics", include_in_schema=False)
     def api_metrics():

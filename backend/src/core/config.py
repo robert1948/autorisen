@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
 
+    # Monitoring
+    sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
+
     session_cookie_secure: bool = Field(default=False, alias="SESSION_COOKIE_SECURE")
     session_cookie_samesite: Literal["lax", "strict", "none"] = Field(
         default="lax", alias="SESSION_COOKIE_SAMESITE"
