@@ -179,6 +179,11 @@ usage_router = _safe_import(
     "backend.src.modules.usage.router",
     "router",
 )
+billing_router = _safe_import(
+    "billing",
+    "backend.src.modules.billing.router",
+    "router",
+)
 
 # ------------------------------------------------------------------------------
 # Constants / paths
@@ -861,6 +866,9 @@ def create_app() -> FastAPI:
     if usage_router:
         # → /api/usage/summary
         api.include_router(usage_router)
+    if billing_router:
+        # → /api/billing/cycle/run, /api/billing/events, /api/billing/process-emails
+        api.include_router(billing_router)
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")
@@ -911,6 +919,15 @@ def create_app() -> FastAPI:
     @application.on_event("startup")
     def _record_build_metadata() -> None:
         record_build_if_new()
+
+    # ----------------------------- Billing scheduler ----------------------
+    @application.on_event("startup")
+    def _start_billing_scheduler() -> None:
+        try:
+            from backend.src.modules.billing.scheduler import start_scheduler
+            start_scheduler()
+        except Exception:
+            log.exception("Billing scheduler failed to start (non-fatal)")
 
     # ----------------------------- SPA mount ------------------------------
     if spa_index:

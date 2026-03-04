@@ -1403,6 +1403,38 @@ class UsageLog(Base):
 
 
 # ---------------------------------------------------------------------------
+# Billing events — audit trail for automated billing actions
+# ---------------------------------------------------------------------------
+
+class BillingEvent(Base):
+    """Immutable audit log for every automated billing action."""
+
+    __tablename__ = "billing_events"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    subscription_id = Column(String(36), nullable=False, index=True)
+    event_type = Column(
+        String(64), nullable=False, index=True,
+    )  # renewal_invoice_created | subscription_past_due | reminder_sent |
+       # subscription_cancelled_nonpayment | subscription_cancelled_by_user | payment_received
+    detail = Column(Text, nullable=True)
+    invoice_id = Column(String(36), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("ix_billing_events_sub_type", "subscription_id", "event_type"),
+    )
+
+
+# ---------------------------------------------------------------------------
 # RAG models — imported here so Alembic's env.py picks them up via Base
 # ---------------------------------------------------------------------------
 from backend.src.modules.rag.models import (  # noqa: E402, F401
