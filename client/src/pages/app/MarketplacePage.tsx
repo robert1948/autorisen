@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { apiFetch } from '../../lib/apiFetch';
 import MarketplaceShowcase from '../../features/marketplace/MarketplaceShowcase';
 
+interface MarketplaceStats {
+  total_agents: number;
+  total_downloads: number;
+  active_users: number;
+}
+
 const Marketplace: React.FC = () => {
+  const [stats, setStats] = useState<MarketplaceStats | null>(null);
+
+  useEffect(() => {
+    apiFetch('/marketplace/analytics')
+      .then((data) => setStats(data as MarketplaceStats))
+      .catch(() => setStats(null));
+  }, []);
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navigation Header */}
@@ -43,21 +57,23 @@ const Marketplace: React.FC = () => {
               review their manifests, or get inspiration for your own agent creations.
             </p>
             
-            {/* Quick Stats */}
+            {/* Quick Stats — fetched from /api/marketplace/analytics */}
+            {stats && stats.total_agents > 0 && (
             <div className="grid grid-cols-3 gap-6 bg-white rounded-lg shadow p-6">
               <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">25+</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.total_agents}</p>
                 <p className="text-sm text-gray-500">Published Agents</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">1.2k</p>
+                <p className="text-2xl font-bold text-green-600">{stats.total_downloads || '—'}</p>
                 <p className="text-sm text-gray-500">Agent Deployments</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">4.8★</p>
-                <p className="text-sm text-gray-500">Average Rating</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.active_users || '—'}</p>
+                <p className="text-sm text-gray-500">Active Users</p>
               </div>
             </div>
+            )}
           </div>
         </section>
 
@@ -74,7 +90,6 @@ const Marketplace: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">Support</p>
-                  <p className="text-sm text-gray-500">8 agents</p>
                 </div>
               </div>
             </div>
@@ -88,7 +103,6 @@ const Marketplace: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">Onboarding</p>
-                  <p className="text-sm text-gray-500">5 agents</p>
                 </div>
               </div>
             </div>
@@ -101,8 +115,7 @@ const Marketplace: React.FC = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Energy</p>
-                  <p className="text-sm text-gray-500">7 agents</p>
+                  <p className="font-medium text-gray-900">Automation</p>
                 </div>
               </div>
             </div>
@@ -116,7 +129,6 @@ const Marketplace: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">Finance</p>
-                  <p className="text-sm text-gray-500">5 agents</p>
                 </div>
               </div>
             </div>

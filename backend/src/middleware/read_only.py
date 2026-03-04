@@ -13,6 +13,7 @@ _BLOCKED_METHODS: set[str] = {"POST", "PUT", "PATCH", "DELETE"}
 _EXEMPT_PATH_PREFIXES: tuple[str, ...] = (
     "/api/auth/",
     "/api/health",
+    "/api/payments/payfast/itn",  # PayFast ITN webhook must always be writable
 )
 
 

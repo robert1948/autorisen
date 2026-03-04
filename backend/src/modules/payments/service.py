@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, Mapping, TypedDict
 from urllib.parse import quote_plus
@@ -25,53 +25,44 @@ def _activate_subscription_on_payment(db: Session, invoice: models.Invoice) -> N
 
     Looks up the user's subscription and transitions it from 'pending' or
     'trialing' to 'active' with proper period dates.
+
+    NOTE: Does NOT call db.commit() — the caller (process_itn) performs
+    a single atomic commit for the entire ITN transaction.
     """
-    try:
-        if not invoice.user_id:
-            log.warning("Invoice %s has no user_id, skipping subscription activation", invoice.id)
-            return
+    if not invoice.user_id:
+        log.warning("Invoice %s has no user_id, skipping subscription activation", invoice.id)
+        return
 
-        sub = (
-            db.query(models.Subscription)
-            .filter(models.Subscription.user_id == invoice.user_id)
-            .first()
+    sub = (
+        db.query(models.Subscription)
+        .filter(models.Subscription.user_id == invoice.user_id)
+        .first()
+    )
+
+    if sub is None:
+        log.info("No subscription found for user %s after payment", invoice.user_id)
+        return
+
+    if sub.status in ("pending", "trialing"):
+        now = datetime.now(timezone.utc)
+        sub.status = "active"
+        sub.current_period_start = now
+        # Set period end based on plan interval
+        if sub.plan_id in ("pro", "enterprise"):
+            sub.current_period_end = now + timedelta(days=30)
+        elif sub.plan_id == "free":
+            sub.current_period_end = None  # free tier has no expiry
+        sub.cancel_at_period_end = False
+        sub.cancelled_at = None
+        log.info(
+            "Subscription activated for user %s on plan %s after payment on invoice %s",
+            invoice.user_id, sub.plan_id, invoice.id,
         )
-
-        if sub is None:
-            log.info("No subscription found for user %s after payment", invoice.user_id)
-            return
-
-        if sub.status in ("pending", "trialing"):
-            now = datetime.now()
-            sub.status = "active"
-            sub.current_period_start = now
-            # Set period end based on plan interval
-            if sub.plan_id in ("pro", "enterprise"):
-                sub.current_period_end = now + _timedelta_30_days()
-            elif sub.plan_id == "free":
-                sub.current_period_end = None  # free tier has no expiry
-            sub.cancel_at_period_end = False
-            sub.cancelled_at = None
-            db.commit()
-            log.info(
-                "Subscription activated for user %s on plan %s after payment on invoice %s",
-                invoice.user_id, sub.plan_id, invoice.id,
-            )
-        else:
-            log.info(
-                "Subscription for user %s already in status %s, no activation needed",
-                invoice.user_id, sub.status,
-            )
-
-    except Exception as e:
-        log.error("Failed to activate subscription after payment: %s", e)
-        # Don't fail the payment processing — subscription activation is best-effort
-
-
-def _timedelta_30_days():
-    """Return a timedelta of 30 days."""
-    from datetime import timedelta
-    return timedelta(days=30)
+    else:
+        log.info(
+            "Subscription for user %s already in status %s, no activation needed",
+            invoice.user_id, sub.status,
+        )
 
 
 def _serialize_fields(data: Mapping[str, str | int | float | None]) -> Dict[str, str]:
@@ -382,14 +373,14 @@ def process_itn(
     else:
         # Update existing transaction with latest ITN data
         transaction.itn_data = payload
-        transaction.updated_at = datetime.now()
+        transaction.updated_at = datetime.now(timezone.utc)
 
     # 4. Update Statuses
     # PayFast statuses: COMPLETE, FAILED, PENDING, CANCELLED
 
     if payment_status == "COMPLETE":
         transaction.status = "completed"
-        transaction.processed_at = datetime.now()
+        transaction.processed_at = datetime.now(timezone.utc)
 
         # Only mark invoice paid if it wasn't already
         if invoice.status != "paid":
@@ -411,5 +402,6 @@ def process_itn(
         transaction.status = "pending"
         # Invoice stays pending
 
+    # Single atomic commit: transaction + invoice + subscription all committed together
     db.commit()
     log.info(f"Processed ITN for Invoice {invoice.id}: {payment_status}")
