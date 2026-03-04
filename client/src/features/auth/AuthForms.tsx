@@ -208,8 +208,8 @@ const AuthForms = () => {
           </div>
         </label>
         <p className="auth-terms">
-          By clicking Log in, you agree to CapeControl&apos;s <a href="#terms">terms</a>,
-          <a href="#privacy"> privacy policy</a>, and <a href="#privacy">cookie policy</a>.
+          By clicking Log in, you agree to CapeControl&apos;s <a href="/terms-and-conditions">terms</a>,
+          <a href="/privacy-policy"> privacy policy</a>, and <a href="/privacy-policy">cookie policy</a>.
         </p>
         {error && <p className="auth-error">{error}</p>}
         {socialError && <p className="auth-error">{socialError}</p>}

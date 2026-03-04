@@ -167,7 +167,7 @@ export const PersonalInfoModule = ({ user }: PersonalInfoModuleProps) => {
             Request a copy of your data
           </button>
           <a
-            href="/privacy"
+            href="/privacy-policy"
             className="text-slate-500 hover:text-slate-700"
           >
             Privacy Policy

@@ -592,7 +592,7 @@ const Home = () => {
                     Contact
                   </button>
                 </li>
-                <li><a href="#privacy">Privacy Policy</a></li>
+                <li><Link to="/privacy-policy">Privacy Policy</Link></li>
                 <li><Link to="/terms-and-conditions">Customer T&amp;Cs</Link></li>
               </ul>
             </div>

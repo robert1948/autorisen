@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import logoUrl from "../assets/capecontrol-logo.png";
 import BuildBadge from "./version/BuildBadge";
 
@@ -83,10 +84,10 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
                 </button>
               </li>
               <li>
-                <a href="#privacy">Privacy Policy</a>
+                <Link to="/privacy-policy">Privacy Policy</Link>
               </li>
               <li>
-                <a href="#terms">Terms of Service</a>
+                <Link to="/terms-and-conditions">Terms of Service</Link>
               </li>
             </ul>
           </div>

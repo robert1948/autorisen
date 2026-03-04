@@ -642,7 +642,7 @@ const DeveloperTermsPage: React.FC = () => {
               <h4>Company</h4>
               <ul className="footer__links-list">
                 <li><a href="/#about">About</a></li>
-                <li><a href="/#privacy">Privacy Policy</a></li>
+                <li><Link to="/privacy-policy">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>

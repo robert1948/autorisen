@@ -160,7 +160,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <p className="cc-agree" style={{marginTop:16}}>
-          By clicking Log in, you agree to CapeControl's <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>, <a href="/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>, and <a href="/cookies" target="_blank" rel="noopener noreferrer">cookie policy</a>.
+          By clicking Log in, you agree to CapeControl's <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer">terms</a>, <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">privacy policy</a>, and <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">cookie policy</a>.
         </p>
 
         <div style={{textAlign:'center',marginTop:12}}>

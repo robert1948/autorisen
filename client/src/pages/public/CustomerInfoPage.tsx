@@ -591,7 +591,7 @@ const CustomerInfoPage: React.FC = () => {
                   <a href="/#about">About</a>
                 </li>
                 <li>
-                  <a href="/#privacy">Privacy Policy</a>
+                  <Link to="/privacy-policy">Privacy Policy</Link>
                 </li>
                 <li>
                   <Link to="/terms-and-conditions">Terms of Service</Link>

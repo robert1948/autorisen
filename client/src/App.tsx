@@ -25,6 +25,7 @@ import DeveloperInfo from "./pages/public/DeveloperInfoPage";
 import CustomerInfo from "./pages/public/CustomerInfoPage";
 import TermsAndConditions from "./pages/public/TermsAndConditionsPage";
 import DeveloperTerms from "./pages/public/DeveloperTermsPage";
+import PrivacyPolicy from "./pages/public/PrivacyPolicyPage";
 
 // Auth pages / flows
 import Register from "./pages/auth/RegisterPage";
@@ -167,6 +168,8 @@ export default function App() {
         <Route path="/customer-terms" element={<CustomerInfo />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/developer-terms" element={<DeveloperTerms />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         {/* -------------------- AUTH (CANONICAL) -------------------- */}
         <Route path="/auth/login" element={<LoginPage />} />
