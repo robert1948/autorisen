@@ -41,22 +41,33 @@ interface ComplianceMission {
   detail: string;
 }
 
+interface AuditStats {
+  total_events: number;
+  event_types: Record<string, number>;
+  login_attempts: number;
+  failed_logins: number;
+}
+
 /* ── Main page ────────────────────────────────────── */
 
 export default function CompliancePage() {
   const [security, setSecurity] = useState<SecurityStats | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [auditStats, setAuditStats] = useState<AuditStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [secData, healthData] = await Promise.all([
+      const [secData, healthData, auditData] = await Promise.all([
         apiFetch<SecurityStats>("/security/stats").catch(() => null),
         apiFetch<HealthStatus>("/health", { auth: false }).catch(() => null),
+        apiFetch<AuditStats>("/audit/stats").catch(() => null),
       ]);
       setSecurity(secData);
       setHealth(healthData);
+      setAuditStats(auditData);
     } finally {
       setLoading(false);
     }
@@ -65,6 +76,29 @@ export default function CompliancePage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/audit/export?format=pdf", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `evidence-pack-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Failed to export evidence pack. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Derive missions from real security data
   const missions = deriveMissions(security, health);
@@ -117,6 +151,55 @@ export default function CompliancePage() {
           </div>
         </div>
       </header>
+
+      {/* Evidence Pack Export */}
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
+              <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Evidence Pack Export
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Generate a compliance-grade PDF with full RAG provenance, document inventory, and audit trail.
+            </p>
+          </div>
+          <button
+            onClick={handleExportPDF}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-slate-900"
+          >
+            {exporting ? (
+              <>
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Generating...
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export PDF
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Audit Stats Summary */}
+        {auditStats && (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <MiniStat label="Audit Events" value={auditStats.total_events} />
+            <MiniStat label="Event Types" value={Object.keys(auditStats.event_types).length} />
+            <MiniStat label="Login Attempts" value={auditStats.login_attempts} />
+            <MiniStat label="Failed Logins" value={auditStats.failed_logins} accent={auditStats.failed_logins > 0 ? "red" : undefined} />
+          </div>
+        )}
+      </section>
 
       {/* Loading */}
       {loading && (
@@ -401,5 +484,25 @@ function FieldIntelIcon() {
     <svg className="h-5 w-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: "red";
+}) {
+  const valColor = accent === "red"
+    ? "text-red-600 dark:text-red-400"
+    : "text-slate-900 dark:text-white";
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500">{label}</p>
+      <p className={`text-lg font-bold ${valColor}`}>{value}</p>
+    </div>
   );
 }

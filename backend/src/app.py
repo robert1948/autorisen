@@ -169,6 +169,11 @@ capsules_router = _safe_import(
     "backend.src.modules.capsules.router",
     "router",
 )
+audit_router = _safe_import(
+    "audit",
+    "backend.src.modules.audit.router",
+    "router",
+)
 usage_router = _safe_import(
     "usage",
     "backend.src.modules.usage.router",
@@ -850,6 +855,9 @@ def create_app() -> FastAPI:
     if capsules_router:
         # → /api/capsules/, /api/capsules/{id}, /api/capsules/run
         api.include_router(capsules_router)
+    if audit_router:
+        # → /api/audit/export, /api/audit/events, /api/audit/stats
+        api.include_router(audit_router)
     if usage_router:
         # → /api/usage/summary
         api.include_router(usage_router)
