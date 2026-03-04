@@ -118,7 +118,7 @@ def list_audit_events(
                 "event_type": e.event_type,
                 "user_id": e.user_id,
                 "agent_id": e.agent_id,
-                "payload": e.payload,
+                "payload": e.event_data,
                 "ip_address": e.ip_address,
                 "created_at": e.created_at.isoformat() if e.created_at else None,
             }

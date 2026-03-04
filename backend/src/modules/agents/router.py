@@ -309,7 +309,7 @@ def launch_agent(
             user_id=owner.id,
             agent_id=agent.id,
             event_type="agent_run_launch",
-            payload={"run_id": run.id, "slug": slug},
+            event_data={"run_id": run.id, "slug": slug},
         )
     )
     db.commit()
@@ -437,7 +437,7 @@ def run_agent_action(
             user_id=owner.id,
             agent_id=agent.id,
             event_type="agent_action",
-            payload={"run_id": run.id, "slug": slug, "action": action},
+            event_data={"run_id": run.id, "slug": slug, "action": action},
         )
     )
     db.commit()

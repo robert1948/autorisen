@@ -85,8 +85,8 @@ async def test_install_agent_success(db_session: Session, sample_agent):
     )
     audit_event = db_session.scalar(audit_stmt)
     assert audit_event is not None
-    assert audit_event.payload["version"] == "1.0.0"
-    assert audit_event.payload["installation_id"] == installation.id
+    assert audit_event.event_data["version"] == "1.0.0"
+    assert audit_event.event_data["installation_id"] == installation.id
 
 
 @pytest.mark.asyncio

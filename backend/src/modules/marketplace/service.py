@@ -300,7 +300,7 @@ class MarketplaceService:
             agent_id=agent.id,
             user_id=user_id,
             event_type="agent_install",
-            payload={
+            event_data={
                 "version": version.version,
                 "installation_id": installation.id,
                 "configuration": request.configuration,

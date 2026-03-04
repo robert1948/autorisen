@@ -112,7 +112,7 @@ def _record_tool_audit_event(
         agent_id=agent_id,
         task_id=task_id,
         event_type="chatkit_tool_invocation",
-        payload={
+        event_data={
             "thread_id": thread.id,
             "placement": thread.placement,
             "tool_name": tool_name,

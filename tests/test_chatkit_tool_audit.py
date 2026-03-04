@@ -41,8 +41,8 @@ def test_chatkit_invoke_tool_creates_audit_event():
         audit_event = db.get(models.AuditEvent, audit_id)
         assert audit_event is not None
         assert audit_event.event_type == "chatkit_tool_invocation"
-        assert (audit_event.payload or {}).get("tool_name") == "onboarding.plan"
-        assert (audit_event.payload or {}).get("thread_id") == thread.id
+        assert (audit_event.event_data or {}).get("tool_name") == "onboarding.plan"
+        assert (audit_event.event_data or {}).get("thread_id") == thread.id
 
 
 def test_execute_tool_enforces_allowlist_without_writing_audit():

@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import get_session
-from backend.src.modules.auth.dependencies import get_verified_user
+from backend.src.modules.auth.deps import get_verified_user
 
 log = logging.getLogger("billing.router")
 

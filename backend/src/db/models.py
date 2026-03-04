@@ -639,7 +639,7 @@ class AuditEvent(Base):
         String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     event_type = Column(String(64), nullable=False, index=True)
-    payload = Column(JSON, nullable=True)
+    event_data = Column(JSON, nullable=True)
     ip_address = Column(String(45), nullable=True)  # IPv6 compatible
     user_agent = Column(Text, nullable=True)
     created_at = Column(

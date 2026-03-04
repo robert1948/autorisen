@@ -120,7 +120,7 @@ def delete_account_me(
         models.AuditEvent(
             user_id=current_user.id,
             event_type="account_deleted",
-            payload={"reason": "user_requested"},
+            event_data={"reason": "user_requested"},
         ),
     )
     db.commit()
