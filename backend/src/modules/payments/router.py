@@ -214,6 +214,7 @@ def list_invoices(
         invoices=[
             schemas.InvoiceOut(
                 id=inv.id,
+                invoice_number=inv.invoice_number,
                 amount=str(inv.amount),
                 currency=inv.currency,
                 status=inv.status,
@@ -225,6 +226,64 @@ def list_invoices(
             for inv in invoices
         ],
         total=total,
+    )
+
+
+@router.get("/invoices/{invoice_id}", response_model=schemas.InvoiceDetailOut)
+def get_invoice_detail(
+    invoice_id: str,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.InvoiceDetailOut:
+    """Get full invoice detail including transaction history."""
+    invoice = (
+        db.query(models.Invoice)
+        .filter(
+            models.Invoice.id == invoice_id,
+            models.Invoice.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    transactions = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.invoice_id == invoice.id)
+        .order_by(models.Transaction.created_at.desc())
+        .all()
+    )
+
+    return schemas.InvoiceDetailOut(
+        id=invoice.id,
+        invoice_number=invoice.invoice_number,
+        amount=str(invoice.amount),
+        currency=invoice.currency,
+        status=invoice.status,
+        item_name=invoice.item_name,
+        item_description=invoice.item_description,
+        customer_email=invoice.customer_email,
+        customer_first_name=invoice.customer_first_name,
+        customer_last_name=invoice.customer_last_name,
+        payment_provider=invoice.payment_provider,
+        external_reference=invoice.external_reference,
+        transactions=[
+            schemas.TransactionOut(
+                id=txn.id,
+                amount=str(txn.amount),
+                currency=txn.currency,
+                status=txn.status,
+                transaction_type=txn.transaction_type,
+                amount_fee=str(txn.amount_fee) if txn.amount_fee else None,
+                amount_net=str(txn.amount_net) if txn.amount_net else None,
+                payment_provider=txn.payment_provider,
+                provider_transaction_id=txn.provider_transaction_id,
+                processed_at=txn.processed_at,
+                created_at=txn.created_at,
+            )
+            for txn in transactions
+        ],
+        created_at=invoice.created_at,
     )
 
 

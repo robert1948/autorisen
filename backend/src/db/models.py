@@ -972,6 +972,9 @@ class Invoice(Base):
     customer_first_name = Column(String(64), nullable=True)
     customer_last_name = Column(String(64), nullable=True)
 
+    # Human-readable sequential invoice number (e.g. INV-2026-00042)
+    invoice_number = Column(String(32), nullable=True, unique=True, index=True)
+
     # PayFast integration
     payment_provider = Column(String(32), nullable=False, default="payfast")
     external_reference = Column(String(255), nullable=True, unique=True, index=True)
@@ -1026,6 +1029,10 @@ class Transaction(Base):
         String(255), nullable=True, unique=True, index=True
     )
     provider_reference = Column(String(255), nullable=True, index=True)
+
+    # PayFast fee/net breakdown from ITN
+    amount_fee = Column(Numeric(10, 2), nullable=True)
+    amount_net = Column(Numeric(10, 2), nullable=True)
 
     # ITN data
     itn_data = Column(JSON, nullable=True)

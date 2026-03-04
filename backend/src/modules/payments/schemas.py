@@ -144,12 +144,50 @@ class SubscriptionCancelResponse(BaseModel):
 
 class InvoiceOut(BaseModel):
     id: str
+    invoice_number: Optional[str] = None
     amount: str
     currency: str
     status: str
     item_name: str
     item_description: Optional[str] = None
     payment_provider: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TransactionOut(BaseModel):
+    id: str
+    amount: str
+    currency: str
+    status: str
+    transaction_type: str
+    amount_fee: Optional[str] = None
+    amount_net: Optional[str] = None
+    payment_provider: str
+    provider_transaction_id: Optional[str] = None
+    processed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceDetailOut(BaseModel):
+    id: str
+    invoice_number: Optional[str] = None
+    amount: str
+    currency: str
+    status: str
+    item_name: str
+    item_description: Optional[str] = None
+    customer_email: str
+    customer_first_name: Optional[str] = None
+    customer_last_name: Optional[str] = None
+    payment_provider: str
+    external_reference: Optional[str] = None
+    transactions: List[TransactionOut] = []
     created_at: Optional[datetime] = None
 
     class Config:

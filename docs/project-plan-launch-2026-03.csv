@@ -100,7 +100,7 @@ PROD-008,ChatKit conversation history persistence,engineering,in-progress,P1,202
 # ──────────────────────────────────────────────────────────────
 # PHASE 7: PAYMENTS & CONVERSION (Apr–May)
 # ──────────────────────────────────────────────────────────────
-PAY-010,Complete PayFast ITN ingestion + transaction logging,engineering,not-started,P0,2026-04-01,Phase 7,Payments,"Persist all ITN events to DB. Invoice generation from transactions.",PAY-003,"Simulate ITN → record in DB"
+PAY-010,Complete PayFast ITN ingestion + transaction logging,engineering,done,P0,2026-04-01,Phase 7,Payments,"Persist all ITN events to DB. Invoice generation from transactions.",PAY-003,"Simulate ITN → record in DB"
 PAY-011,Payment return page UX (success/cancel/failure),engineering,not-started,P0,2026-04-07,Phase 7,Payments,"Handle PayFast redirect URLs gracefully. Show confirmation or retry options.",PAY-008,"Complete test payment → correct status page"
 PAY-012,Subscription management UI,engineering,not-started,P1,2026-04-14,Phase 7,Payments,"Users can view current plan, upgrade/downgrade, and see billing history at /app/billing.",PAY-010,"Visit /app/billing — plan details shown"
 PAY-013,Free → Pro conversion flow,engineering,not-started,P0,2026-04-14,Phase 7,Payments,"Streamlined upgrade path: Free users see upgrade prompts at feature gates + pricing page CTA.",PAY-012,"Free user clicks upgrade → PayFast checkout → Pro plan activated"

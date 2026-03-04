@@ -319,6 +319,36 @@ async def validate_itn_with_server(
         return False
 
 
+def _generate_invoice_number(db: Session) -> str:
+    """Generate sequential human-readable invoice number like INV-2026-00042."""
+    from sqlalchemy import func as sa_func
+    year = datetime.now(timezone.utc).year
+    prefix = f"INV-{year}-"
+
+    # Find the highest existing invoice number for this year
+    last = (
+        db.query(sa_func.max(models.Invoice.invoice_number))
+        .filter(models.Invoice.invoice_number.like(f"{prefix}%"))
+        .scalar()
+    )
+    if last:
+        seq = int(last.split("-")[-1]) + 1
+    else:
+        seq = 1
+    return f"{prefix}{seq:05d}"
+
+
+def _determine_transaction_type(payment_status: str | None, payload: Mapping[str, str]) -> str:
+    """Map PayFast ITN data to internal transaction type."""
+    # PayFast sends special event types for refunds/chargebacks
+    pf_type = payload.get("custom_str1", "").lower()
+    if "refund" in pf_type or payment_status == "REFUNDED":
+        return "refund"
+    if "chargeback" in pf_type:
+        return "chargeback"
+    return "payment"
+
+
 def process_itn(
     payload: Mapping[str, str],
     db: Session,
@@ -326,14 +356,16 @@ def process_itn(
     """
     Process a validated ITN payload:
     1. Find the invoice by external_reference (m_payment_id).
-    2. Create/Update the transaction record.
-    3. Update the invoice status.
+    2. Create/Update the transaction record with full PayFast data.
+    3. Update the invoice status and assign invoice number on completion.
     """
     # 1. Extract key fields
     pf_payment_id = payload.get("pf_payment_id")
     payment_status = payload.get("payment_status")
     m_payment_id = payload.get("m_payment_id")
     amount_gross = payload.get("amount_gross")
+    amount_fee = payload.get("amount_fee")
+    amount_net = payload.get("amount_net")
 
     if not m_payment_id:
         log.error("ITN missing m_payment_id")
@@ -350,7 +382,10 @@ def process_itn(
         log.error(f"Invoice not found for m_payment_id: {m_payment_id}")
         return
 
-    # 3. Check for existing transaction to avoid duplicates
+    # 3. Determine transaction type (payment, refund, chargeback)
+    txn_type = _determine_transaction_type(payment_status, payload)
+
+    # 4. Check for existing transaction to avoid duplicates
     transaction = (
         db.query(models.Transaction)
         .filter(models.Transaction.provider_transaction_id == pf_payment_id)
@@ -361,21 +396,29 @@ def process_itn(
         transaction = models.Transaction(
             invoice_id=invoice.id,
             amount=Decimal(amount_gross) if amount_gross else Decimal("0.00"),
-            currency="ZAR",  # PayFast is ZAR only usually
+            currency="ZAR",
             payment_provider="payfast",
             provider_transaction_id=pf_payment_id,
             provider_reference=m_payment_id,
-            transaction_type="payment",
-            status="pending",  # Will update below
-            itn_data=payload,
+            transaction_type=txn_type,
+            status="pending",
+            amount_fee=Decimal(amount_fee) if amount_fee else None,
+            amount_net=Decimal(amount_net) if amount_net else None,
+            itn_data=dict(payload),
         )
         db.add(transaction)
     else:
         # Update existing transaction with latest ITN data
-        transaction.itn_data = payload
+        transaction.itn_data = dict(payload)
         transaction.updated_at = datetime.now(timezone.utc)
+        if amount_fee:
+            transaction.amount_fee = Decimal(amount_fee)
+        if amount_net:
+            transaction.amount_net = Decimal(amount_net)
+        if txn_type != "payment":
+            transaction.transaction_type = txn_type
 
-    # 4. Update Statuses
+    # 5. Update Statuses
     # PayFast statuses: COMPLETE, FAILED, PENDING, CANCELLED
 
     if payment_status == "COMPLETE":
@@ -385,6 +428,11 @@ def process_itn(
         # Only mark invoice paid if it wasn't already
         if invoice.status != "paid":
             invoice.status = "paid"
+
+            # Assign sequential invoice number on first payment completion
+            if not invoice.invoice_number:
+                invoice.invoice_number = _generate_invoice_number(db)
+
             # Post-payment hooks: activate subscription if linked
             _activate_subscription_on_payment(db, invoice)
 
@@ -402,6 +450,18 @@ def process_itn(
         transaction.status = "pending"
         # Invoice stays pending
 
+    elif payment_status == "REFUNDED":
+        transaction.status = "refunded"
+        invoice.status = "refunded"
+
     # Single atomic commit: transaction + invoice + subscription all committed together
     db.commit()
-    log.info(f"Processed ITN for Invoice {invoice.id}: {payment_status}")
+    log.info(
+        "Processed ITN for Invoice %s (invoice_number=%s): %s [type=%s, fee=%s, net=%s]",
+        invoice.id,
+        invoice.invoice_number,
+        payment_status,
+        txn_type,
+        amount_fee,
+        amount_net,
+    )
