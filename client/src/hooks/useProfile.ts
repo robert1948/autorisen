@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getMe, type MeResponse } from "../lib/authApi";
-import type { UserProfile, UserRole, UserStatus } from "../types/user";
+import type { UserProfile, UserRole, UserStatus, SubscriptionTier } from "../types/user";
 
 /** Cache TTL in milliseconds (5 minutes) */
 const PROFILE_CACHE_TTL = 5 * 60 * 1000;
@@ -34,6 +34,7 @@ interface ProfileState {
 function mapMeToProfile(me: MeResponse): UserProfile {
   const profile = me.profile;
   const role = (me.role ?? "user") as UserRole;
+  const tier = (me.plan_id ?? "free") as SubscriptionTier;
 
   return {
     userId: profile.id,
@@ -53,8 +54,8 @@ function mapMeToProfile(me: MeResponse): UserProfile {
     },
     account: {
       balance: 0,
-      currency: "USD",
-      subscriptionTier: "free",
+      currency: "ZAR",
+      subscriptionTier: tier,
     },
     developerProfile: role === "developer" || role === "admin"
       ? {

@@ -77,3 +77,5 @@ def test_me_returns_profile_with_token(client):
     model = MeResponse(**data)
     assert model.profile.email == "me@example.com"
     assert (model.profile.first_name or "") == "Me"
+    # PAY-013: /me now includes plan_id (defaults to "free" for new users)
+    assert data.get("plan_id", "free") == "free"

@@ -186,6 +186,7 @@ class MeResponse(BaseModel):
     role: str
     profile: MeProfile
     summary: Optional[MeSummary] = None
+    plan_id: str = "free"
 
 
 class ErrorResponse(BaseModel):

@@ -103,7 +103,7 @@ export const AccountBalanceModule = ({ user }: AccountBalanceModuleProps) => {
                   Add credits
                 </a>{" "}
                 or{" "}
-                <a href="/app/billing/upgrade" className="font-medium underline hover:text-amber-900">
+                <a href="/app/pricing" className="font-medium underline hover:text-amber-900">
                   upgrade your plan
                 </a>{" "}
                 to avoid service interruption.

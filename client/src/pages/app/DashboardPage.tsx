@@ -30,6 +30,8 @@ import { PersonalInfoModule } from "../../components/dashboard/PersonalInfoModul
 import { ProjectStatusModule } from "../../components/dashboard/ProjectStatusModule";
 import { AccountBalanceModule } from "../../components/dashboard/AccountBalanceModule";
 import { DeleteAccountModule } from "../../components/dashboard/DeleteAccountModule";
+import { UpgradePrompt } from "../../components/payments/UpgradePrompt";
+import { features } from "../../config/features";
 
 // Lazy-load role-specific modules (spec §2.1 — bundle size optimisation)
 const DeveloperHubSection = lazy(
@@ -139,6 +141,13 @@ const Dashboard = () => {
             <div className="lg:col-span-12">
               <WelcomeHeader user={user} />
             </div>
+
+            {/* Upgrade banner for free-tier users */}
+            {features.payments && user.account?.subscriptionTier === "free" && (
+              <div className="lg:col-span-12">
+                <UpgradePrompt variant="banner" />
+              </div>
+            )}
 
             {/* Quick actions row */}
             <div className="lg:col-span-12">

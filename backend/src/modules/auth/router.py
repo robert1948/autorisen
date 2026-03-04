@@ -2175,7 +2175,20 @@ async def me(
         recent_activity=recent_activity,
         system_status="ok",
     )
-    return MeResponse(role=role, profile=profile, summary=summary)
+    # Resolve current subscription plan
+    plan_id = "free"
+    try:
+        sub = db.execute(
+            select(models.Subscription.plan_id).where(
+                models.Subscription.user_id == str(current_user.id)
+            )
+        ).scalar_one_or_none()
+        if sub:
+            plan_id = sub
+    except Exception as exc:
+        log.warning("me_plan_lookup_failed: %s", exc)
+
+    return MeResponse(role=role, profile=profile, summary=summary, plan_id=plan_id)
 
 
 @router.post("/logout", response_model=LogoutOut, status_code=200)

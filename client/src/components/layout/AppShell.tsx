@@ -14,6 +14,7 @@ import { useAuth } from "../../features/auth/AuthContext";
 import { useProfile } from "../../hooks/useProfile";
 import { features } from "../../config/features";
 import { hasPermission } from "../../utils/permissions";
+import { UpgradePrompt } from "../payments/UpgradePrompt";
 
 /* ── SVG icon components ─────────────────────────────── */
 
@@ -282,6 +283,11 @@ export function AppShell() {
             ))}
           </div>
         </nav>
+
+        {/* Upgrade CTA for free-tier users */}
+        {features.payments && !collapsed && user?.account?.subscriptionTier === "free" && (
+          <UpgradePrompt variant="sidebar" />
+        )}
 
         {/* User section at bottom */}
         <div className={`border-t border-slate-200 p-3 dark:border-slate-800 ${collapsed ? "flex flex-col items-center gap-2" : ""}`}>

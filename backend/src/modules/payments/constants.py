@@ -155,3 +155,25 @@ PLANS_BY_ID: Dict[str, PlanDefinition] = {p.id: p for p in PLANS}
 
 def get_plan_by_id(plan_id: str) -> PlanDefinition | None:
     return PLANS_BY_ID.get(plan_id.strip().lower())
+
+
+# ---------------------------------------------------------------------------
+# Numeric plan limits (machine-readable for feature gating)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class PlanLimits:
+    max_agents: int
+    max_executions_per_month: int
+
+
+PLAN_LIMITS: Dict[str, PlanLimits] = {
+    "free": PlanLimits(max_agents=3, max_executions_per_month=100),
+    "pro": PlanLimits(max_agents=50, max_executions_per_month=2500),
+    "enterprise": PlanLimits(max_agents=999999, max_executions_per_month=999999),
+}
+
+
+def get_plan_limits(plan_id: str) -> PlanLimits:
+    """Return numeric limits for a plan, defaulting to free."""
+    return PLAN_LIMITS.get(plan_id.strip().lower(), PLAN_LIMITS["free"])

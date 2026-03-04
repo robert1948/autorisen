@@ -247,6 +247,7 @@ export type MeResponse = {
   role: string;
   profile: MeProfile;
   summary?: MeSummary | null;
+  plan_id?: string;
 };
 
 export type GoogleLoginPayload = {
