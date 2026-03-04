@@ -16,6 +16,7 @@ import type { UserProfile } from "../../types/user";
 import { ROLE_LABELS } from "../../constants/roles";
 import { hasPermission } from "../../utils/permissions";
 import { dashboardModulesApi } from "../../services/dashboardModulesApi";
+import { useUsageSummary } from "../../hooks/useUsageSummary";
 
 interface WelcomeHeaderProps {
   user: UserProfile;
@@ -39,6 +40,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
   const navigate = useNavigate();
   const [systemStatus, setSystemStatus] = useState<SystemStatus>("operational");
   const [projectCount, setProjectCount] = useState<number | null>(null);
+  const { data: usage } = useUsageSummary();
 
   // Fetch system status from /api/health
   useEffect(() => {
@@ -124,7 +126,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         </div>
 
         {/* Stat cards — gradient accented */}
-        <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           <GradientStatCard
             label="Projects"
             value={projectCount !== null ? String(projectCount) : "…"}
@@ -133,6 +135,44 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            }
+          />
+
+          <GradientStatCard
+            label="Agent runs"
+            value={String(usage.agentRuns)}
+            gradient="from-cyan-500 to-cyan-600"
+            icon={
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+
+          <GradientStatCard
+            label="Documents"
+            value={String(usage.documentsCount)}
+            gradient="from-emerald-500 to-emerald-600"
+            icon={
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            }
+          />
+
+          <GradientStatCard
+            label="Evidence packs"
+            value={String(usage.evidenceExports)}
+            gradient="from-violet-500 to-violet-600"
+            icon={
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             }
           />
@@ -153,25 +193,11 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
             <GradientStatCard
               label="Balance"
               value={`${user.account.currency} ${user.account.balance.toFixed(2)}`}
-              gradient="from-violet-500 to-violet-600"
-              icon={
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-            />
-          )}
-
-          {hasPermission(user, "apikeys:manage") && user.developerProfile && (
-            <GradientStatCard
-              label="API calls"
-              value={`${user.developerProfile.usageQuota.apiCallsUsed.toLocaleString()} / ${user.developerProfile.usageQuota.apiCallsLimit.toLocaleString()}`}
               gradient="from-amber-500 to-orange-500"
               icon={
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               }
             />

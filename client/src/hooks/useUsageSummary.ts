@@ -19,6 +19,11 @@ export interface UsageSummary {
   periodStart: string;
   periodEnd: string;
   planId: string;
+  /* PROD-007: real usage metrics */
+  agentRuns: number;
+  documentsCount: number;
+  ragQueries: number;
+  evidenceExports: number;
 }
 
 const EMPTY: UsageSummary = {
@@ -32,6 +37,10 @@ const EMPTY: UsageSummary = {
   periodStart: new Date().toISOString(),
   periodEnd: new Date(Date.now() + 30 * 86_400_000).toISOString(),
   planId: "free",
+  agentRuns: 0,
+  documentsCount: 0,
+  ragQueries: 0,
+  evidenceExports: 0,
 };
 
 interface UsageSummaryState {
@@ -55,6 +64,10 @@ function mapResponse(raw: Record<string, unknown>): UsageSummary {
     periodStart: (raw.period_start as string) ?? EMPTY.periodStart,
     periodEnd: (raw.period_end as string) ?? EMPTY.periodEnd,
     planId: (raw.plan_id as string) ?? "free",
+    agentRuns: (raw.agent_runs as number) ?? 0,
+    documentsCount: (raw.documents_count as number) ?? 0,
+    ragQueries: (raw.rag_queries as number) ?? 0,
+    evidenceExports: (raw.evidence_exports as number) ?? 0,
   };
 }
 

@@ -11,7 +11,8 @@ from typing import Any, Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from backend.src.db.models import UsageLog
+from backend.src.db.models import UsageLog, AgentRun, AuditEvent
+from backend.src.modules.rag.models import ApprovedDocument, RAGQueryLog
 
 log = logging.getLogger(__name__)
 
@@ -112,6 +113,35 @@ def get_usage_summary(
 
     quotas = PLAN_QUOTAS.get(plan_id, PLAN_QUOTAS["free"])
 
+    # ── Real usage metrics from related tables ────────────────────────────
+    agent_runs_count = db.execute(
+        select(func.count(AgentRun.id)).where(
+            AgentRun.user_id == user_id,
+            AgentRun.created_at >= period_start,
+        )
+    ).scalar_one()
+
+    documents_count = db.execute(
+        select(func.count(ApprovedDocument.id)).where(
+            ApprovedDocument.owner_id == user_id,
+        )
+    ).scalar_one()
+
+    rag_queries_count = db.execute(
+        select(func.count(RAGQueryLog.id)).where(
+            RAGQueryLog.user_id == user_id,
+            RAGQueryLog.created_at >= period_start,
+        )
+    ).scalar_one()
+
+    evidence_exports_count = db.execute(
+        select(func.count(AuditEvent.id)).where(
+            AuditEvent.user_id == user_id,
+            AuditEvent.event_type == "evidence_export",
+            AuditEvent.created_at >= period_start,
+        )
+    ).scalar_one()
+
     return {
         "api_calls_used": row.api_calls_used,
         "api_calls_limit": quotas["api_calls_limit"],
@@ -122,6 +152,11 @@ def get_usage_summary(
         "storage_limit_mb": quotas["storage_limit_mb"],
         "period_start": period_start.isoformat(),
         "plan_id": plan_id,
+        # Real usage metrics
+        "agent_runs": agent_runs_count,
+        "documents_count": documents_count,
+        "rag_queries": rag_queries_count,
+        "evidence_exports": evidence_exports_count,
     }
 
 

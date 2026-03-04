@@ -1,12 +1,13 @@
 /**
  * ActivityFeedCard — recent account activity timeline.
  *
- * Displays recent login events, project changes, and system
- * notifications in a compact timeline layout.
+ * Fetches real audit events from /api/audit/events and falls back
+ * to profile-derived events when audit data is unavailable.
  */
 
 import { useEffect, useState } from "react";
 import type { UserProfile } from "../../types/user";
+import { apiFetch } from "../../lib/apiFetch";
 
 interface ActivityFeedCardProps {
   user: UserProfile;
@@ -14,7 +15,7 @@ interface ActivityFeedCardProps {
 
 interface ActivityItem {
   id: string;
-  type: "login" | "project" | "system" | "payment";
+  type: "login" | "project" | "system" | "payment" | "agent" | "evidence";
   title: string;
   detail: string;
   timestamp: string;
@@ -25,6 +26,8 @@ const ACTIVITY_ICONS: Record<ActivityItem["type"], { icon: string; color: string
   project: { icon: "📁", color: "bg-emerald-100 text-emerald-600" },
   system: { icon: "⚙️", color: "bg-slate-100 text-slate-600" },
   payment: { icon: "💳", color: "bg-violet-100 text-violet-600" },
+  agent: { icon: "🤖", color: "bg-cyan-100 text-cyan-600" },
+  evidence: { icon: "📋", color: "bg-amber-100 text-amber-600" },
 };
 
 function timeAgo(isoDate: string): string {
@@ -39,48 +42,91 @@ function timeAgo(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+function eventTypeToActivity(eventType: string): ActivityItem["type"] {
+  if (eventType.startsWith("login") || eventType === "logout") return "login";
+  if (eventType.startsWith("agent") || eventType === "agent_run") return "agent";
+  if (eventType.startsWith("evidence") || eventType === "evidence_export") return "evidence";
+  if (eventType.startsWith("payment") || eventType.startsWith("payfast")) return "payment";
+  if (eventType.startsWith("project")) return "project";
+  return "system";
+}
+
+function humanizeEventType(eventType: string): string {
+  return eventType
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function ActivityFeedCard({ user }: ActivityFeedCardProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
-  // Build activity from available user data
+  // Fetch real audit events, fall back to profile data
   useEffect(() => {
-    const items: ActivityItem[] = [];
+    let cancelled = false;
 
-    // Most recent login
-    if (user.lastLogin) {
+    async function fetchAuditEvents() {
+      try {
+        const data = await apiFetch("/audit/events?limit=8", { auth: true }) as {
+          items?: Array<{
+            id: string;
+            event_type: string;
+            created_at: string;
+            payload?: Record<string, unknown>;
+          }>;
+        };
+        if (cancelled) return;
+
+        if (data.items && data.items.length > 0) {
+          setActivities(
+            data.items.map((ev) => ({
+              id: ev.id,
+              type: eventTypeToActivity(ev.event_type),
+              title: humanizeEventType(ev.event_type),
+              detail: ev.payload?.detail as string ?? ev.event_type,
+              timestamp: ev.created_at,
+            }))
+          );
+          return;
+        }
+      } catch {
+        // Audit endpoint unavailable — fall through to profile-derived data
+      }
+
+      if (cancelled) return;
+
+      // Fallback: build from profile
+      const items: ActivityItem[] = [];
+      if (user.lastLogin) {
+        items.push({
+          id: "login-latest",
+          type: "login",
+          title: "Signed in",
+          detail: "Session started successfully",
+          timestamp: user.lastLogin,
+        });
+      }
       items.push({
-        id: "login-latest",
-        type: "login",
-        title: "Signed in",
-        detail: "Session started successfully",
-        timestamp: user.lastLogin,
-      });
-    }
-
-    // Account creation
-    items.push({
-      id: "account-created",
-      type: "system",
-      title: "Account created",
-      detail: `Joined as ${user.role}`,
-      timestamp: user.createdAt,
-    });
-
-    // Email verified
-    if (user.emailVerified) {
-      items.push({
-        id: "email-verified",
+        id: "account-created",
         type: "system",
-        title: "Email verified",
-        detail: user.email,
+        title: "Account created",
+        detail: `Joined as ${user.role}`,
         timestamp: user.createdAt,
       });
+      if (user.emailVerified) {
+        items.push({
+          id: "email-verified",
+          type: "system",
+          title: "Email verified",
+          detail: user.email,
+          timestamp: user.createdAt,
+        });
+      }
+      items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setActivities(items.slice(0, 5));
     }
 
-    // Sort newest first
-    items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-    setActivities(items.slice(0, 5));
+    fetchAuditEvents();
+    return () => { cancelled = true; };
   }, [user]);
 
   return (

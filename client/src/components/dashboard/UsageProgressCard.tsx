@@ -113,11 +113,27 @@ export function UsageProgressCard({ user }: UsageProgressCardProps) {
   }
 
   items.push({
+    label: "Documents",
+    current: usage.documentsCount,
+    max: 100, // soft display cap
+    color: "bg-emerald-500",
+    bgColor: "bg-emerald-100",
+  });
+
+  items.push({
+    label: "RAG Queries",
+    current: usage.ragQueries,
+    max: apiLimit, // same quota pool
+    color: "bg-violet-500",
+    bgColor: "bg-violet-100",
+  });
+
+  items.push({
     label: "Storage Used",
     current: usage.storageUsedMb,
     max: usage.storageLimitMb,
-    color: "bg-emerald-500",
-    bgColor: "bg-emerald-100",
+    color: "bg-cyan-500",
+    bgColor: "bg-cyan-100",
   });
 
   return (
