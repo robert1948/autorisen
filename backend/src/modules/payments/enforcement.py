@@ -68,6 +68,17 @@ def _total_platform_spend(db: Session, since: datetime) -> float:
     ).scalar_one()
     return float(total)
 
+
+def _user_spend(db: Session, user_id: str, since: datetime) -> float:
+    """Sum cost_usd for a single user since the given timestamp."""
+    total = db.execute(
+        select(func.coalesce(func.sum(UsageLog.cost_usd), 0)).where(
+            UsageLog.user_id == user_id,
+            UsageLog.created_at >= since,
+        )
+    ).scalar_one()
+    return float(total)
+
 def _get_plan_id(db: Session, user_id: str) -> str:
     """Return the user's active plan_id, defaulting to 'free'."""
     sub = (
@@ -229,6 +240,11 @@ async def enforce_platform_budget(
     month_start = _platform_month_start()
     spent = _total_platform_spend(db, month_start)
 
+    # ── Budget threshold alerts (FinOps) ──────────────────────────
+    from backend.src.modules.usage.budget_alerts import check_budget_thresholds
+
+    check_budget_thresholds(spent, cap)
+
     if spent >= cap:
         log.critical(
             "CIRCUIT BREAKER: monthly AI spend $%.2f >= cap $%.2f – blocking LLM requests",
@@ -244,5 +260,49 @@ async def enforce_platform_budget(
                 "code": "platform_budget_exceeded",
                 "spent_usd": round(spent, 2),
                 "cap_usd": cap,
+            },
+        )
+
+
+async def enforce_user_budget(
+    request: Request,
+    user: Any = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> None:
+    """Per-user monthly AI spending circuit breaker.
+
+    If the user's total AI spend this month exceeds
+    ``MAX_USER_MONTHLY_SPEND_USD`` (from Settings), the request is
+    rejected with HTTP 429 and a user-friendly detail payload.
+
+    Set ``MAX_USER_MONTHLY_SPEND_USD=0`` to disable the per-user cap.
+    """
+    from backend.src.core.config import get_settings
+
+    cap = get_settings().max_user_monthly_spend_usd
+    if cap <= 0:
+        return  # per-user cap disabled
+
+    user_id: str = user.id
+    month_start = _platform_month_start()
+    spent = _user_spend(db, user_id, month_start)
+
+    if spent >= cap:
+        log.warning(
+            "USER CIRCUIT BREAKER: user=%s monthly AI spend $%.2f >= cap $%.2f",
+            user_id, spent, cap,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": (
+                    f"You have reached your monthly AI spending limit "
+                    f"(${spent:.2f}/${cap:.2f}). Upgrade your plan or "
+                    f"wait until next month."
+                ),
+                "code": "user_budget_exceeded",
+                "spent_usd": round(spent, 2),
+                "cap_usd": cap,
+                "upgrade_url": _UPGRADE_URL,
             },
         )

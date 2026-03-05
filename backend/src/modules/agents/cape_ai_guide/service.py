@@ -220,7 +220,7 @@ class CapeAIGuideService:
                         model=self.model,
                         max_tokens=1000,
                         temperature=0.7,
-                        system=system_prompt,
+                        system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
                         messages=messages,
                         tools=tools_payload,
                     )

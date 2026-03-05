@@ -71,14 +71,26 @@ async def admin_cost_report(
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     rows = service.get_admin_cost_report(db, period_start=month_start)
+    by_agent = service.get_agent_cost_breakdown(db, period_start=month_start)
 
     # Compute platform total
     total_cost = sum(r["cost_usd"] for r in rows)
     total_calls = sum(r["total_calls"] for r in rows)
 
+    # Budget alert status
+    from backend.src.core.config import get_settings
+    from backend.src.modules.usage.budget_alerts import check_budget_thresholds, budget_tracker
+
+    cap = get_settings().max_monthly_ai_spend_usd
+    active_alerts = check_budget_thresholds(total_cost, cap)
+
     return {
         "period_start": month_start.isoformat(),
         "total_cost_usd": round(total_cost, 4),
         "total_calls": total_calls,
+        "budget_cap_usd": cap,
+        "budget_pct_used": round((total_cost / cap) * 100, 1) if cap > 0 else 0,
+        "alerts": active_alerts,
         "users": rows,
+        "by_agent": by_agent,
     }

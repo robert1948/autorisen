@@ -69,6 +69,11 @@ class Settings(BaseSettings):
         default=500.0, alias="MAX_MONTHLY_AI_SPEND_USD"
     )
 
+    # Per-user monthly AI spending cap in USD.  0 = unlimited.
+    max_user_monthly_spend_usd: float = Field(
+        default=50.0, alias="MAX_USER_MONTHLY_SPEND_USD"
+    )
+
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
 

@@ -187,7 +187,7 @@ class DomainSpecialistService:
                         model=self.model,
                         max_tokens=700,
                         temperature=0.6,
-                        system=system_prompt,
+                        system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
                         messages=messages,
                         tools=tools_payload,
                     )

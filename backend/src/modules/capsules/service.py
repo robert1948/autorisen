@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from backend.src.core.config import get_settings
 from backend.src.db import models as app_models
 from backend.src.modules.usage.track import try_record_usage
+from backend.src.modules.usage.llm_cache import llm_cache
 
 from .schemas import (
     CapsuleCategory,
@@ -93,9 +94,12 @@ _register(
         category=CapsuleCategory.CLAUSE_FINDING,
         system_prompt=(
             "You are a legal clause finder. Identify and extract the exact "
-            "clauses that match the user's query. Return each clause with its "
-            "source document, section number (if available), and verbatim "
-            "text. Do not paraphrase clauses."
+            "clauses that match the user's query.\n"
+            "You MUST respond with valid JSON matching this schema:\n"
+            '{"clauses": [{"source_document": "...", "section": "...", '
+            '"verbatim_text": "..."}], "total_found": 0}\n'
+            "Use the verbatim text from the source. Do NOT paraphrase. "
+            "Do NOT include any text outside the JSON object."
         ),
         doc_types=["legal", "contract", "regulation", "policy"],
         top_k=10,
@@ -116,10 +120,12 @@ _register(
         system_prompt=(
             "You are a compliance checker. Given the user's query describing "
             "the compliance requirement, evaluate the provided document "
-            "excerpts and produce a structured checklist:\n"
-            "- For each requirement, output: Requirement | Status "
-            "(PASS/FAIL/PARTIAL) | Evidence (cite source)\n"
-            "Summarise overall compliance at the end."
+            "excerpts and produce a structured checklist.\n"
+            "You MUST respond with valid JSON matching this schema:\n"
+            '{"items": [{"requirement": "...", "status": "PASS|FAIL|PARTIAL", '
+            '"evidence": "cite source"}], "overall": "COMPLIANT|NON_COMPLIANT|PARTIAL", '
+            '"summary": "..."}\n'
+            "Do NOT include any text outside the JSON object."
         ),
         doc_types=None,  # all doc types
         top_k=10,
@@ -352,6 +358,13 @@ class CapsuleService:
 
         user_message = f"{query}{extra}\n\n---\nRetrieved Documents:\n\n{doc_context}"
 
+        # ── LLM cache check ─────────────────────────────────────────────────
+        cache_key = llm_cache.make_key(model, capsule.system_prompt, user_message)
+        cached = llm_cache.get(cache_key)
+        if cached is not None:
+            log.debug("LLM cache hit for capsule %s", capsule.id)
+            return cached  # (text, usage_meta) tuple
+
         # Use Anthropic (preferred) or OpenAI
         anthropic_key = settings_obj.anthropic_api_key
         openai_key = settings_obj.openai_api_key
@@ -365,7 +378,8 @@ class CapsuleService:
                 msg = client.messages.create(
                     model=model,
                     max_tokens=2048,
-                    system=capsule.system_prompt,
+                    temperature=0.2,
+                    system=[{"type": "text", "text": capsule.system_prompt, "cache_control": {"type": "ephemeral"}}],
                     messages=[{"role": "user", "content": user_message}],
                 )
                 usage_meta = {
@@ -373,7 +387,9 @@ class CapsuleService:
                     "tokens_in": msg.usage.input_tokens,
                     "tokens_out": msg.usage.output_tokens,
                 }
-                return msg.content[0].text, usage_meta  # type: ignore[union-attr]
+                result = (msg.content[0].text, usage_meta)  # type: ignore[union-attr]
+                llm_cache.put(cache_key, result)
+                return result
             except Exception as exc:
                 log.warning("Anthropic call failed for capsule %s: %s", capsule.id, exc)
 
@@ -389,6 +405,7 @@ class CapsuleService:
                         {"role": "user", "content": user_message},
                     ],
                     max_tokens=2048,
+                    temperature=0.2,
                 )
                 oai_usage = getattr(resp, "usage", None)
                 usage_meta = {
@@ -396,7 +413,9 @@ class CapsuleService:
                     "tokens_in": getattr(oai_usage, "prompt_tokens", 0),
                     "tokens_out": getattr(oai_usage, "completion_tokens", 0),
                 }
-                return resp.choices[0].message.content or "", usage_meta
+                result = (resp.choices[0].message.content or "", usage_meta)
+                llm_cache.put(cache_key, result)
+                return result
             except Exception as exc:
                 log.warning("OpenAI call failed for capsule %s: %s", capsule.id, exc)
 

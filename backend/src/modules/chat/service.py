@@ -12,6 +12,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.usage.input_guard import validate_llm_input
+from backend.src.modules.usage.model_router import select_model
+from backend.src.modules.usage.token_counter import count_tokens as _count_tokens
 
 log = logging.getLogger(__name__)
 
@@ -161,15 +164,36 @@ def create_event(
 
 # ── AI response generation ────────────────────────────────────────────────────
 
+# Rough token estimate: ~4 chars per token for English text.
+_CHARS_PER_TOKEN = 4
+# Max tokens to allocate for conversation context (leaves room for system
+# prompt + response within the model's context window).
+_MAX_CONTEXT_TOKENS = 6000
+# Maximum characters allowed in a single user message before truncation.
+MAX_INPUT_CHARS = 8000
+
+
+def _estimate_tokens(text: str) -> int:
+    """Token count — uses tiktoken when available, else 4-chars heuristic."""
+    return _count_tokens(text) or max(1, len(text) // _CHARS_PER_TOKEN)
+
+
 def _build_messages_for_ai(
     db: Session,
     *,
     thread: models.ChatThread,
     limit: int = 50,
 ) -> list[dict[str, str]]:
-    """Retrieve recent events and map them to Anthropic message format."""
+    """Retrieve recent events and map them to Anthropic message format.
+
+    Applies a sliding window that keeps the most recent messages up to
+    ``_MAX_CONTEXT_TOKENS`` estimated tokens.  Messages that fall outside
+    the window are compressed into a short summary prepended as context,
+    keeping total token usage bounded while preserving key decisions and
+    facts from earlier in the conversation.
+    """
     events = list_events(db, thread_id=thread.id, limit=limit)
-    messages: list[dict[str, str]] = []
+    raw_messages: list[dict[str, str]] = []
     for event in events:
         role = event.role
         # Anthropic only accepts "user" or "assistant"
@@ -178,11 +202,67 @@ def _build_messages_for_ai(
         elif role not in ("user", "assistant"):
             role = "user"
         # Merge consecutive same-role messages
-        if messages and messages[-1]["role"] == role:
-            messages[-1]["content"] += "\n\n" + event.content
+        if raw_messages and raw_messages[-1]["role"] == role:
+            raw_messages[-1]["content"] += "\n\n" + event.content
         else:
-            messages.append({"role": role, "content": event.content})
-    return messages
+            raw_messages.append({"role": role, "content": event.content})
+
+    # ── Token-budgeted sliding window ─────────────────────────────────
+    # Reserve ~200 tokens for the summary prefix.
+    _SUMMARY_BUDGET = 200
+    budget = _MAX_CONTEXT_TOKENS - _SUMMARY_BUDGET
+    selected: list[dict[str, str]] = []
+    split_idx = len(raw_messages)  # index where we stopped including
+
+    for i, msg in enumerate(reversed(raw_messages)):
+        cost = _estimate_tokens(msg["content"])
+        if cost > budget and selected:
+            split_idx = len(raw_messages) - i
+            break
+        budget -= cost
+        selected.append(msg)
+
+    selected.reverse()  # restore chronological order
+
+    # ── Summarise dropped messages ────────────────────────────────────
+    dropped = raw_messages[:split_idx] if split_idx < len(raw_messages) else []
+    if dropped and len(dropped) >= 3:
+        summary = _summarise_dropped_messages(dropped)
+        if summary:
+            # Prepend as a "user" context message so the model has the gist.
+            selected.insert(0, {"role": "user", "content": summary})
+
+    return selected
+
+
+def _summarise_dropped_messages(messages: list[dict[str, str]]) -> str:
+    """Create a lightweight extractive summary of older conversation turns.
+
+    This is NOT an LLM call — it's a fast heuristic extraction that pulls
+    the first sentence of each dropped message.  Keeps cost at zero while
+    still preserving key context.  A future upgrade can use a small model
+    for abstractive summarisation.
+    """
+    import re
+
+    snippets: list[str] = []
+    for msg in messages[-6:]:  # last 6 dropped messages are most relevant
+        text = msg["content"].strip()
+        # Extract first sentence (up to 120 chars)
+        match = re.match(r"^(.{10,120}?[.!?])\s", text)
+        if match:
+            snippets.append(f"- {msg['role']}: {match.group(1)}")
+        else:
+            snippets.append(f"- {msg['role']}: {text[:100]}…")
+
+    if not snippets:
+        return ""
+
+    return (
+        "[Earlier conversation summary]\n"
+        + "\n".join(snippets)
+        + "\n[End summary — recent messages follow]"
+    )
 
 
 def generate_ai_response(
@@ -193,7 +273,11 @@ def generate_ai_response(
 ) -> models.ChatEvent:
     """Call Anthropic API to generate an assistant response and persist it."""
     api_key = os.getenv("ANTHROPIC_API_KEY", "")
-    model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+    env_model = os.getenv("ANTHROPIC_MODEL")  # explicit override
+
+    # ── Intelligent model routing ─────────────────────────────────
+    # If no explicit model override, route based on prompt complexity.
+    model = select_model(user_message, force_model=env_model)
 
     system_prompt = PLACEMENT_SYSTEM_PROMPTS.get(
         thread.placement, DEFAULT_SYSTEM_PROMPT
@@ -201,6 +285,15 @@ def generate_ai_response(
 
     # Build conversation history
     messages = _build_messages_for_ai(db, thread=thread)
+
+    # ── Input length guard ────────────────────────────────────────
+    # Truncate the most recent user message if it exceeds the cap
+    if messages:
+        last = messages[-1]
+        if last["role"] == "user":
+            last["content"] = validate_llm_input(
+                last["content"], label="chat message"
+            )
 
     if not api_key:
         log.warning("ANTHROPIC_API_KEY not set — returning placeholder response")
@@ -223,7 +316,7 @@ def generate_ai_response(
         response = client.messages.create(
             model=model,
             max_tokens=2048,
-            system=system_prompt,
+            system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
             messages=messages,
         )
         content = ""

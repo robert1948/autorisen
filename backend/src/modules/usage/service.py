@@ -28,6 +28,14 @@ MODEL_RATES: dict[str, dict[str, Decimal]] = {
     "claude-3-haiku-20240307": {"input": Decimal("0.25"), "output": Decimal("1.25")},
     # Opus family
     "claude-3-opus-20240229": {"input": Decimal("15.00"), "output": Decimal("75.00")},
+    # OpenAI models
+    "gpt-4o-mini": {"input": Decimal("0.15"), "output": Decimal("0.60")},
+    "gpt-4o-mini-2024-07-18": {"input": Decimal("0.15"), "output": Decimal("0.60")},
+    "gpt-4o": {"input": Decimal("2.50"), "output": Decimal("10.00")},
+    "gpt-4o-2024-08-06": {"input": Decimal("2.50"), "output": Decimal("10.00")},
+    "gpt-4": {"input": Decimal("30.00"), "output": Decimal("60.00")},
+    "gpt-4-turbo": {"input": Decimal("10.00"), "output": Decimal("30.00")},
+    "gpt-3.5-turbo": {"input": Decimal("0.50"), "output": Decimal("1.50")},
 }
 
 # Fallback for unknown models
@@ -197,6 +205,41 @@ def get_admin_cost_report(
         {
             "user_id": r.user_id,
             "total_calls": r.total_calls,
+            "tokens_in": int(r.tokens_in),
+            "tokens_out": int(r.tokens_out),
+            "cost_usd": float(r.cost_usd),
+        }
+        for r in rows
+    ]
+
+
+def get_agent_cost_breakdown(
+    db: Session,
+    *,
+    period_start: datetime,
+) -> list[dict[str, Any]]:
+    """Per-agent (event_type) cost breakdown for the billing period.
+
+    Returns rows sorted by total cost descending so the most expensive
+    agent category appears first.
+    """
+    rows = db.execute(
+        select(
+            UsageLog.event_type,
+            func.count(UsageLog.id).label("calls"),
+            func.coalesce(func.sum(UsageLog.tokens_in), 0).label("tokens_in"),
+            func.coalesce(func.sum(UsageLog.tokens_out), 0).label("tokens_out"),
+            func.coalesce(func.sum(UsageLog.cost_usd), 0).label("cost_usd"),
+        )
+        .where(UsageLog.created_at >= period_start)
+        .group_by(UsageLog.event_type)
+        .order_by(func.sum(UsageLog.cost_usd).desc())
+    ).all()
+
+    return [
+        {
+            "event_type": r.event_type,
+            "calls": r.calls,
             "tokens_in": int(r.tokens_in),
             "tokens_out": int(r.tokens_out),
             "cost_usd": float(r.cost_usd),

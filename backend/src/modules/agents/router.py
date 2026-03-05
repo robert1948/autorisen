@@ -25,6 +25,7 @@ from backend.src.modules.payments.enforcement import (
     enforce_agent_limit,
     enforce_execution_limit,
     enforce_platform_budget,
+    enforce_user_budget,
 )
 from backend.src.modules.support import service as support_service
 
@@ -294,6 +295,7 @@ def launch_agent(
     db: Session = Depends(get_session),
     _quota=Depends(enforce_execution_limit),
     _budget=Depends(enforce_platform_budget),
+    _user_budget=Depends(enforce_user_budget),
 ) -> schemas.AgentRunResponse:
     agent, _version = _get_published_agent(db, slug)
     run = models.AgentRun(
@@ -341,6 +343,7 @@ def run_agent_action(
     db: Session = Depends(get_session),
     _quota=Depends(enforce_execution_limit),
     _budget=Depends(enforce_platform_budget),
+    _user_budget=Depends(enforce_user_budget),
 ) -> schemas.AgentActionResponse:
     agent, _version = _get_published_agent(db, slug)
     run = db.scalar(
@@ -468,6 +471,7 @@ async def create_task(
     db: Session = Depends(get_session),
     _quota=Depends(enforce_execution_limit),
     _budget=Depends(enforce_platform_budget),
+    _user_budget=Depends(enforce_user_budget),
 ) -> TaskResponse:
     """Execute an agent task."""
 

@@ -13,7 +13,7 @@ from backend.src.core.config import get_settings
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
 from backend.src.db.models import User
-from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget
+from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget, enforce_user_budget
 from .schemas import CapeAIGuideTaskInput, CapeAIGuideTaskOutput
 from .service import CapeAIGuideService
 
@@ -46,6 +46,7 @@ async def ask_cape_ai_guide(
     service: CapeAIGuideService = Depends(get_cape_ai_service),
     _quota=Depends(enforce_execution_limit),
     _budget=Depends(enforce_platform_budget),
+    _user_budget=Depends(enforce_user_budget),
 ):
     """Submit a question to the CapeAI Guide agent.
 

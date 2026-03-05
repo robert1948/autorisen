@@ -16,6 +16,7 @@ from backend.src.core.config import get_settings
 from backend.src.db import models as app_models
 from backend.src.modules.usage.track import try_record_usage
 from backend.src.modules.usage.llm_cache import llm_cache
+from backend.src.modules.usage.token_counter import count_tokens as _count_tokens
 
 from . import embeddings
 from .models import ApprovedDocument, DocumentChunk, RAGQueryLog
@@ -101,7 +102,7 @@ class RAGService:
                 chunk_index=idx,
                 chunk_text=text,
                 embedding=vec,
-                token_count=len(text.split()),
+                token_count=_count_tokens(text),
             )
             db.add(chunk)
 
@@ -210,6 +211,13 @@ class RAGService:
             top_k=request.top_k,
             similarity_threshold=request.similarity_threshold,
             doc_types=request.doc_types,
+        )
+
+        # 2b. Re-rank using hybrid cosine + BM25 scoring
+        from backend.src.modules.rag.reranker import rerank_chunks
+
+        candidates = rerank_chunks(
+            request.query, candidates, top_n=request.top_k
         )
 
         # 3. Build citations
@@ -379,15 +387,30 @@ class RAGService:
     ) -> Tuple[str, dict]:
         """Generate an LLM response using retrieved context.
 
+        Checks the semantic cache first for near-duplicate queries.
         Returns (text, usage_meta) for cost tracking.
         """
+        # ── Semantic cache check ──────────────────────────────────────
+        from backend.src.modules.usage.semantic_cache import semantic_cache
+
+        sem_hit = await semantic_cache.get(query)
+        if sem_hit is not None:
+            log.debug("RAG semantic cache hit for query")
+            return sem_hit
+
         system_prompt = self._build_system_prompt(grounded, unsupported_policy)
         user_prompt = self._build_user_prompt(query, citations)
 
         if "claude" in self._model.lower():
-            return await self._call_anthropic(system_prompt, user_prompt)
+            result = await self._call_anthropic(system_prompt, user_prompt)
         else:
-            return await self._call_openai(system_prompt, user_prompt)
+            result = await self._call_openai(system_prompt, user_prompt)
+
+        # Store in semantic cache for future similar queries
+        if result and result[0] and not result[0].startswith("[Error"):
+            await semantic_cache.put(query, result)
+
+        return result
 
     def _build_system_prompt(
         self, grounded: bool, unsupported_policy: UnsupportedPolicy
@@ -468,7 +491,7 @@ class RAGService:
             resp = await client.messages.create(
                 model=self._model,
                 max_tokens=2048,
-                system=system_prompt,
+                system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
                 messages=[{"role": "user", "content": user_prompt}],
             )
             text = resp.content[0].text if resp.content else ""

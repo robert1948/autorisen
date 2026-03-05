@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.modules.usage.track import try_record_usage
+from backend.src.modules.usage.input_guard import validate_llm_input
+from backend.src.modules.usage.llm_cache import llm_cache
 
 from .schemas import ContentAgentTaskInput, ContentAgentTaskOutput, ContentPiece
 
@@ -108,7 +110,9 @@ class ContentAgentService:
                 context_info=context_info,
             )
 
-            ai_response, usage_meta = await self._call_llm(user_prompt)
+            ai_response, usage_meta = await self._call_llm(
+                validate_llm_input(user_prompt, label="content request")
+            )
 
             # Record LLM usage for cost tracking
             if usage_meta:
@@ -183,19 +187,27 @@ class ContentAgentService:
 
         Returns (text, usage_meta) for cost tracking.
         """
+        cache_key = llm_cache.make_key(self.model, SYSTEM_PROMPT, user_prompt)
+        cached = llm_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         if self.anthropic_client and "claude" in self.model:
             try:
                 response = await self.anthropic_client.messages.create(
                     model=self.model,
                     max_tokens=2048,
-                    system=SYSTEM_PROMPT,
+                    temperature=0.7,
+                    system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
                     messages=[{"role": "user", "content": user_prompt}],
                 )
-                return response.content[0].text, {
+                result = (response.content[0].text, {
                     "model": response.model,
                     "tokens_in": response.usage.input_tokens,
                     "tokens_out": response.usage.output_tokens,
-                }
+                })
+                llm_cache.put(cache_key, result)
+                return result
             except Exception as e:
                 log.warning("Anthropic call failed: %s", e)
 
@@ -204,17 +216,20 @@ class ContentAgentService:
                 response = await self.openai_client.chat.completions.create(
                     model="gpt-4o-mini" if "claude" in self.model else self.model,
                     max_tokens=2048,
+                    temperature=0.7,
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": user_prompt},
                     ],
                 )
                 usage = getattr(response, "usage", None)
-                return response.choices[0].message.content or "", {
+                result = (response.choices[0].message.content or "", {
                     "model": response.model,
                     "tokens_in": getattr(usage, "prompt_tokens", 0),
                     "tokens_out": getattr(usage, "completion_tokens", 0),
-                }
+                })
+                llm_cache.put(cache_key, result)
+                return result
             except Exception as e:
                 log.error("OpenAI call also failed: %s", e)
 

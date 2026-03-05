@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user
-from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget
+from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget, enforce_user_budget
 
 from . import schemas, service, tools
 
@@ -83,6 +83,7 @@ def invoke_tool(
     db: Session = Depends(get_session),
     _quota=Depends(enforce_execution_limit),
     _budget=Depends(enforce_platform_budget),
+    _user_budget=Depends(enforce_user_budget),
 ) -> schemas.ToolInvokeResponse:
     """Invoke a placement-scoped backend tool and record the resulting event."""
 
