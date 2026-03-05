@@ -3,8 +3,9 @@ id,task,owner,status,priority,target_date,phase,category,notes,dependencies,veri
 # CapeControl Launch Project Plan — March 2026
 # Entity: Cape Craft Projects CC (VAT 4270105119)
 # Owner: Robert Kleyn
-# Platform: v0.2.5 (Build 533)
+# Platform: v0.2.5 (Build 544)
 # Generated: 2026-03-01
+# Updated: 2026-03-05
 # ============================================================
 
 # ──────────────────────────────────────────────────────────────
@@ -96,6 +97,10 @@ PROD-005,Landing page demo video embed,engineering,not-started,P2,2026-04-01,Pha
 PROD-006,Add social proof section to landing page,engineering,not-started,P2,2026-04-14,Phase 6,Frontend,"Testimonial quotes from beta users (once available). Trust badges: GDPR-ready / Audit logging / SA-hosted.",BETA-006,"Manual review: landing page social proof section"
 PROD-007,Dashboard V2 — real usage metrics,engineering,done,P1,2026-04-01,Phase 6,Frontend,"Wire dashboard stat cards to real usage data: runs, documents, evidence packs generated.",adfecb68,"Dashboard shows non-zero real data"
 PROD-008,ChatKit conversation history persistence,engineering,in-progress,P1,2026-04-07,Phase 6,Backend,"WS connection working. CSRF fixed. Chat threads + events persist to DB. Remaining: agent-side response generation (messages acknowledged but no AI reply yet).",HARD-011 HARD-012,"Close and reopen ChatKit — history preserved"
+PROD-009,Pricing system hardening — zero-loss economics,engineering,done,P0,2026-03-05,Phase 6,Backend,"5 fixes: (1) unified pricing constants in plans.py (2) schema regex validation (3) ZAR alignment across all tiers (4) legacy /pricing deprecation (5) enforce_execution_limit wired into all LLM endpoints. 3-tier model: Free R0/3 agents/50 exec — Pro R529/50 agents/2000 exec — Enterprise R1799/500 agents/8000 exec. Deployed Build 543 (d9ee0369).",—,"make codex-test — 145 passed"
+PROD-010,Agent rating system + marketplace integration,engineering,done,P1,2026-03-05,Phase 6,Backend,"AgentRating DB model with unique user+agent constraint. 3 API endpoints: POST/GET/DELETE /marketplace/agents/{id}/ratings. Real average ratings in marketplace listings. StarRating + AgentRatingPanel frontend components. Deployed Build 544 (646812c8).",PROD-001,"POST /api/marketplace/agents/{id}/ratings → 201"
+PROD-011,Cost control suite — 5 critical fixes,engineering,done,P0,2026-03-05,Phase 6,Backend,"Fix 1: try_record_usage() helper wired into all 8 agent services (customer/dev/finance/content/guide/specialist/rag/capsule). Fix 2: platform spending circuit breaker (MAX_MONTHLY_AI_SPEND_USD config + enforce_platform_budget Depends on 7 routers → HTTP 503). Fix 3: GET /api/usage/admin/costs admin endpoint with per-user breakdown. Fix 4: per-tool-call usage recording in run_engine.py flow orchestrator. Fix 5: LLM response cache with TTL eviction (LLM_CACHE_TTL_SECONDS=300, LLM_CACHE_MAX_SIZE=512) wired into RAG service. 28 new tests. Deployed Build 544 (646812c8).",—,"173/173 tests passing"
+PROD-012,Usage dashboard enhancements,engineering,done,P1,2026-03-05,Phase 6,Frontend,"UsageProgressCard: execution + agent progress bars with colour thresholds (green/amber/red). Upgrade CTA button when usage >80%. useUsageSummary hook extended with agentCount/maxAgents fields. Deployed Build 544 (646812c8).",PROD-007,"Dashboard shows progress bars + upgrade prompt"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 7: PAYMENTS & CONVERSION (Apr–May)
@@ -111,7 +116,7 @@ PAY-014,First 5 paying customers,Robert,not-started,P0,2026-04-30,Phase 7,GTM,"C
 # ──────────────────────────────────────────────────────────────
 SCALE-001,Stripe integration for international payments,engineering,not-started,P2,2026-06-01,Phase 8,Payments,"USD/EUR/GBP payment rails for non-ZAR customers. Business Plan target: Q3 2026.",BP-STRIPE-001,"Stripe test payment succeeds"
 SCALE-002,pgvector migration for production RAG,engineering,not-started,P1,2026-05-01,Phase 8,Backend,"Move from SQLite vector store to PostgreSQL pgvector for production-grade RAG.",BP-RAG-001,"RAG queries hit pgvector"
-SCALE-003,Re-enable disabled test suite (50 tests),engineering,in-progress,P1,2026-05-01,Phase 8,Quality,"65 tests passing as of 2026-03-03. Remaining ~50 in tests_disabled/ need review and migration.",HARD-006,"make codex-test — all tests pass"
+SCALE-003,Re-enable disabled test suite,engineering,in-progress,P1,2026-05-01,Phase 8,Quality,"173 tests passing as of 2026-03-05 (up from 65 on 2026-03-03). Added 28 cost-control tests + 11 agent-rating tests + previous additions. Remaining tests in tests_disabled/ need review and migration.",HARD-006,"make codex-test — all tests pass"
 SCALE-004,Security penetration test,engineering,not-started,P1,2026-06-01,Phase 8,Security,"Third-party security assessment before mid-market push. Budget: ~R37,000.",—,"Pentest report received"
 SCALE-005,SOC 2 readiness assessment,management,not-started,P2,2026-08-01,Phase 8,Security,"Begin SOC 2 Type I preparation. Budget: ~R93,000. Required for mid-market enterprise buyers.",—,"Assessment report received"
 SCALE-006,Content marketing system (blog / case studies),Robert,not-started,P2,2026-05-15,Phase 8,GTM,"Publish 2 case studies from beta users. Set up /blog route or external blog (Hashnode/Substack).",BETA-006,"2 case studies published"
