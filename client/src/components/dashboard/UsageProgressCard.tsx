@@ -100,17 +100,29 @@ export function UsageProgressCard({ user }: UsageProgressCardProps) {
   const apiUsed = usage.apiCallsUsed;
   const apiLimit = usage.apiCallsLimit;
 
+  // Primary gauge metric: executions used / limit
+  const execPct = apiLimit > 0 ? apiUsed / apiLimit : 0;
+  const showUpgrade = execPct >= 0.8 || (usage.maxAgents > 0 && usage.agentCount / usage.maxAgents >= 0.8);
+
   const items: ProgressItem[] = [];
 
-  if (isDeveloper) {
-    items.push({
-      label: "API Calls",
-      current: apiUsed,
-      max: apiLimit,
-      color: "bg-blue-500",
-      bgColor: "bg-blue-100",
-    });
-  }
+  // Always show Executions (the core billable metric)
+  items.push({
+    label: "Executions",
+    current: apiUsed,
+    max: apiLimit,
+    color: "bg-blue-500",
+    bgColor: "bg-blue-100",
+  });
+
+  // Always show Agents
+  items.push({
+    label: "Agents",
+    current: usage.agentCount,
+    max: usage.maxAgents,
+    color: "bg-indigo-500",
+    bgColor: "bg-indigo-100",
+  });
 
   items.push({
     label: "Documents",
@@ -128,13 +140,15 @@ export function UsageProgressCard({ user }: UsageProgressCardProps) {
     bgColor: "bg-violet-100",
   });
 
-  items.push({
-    label: "Storage Used",
-    current: usage.storageUsedMb,
-    max: usage.storageLimitMb,
-    color: "bg-cyan-500",
-    bgColor: "bg-cyan-100",
-  });
+  if (isDeveloper) {
+    items.push({
+      label: "Storage Used",
+      current: usage.storageUsedMb,
+      max: usage.storageLimitMb,
+      color: "bg-cyan-500",
+      bgColor: "bg-cyan-100",
+    });
+  }
 
   return (
     <section
@@ -153,9 +167,11 @@ export function UsageProgressCard({ user }: UsageProgressCardProps) {
             max={apiLimit}
             size={90}
             strokeWidth={7}
-            color={apiUsed / apiLimit > 0.8 ? "#f59e0b" : "#3b82f6"}
+            color={execPct > 0.8 ? "#f59e0b" : "#3b82f6"}
           />
-          <span className="text-xs font-medium text-slate-500">API Quota</span>
+          <span className="text-xs font-medium text-slate-500">
+            {usage.planId === "free" ? "Free" : usage.planId === "pro" ? "Pro" : "Enterprise"} Plan
+          </span>
         </div>
 
         {/* Linear progress bars */}
@@ -165,6 +181,18 @@ export function UsageProgressCard({ user }: UsageProgressCardProps) {
           ))}
         </div>
       </div>
+
+      {showUpgrade && usage.planId !== "enterprise" && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-900/30">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            You&apos;re approaching your plan limits.{" "}
+            <a href="/app/pricing" className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-100">
+              Upgrade your plan
+            </a>{" "}
+            for more capacity.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

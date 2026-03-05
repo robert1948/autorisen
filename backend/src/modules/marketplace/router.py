@@ -26,6 +26,9 @@ from .models import (
     MarketplaceAnalytics,
     AgentValidationResult,
     AgentCategory,
+    RateAgentRequest,
+    AgentRatingSummary,
+    AgentRating,
 )
 from .service import MarketplaceService
 
@@ -202,6 +205,51 @@ async def get_featured_agents(db: Session = Depends(get_session)) -> list[AgentL
     """
     service = MarketplaceService(db)
     return await service.get_featured_agents(limit=6)
+
+
+# ------------------------------------------------------------------
+# Agent ratings
+# ------------------------------------------------------------------
+
+@router.post("/agents/{agent_id}/rate", response_model=AgentRating)
+async def rate_agent(
+    agent_id: str,
+    request: RateAgentRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> AgentRating:
+    """
+    Rate an agent (1-5 stars) with an optional text review.
+    One rating per user per agent; submitting again updates the existing rating.
+    """
+    service = MarketplaceService(db)
+    return await service.rate_agent(agent_id, current_user.id, request)
+
+
+@router.get("/agents/{agent_id}/ratings")
+async def get_agent_ratings(
+    agent_id: str,
+    page: int = 1,
+    limit: int = 20,
+    db: Session = Depends(get_session),
+):
+    """Get paginated ratings and summary statistics for an agent."""
+    service = MarketplaceService(db)
+    return await service.get_agent_ratings(agent_id, page=page, limit=limit)
+
+
+@router.delete("/agents/{agent_id}/rate", status_code=204)
+async def delete_agent_rating(
+    agent_id: str,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    """Remove the current user's rating for an agent."""
+    service = MarketplaceService(db)
+    deleted = await service.delete_agent_rating(agent_id, current_user.id)
+    if not deleted:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Rating not found")
 
 
 # Legacy endpoints for backward compatibility

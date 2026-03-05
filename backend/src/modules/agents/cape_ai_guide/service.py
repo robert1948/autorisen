@@ -14,6 +14,7 @@ from openai import AsyncOpenAI, OpenAIError
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.usage.track import try_record_usage
 from backend.src.modules.agents.tool_use import (
     ToolUseContext,
     anthropic_tools_payload,
@@ -224,6 +225,16 @@ class CapeAIGuideService:
                         tools=tools_payload,
                     )
 
+                    # Record each LLM turn for cost tracking
+                    try_record_usage(
+                        db,
+                        user_id=user.id if user else None,
+                        event_type="agent:cape-ai-guide",
+                        model=getattr(response, "model", self.model),
+                        tokens_in=getattr(getattr(response, "usage", None), "input_tokens", 0),
+                        tokens_out=getattr(getattr(response, "usage", None), "output_tokens", 0),
+                    )
+
                     content = getattr(response, "content", None)
                     tool_uses = [
                         block
@@ -318,6 +329,17 @@ class CapeAIGuideService:
                     tools=tools_payload,
                     max_tokens=1000,
                     temperature=0.7,
+                )
+
+                # Record each LLM turn for cost tracking
+                _oai_usage = getattr(response, "usage", None)
+                try_record_usage(
+                    db,
+                    user_id=user.id if user else None,
+                    event_type="agent:cape-ai-guide",
+                    model=getattr(response, "model", self.model),
+                    tokens_in=getattr(_oai_usage, "prompt_tokens", 0),
+                    tokens_out=getattr(_oai_usage, "completion_tokens", 0),
                 )
 
                 message = response.choices[0].message

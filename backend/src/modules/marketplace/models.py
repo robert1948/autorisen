@@ -102,6 +102,25 @@ class AgentRating(BaseModel):
     helpful_votes: int = Field(0, description="Helpful vote count")
 
 
+class RateAgentRequest(BaseModel):
+    """Request to rate/review an agent."""
+
+    rating: int = Field(..., description="Rating score", ge=1, le=5)
+    review: Optional[str] = Field(None, description="Review text", max_length=1000)
+
+
+class AgentRatingSummary(BaseModel):
+    """Aggregated rating statistics for an agent."""
+
+    agent_id: str
+    average_rating: float = Field(..., ge=0.0, le=5.0)
+    total_ratings: int
+    distribution: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Rating distribution e.g. {'1': 2, '2': 0, ...}",
+    )
+
+
 class AgentInstallRequest(BaseModel):
     """Request to install an agent."""
 

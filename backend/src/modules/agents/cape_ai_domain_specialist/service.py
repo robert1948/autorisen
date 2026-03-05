@@ -17,6 +17,7 @@ from openai import AsyncOpenAI, OpenAIError
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.usage.track import try_record_usage
 from backend.src.modules.agents.tool_use import (
     ToolUseContext,
     anthropic_tools_payload,
@@ -191,6 +192,16 @@ class DomainSpecialistService:
                         tools=tools_payload,
                     )
 
+                    # Record each LLM turn for cost tracking
+                    try_record_usage(
+                        db,
+                        user_id=user.id if user else None,
+                        event_type="agent:domain-specialist",
+                        model=getattr(completion, "model", self.model),
+                        tokens_in=getattr(getattr(completion, "usage", None), "input_tokens", 0),
+                        tokens_out=getattr(getattr(completion, "usage", None), "output_tokens", 0),
+                    )
+
                     content = getattr(completion, "content", None)
                     tool_uses = [
                         block
@@ -284,6 +295,17 @@ class DomainSpecialistService:
                     tools=tools_payload,
                     temperature=0.6,
                     max_tokens=700,
+                )
+
+                # Record each LLM turn for cost tracking
+                _oai_usage = getattr(completion, "usage", None)
+                try_record_usage(
+                    db,
+                    user_id=user.id if user else None,
+                    event_type="agent:domain-specialist",
+                    model=getattr(completion, "model", self.model),
+                    tokens_in=getattr(_oai_usage, "prompt_tokens", 0),
+                    tokens_out=getattr(_oai_usage, "completion_tokens", 0),
                 )
 
                 message = completion.choices[0].message

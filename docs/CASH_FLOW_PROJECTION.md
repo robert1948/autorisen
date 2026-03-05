@@ -1,6 +1,6 @@
 # CapeControl — 24-Month Cash Flow Projection
 
-> **Version:** 1.0 · **Last Updated:** 2026-02-24
+> **Version:** 1.1 · **Last Updated:** 2026-03-05
 > **Entity:** Cape Craft Projects CC (VAT 4270105119)
 > **Currency:** ZAR primary, USD equivalent shown where relevant
 > **Exchange Rate Assumption:** R18.50 / USD
@@ -11,9 +11,13 @@
 
 | Assumption | Value | Source |
 |---|---|---|
-| Pro plan price | R529/mo (~$29 USD) | FEAT-PAY-ALIGN-001 |
-| Enterprise plan price | R1,799/mo (~$97 USD) | FEAT-PAY-ALIGN-001 |
-| Free tier | R0 | Business Plan v2 |
+| Pro plan price | R529/mo (~$29 USD) | constants.py — PRO_PLAN |
+| Pro plan yearly | R4,990/yr (save ~21%) | constants.py — PRO_YEARLY_PRODUCT |
+| Enterprise plan price | R1,799/mo (~$97 USD) | constants.py — ENTERPRISE_PLAN |
+| Enterprise plan yearly | R17,190/yr (save ~20%) | constants.py — ENTERPRISE_YEARLY_PRODUCT |
+| Free tier | R0 (3 agents, 50 exec/mo) | constants.py — FREE_PLAN |
+| Pro limits | 50 agents, 2,000 exec/mo, 5 GB | constants.py — PLAN_LIMITS |
+| Enterprise limits | 500 agents, 8,000 exec/mo, 50 GB | constants.py — PLAN_LIMITS |
 | Blended ARPU (after free dilution) | R830/mo (~$45 USD) | Business Plan v2 |
 | Monthly churn | 6% | Business Plan v2 |
 | Services revenue share (Year 1) | 25% of total | Business Plan v2 |
@@ -56,7 +60,7 @@
 
 | Line Item | Per-Unit | Monthly Estimate (Early) | Monthly Estimate (Scale) |
 |---|---|---|---|
-| Anthropic Claude 3.5 Haiku (inference) | ~$0.25/1K input + $1.25/1K output | R1,850 ($100) | R18,500 ($1,000) |
+| Anthropic Claude 3.5 Haiku (inference) | $0.25/1M input + $1.25/1M output | R1,850 ($100) | R18,500 ($1,000) |
 | Embedding API (RAG pipeline) | ~$0.02/1K tokens | R370 ($20) | R3,700 ($200) |
 | OpenAI fallback | Variable | R185 ($10) | R1,850 ($100) |
 | **AI Subtotal** | | **R2,405 ($130)** | **R24,050 ($1,300)** |

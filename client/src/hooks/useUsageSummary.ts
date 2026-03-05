@@ -24,6 +24,9 @@ export interface UsageSummary {
   documentsCount: number;
   ragQueries: number;
   evidenceExports: number;
+  /* PROD-012: agent utilisation */
+  agentCount: number;
+  maxAgents: number;
 }
 
 const EMPTY: UsageSummary = {
@@ -41,6 +44,8 @@ const EMPTY: UsageSummary = {
   documentsCount: 0,
   ragQueries: 0,
   evidenceExports: 0,
+  agentCount: 0,
+  maxAgents: 3,
 };
 
 interface UsageSummaryState {
@@ -68,6 +73,8 @@ function mapResponse(raw: Record<string, unknown>): UsageSummary {
     documentsCount: (raw.documents_count as number) ?? 0,
     ragQueries: (raw.rag_queries as number) ?? 0,
     evidenceExports: (raw.evidence_exports as number) ?? 0,
+    agentCount: (raw.agent_count as number) ?? 0,
+    maxAgents: (raw.max_agents as number) ?? 3,
   };
 }
 

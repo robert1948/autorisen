@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from backend.src.core.config import get_settings
 from backend.src.db import models as app_models
+from backend.src.modules.usage.track import try_record_usage
 
 from .schemas import (
     CapsuleCategory,
@@ -262,12 +263,24 @@ class CapsuleService:
 
         if grounded and rag_result.evidence and rag_result.evidence.citations:
             # Re-generate with capsule-specific system prompt
-            capsule_response = await self._generate_capsule_response(
+            capsule_response, capsule_usage_meta = await self._generate_capsule_response(
                 capsule=capsule,
                 query=request.query,
                 citations=rag_result.evidence.citations,
                 context=request.context,
             )
+
+            # Record capsule-specific LLM usage for cost tracking
+            if capsule_usage_meta:
+                try_record_usage(
+                    db,
+                    user_id=user.id,
+                    event_type="agent:capsule",
+                    model=capsule_usage_meta.get("model"),
+                    tokens_in=capsule_usage_meta.get("tokens_in", 0),
+                    tokens_out=capsule_usage_meta.get("tokens_out", 0),
+                    detail=f"capsule:{capsule.id}",
+                )
 
         # Map RAG citations → CapsuleCitations
         capsule_citations: List[CapsuleCitation] = []
@@ -314,8 +327,11 @@ class CapsuleService:
         query: str,
         citations: list,
         context: Optional[Dict[str, Any]] = None,
-    ) -> str:
-        """Generate LLM response using the capsule's system prompt."""
+    ) -> tuple[str, dict]:
+        """Generate LLM response using the capsule's system prompt.
+
+        Returns (text, usage_meta) for cost tracking.
+        """
         settings_obj = get_settings()
 
         # Build context from retrieved citations
@@ -352,7 +368,12 @@ class CapsuleService:
                     system=capsule.system_prompt,
                     messages=[{"role": "user", "content": user_message}],
                 )
-                return msg.content[0].text  # type: ignore[union-attr]
+                usage_meta = {
+                    "model": msg.model,
+                    "tokens_in": msg.usage.input_tokens,
+                    "tokens_out": msg.usage.output_tokens,
+                }
+                return msg.content[0].text, usage_meta  # type: ignore[union-attr]
             except Exception as exc:
                 log.warning("Anthropic call failed for capsule %s: %s", capsule.id, exc)
 
@@ -369,11 +390,17 @@ class CapsuleService:
                     ],
                     max_tokens=2048,
                 )
-                return resp.choices[0].message.content or ""
+                oai_usage = getattr(resp, "usage", None)
+                usage_meta = {
+                    "model": resp.model,
+                    "tokens_in": getattr(oai_usage, "prompt_tokens", 0),
+                    "tokens_out": getattr(oai_usage, "completion_tokens", 0),
+                }
+                return resp.choices[0].message.content or "", usage_meta
             except Exception as exc:
                 log.warning("OpenAI call failed for capsule %s: %s", capsule.id, exc)
 
         return (
             f"[Capsule {capsule.name}] Retrieved {len(citations)} relevant "
             f"excerpts but LLM generation unavailable (no API keys configured)."
-        )
+        ), {}

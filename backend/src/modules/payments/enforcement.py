@@ -53,6 +53,21 @@ _UPGRADE_URL = "/app/pricing"
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+def _platform_month_start() -> datetime:
+    """Return the first instant of the current UTC month."""
+    now = datetime.now(timezone.utc)
+    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _total_platform_spend(db: Session, since: datetime) -> float:
+    """Sum cost_usd across ALL users since the given timestamp."""
+    total = db.execute(
+        select(func.coalesce(func.sum(UsageLog.cost_usd), 0)).where(
+            UsageLog.created_at >= since,
+        )
+    ).scalar_one()
+    return float(total)
+
 def _get_plan_id(db: Session, user_id: str) -> str:
     """Return the user's active plan_id, defaulting to 'free'."""
     sub = (
@@ -190,4 +205,44 @@ async def enforce_agent_limit(
             current=current,
             maximum=limits.max_agents,
             plan_id=plan_id,
+        )
+
+
+async def enforce_platform_budget(
+    db: Session = Depends(get_session),
+) -> None:
+    """Platform-wide circuit breaker.
+
+    If total AI spend this month exceeds ``MAX_MONTHLY_AI_SPEND_USD``
+    (from Settings), **all** LLM-dependent endpoints return HTTP 503.
+    This protects the operator from runaway costs regardless of
+    individual plan limits.
+
+    Set ``MAX_MONTHLY_AI_SPEND_USD=0`` to disable the check entirely.
+    """
+    from backend.src.core.config import get_settings
+
+    cap = get_settings().max_monthly_ai_spend_usd
+    if cap <= 0:
+        return  # unlimited — circuit breaker disabled
+
+    month_start = _platform_month_start()
+    spent = _total_platform_spend(db, month_start)
+
+    if spent >= cap:
+        log.critical(
+            "CIRCUIT BREAKER: monthly AI spend $%.2f >= cap $%.2f – blocking LLM requests",
+            spent, cap,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "message": (
+                    "AI services are temporarily unavailable due to platform "
+                    "spending limits. Please try again later or contact support."
+                ),
+                "code": "platform_budget_exceeded",
+                "spent_usd": round(spent, 2),
+                "cap_usd": cap,
+            },
         )

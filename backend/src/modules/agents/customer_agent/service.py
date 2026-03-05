@@ -14,6 +14,7 @@ from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.usage.track import try_record_usage
 
 from .schemas import (
     CustomerAgentTaskInput,
@@ -129,7 +130,18 @@ class CustomerAgentService:
                 templates=template_text,
             )
 
-            ai_response = await self._call_llm(user_prompt)
+            ai_response, usage_meta = await self._call_llm(user_prompt)
+
+            # Record LLM usage for cost tracking
+            if usage_meta:
+                try_record_usage(
+                    db,
+                    user_id=user.id if user else None,
+                    event_type="agent:customer",
+                    model=usage_meta.get("model"),
+                    tokens_in=usage_meta.get("tokens_in", 0),
+                    tokens_out=usage_meta.get("tokens_out", 0),
+                )
 
             # Build workflow suggestions from templates
             suggestions = [
@@ -183,8 +195,12 @@ class CustomerAgentService:
                 processing_time_ms=processing_time,
             )
 
-    async def _call_llm(self, user_prompt: str) -> str:
-        """Call the LLM provider (Anthropic preferred, OpenAI fallback)."""
+    async def _call_llm(self, user_prompt: str) -> tuple[str, dict]:
+        """Call the LLM provider (Anthropic preferred, OpenAI fallback).
+
+        Returns (text, usage_meta) where usage_meta contains model/tokens
+        for cost tracking.  usage_meta is empty on failure.
+        """
         if self.anthropic_client and "claude" in self.model:
             try:
                 response = await self.anthropic_client.messages.create(
@@ -193,7 +209,11 @@ class CustomerAgentService:
                     system=SYSTEM_PROMPT,
                     messages=[{"role": "user", "content": user_prompt}],
                 )
-                return response.content[0].text
+                return response.content[0].text, {
+                    "model": response.model,
+                    "tokens_in": response.usage.input_tokens,
+                    "tokens_out": response.usage.output_tokens,
+                }
             except Exception as e:
                 log.warning("Anthropic call failed, trying OpenAI fallback: %s", e)
 
@@ -207,7 +227,12 @@ class CustomerAgentService:
                         {"role": "user", "content": user_prompt},
                     ],
                 )
-                return response.choices[0].message.content or ""
+                usage = getattr(response, "usage", None)
+                return response.choices[0].message.content or "", {
+                    "model": response.model,
+                    "tokens_in": getattr(usage, "prompt_tokens", 0),
+                    "tokens_out": getattr(usage, "completion_tokens", 0),
+                }
             except Exception as e:
                 log.error("OpenAI call also failed: %s", e)
 
@@ -216,7 +241,7 @@ class CustomerAgentService:
             "Based on the available information, I'd recommend exploring our workflow templates "
             "in the Agent Marketplace. Our team can also provide personalized guidance — "
             "feel free to reach out to support@capecontrol.ai."
-        )
+        ), {}
 
     def _extract_next_steps(
         self, response: str, templates: list

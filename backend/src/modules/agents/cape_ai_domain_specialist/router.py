@@ -15,7 +15,7 @@ from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
 from backend.src.db import models
 from backend.src.db.models import Task, User
-from backend.src.modules.payments.enforcement import enforce_execution_limit
+from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget
 from ..executor import AgentExecutor, TaskCreate, TaskResponse
 from .schemas import DomainSpecialistTaskInput, DomainSpecialistTaskOutput
 from .service import DomainSpecialistService
@@ -49,6 +49,7 @@ async def ask_domain_specialist(
     current_user: User = Depends(get_current_user),
     service: DomainSpecialistService = Depends(get_domain_service),
     _quota=Depends(enforce_execution_limit),
+    _budget=Depends(enforce_platform_budget),
 ):
     """Execute a domain-specialized task by enqueuing it in the agent executor."""
     task_data = TaskCreate(

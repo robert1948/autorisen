@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
-from backend.src.modules.payments.enforcement import enforce_execution_limit
+from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget
 from backend.src.orchestrator import run_engine
 
 from . import schemas
@@ -26,6 +26,7 @@ def run_flow(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
     _quota=Depends(enforce_execution_limit),
+    _budget=Depends(enforce_platform_budget),
 ) -> schemas.FlowRunResponse:
     if not payload.tool_calls:
         raise HTTPException(

@@ -25,6 +25,9 @@ from .models import (
     PublishAgentRequest,
     MarketplaceAnalytics,
     AgentValidationResult,
+    AgentRating as AgentRatingSchema,
+    RateAgentRequest,
+    AgentRatingSummary,
 )
 
 
@@ -77,7 +80,18 @@ class MarketplaceService:
                 dl_sub, models.Agent.id == dl_sub.c.agent_id
             ).order_by(desc(func.coalesce(dl_sub.c.dl_count, 0)))
         elif request.sort_by == "rating":
-            query = query.order_by(desc(models.Agent.updated_at))
+            # Sub-select: average rating per agent from user reviews
+            rating_sub = (
+                select(
+                    models.AgentRating.agent_id,
+                    func.avg(models.AgentRating.rating).label("avg_rating"),
+                )
+                .group_by(models.AgentRating.agent_id)
+                .subquery()
+            )
+            query = query.outerjoin(
+                rating_sub, models.Agent.id == rating_sub.c.agent_id
+            ).order_by(desc(func.coalesce(rating_sub.c.avg_rating, 0)))
         elif request.sort_by == "name":
             query = query.order_by(models.Agent.name)
         elif request.sort_by == "updated":
@@ -479,6 +493,150 @@ class MarketplaceService:
         )
 
     # ------------------------------------------------------------------
+    # Agent ratings
+    # ------------------------------------------------------------------
+
+    async def rate_agent(
+        self, agent_id: str, user_id: str, request: RateAgentRequest
+    ) -> AgentRatingSchema:
+        """Create or update a user's rating for an agent."""
+        # Verify agent exists
+        agent = self.db.scalar(
+            select(models.Agent).where(models.Agent.id == agent_id)
+        )
+        if not agent:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Agent '{agent_id}' not found",
+            )
+
+        # Upsert: check for existing rating by this user
+        existing = self.db.scalar(
+            select(models.AgentRating).where(
+                and_(
+                    models.AgentRating.user_id == user_id,
+                    models.AgentRating.agent_id == agent_id,
+                )
+            )
+        )
+
+        if existing:
+            existing.rating = request.rating
+            existing.review = request.review
+            self.db.commit()
+            self.db.refresh(existing)
+            row = existing
+        else:
+            row = models.AgentRating(
+                user_id=user_id,
+                agent_id=agent_id,
+                rating=request.rating,
+                review=request.review,
+            )
+            self.db.add(row)
+            self.db.commit()
+            self.db.refresh(row)
+
+        return AgentRatingSchema(
+            agent_id=row.agent_id,
+            user_id=row.user_id,
+            rating=row.rating,
+            review=row.review,
+            created_at=row.created_at,
+            helpful_votes=row.helpful_votes,
+        )
+
+    async def get_agent_ratings(
+        self, agent_id: str, page: int = 1, limit: int = 20
+    ) -> dict:
+        """Return paginated ratings for an agent with summary stats."""
+        # Summary
+        summary_row = self.db.execute(
+            select(
+                func.count(models.AgentRating.id).label("total"),
+                func.coalesce(func.avg(models.AgentRating.rating), 0).label("avg"),
+            ).where(models.AgentRating.agent_id == agent_id)
+        ).one()
+
+        total = summary_row.total
+        avg_rating = round(float(summary_row.avg), 2)
+
+        # Distribution
+        dist_rows = self.db.execute(
+            select(
+                models.AgentRating.rating,
+                func.count(models.AgentRating.id).label("cnt"),
+            )
+            .where(models.AgentRating.agent_id == agent_id)
+            .group_by(models.AgentRating.rating)
+        ).all()
+        distribution = {str(i): 0 for i in range(1, 6)}
+        for dr in dist_rows:
+            distribution[str(dr.rating)] = dr.cnt
+
+        # Paginated reviews
+        offset = (page - 1) * limit
+        rows = (
+            self.db.scalars(
+                select(models.AgentRating)
+                .where(models.AgentRating.agent_id == agent_id)
+                .order_by(desc(models.AgentRating.created_at))
+                .offset(offset)
+                .limit(limit)
+            )
+            .all()
+        )
+
+        ratings = [
+            AgentRatingSchema(
+                agent_id=r.agent_id,
+                user_id=r.user_id,
+                rating=r.rating,
+                review=r.review,
+                created_at=r.created_at,
+                helpful_votes=r.helpful_votes,
+            )
+            for r in rows
+        ]
+
+        return {
+            "summary": AgentRatingSummary(
+                agent_id=agent_id,
+                average_rating=avg_rating,
+                total_ratings=total,
+                distribution=distribution,
+            ),
+            "ratings": ratings,
+            "page": page,
+            "pages": (total + limit - 1) // limit if total > 0 else 1,
+        }
+
+    async def delete_agent_rating(self, agent_id: str, user_id: str) -> bool:
+        """Delete a user's rating for an agent. Returns True if deleted."""
+        row = self.db.scalar(
+            select(models.AgentRating).where(
+                and_(
+                    models.AgentRating.user_id == user_id,
+                    models.AgentRating.agent_id == agent_id,
+                )
+            )
+        )
+        if not row:
+            return False
+        self.db.delete(row)
+        self.db.commit()
+        return True
+
+    def _get_average_rating(self, agent_id: str) -> Optional[float]:
+        """Return the average user rating for an agent, or None."""
+        result = self.db.scalar(
+            select(func.avg(models.AgentRating.rating)).where(
+                models.AgentRating.agent_id == agent_id
+            )
+        )
+        return round(float(result), 2) if result else None
+
+    # ------------------------------------------------------------------
     # Download-count helpers
     # ------------------------------------------------------------------
 
@@ -634,7 +792,7 @@ class MarketplaceService:
             category=AgentCategory(manifest.get("category", "productivity")),
             author=manifest.get("author", "Unknown"),
             version=version.version,
-            rating=manifest.get("rating"),
+            rating=self._get_average_rating(agent.id),
             downloads=download_count,
             tags=manifest.get("tags", []),
             published_at=version.published_at or datetime.utcnow(),

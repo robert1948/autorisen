@@ -511,6 +511,44 @@ class AgentInstallation(Base):
     agent = relationship("Agent")
 
 
+class AgentRating(Base):
+    """User rating and review for a marketplace agent."""
+
+    __tablename__ = "agent_ratings"
+    __table_args__ = (
+        UniqueConstraint("user_id", "agent_id", name="uq_agent_ratings_user_agent"),
+    )
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    agent_id = Column(
+        String(36),
+        ForeignKey("agents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    rating = Column(Integer, nullable=False)  # 1-5
+    review = Column(Text, nullable=True)
+    helpful_votes = Column(Integer, nullable=False, server_default="0")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user = relationship("User")
+    agent = relationship("Agent")
+
+
 class Task(Base):
     """Agent task execution tracking."""
 

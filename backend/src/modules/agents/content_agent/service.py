@@ -14,6 +14,7 @@ from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.usage.track import try_record_usage
 
 from .schemas import ContentAgentTaskInput, ContentAgentTaskOutput, ContentPiece
 
@@ -107,7 +108,18 @@ class ContentAgentService:
                 context_info=context_info,
             )
 
-            ai_response = await self._call_llm(user_prompt)
+            ai_response, usage_meta = await self._call_llm(user_prompt)
+
+            # Record LLM usage for cost tracking
+            if usage_meta:
+                try_record_usage(
+                    db,
+                    user_id=user.id if user else None,
+                    event_type="agent:content",
+                    model=usage_meta.get("model"),
+                    tokens_in=usage_meta.get("tokens_in", 0),
+                    tokens_out=usage_meta.get("tokens_out", 0),
+                )
 
             # Build content piece
             word_count = len(ai_response.split())
@@ -166,8 +178,11 @@ class ContentAgentService:
                 processing_time_ms=processing_time,
             )
 
-    async def _call_llm(self, user_prompt: str) -> str:
-        """Call the LLM provider."""
+    async def _call_llm(self, user_prompt: str) -> tuple[str, dict]:
+        """Call the LLM provider.
+
+        Returns (text, usage_meta) for cost tracking.
+        """
         if self.anthropic_client and "claude" in self.model:
             try:
                 response = await self.anthropic_client.messages.create(
@@ -176,7 +191,11 @@ class ContentAgentService:
                     system=SYSTEM_PROMPT,
                     messages=[{"role": "user", "content": user_prompt}],
                 )
-                return response.content[0].text
+                return response.content[0].text, {
+                    "model": response.model,
+                    "tokens_in": response.usage.input_tokens,
+                    "tokens_out": response.usage.output_tokens,
+                }
             except Exception as e:
                 log.warning("Anthropic call failed: %s", e)
 
@@ -190,7 +209,12 @@ class ContentAgentService:
                         {"role": "user", "content": user_prompt},
                     ],
                 )
-                return response.choices[0].message.content or ""
+                usage = getattr(response, "usage", None)
+                return response.choices[0].message.content or "", {
+                    "model": response.model,
+                    "tokens_in": getattr(usage, "prompt_tokens", 0),
+                    "tokens_out": getattr(usage, "completion_tokens", 0),
+                }
             except Exception as e:
                 log.error("OpenAI call also failed: %s", e)
 
@@ -199,7 +223,7 @@ class ContentAgentService:
             "For the best results, our AI content engine leverages advanced language models "
             "to create engaging, audience-appropriate content. Please ensure your API keys "
             "are configured for full content generation capabilities."
-        )
+        ), {}
 
     def _extract_title(self, content: str, query: str) -> str:
         """Extract or generate a title from the content."""

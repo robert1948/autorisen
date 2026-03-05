@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     # MFA encryption (Fernet key — generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
     mfa_encryption_key: Optional[str] = Field(default=None, alias="MFA_ENCRYPTION_KEY")
 
+    # Platform-wide monthly AI spending cap in USD.  0 = unlimited.
+    max_monthly_ai_spend_usd: float = Field(
+        default=500.0, alias="MAX_MONTHLY_AI_SPEND_USD"
+    )
+
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
 

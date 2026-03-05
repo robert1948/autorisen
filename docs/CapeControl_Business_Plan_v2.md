@@ -1,6 +1,6 @@
 # CapeControl Business Plan
 
-**Concise Version — Updated February 2026**
+**Concise Version — Updated March 2026**
 
 ---
 
@@ -21,7 +21,7 @@ CapeControl is a workflow-first AI platform that helps compliance-heavy small bu
 
 **Stage:** MVP live with enterprise-grade auth, 6 domain AI agents, payment infrastructure, and mature deployment pipeline. Core evidence layer (RAG, citation trace, evidence export) in active development for regulated SMB beta.
 
-**Goal:** $150K–$500K ARR in 18–24 months via 100–400 active regulated SMB users, plus services revenue and early mid-market pilots once evidence completeness is proven.
+**Goal:** R2.8M–R9.3M ARR (~$150K–$500K USD) in 18–24 months via 100–400 active regulated SMB users, plus services revenue and early mid-market pilots once evidence completeness is proven.
 
 **Expansion Path:** After wedge validation (trust + retention + evidence completeness), expand into mid-market regulated ops with stronger reliability posture and optional hybrid/on-prem delivery.
 
@@ -116,34 +116,38 @@ Regulated SMBs and operational teams face rising pressure to adopt AI while main
 
 ### Revenue Model: Freemium → Pro → Enterprise + Services
 
-| Tier | Price | Includes |
+| Tier | Price (ZAR) | Includes |
 |---|---|---|
-| **Free** | $0 | Limited runs, single agent, basic onboarding |
-| **Pro** | $29–$79/user/month | Quota-based runs, full agent access, evidence exports |
-| **Enterprise** | Custom | Governance controls, reliability posture, optional deployment requirements |
+| **Free** | R0/mo | 3 AI agents, 50 executions/mo, community support, basic integrations |
+| **Pro** | R529/mo (R4,990/yr) | 50 AI agents, 2,000 executions/mo, all integrations, priority email support (24h), advanced analytics |
+| **Enterprise** | R1,799/mo (R17,190/yr) | 500 AI agents, 8,000 executions/mo, custom integrations, priority account support (4h SLA), SSO & advanced security |
 | **Services** | Project-based | Onboarding, workflow/capsule setup, compliance assistance |
 
 ### Projections (Assumption-Based)
 
+All figures in ZAR. Exchange rate assumption: R18.50/USD.
+
 | | Conservative | Optimistic |
 |---|---|---|
-| **Year 1** | 50–150 users → $100–250K ARR | 200–400 users → $300–500K ARR |
-| **Year 2** | 200–500 users → $500K–1.2M ARR | 500–1,000 users → $1.5–3M ARR |
+| **Year 1** | 50–150 users → R1.8M–R4.6M ARR | 200–400 users → R5.5M–R9.3M ARR |
+| **Year 2** | 200–500 users → R9.3M–R22M ARR | 500–1,000 users → R28M–R55M ARR |
 
 **Key assumptions:**
 - Monthly churn modelled at 5–7% (typical early-stage SMB SaaS)
 - Services revenue = 20–30% of total in Year 1 (de-risks platform revenue)
-- Blended ARPU ~$45/user/month after free tier dilution
+- Blended ARPU ~R830/user/month after free tier dilution (~$45 USD)
+- Plan limits enforced server-side: Free 50 exec/mo, Pro 2,000 exec/mo, Enterprise 8,000 exec/mo
 
 ### Unit Economics
 
 - **Gross margin target:** 55–65% initially (AI inference + embedding costs compress margins until caching/tiering mature); target 70%+ at scale
-- **CAC:** Low — founder-led content marketing + pilot cohorts; target <$200 blended CAC
-- **LTV:** At $45 ARPU and 6% monthly churn, ~$750 LTV → LTV:CAC >3x required before scaling spend
+- **CAC:** Low — founder-led content marketing + pilot cohorts; target <R3,700 (~$200 USD) blended CAC
+- **LTV:** At R830 ARPU and 6% monthly churn, ~R13,830 LTV (~$750 USD) → LTV:CAC >3x required before scaling spend
+- **Per-execution AI cost:** ~R0.12–R0.20 blended (Claude 3.5 Haiku primary). Enterprise at full utilisation: R1,632/mo AI cost on R1,799 revenue — margin-positive at all realistic utilisation levels
 
 ### Funding / Runway
 
-Bootstrap initially. Optional $1–3M raise to accelerate growth, security posture, and certifications (SOC 2 trajectory) once demand signal is validated through:
+Bootstrap initially. Optional R18M–R55M (~$1–3M USD) raise to accelerate growth, security posture, and certifications (SOC 2 trajectory) once demand signal is validated through:
 - 30+ paying users with >3 month retention
 - Evidence completeness confirmed by pilot customers
 - Positive unit economics on Pro tier
@@ -215,4 +219,4 @@ This plan preserves the existing technical foundation while sharpening focus on 
 
 ---
 
-*Last updated: February 2026*
+*Last updated: March 2026*

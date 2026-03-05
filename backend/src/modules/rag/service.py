@@ -14,6 +14,8 @@ from sqlalchemy.orm import Session
 
 from backend.src.core.config import get_settings
 from backend.src.db import models as app_models
+from backend.src.modules.usage.track import try_record_usage
+from backend.src.modules.usage.llm_cache import llm_cache
 
 from . import embeddings
 from .models import ApprovedDocument, DocumentChunk, RAGQueryLog
@@ -241,12 +243,23 @@ class RAGService:
             )
         elif request.include_response:
             # 5. Generate LLM response with retrieved context
-            response_text = await self._generate_response(
+            response_text, llm_usage_meta = await self._generate_response(
                 query=request.query,
                 citations=citations,
                 grounded=grounded,
                 unsupported_policy=request.unsupported_policy,
             )
+
+            # Record LLM usage for cost tracking
+            if llm_usage_meta:
+                try_record_usage(
+                    db,
+                    user_id=user.id,
+                    event_type="agent:rag",
+                    model=llm_usage_meta.get("model"),
+                    tokens_in=llm_usage_meta.get("tokens_in", 0),
+                    tokens_out=llm_usage_meta.get("tokens_out", 0),
+                )
 
         # 6. Build evidence trace
         elapsed_ms = int((time.time() - t0) * 1000)
@@ -363,8 +376,11 @@ class RAGService:
         citations: List[Citation],
         grounded: bool,
         unsupported_policy: UnsupportedPolicy,
-    ) -> str:
-        """Generate an LLM response using retrieved context."""
+    ) -> Tuple[str, dict]:
+        """Generate an LLM response using retrieved context.
+
+        Returns (text, usage_meta) for cost tracking.
+        """
         system_prompt = self._build_system_prompt(grounded, unsupported_policy)
         user_prompt = self._build_user_prompt(query, citations)
 
@@ -431,14 +447,21 @@ class RAGService:
 
         return "\n".join(parts)
 
-    async def _call_anthropic(self, system_prompt: str, user_prompt: str) -> str:
-        """Call Anthropic Claude API."""
+    async def _call_anthropic(self, system_prompt: str, user_prompt: str) -> Tuple[str, dict]:
+        """Call Anthropic Claude API. Returns (text, usage_meta)."""
         from anthropic import AsyncAnthropic
+
+        # Check cache first
+        cache_key = llm_cache.make_key(self._model, system_prompt, user_prompt)
+        cached = llm_cache.get(cache_key)
+        if cached is not None:
+            log.debug("RAG Anthropic cache hit")
+            return cached
 
         settings = get_settings()
         api_key = self._anthropic_key or settings.anthropic_api_key
         if not api_key:
-            return "[Error: No Anthropic API key configured]"
+            return "[Error: No Anthropic API key configured]", {}
 
         client = AsyncAnthropic(api_key=api_key)
         try:
@@ -448,19 +471,34 @@ class RAGService:
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
             )
-            return resp.content[0].text if resp.content else ""
+            text = resp.content[0].text if resp.content else ""
+            usage_meta = {
+                "model": resp.model,
+                "tokens_in": resp.usage.input_tokens,
+                "tokens_out": resp.usage.output_tokens,
+            }
+            result = (text, usage_meta)
+            llm_cache.put(cache_key, result)
+            return result
         except Exception as exc:
             log.exception("Anthropic API error during RAG response")
-            return f"[Error generating response: {exc}]"
+            return f"[Error generating response: {exc}]", {}
 
-    async def _call_openai(self, system_prompt: str, user_prompt: str) -> str:
-        """Call OpenAI API."""
+    async def _call_openai(self, system_prompt: str, user_prompt: str) -> Tuple[str, dict]:
+        """Call OpenAI API. Returns (text, usage_meta)."""
         from openai import AsyncOpenAI
+
+        # Check cache first
+        cache_key = llm_cache.make_key(self._model, system_prompt, user_prompt)
+        cached = llm_cache.get(cache_key)
+        if cached is not None:
+            log.debug("RAG OpenAI cache hit")
+            return cached
 
         settings = get_settings()
         api_key = self._openai_key or settings.openai_api_key
         if not api_key:
-            return "[Error: No OpenAI API key configured]"
+            return "[Error: No OpenAI API key configured]", {}
 
         client = AsyncOpenAI(api_key=api_key)
         try:
@@ -472,10 +510,19 @@ class RAGService:
                     {"role": "user", "content": user_prompt},
                 ],
             )
-            return resp.choices[0].message.content or ""
+            text = resp.choices[0].message.content or ""
+            usage = getattr(resp, "usage", None)
+            usage_meta = {
+                "model": resp.model,
+                "tokens_in": getattr(usage, "prompt_tokens", 0),
+                "tokens_out": getattr(usage, "completion_tokens", 0),
+            }
+            result = (text, usage_meta)
+            llm_cache.put(cache_key, result)
+            return result
         except Exception as exc:
             log.exception("OpenAI API error during RAG response")
-            return f"[Error generating response: {exc}]"
+            return f"[Error generating response: {exc}]", {}
 
     def _log_query(
         self,

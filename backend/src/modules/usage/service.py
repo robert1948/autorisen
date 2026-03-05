@@ -11,7 +11,7 @@ from typing import Any, Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from backend.src.db.models import UsageLog, AgentRun, AuditEvent
+from backend.src.db.models import UsageLog, AgentRun, AuditEvent, Agent, AgentInstallation
 from backend.src.modules.rag.models import ApprovedDocument, RAGQueryLog
 
 log = logging.getLogger(__name__)
@@ -141,6 +141,18 @@ def get_usage_summary(
         )
     ).scalar_one()
 
+    # Agent counts — owned + installed
+    owned_agents = db.execute(
+        select(func.count(Agent.id)).where(Agent.owner_id == user_id)
+    ).scalar_one()
+    installed_agents = db.execute(
+        select(func.count(AgentInstallation.id)).where(
+            AgentInstallation.user_id == user_id,
+            AgentInstallation.status == "active",
+        )
+    ).scalar_one()
+    agent_count = owned_agents + installed_agents
+
     return {
         "api_calls_used": row.api_calls_used,
         "api_calls_limit": quotas["api_calls_limit"],
@@ -156,6 +168,9 @@ def get_usage_summary(
         "documents_count": documents_count,
         "rag_queries": rag_queries_count,
         "evidence_exports": evidence_exports_count,
+        # Agent utilisation
+        "agent_count": agent_count,
+        "max_agents": _limits.max_agents,
     }
 
 

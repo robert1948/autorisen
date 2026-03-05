@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from backend.src.db import models
 from backend.src.modules.chatkit import service as chatkit_service
 from backend.src.modules.flows.onboarding import update_task
+from backend.src.modules.usage.track import try_record_usage
 
 
 @dataclass
@@ -315,6 +316,17 @@ def execute(
             ) from exc
 
         current_thread_id = thread.id
+
+        # Record each tool invocation as a separate execution for quota accounting.
+        # The router-level enforce_execution_limit ran once for the whole request;
+        # this ensures the usage log accurately reflects per-tool-call costs.
+        try_record_usage(
+            db,
+            user_id=getattr(user, "id", None),
+            event_type="flow:tool_call",
+            detail={"tool": call.name, "flow_run_id": flow_run.id},
+        )
+
         steps.append(
             RunStep(
                 tool=call.name,

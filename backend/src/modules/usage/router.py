@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_session
 from backend.src.db.models import Subscription
-from backend.src.modules.auth.deps import get_verified_user
+from backend.src.modules.auth.deps import get_verified_user, require_roles
 
 from . import service
 
@@ -55,3 +55,30 @@ async def usage_summary(
         summary["period_end"] = (period_start + timedelta(days=30)).isoformat()
 
     return summary
+
+
+@router.get("/admin/costs")
+async def admin_cost_report(
+    _admin=Depends(require_roles("admin")),
+    db: Session = Depends(get_session),
+):
+    """Admin-only: per-user cost aggregation for the current month.
+
+    Returns a list of ``{user_id, total_calls, tokens_in, tokens_out,
+    cost_usd}`` sorted by cost descending.
+    """
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    rows = service.get_admin_cost_report(db, period_start=month_start)
+
+    # Compute platform total
+    total_cost = sum(r["cost_usd"] for r in rows)
+    total_calls = sum(r["total_calls"] for r in rows)
+
+    return {
+        "period_start": month_start.isoformat(),
+        "total_cost_usd": round(total_cost, 4),
+        "total_calls": total_calls,
+        "users": rows,
+    }

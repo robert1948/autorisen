@@ -14,6 +14,7 @@ from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
+from backend.src.modules.usage.track import try_record_usage
 
 from .schemas import FinanceAgentTaskInput, FinanceAgentTaskOutput, FinancialInsight
 from .knowledge_base import FinanceKnowledgeBase
@@ -108,7 +109,18 @@ class FinanceAgentService:
                 knowledge=knowledge_text,
             )
 
-            ai_response = await self._call_llm(user_prompt)
+            ai_response, usage_meta = await self._call_llm(user_prompt)
+
+            # Record LLM usage for cost tracking
+            if usage_meta:
+                try_record_usage(
+                    db,
+                    user_id=user.id if user else None,
+                    event_type="agent:finance",
+                    model=usage_meta.get("model"),
+                    tokens_in=usage_meta.get("tokens_in", 0),
+                    tokens_out=usage_meta.get("tokens_out", 0),
+                )
 
             # Generate insights based on analysis type
             insights = self._generate_insights(input_data.analysis_type, relevant_docs)
@@ -157,8 +169,11 @@ class FinanceAgentService:
                 processing_time_ms=processing_time,
             )
 
-    async def _call_llm(self, user_prompt: str) -> str:
-        """Call the LLM provider."""
+    async def _call_llm(self, user_prompt: str) -> tuple[str, dict]:
+        """Call the LLM provider.
+
+        Returns (text, usage_meta) for cost tracking.
+        """
         if self.anthropic_client and "claude" in self.model:
             try:
                 response = await self.anthropic_client.messages.create(
@@ -167,7 +182,11 @@ class FinanceAgentService:
                     system=SYSTEM_PROMPT,
                     messages=[{"role": "user", "content": user_prompt}],
                 )
-                return response.content[0].text
+                return response.content[0].text, {
+                    "model": response.model,
+                    "tokens_in": response.usage.input_tokens,
+                    "tokens_out": response.usage.output_tokens,
+                }
             except Exception as e:
                 log.warning("Anthropic call failed: %s", e)
 
@@ -181,7 +200,12 @@ class FinanceAgentService:
                         {"role": "user", "content": user_prompt},
                     ],
                 )
-                return response.choices[0].message.content or ""
+                usage = getattr(response, "usage", None)
+                return response.choices[0].message.content or "", {
+                    "model": response.model,
+                    "tokens_in": getattr(usage, "prompt_tokens", 0),
+                    "tokens_out": getattr(usage, "completion_tokens", 0),
+                }
             except Exception as e:
                 log.error("OpenAI call also failed: %s", e)
 
@@ -190,7 +214,7 @@ class FinanceAgentService:
             "your key financial metrics including cash flow ratios, profitability margins, "
             "and working capital position. Please provide specific financial data for a "
             "more detailed analysis."
-        )
+        ), {}
 
     def _generate_insights(
         self, analysis_type: Optional[str], docs: list
