@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_current_user
+from backend.src.modules.payments.enforcement import enforce_execution_limit
 
 from . import schemas, service
 
@@ -157,6 +158,7 @@ async def create_event(
     payload: schemas.EventCreate,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
+    _quota=Depends(enforce_execution_limit),
 ):
     """Send a message to a thread and get an AI response."""
     thread = service.get_thread(db, user=user, thread_id=thread_id)

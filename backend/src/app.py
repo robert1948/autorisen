@@ -154,11 +154,12 @@ dev_dashboard_router = _safe_import(
     "backend.src.modules.dev.router",
     "router",
 )
-subscriptions_router = _safe_import(
-    "subscriptions",
-    "backend.src.modules.subscriptions.router",
-    "router",
-)
+# subscriptions module deprecated — use payments module instead (2026-03-05)
+# subscriptions_router = _safe_import(
+#     "subscriptions",
+#     "backend.src.modules.subscriptions.router",
+#     "router",
+# )
 rag_router = _safe_import(
     "rag",
     "backend.src.modules.rag.router",
@@ -851,9 +852,7 @@ def create_app() -> FastAPI:
     if dev_dashboard_router:
         # → /api/dev/profile, /api/dev/api-keys, /api/dev/usage
         api.include_router(dev_dashboard_router, prefix="/dev")
-    if subscriptions_router:
-        # → /api/subscriptions/plans, /current, /subscribe, /cancel, etc.
-        api.include_router(subscriptions_router)
+    # subscriptions_router deprecated — use /api/payments/* instead (2026-03-05)
     if rag_router:
         # → /api/rag/documents, /api/rag/query, /api/rag/health
         api.include_router(rag_router)

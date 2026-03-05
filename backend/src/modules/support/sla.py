@@ -20,7 +20,7 @@ PLAN_RESPONSE_HOURS: dict[str, int] = {
 PLAN_RESPONSE_LABELS: dict[str, str] = {
     "free": "48 hours (Community)",
     "pro": "24 hours (Priority)",
-    "enterprise": "4 hours (Dedicated SLA)",
+    "enterprise": "4 hours (Priority Account SLA)",
 }
 
 DEFAULT_PLAN = "free"

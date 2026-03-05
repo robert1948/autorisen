@@ -9,7 +9,6 @@ cycle.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from backend.src.core.mailer import MailerError, send_email
 

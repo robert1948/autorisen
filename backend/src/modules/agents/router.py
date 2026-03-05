@@ -8,7 +8,6 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, WebSocket
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import get_session
@@ -22,6 +21,10 @@ from backend.src.modules.marketplace.models import (
 from backend.src.modules.marketplace.service import MarketplaceService
 from backend.src.modules.onboarding import service as onboarding_service
 from backend.src.modules.ops import service as ops_service
+from backend.src.modules.payments.enforcement import (
+    enforce_agent_limit,
+    enforce_execution_limit,
+)
 from backend.src.modules.support import service as support_service
 
 from . import schemas
@@ -128,6 +131,7 @@ def create_agent(
     payload: schemas.AgentCreate,
     owner: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
+    _quota=Depends(enforce_agent_limit),
 ) -> schemas.AgentResponse:
     existing = db.scalar(select(models.Agent).where(models.Agent.slug == payload.slug))
     if existing:
@@ -287,6 +291,7 @@ def launch_agent(
     payload: schemas.AgentRunCreate,
     owner: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
+    _quota=Depends(enforce_execution_limit),
 ) -> schemas.AgentRunResponse:
     agent, _version = _get_published_agent(db, slug)
     run = models.AgentRun(
@@ -332,6 +337,7 @@ def run_agent_action(
     payload: schemas.AgentActionRequest,
     owner: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
+    _quota=Depends(enforce_execution_limit),
 ) -> schemas.AgentActionResponse:
     agent, _version = _get_published_agent(db, slug)
     run = db.scalar(
@@ -457,6 +463,7 @@ async def create_task(
     task_data: TaskCreate,
     owner: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
+    _quota=Depends(enforce_execution_limit),
 ) -> TaskResponse:
     """Execute an agent task."""
 

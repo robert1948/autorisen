@@ -18,16 +18,13 @@ import threading
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
 from backend.src.modules.payments.constants import (
-    PLANS_BY_ID,
     get_plan_by_id,
 )
 

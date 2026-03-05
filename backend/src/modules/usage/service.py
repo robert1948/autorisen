@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
 
@@ -83,12 +83,7 @@ def record_usage(
 
 # ── Read / aggregation ────────────────────────────────────────────────────────
 
-# Plan-level quota definitions (calls per billing period)
-PLAN_QUOTAS: dict[str, dict[str, int]] = {
-    "free": {"api_calls_limit": 50, "storage_limit_mb": 512},
-    "pro": {"api_calls_limit": 2_000, "storage_limit_mb": 5_120},
-    "enterprise": {"api_calls_limit": 50_000, "storage_limit_mb": 51_200},
-}
+from backend.src.modules.payments.constants import get_plan_limits as _get_plan_limits
 
 
 def get_usage_summary(
@@ -111,7 +106,11 @@ def get_usage_summary(
         )
     ).one()
 
-    quotas = PLAN_QUOTAS.get(plan_id, PLAN_QUOTAS["free"])
+    _limits = _get_plan_limits(plan_id)
+    quotas = {
+        "api_calls_limit": _limits.max_executions_per_month,
+        "storage_limit_mb": _limits.storage_limit_mb,
+    }
 
     # ── Real usage metrics from related tables ────────────────────────────
     agent_runs_count = db.execute(

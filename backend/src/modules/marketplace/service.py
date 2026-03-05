@@ -6,8 +6,8 @@ installation, analytics, and validation.
 """
 
 import semver
-from datetime import datetime
-from typing import Dict, Any
+from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy import select, func, desc, and_, or_
 from sqlalchemy.orm import Session, selectinload
@@ -64,10 +64,19 @@ class MarketplaceService:
 
         # Apply sorting
         if request.sort_by == "popularity":
-            # TODO: Add download count/popularity metrics
-            query = query.order_by(desc(models.Agent.updated_at))
+            # Sub-select: count installations per agent
+            dl_sub = (
+                select(
+                    models.AgentInstallation.agent_id,
+                    func.count(models.AgentInstallation.id).label("dl_count"),
+                )
+                .group_by(models.AgentInstallation.agent_id)
+                .subquery()
+            )
+            query = query.outerjoin(
+                dl_sub, models.Agent.id == dl_sub.c.agent_id
+            ).order_by(desc(func.coalesce(dl_sub.c.dl_count, 0)))
         elif request.sort_by == "rating":
-            # TODO: Add rating aggregation
             query = query.order_by(desc(models.Agent.updated_at))
         elif request.sort_by == "name":
             query = query.order_by(models.Agent.name)
@@ -89,6 +98,10 @@ class MarketplaceService:
             .all()
         )
 
+        # Compute download counts for the result set
+        agent_ids = [a.id for a in agents]
+        download_map = self._get_download_counts(agent_ids)
+
         # Convert to listings
         listings = []
         for agent in agents:
@@ -97,7 +110,9 @@ class MarketplaceService:
                 None,
             )
             if published_version and published_version.manifest:
-                listing = self._agent_to_listing(agent, published_version)
+                listing = self._agent_to_listing(
+                    agent, published_version, download_count=download_map.get(agent.id, 0)
+                )
                 listings.append(listing)
 
         # Calculate pagination
@@ -404,8 +419,8 @@ class MarketplaceService:
             for result in recent_results
         ]
 
-        # TODO: Get trending agents based on download/usage metrics
-        trending_agents = []
+        # Trending: agents with most installs in the last 30 days
+        trending_agents = await self.get_trending_agents(limit=5)
 
         return MarketplaceAnalytics(
             total_agents=total_agents,
@@ -463,12 +478,153 @@ class MarketplaceService:
             performance_score=performance_score,
         )
 
+    # ------------------------------------------------------------------
+    # Download-count helpers
+    # ------------------------------------------------------------------
+
+    def _get_download_counts(
+        self, agent_ids: List[str]
+    ) -> Dict[str, int]:
+        """Return {agent_id: install_count} for the given IDs."""
+        if not agent_ids:
+            return {}
+        rows = self.db.execute(
+            select(
+                models.AgentInstallation.agent_id,
+                func.count(models.AgentInstallation.id).label("cnt"),
+            )
+            .where(models.AgentInstallation.agent_id.in_(agent_ids))
+            .group_by(models.AgentInstallation.agent_id)
+        ).fetchall()
+        return {r.agent_id: r.cnt for r in rows}
+
+    def _get_download_count(self, agent_id: str) -> int:
+        """Return the total installation count for a single agent."""
+        return self.db.scalar(
+            select(func.count(models.AgentInstallation.id)).where(
+                models.AgentInstallation.agent_id == agent_id
+            )
+        ) or 0
+
+    # ------------------------------------------------------------------
+    # Featured
+    # ------------------------------------------------------------------
+
+    async def get_featured_agents(self, limit: int = 6) -> List[AgentListing]:
+        """Return agents marked as featured by the marketplace team."""
+        stmt = (
+            select(models.Agent)
+            .join(models.AgentVersion)
+            .where(
+                and_(
+                    models.Agent.is_featured == True,  # noqa: E712
+                    models.AgentVersion.status == AgentStatus.PUBLISHED.value,
+                    models.Agent.visibility == "public",
+                )
+            )
+            .order_by(desc(models.Agent.updated_at))
+            .limit(limit)
+        )
+
+        agents = (
+            self.db.scalars(stmt.options(selectinload(models.Agent.versions)))
+            .unique()
+            .all()
+        )
+
+        agent_ids = [a.id for a in agents]
+        download_map = self._get_download_counts(agent_ids)
+
+        listings: List[AgentListing] = []
+        for agent in agents:
+            pv = next(
+                (v for v in agent.versions if v.status == AgentStatus.PUBLISHED.value),
+                None,
+            )
+            if pv and pv.manifest:
+                listings.append(
+                    self._agent_to_listing(
+                        agent, pv, download_count=download_map.get(agent.id, 0)
+                    )
+                )
+        return listings
+
+    # ------------------------------------------------------------------
+    # Trending
+    # ------------------------------------------------------------------
+
+    async def get_trending_agents(
+        self, limit: int = 10, days: int = 30
+    ) -> List[AgentListing]:
+        """Return agents ranked by installation count in the last *days* days."""
+        cutoff = datetime.utcnow() - timedelta(days=days)
+
+        # Sub-select: installations since cutoff
+        recent_dl = (
+            select(
+                models.AgentInstallation.agent_id,
+                func.count(models.AgentInstallation.id).label("recent_count"),
+            )
+            .where(models.AgentInstallation.installed_at >= cutoff)
+            .group_by(models.AgentInstallation.agent_id)
+            .subquery()
+        )
+
+        stmt = (
+            select(models.Agent)
+            .join(models.AgentVersion)
+            .join(recent_dl, models.Agent.id == recent_dl.c.agent_id)
+            .where(
+                and_(
+                    models.AgentVersion.status == AgentStatus.PUBLISHED.value,
+                    models.Agent.visibility == "public",
+                )
+            )
+            .order_by(desc(recent_dl.c.recent_count))
+            .limit(limit)
+        )
+
+        agents = (
+            self.db.scalars(stmt.options(selectinload(models.Agent.versions)))
+            .unique()
+            .all()
+        )
+
+        agent_ids = [a.id for a in agents]
+        download_map = self._get_download_counts(agent_ids)
+
+        listings: List[AgentListing] = []
+        for agent in agents:
+            pv = next(
+                (v for v in agent.versions if v.status == AgentStatus.PUBLISHED.value),
+                None,
+            )
+            if pv and pv.manifest:
+                listings.append(
+                    self._agent_to_listing(
+                        agent, pv, download_count=download_map.get(agent.id, 0)
+                    )
+                )
+        return listings
+
+    # ------------------------------------------------------------------
+    # Conversion helpers
+    # ------------------------------------------------------------------
+
     def _agent_to_listing(
-        self, agent: models.Agent, version: models.AgentVersion
+        self,
+        agent: models.Agent,
+        version: models.AgentVersion,
+        *,
+        download_count: Optional[int] = None,
     ) -> AgentListing:
         """Convert database models to AgentListing."""
 
         manifest = version.manifest or {}
+
+        # Use supplied count, fall back to a single-agent query
+        if download_count is None:
+            download_count = self._get_download_count(agent.id)
 
         return AgentListing(
             id=agent.id,
@@ -478,12 +634,13 @@ class MarketplaceService:
             category=AgentCategory(manifest.get("category", "productivity")),
             author=manifest.get("author", "Unknown"),
             version=version.version,
-            rating=4.5,  # TODO: Calculate from actual ratings
-            downloads=manifest.get("downloads", 0),
+            rating=manifest.get("rating"),
+            downloads=download_count,
             tags=manifest.get("tags", []),
             published_at=version.published_at or datetime.utcnow(),
             updated_at=agent.updated_at,
             thumbnail_url=manifest.get("thumbnail_url"),
+            is_featured=bool(agent.is_featured),
         )
 
     def _agent_to_detail(

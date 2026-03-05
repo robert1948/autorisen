@@ -47,7 +47,7 @@ class SubscriptionOut(BaseModel):
 # --- Subscribe / change plan ---
 
 class SubscribeRequest(BaseModel):
-    plan_id: str = Field(..., pattern=r"^(starter|growth|enterprise)$")
+    plan_id: str = Field(..., pattern=r"^(free|pro|enterprise)$")
 
 
 class SubscribeResponse(BaseModel):

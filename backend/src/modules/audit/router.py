@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user
-from backend.src.modules.rag.evidence import EvidencePack, generate_evidence_pack
+from backend.src.modules.rag.evidence import generate_evidence_pack
 
 from .pdf_renderer import render_evidence_pdf
 

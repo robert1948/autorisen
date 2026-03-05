@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
@@ -123,8 +124,6 @@ def _format_amount(amount: Decimal | float | str) -> str:
     dec = Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     return f"{dec:.2f}"
 
-
-import re
 
 _PAYFAST_SAFE_RE = re.compile(r"[^a-zA-Z0-9 \-]")
 

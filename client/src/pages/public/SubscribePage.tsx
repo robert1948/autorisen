@@ -21,49 +21,43 @@ const SubscribePage: React.FC = () => {
   const pricingTiers: PricingTier[] = [
     {
       name: 'Free',
-      price: '$0',
+      price: 'R0',
       period: 'forever',
       description: 'Perfect for getting started with AI automation',
       features: [
-        '5 AI agents',
-        '100 monthly executions',
-        'Basic integrations',
+        '3 AI agents',
+        '50 monthly executions',
         'Community support',
-        'Standard templates'
+        'Basic integrations'
       ],
       cta: 'Get Started Free'
     },
     {
       name: 'Pro',
-      price: billingPeriod === 'monthly' ? '$29' : '$24',
+      price: billingPeriod === 'monthly' ? 'R529' : 'R416',
       period: billingPeriod === 'monthly' ? 'per month' : 'per month, billed yearly',
-      description: 'Ideal for individuals and small teams',
+      description: 'Scale your automation with more power',
       features: [
         '50 AI agents',
-        '2,500 monthly executions',
+        '2,000 monthly executions',
         'All integrations',
-        'Priority support',
-        'Advanced templates',
-        'Custom workflows',
-        'Analytics dashboard'
+        'Priority email support (24h)',
+        'Advanced analytics'
       ],
       cta: 'Start Pro Trial',
       popular: true
     },
     {
       name: 'Enterprise',
-      price: billingPeriod === 'monthly' ? '$99' : '$79',
+      price: billingPeriod === 'monthly' ? 'R1,799' : 'R1,433',
       period: billingPeriod === 'monthly' ? 'per month' : 'per month, billed yearly',
-      description: 'For teams that need advanced features and support',
+      description: 'Maximum power for large teams',
       features: [
-        'Unlimited AI agents',
-        'Unlimited executions',
+        '500 AI agents',
+        '8,000 monthly executions',
         'Custom integrations',
-        'Dedicated support',
-        'White-label options',
-        'Advanced security',
-        'SLA guarantees',
-        'On-premise deployment'
+        'Priority account support (4h SLA)',
+        'SSO & advanced security'
       ],
       cta: 'Contact Sales'
     }

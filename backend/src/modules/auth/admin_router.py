@@ -17,15 +17,14 @@ Admin registration (invite-only):
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_db
 from backend.src.modules.auth.csrf import require_csrf_token
-from backend.src.modules.auth.deps import get_verified_user, require_roles
+from backend.src.modules.auth.deps import require_roles
 from backend.src.modules.auth.rate_limiter import auth_rate_limit
 from backend.src.modules.auth.schemas import (
     AdminInviteIn,
@@ -164,8 +163,23 @@ async def create_invite(
         log.exception("admin_invite_error: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to create invite.")
 
-    # TODO: send invite email with raw_token
-    # The invite link format: {frontend_origin}/auth/register?invite={raw_token}&email={target_email}
+    # Send invite email
+    try:
+        from backend.src.services.emailer import send_admin_invite_email
+
+        invited_by_name = getattr(current_user, "first_name", None) or "an administrator"
+        send_admin_invite_email(
+            payload.target_email,
+            invite_token=raw_token,
+            invited_by=invited_by_name,
+        )
+    except Exception as exc:
+        log.warning(
+            "admin_invite_email_failed target=%s: %s",
+            payload.target_email,
+            exc,
+        )
+
     log.info(
         "admin_invite_created id=%s target=%s by=%s",
         invite.id,

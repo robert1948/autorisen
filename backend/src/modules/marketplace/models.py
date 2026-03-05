@@ -62,12 +62,13 @@ class AgentListing(BaseModel):
     category: AgentCategory = Field(..., description="Agent category")
     author: str = Field(..., description="Agent author/publisher")
     version: str = Field(..., description="Current published version")
-    rating: float = Field(..., description="Average user rating", ge=0.0, le=5.0)
+    rating: Optional[float] = Field(None, description="Average user rating", ge=0.0, le=5.0)
     downloads: int = Field(..., description="Total download count")
     tags: List[str] = Field(default_factory=list, description="Agent tags")
     published_at: datetime = Field(..., description="Publication date")
     updated_at: datetime = Field(..., description="Last update date")
     thumbnail_url: Optional[str] = Field(None, description="Agent thumbnail image")
+    is_featured: bool = Field(False, description="Whether the agent is featured")
 
 
 class AgentDetail(AgentListing):

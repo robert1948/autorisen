@@ -5,7 +5,6 @@ Core business logic for the Customer Agent including LLM integration,
 goal analysis, workflow suggestion, and personalized recommendations.
 """
 
-import json
 import time
 import logging
 from typing import Any, Dict, List, Optional

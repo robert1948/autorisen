@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.src.db.session import get_session
+from backend.src.db.models import Subscription
 from backend.src.modules.auth.deps import get_verified_user
 
 from . import service
-from backend.src.modules.subscriptions import service as sub_service
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ async def usage_summary(
 ):
     """Return aggregated usage for the current billing period."""
     user_id: str = current_user.id  # type: ignore[union-attr]
-    sub = sub_service.get_subscription(db, user_id)
+    sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
     plan_id = sub.plan_id if sub else "free"
     period_start = _period_start_for_subscription(sub)
 

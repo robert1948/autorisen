@@ -13,6 +13,7 @@ from backend.src.core.config import get_settings
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
 from backend.src.db.models import User
+from backend.src.modules.payments.enforcement import enforce_execution_limit
 from .schemas import CapeAIGuideTaskInput, CapeAIGuideTaskOutput
 from .service import CapeAIGuideService
 
@@ -43,6 +44,7 @@ async def ask_cape_ai_guide(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
     service: CapeAIGuideService = Depends(get_cape_ai_service),
+    _quota=Depends(enforce_execution_limit),
 ):
     """
     Submit a question to the CapeAI Guide agent.

@@ -6,7 +6,7 @@ import hashlib
 import logging
 import math
 import re
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 log = logging.getLogger(__name__)
 

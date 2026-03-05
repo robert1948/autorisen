@@ -259,3 +259,60 @@ def send_beta_invite_email(
         )
     else:
         logger.info("Beta invite email sent to %s", email)
+
+
+def send_admin_invite_email(
+    email: str,
+    *,
+    invite_token: str,
+    invited_by: str = "an administrator",
+) -> None:
+    """Send an admin invite email with a registration link. Soft-fail."""
+
+    from backend.src.core.config import settings
+
+    frontend = settings.frontend_origin or "https://cape-control.com"
+    invite_url = (
+        f"{frontend}/auth/register?invite={invite_token}&email={email}"
+    )
+
+    subject = "You've been invited to CapeControl"
+    text_body = (
+        f"Hi,\n\n"
+        f"You've been invited to join CapeControl by {invited_by}.\n\n"
+        f"Use the link below to create your account:\n{invite_url}\n\n"
+        f"This invite expires in 48 hours.\n\n"
+        "— CapeControl Team"
+    )
+    html_body = f"""
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+      <h2 style="color:#1a1a2e;">You're invited to CapeControl</h2>
+      <p>Hi,</p>
+      <p>You've been invited to join <strong>CapeControl</strong> by {invited_by}.</p>
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{invite_url}"
+           style="background:#4f46e5;color:#fff;padding:14px 28px;
+                  border-radius:8px;text-decoration:none;font-weight:bold;">
+          Accept Invite &amp; Register
+        </a>
+      </p>
+      <p style="font-size:13px;color:#666;">
+        Or paste this URL in your browser:<br>
+        <code style="word-break:break-all;">{invite_url}</code>
+      </p>
+      <p style="font-size:13px;color:#888;">This invite expires in 48 hours.</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <p style="font-size:12px;color:#999;">— CapeControl Platform</p>
+    </div>
+    """
+
+    try:
+        send_email(
+            subject=subject, to=[email], text_body=text_body, html_body=html_body
+        )
+    except MailerError:
+        logger.warning(
+            "Admin invite email delivery failed", extra={"email": email}
+        )
+    else:
+        logger.info("Admin invite email sent to %s", email)

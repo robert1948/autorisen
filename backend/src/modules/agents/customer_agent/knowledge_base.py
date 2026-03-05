@@ -160,10 +160,10 @@ KNOWLEDGE_DOCUMENTS = [
     KnowledgeDocument(
         id="plan-comparison",
         title="Choosing the Right Plan",
-        content="Free plan: 5 agents, 100 executions/month, basic integrations. "
-        "Pro plan: 50 agents, 2500 executions/month, all integrations, priority support. "
-        "Enterprise: unlimited agents, custom integrations, dedicated support, SLA guarantees. "
-        "All plans include access to the Agent Marketplace and community support.",
+        content="Free plan: 3 agents, 50 executions/month, 512 MB storage, basic integrations, community support (48h response). "
+        "Pro plan (R529/mo): 50 agents, 2000 executions/month, 5 GB storage, all integrations, priority email support (24h response), advanced analytics. "
+        "Enterprise plan (R1799/mo): 500 agents, 8000 executions/month, 50 GB storage, custom integrations, priority account support (4h SLA), SSO & advanced security. "
+        "All plans include access to the Agent Marketplace, Google/LinkedIn OAuth, and full security stack.",
         category="billing",
         tags=["plan", "pricing", "subscription", "upgrade", "billing"],
     ),

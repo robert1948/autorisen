@@ -192,13 +192,13 @@ async def seed_documents(dry_run: bool = False, fallback_embeddings: bool = Fals
 
             # Check source file exists
             if not source.exists():
-                print(f"       ⚠ Source file not found — SKIPPED")
+                print("       ⚠ Source file not found — SKIPPED")
                 errors += 1
                 continue
 
             # Check not already seeded
             if document_already_seeded(db, system_user.id, title):
-                print(f"       ✓ Already seeded — SKIPPED")
+                print("       ✓ Already seeded — SKIPPED")
                 skipped += 1
                 continue
 
@@ -207,7 +207,7 @@ async def seed_documents(dry_run: bool = False, fallback_embeddings: bool = Fals
             print(f"       Content: {len(content):,} chars")
 
             if dry_run:
-                print(f"       → Would upload (dry run)")
+                print("       → Would upload (dry run)")
                 seeded += 1
                 continue
 

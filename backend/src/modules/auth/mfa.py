@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from backend.src.core.crypto import decrypt_secret, encrypt_secret
 from backend.src.db.models import MfaFactor
 from backend.src.db.session import get_db
 from backend.src.modules.auth.deps import get_verified_user
@@ -147,7 +148,7 @@ async def mfa_setup(
     factor = MfaFactor(
         user_id=user["id"],
         type="totp",
-        secret_encrypted=secret,  # TODO: encrypt at rest with app-level key
+        secret_encrypted=encrypt_secret(secret),
     )
     db.add(factor)
     db.commit()
@@ -184,7 +185,8 @@ async def mfa_verify(
             detail="No MFA factor found. Call /mfa/setup first.",
         )
 
-    totp = pyotp.TOTP(factor.secret_encrypted)
+    plaintext_secret = decrypt_secret(factor.secret_encrypted)
+    totp = pyotp.TOTP(plaintext_secret)
     if not totp.verify(payload.code, valid_window=1):
         log.warning("mfa_verify_failed user=%s enrolment=%s", user["id"], is_enrolment)
         return MfaVerifyOut(verified=False, message="Invalid code. Please try again.")
@@ -213,7 +215,8 @@ async def mfa_disable(
             detail="MFA is not enabled.",
         )
 
-    totp = pyotp.TOTP(factor.secret_encrypted)
+    plaintext_secret = decrypt_secret(factor.secret_encrypted)
+    totp = pyotp.TOTP(plaintext_secret)
     if not totp.verify(payload.code, valid_window=1):
         return MfaVerifyOut(verified=False, message="Invalid code. MFA not disabled.")
 

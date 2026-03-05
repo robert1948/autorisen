@@ -420,6 +420,7 @@ class Agent(Base):
     name = Column(String(160), nullable=False)
     description = Column(Text, nullable=True)
     visibility = Column(String(32), nullable=False, server_default="private")
+    is_featured = Column(Boolean, nullable=False, server_default="0")
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
 
+    # MFA encryption (Fernet key — generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+    mfa_encryption_key: Optional[str] = Field(default=None, alias="MFA_ENCRYPTION_KEY")
+
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
 
@@ -100,6 +103,13 @@ class Settings(BaseSettings):
         If ACCESS_TOKEN_EXPIRE_MINUTES is provided and ACCESS_TOKEN_TTL_MINUTES isn't,
         treat EXPIRE as the canonical TTL to stay backward-compatible.
         """
+        # ── SEC-001: reject insecure SECRET_KEY in production ──
+        if self.env == "prod" and self.secret_key.startswith("dev-"):
+            raise ValueError(
+                "SECRET_KEY must not start with 'dev-' when ENV=prod. "
+                "Set a strong, random SECRET_KEY for production."
+            )
+
         expire_minutes = self.access_token_expire_minutes
         if expire_minutes is not None and "ACCESS_TOKEN_TTL_MINUTES" not in os.environ:
             object.__setattr__(self, "access_token_ttl_minutes", int(expire_minutes))

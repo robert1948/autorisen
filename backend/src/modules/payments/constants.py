@@ -54,28 +54,28 @@ PRO_MONTHLY_PRODUCT = PayFastProduct(
     code=PRO_MONTHLY,
     amount_zar=Decimal("529.00"),
     item_name="CapeControl Pro - Monthly",
-    item_description="CapeControl Pro plan - 50 AI agents 2500 monthly executions all integrations priority support",
+    item_description="CapeControl Pro plan - 50 AI agents 2000 monthly executions all integrations priority support",
 )
 
 ENTERPRISE_MONTHLY_PRODUCT = PayFastProduct(
     code=ENTERPRISE_MONTHLY,
     amount_zar=Decimal("1799.00"),
     item_name="CapeControl Enterprise - Monthly",
-    item_description="CapeControl Enterprise plan - unlimited agents custom integrations dedicated support SLA guarantees",
+    item_description="CapeControl Enterprise plan - 500 agents 8000 monthly executions custom integrations priority account support 4h SLA SSO",
 )
 
 PRO_YEARLY_PRODUCT = PayFastProduct(
     code=PRO_YEARLY,
     amount_zar=Decimal("4990.00"),
     item_name="CapeControl Pro - Yearly",
-    item_description="CapeControl Pro plan annual - Save 20 percent 50 AI agents 2500 monthly executions all integrations",
+    item_description="CapeControl Pro plan annual - Save 20 percent 50 AI agents 2000 monthly executions all integrations",
 )
 
 ENTERPRISE_YEARLY_PRODUCT = PayFastProduct(
     code=ENTERPRISE_YEARLY,
     amount_zar=Decimal("17190.00"),
     item_name="CapeControl Enterprise - Yearly",
-    item_description="CapeControl Enterprise plan annual - Save 20 percent unlimited agents custom integrations dedicated support",
+    item_description="CapeControl Enterprise plan annual - Save 20 percent 500 agents 8000 monthly executions custom integrations priority account support 4h SLA",
 )
 
 
@@ -106,7 +106,7 @@ FREE_PLAN = PlanDefinition(
     product_code_yearly=None,
     features=[
         "3 AI agents",
-        "100 monthly executions",
+        "50 monthly executions",
         "Community support",
         "Basic integrations",
     ],
@@ -123,9 +123,9 @@ PRO_PLAN = PlanDefinition(
     product_code_yearly=PRO_YEARLY,
     features=[
         "50 AI agents",
-        "2,500 monthly executions",
+        "2,000 monthly executions",
         "All integrations",
-        "Priority email support",
+        "Priority email support (24h)",
         "Advanced analytics",
     ],
 )
@@ -133,17 +133,16 @@ PRO_PLAN = PlanDefinition(
 ENTERPRISE_PLAN = PlanDefinition(
     id="enterprise",
     name="Enterprise",
-    description="Unlimited power for large teams",
+    description="Maximum power for large teams",
     price_monthly_zar=Decimal("1799.00"),
     price_yearly_zar=Decimal("17190.00"),
     product_code_monthly=ENTERPRISE_MONTHLY,
     product_code_yearly=ENTERPRISE_YEARLY,
     features=[
-        "Unlimited AI agents",
-        "Unlimited executions",
+        "500 AI agents",
+        "8,000 monthly executions",
         "Custom integrations",
-        "Dedicated account manager",
-        "SLA guarantees",
+        "Priority account support (4h SLA)",
         "SSO & advanced security",
     ],
     is_enterprise=True,
@@ -165,12 +164,13 @@ def get_plan_by_id(plan_id: str) -> PlanDefinition | None:
 class PlanLimits:
     max_agents: int
     max_executions_per_month: int
+    storage_limit_mb: int = 512
 
 
 PLAN_LIMITS: Dict[str, PlanLimits] = {
-    "free": PlanLimits(max_agents=3, max_executions_per_month=100),
-    "pro": PlanLimits(max_agents=50, max_executions_per_month=2500),
-    "enterprise": PlanLimits(max_agents=999999, max_executions_per_month=999999),
+    "free": PlanLimits(max_agents=3, max_executions_per_month=50, storage_limit_mb=512),
+    "pro": PlanLimits(max_agents=50, max_executions_per_month=2000, storage_limit_mb=5_120),
+    "enterprise": PlanLimits(max_agents=500, max_executions_per_month=8000, storage_limit_mb=51_200),
 }
 
 

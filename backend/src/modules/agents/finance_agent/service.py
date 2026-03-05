@@ -7,7 +7,7 @@ financial analysis, compliance checking, and forecasting.
 
 import time
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from anthropic import AsyncAnthropic
 from openai import AsyncOpenAI

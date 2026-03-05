@@ -10,7 +10,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend.src.db import models
-from .plans import PLANS_BY_ID, get_plan
+from .plans import get_plan
 
 log = logging.getLogger(__name__)
 

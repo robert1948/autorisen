@@ -232,10 +232,14 @@ const ChatThread = ({
         await eventsQuery.refetch();
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to send message.";
+        const upgradeUrl = (err as { upgradeUrl?: string })?.upgradeUrl;
+        const errorText = upgradeUrl
+          ? `${message} [Upgrade →](${upgradeUrl})`
+          : message;
         setOptimisticMessages((prev) =>
           prev.map((msg) =>
             msg.clientId === optimistic.clientId
-              ? { ...msg, status: "error", error: message }
+              ? { ...msg, status: "error", error: errorText }
               : msg,
           ),
         );

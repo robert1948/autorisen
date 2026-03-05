@@ -336,7 +336,6 @@ class AgentExecutor:
             from backend.src.modules.rag.policy import (
                 check_response_grounding,
                 enforce_policy,
-                apply_policy_to_response,
             )
 
             grounded = check_response_grounding(result)

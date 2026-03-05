@@ -128,7 +128,7 @@ def test_billing_cycle_queues_reminder_email(app):
     db = SessionLocal()
     try:
         user = _seed_user(db, email_prefix="reminder")
-        sub = _seed_subscription(db, user, plan_id="pro", status="active", period_end_offset_days=-2)
+        _seed_subscription(db, user, plan_id="pro", status="active", period_end_offset_days=-2)
 
         run_billing_cycle(db)
 
@@ -161,7 +161,7 @@ def test_billing_cycle_queues_reminder_email(app):
 def test_billing_cycle_cancels_after_grace_period(app):
     """A past_due subscription beyond the grace period should be cancelled."""
     from backend.src.db.session import SessionLocal
-    from backend.src.modules.billing.scheduler import run_billing_cycle, GRACE_PERIOD_DAYS
+    from backend.src.modules.billing.scheduler import GRACE_PERIOD_DAYS, run_billing_cycle
 
     db = SessionLocal()
     try:
@@ -239,7 +239,7 @@ def test_billing_cycle_idempotent_email_jobs(app):
     db = SessionLocal()
     try:
         user = _seed_user(db, email_prefix="idempotent")
-        sub = _seed_subscription(db, user, plan_id="pro", status="active", period_end_offset_days=-2)
+        _seed_subscription(db, user, plan_id="pro", status="active", period_end_offset_days=-2)
 
         # Run twice
         run_billing_cycle(db)
@@ -278,7 +278,7 @@ def test_billing_cycle_skips_active_subscriptions(app):
         user = _seed_user(db, email_prefix="active")
         sub = _seed_subscription(db, user, plan_id="pro", status="active", period_end_offset_days=15)
 
-        stats = run_billing_cycle(db)
+        run_billing_cycle(db)
 
         db.expire_all()
         sub = db.query(models.Subscription).filter(models.Subscription.id == sub.id).first()

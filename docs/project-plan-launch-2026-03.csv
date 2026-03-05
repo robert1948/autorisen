@@ -20,7 +20,7 @@ INF-007,Verify cape-control.com in Google Search Console,engineering,done,P0,202
 INF-008,Submit sitemap to Google Search Console,engineering,done,P0,2026-03-01,Phase 0,SEO,"11 pages discovered — Status: Success",INF-007,"Search Console → Sitemaps shows Success"
 INF-009,Request homepage indexing,engineering,done,P0,2026-03-01,Phase 0,SEO,"Added to priority crawl queue",INF-007,"Search Console → URL Inspection"
 INF-010,Publish Google OAuth to production,engineering,done,P0,2026-03-01,Phase 0,Auth,"Audience tab → In production",—,"Google Cloud → Audience shows 'In production'"
-INF-011,Submit Google branding verification,engineering,done,P0,2026-03-01,Phase 0,Auth,"All 3 checks passed; under Trust & Safety review (3–5 days first contact; up to 4–6 weeks)",INF-007,"Google Cloud → Verification centre"
+INF-011,Submit Google branding verification,engineering,done,P0,2026-03-01,Phase 0,Auth,"Submitted 2026-03-01; approved 2026-03-03. Brand verification complete for project 53776689754.",INF-007,"Google Cloud → Verification centre"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 1: PRE-LAUNCH HARDENING (Week of Mar 2–6)
@@ -120,7 +120,7 @@ SCALE-007,Hire contract engineer #1,Robert,not-started,P2,2026-06-01,Phase 8,Tea
 # ──────────────────────────────────────────────────────────────
 # KEY MILESTONES & METRICS
 # ──────────────────────────────────────────────────────────────
-KPI-001,Google branding verification approved,management,in-progress,P0,2026-03-15,Milestone,Auth,"Submitted 2026-03-01. Expected 3–5 days for first contact. Up to 4–6 weeks for full approval.",INF-011,"Google Cloud → Verification centre shows Approved"
+KPI-001,Google branding verification approved,management,done,P0,2026-03-03,Milestone,Auth,"Approved 2026-03-03 (2 days turnaround). Project 53776689754 brand-verified. No unverified-app warning shown to users.",INF-011,"Google Cloud → Verification centre shows Approved"
 KPI-002,First 100 LinkedIn post impressions,Robert,in-progress,P0,2026-03-04,Milestone,LinkedIn,"Baseline metric from first 2 posts. LI-W1-MON: 17+ impressions within minutes of posting.",LI-W1-MON,"LinkedIn analytics"
 KPI-003,500+ impressions per post average,Robert,not-started,P1,2026-03-20,Milestone,LinkedIn,"Week 3 target. Indicates content resonance.",LI-005,"LinkedIn analytics"
 KPI-004,First 10 beta registrations,Robert,not-started,P0,2026-03-27,Milestone,GTM,"From LinkedIn + direct outreach.",BETA-002,"cape-control.com registration count"

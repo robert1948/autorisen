@@ -112,10 +112,17 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   let message = `Request failed with status ${response.status}`;
+  let errorCode: string | undefined;
+  let upgradeUrl: string | undefined;
   try {
     const data = await response.json();
     if (typeof data?.detail === "string") {
       message = data.detail;
+    } else if (data?.detail?.message) {
+      // Structured error from plan enforcement (429)
+      message = data.detail.message;
+      errorCode = data.detail.code;
+      upgradeUrl = data.detail.upgrade_url;
     } else if (data?.detail) {
       message = JSON.stringify(data.detail);
     }
@@ -123,8 +130,14 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     console.warn("Failed to parse error response", err);
   }
 
-  const error = new Error(message) as Error & { status?: number };
+  const error = new Error(message) as Error & {
+    status?: number;
+    code?: string;
+    upgradeUrl?: string;
+  };
   error.status = response.status;
+  error.code = errorCode;
+  error.upgradeUrl = upgradeUrl;
   throw error;
 }
 

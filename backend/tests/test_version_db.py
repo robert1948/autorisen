@@ -1,4 +1,3 @@
-import os
 
 import sqlalchemy as sa
 

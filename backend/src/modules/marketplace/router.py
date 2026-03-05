@@ -191,11 +191,8 @@ async def get_trending_agents(
     """
     Get trending agents based on recent downloads and ratings.
     """
-    # TODO: Implement proper trending algorithm
-    request = MarketplaceSearchRequest(sort_by="popularity", limit=limit)
     service = MarketplaceService(db)
-    result = await service.search_agents(request)
-    return result.agents
+    return await service.get_trending_agents(limit=limit)
 
 
 @router.get("/featured", response_model=list[AgentListing])
@@ -203,11 +200,8 @@ async def get_featured_agents(db: Session = Depends(get_session)) -> list[AgentL
     """
     Get featured agents curated by the marketplace team.
     """
-    # TODO: Add featured flag to agent model
-    request = MarketplaceSearchRequest(sort_by="rating", limit=6)
     service = MarketplaceService(db)
-    result = await service.search_agents(request)
-    return result.agents
+    return await service.get_featured_agents(limit=6)
 
 
 # Legacy endpoints for backward compatibility

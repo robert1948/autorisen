@@ -208,6 +208,26 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | BP-CAPSULE-001 | Design and implement workflow capsule engine | engineering | done | P1 | 2026-02-24 |
 | BP-TENANT-001 | Implement tenant isolation and granular RBAC | engineering | done | P1 | 2026-02-24 |
 | BP-AUDIT-001 | Implement audit export and evidence pack generation | engineering | done | P1 | 2026-02-24 |
+| PAY-010 | Complete PayFast ITN ingestion + transaction logging | engineering | done | P0 | 2026-03-02 |
+| PAY-011 | Payment return page UX — success polling + cancel context | engineering | done | P0 | 2026-03-02 |
+| PAY-012 | Subscription management UI — real billing data | engineering | done | P0 | 2026-03-02 |
+| PAY-013 | Free → Pro conversion flow — upgrade prompts + plan awareness | engineering | done | P0 | 2026-03-02 |
+| PAY-014 | Automated billing cycle + missed payment logging + reminder emails | engineering | done | P0 | 2026-03-04 |
+| PROD-001 | Connect marketplace to real agent registry API | engineering | done | P0 | 2026-03-01 |
+| PROD-003 | Connect onboarding checklist to real backend API | engineering | done | P0 | 2026-03-01 |
+| PROD-004 | Evidence pack PDF export (audit module + CompliancePage export button) | engineering | done | P0 | 2026-03-01 |
+| PROD-007 | Dashboard V2 — wire stat cards to real usage data | engineering | done | P0 | 2026-03-01 |
+| HARD-005 | Add dedicated privacy policy page | engineering | done | P1 | 2026-02-28 |
+| HARD-007 | Add Sentry error tracking | engineering | done | P1 | 2026-02-28 |
+| HARD-008 | Implement database backup schedule | engineering | done | P1 | 2026-02-28 |
+| SEC-001 | Add prod secret_key startup guard | engineering | done | P0 | 2026-03-04 |
+| SEC-002 | Encrypt MFA TOTP secrets at rest | engineering | done | P0 | 2026-03-04 |
+| SEC-003 | Wire admin invite email delivery | engineering | done | P1 | 2026-03-04 |
+| QUAL-001 | Add smoke tests for untested modules | engineering | done | P1 | 2026-03-04 |
+| QUAL-002 | Remove hardcoded marketplace 4.5 star rating | engineering | done | P1 | 2026-03-04 |
+| QUAL-003 | Update stale deployment checklist | docs | done | P2 | 2026-03-04 |
+| FEAT-MKTPLACE-001 | Marketplace download counts + trending algorithm | engineering | done | P2 | 2026-03-04 |
+| FEAT-MKTPLACE-002 | Featured agents admin flag | engineering | done | P2 | 2026-03-04 |
 | BP-STRIPE-001 | Integrate Stripe for international payment rails | engineering | todo | P2 |  |
 | BP-BETA-001 | Launch closed beta with 10–20 compliance-heavy SMBs | management | done | P0 | 2026-02-24 |
 | BP-MONITOR-001 | Implement monitoring and alerting infrastructure (runbooks + backups) | engineering | done | P1 | 2026-02-24 |

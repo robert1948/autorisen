@@ -6,10 +6,7 @@ board packs, customer due-diligence requests, and regulatory snapshots.
 
 from __future__ import annotations
 
-import io
 import logging
-from datetime import datetime, timezone
-from typing import Optional
 
 from fpdf import FPDF
 

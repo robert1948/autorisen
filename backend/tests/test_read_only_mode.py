@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 
 
 def test_read_only_blocks_writes(client, monkeypatch):
