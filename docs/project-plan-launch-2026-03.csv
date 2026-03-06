@@ -3,9 +3,9 @@ id,task,owner,status,priority,target_date,phase,category,notes,dependencies,veri
 # CapeControl Launch Project Plan — March 2026
 # Entity: Cape Craft Projects CC (VAT 4270105119)
 # Owner: Robert Kleyn
-# Platform: v0.2.5 (Build 544)
+# Platform: v0.2.5 (Build 545)
 # Generated: 2026-03-01
-# Updated: 2026-03-05
+# Updated: 2026-03-06
 # ============================================================
 
 # ──────────────────────────────────────────────────────────────
@@ -101,6 +101,9 @@ PROD-009,Pricing system hardening — zero-loss economics,engineering,done,P0,20
 PROD-010,Agent rating system + marketplace integration,engineering,done,P1,2026-03-05,Phase 6,Backend,"AgentRating DB model with unique user+agent constraint. 3 API endpoints: POST/GET/DELETE /marketplace/agents/{id}/ratings. Real average ratings in marketplace listings. StarRating + AgentRatingPanel frontend components. Deployed Build 544 (646812c8).",PROD-001,"POST /api/marketplace/agents/{id}/ratings → 201"
 PROD-011,Cost control suite — 5 critical fixes,engineering,done,P0,2026-03-05,Phase 6,Backend,"Fix 1: try_record_usage() helper wired into all 8 agent services (customer/dev/finance/content/guide/specialist/rag/capsule). Fix 2: platform spending circuit breaker (MAX_MONTHLY_AI_SPEND_USD config + enforce_platform_budget Depends on 7 routers → HTTP 503). Fix 3: GET /api/usage/admin/costs admin endpoint with per-user breakdown. Fix 4: per-tool-call usage recording in run_engine.py flow orchestrator. Fix 5: LLM response cache with TTL eviction (LLM_CACHE_TTL_SECONDS=300, LLM_CACHE_MAX_SIZE=512) wired into RAG service. 28 new tests. Deployed Build 544 (646812c8).",—,"173/173 tests passing"
 PROD-012,Usage dashboard enhancements,engineering,done,P1,2026-03-05,Phase 6,Frontend,"UsageProgressCard: execution + agent progress bars with colour thresholds (green/amber/red). Upgrade CTA button when usage >80%. useUsageSummary hook extended with agentCount/maxAgents fields. Deployed Build 544 (646812c8).",PROD-007,"Dashboard shows progress bars + upgrade prompt"
+PROD-013,9-gap AI cost-efficiency mandate (G1–G9),engineering,done,P0,2026-03-06,Phase 6,Backend,"Audited all 9 LLM-calling services against cost-efficiency mandate. Implemented: (G1) try_record_usage on all services (G2) enforce_platform_budget on all routers (G3) LLM cache on RAG (G4) multi-tool accounting in run_engine (G5) admin cost dashboard (G6) enforce_execution_limit on all endpoints (G7) input validation via input_guard (G8) sliding window on chat history (G9) model downgrade to Haiku default. 47 tests in test_cost_efficiency_mandate.py.",PROD-011,"make codex-test — 266 passed"
+PROD-014,Advanced cost optimization suite (Gaps A–J),engineering,done,P0,2026-03-06,Phase 6,Backend,"10 advanced optimizations: (A) Anthropic prompt caching on all 9 call sites — cache_control ephemeral (B) model_router.py — complexity-based Haiku/Sonnet selection (C) budget_alerts.py — 50%/80%/95% threshold alerting with cooldown (D) conversation summarization — extractive summary of dropped messages (E) semantic_cache.py — embedding similarity cache (cosine ≥0.92) (F) batch_api.py — Anthropic/OpenAI batch client for 50% savings (G) token_counter.py — tiktoken cl100k_base counting (H) input_sanitiser.py — HTML strip + PII redaction + signature removal (I) reranker.py — hybrid BM25+cosine re-ranking (J) per-user circuit breaker — MAX_USER_MONTHLY_SPEND_USD=$50. 46 tests in test_advanced_cost_optimization.py. Deployed Build 545 (db7e14fe).",PROD-013,"make codex-test — 266 passed"
+PROD-015,Customer AI agent instructional video script,engineering,done,P1,2026-03-06,Phase 6,Content,"3:45 video script (docs/VIDEO_SCRIPT_AI_AGENT_CUSTOMER_USE.md). 7 scenes: dashboard overview → marketplace browse → agent details/permissions → launch agent → execute action → results/evidence → security recap. Committed (bd34c38c).",—,"docs/VIDEO_SCRIPT_AI_AGENT_CUSTOMER_USE.md exists"
 
 # ──────────────────────────────────────────────────────────────
 # PHASE 7: PAYMENTS & CONVERSION (Apr–May)
@@ -116,7 +119,7 @@ PAY-014,First 5 paying customers,Robert,not-started,P0,2026-04-30,Phase 7,GTM,"C
 # ──────────────────────────────────────────────────────────────
 SCALE-001,Stripe integration for international payments,engineering,not-started,P2,2026-06-01,Phase 8,Payments,"USD/EUR/GBP payment rails for non-ZAR customers. Business Plan target: Q3 2026.",BP-STRIPE-001,"Stripe test payment succeeds"
 SCALE-002,pgvector migration for production RAG,engineering,not-started,P1,2026-05-01,Phase 8,Backend,"Move from SQLite vector store to PostgreSQL pgvector for production-grade RAG.",BP-RAG-001,"RAG queries hit pgvector"
-SCALE-003,Re-enable disabled test suite,engineering,in-progress,P1,2026-05-01,Phase 8,Quality,"173 tests passing as of 2026-03-05 (up from 65 on 2026-03-03). Added 28 cost-control tests + 11 agent-rating tests + previous additions. Remaining tests in tests_disabled/ need review and migration.",HARD-006,"make codex-test — all tests pass"
+SCALE-003,Re-enable disabled test suite,engineering,in-progress,P1,2026-05-01,Phase 8,Quality,"266 tests passing as of 2026-03-06 (up from 173 on 2026-03-05). Added 93 new tests: 47 cost-efficiency mandate + 46 advanced cost optimization. Remaining tests in tests_disabled/ need review and migration.",HARD-006,"make codex-test — all tests pass"
 SCALE-004,Security penetration test,engineering,not-started,P1,2026-06-01,Phase 8,Security,"Third-party security assessment before mid-market push. Budget: ~R37,000.",—,"Pentest report received"
 SCALE-005,SOC 2 readiness assessment,management,not-started,P2,2026-08-01,Phase 8,Security,"Begin SOC 2 Type I preparation. Budget: ~R93,000. Required for mid-market enterprise buyers.",—,"Assessment report received"
 SCALE-006,Content marketing system (blog / case studies),Robert,not-started,P2,2026-05-15,Phase 8,GTM,"Publish 2 case studies from beta users. Set up /blog route or external blog (Hashnode/Substack).",BETA-006,"2 case studies published"
