@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 
 import { features } from "./config/features";
@@ -15,60 +15,62 @@ import {
   MvpKnowledgeBase,
 } from "./pages/mvp/MvpPages";
 
-// Public
+// Public — HomePage is eagerly loaded (landing page / FCP critical)
 import HomePage from "./pages/public/HomePage";
 import Home from "./pages/Home";
-import Welcome from "./pages/public/WelcomePage";
-import About from "./pages/public/AboutPage";
-import Subscribe from "./pages/public/SubscribePage";
-import DeveloperInfo from "./pages/public/DeveloperInfoPage";
-import CustomerInfo from "./pages/public/CustomerInfoPage";
-import TermsAndConditions from "./pages/public/TermsAndConditionsPage";
-import DeveloperTerms from "./pages/public/DeveloperTermsPage";
-import PrivacyPolicy from "./pages/public/PrivacyPolicyPage";
 
-// Auth pages / flows
-import Register from "./pages/auth/RegisterPage";
-import ForgotPassword from "./pages/auth/ForgotPasswordPage";
-import ResetPassword from "./pages/auth/ResetPasswordPage";
-import SocialCallback from "./pages/auth/SocialCallbackPage";
-import VerifyEmail from "./pages/public/VerifyEmailPage";
+// Lazy-loaded public pages
+const Welcome = lazy(() => import("./pages/public/WelcomePage"));
+const About = lazy(() => import("./pages/public/AboutPage"));
+const Subscribe = lazy(() => import("./pages/public/SubscribePage"));
+const DeveloperInfo = lazy(() => import("./pages/public/DeveloperInfoPage"));
+const CustomerInfo = lazy(() => import("./pages/public/CustomerInfoPage"));
+const TermsAndConditions = lazy(() => import("./pages/public/TermsAndConditionsPage"));
+const DeveloperTerms = lazy(() => import("./pages/public/DeveloperTermsPage"));
+const PrivacyPolicy = lazy(() => import("./pages/public/PrivacyPolicyPage"));
+
+// Auth pages / flows (lazy)
+const Register = lazy(() => import("./pages/auth/RegisterPage"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPasswordPage"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPasswordPage"));
+const SocialCallback = lazy(() => import("./pages/auth/SocialCallbackPage"));
+const VerifyEmail = lazy(() => import("./pages/public/VerifyEmailPage"));
 
 import { useAuth } from "./features/auth/AuthContext";
 
-// Onboarding pages
-import OnboardingCustomer from "./pages/onboarding/OnboardingCustomerPage";
-import OnboardingDeveloper from "./pages/onboarding/OnboardingDeveloperPage";
-import OnboardingGuide from "./pages/onboarding/OnboardingGuidePage";
-import OnboardingChecklistPage from "./pages/onboarding/OnboardingChecklistPage";
-import OnboardingProfilePage from "./pages/onboarding/OnboardingProfilePage";
-import OnboardingWelcome from "./pages/onboarding/Welcome";
-import OnboardingProfile from "./pages/onboarding/Profile";
-import OnboardingChecklist from "./pages/onboarding/Checklist";
-import OnboardingTrust from "./pages/onboarding/Trust";
+// Onboarding pages (lazy)
+const OnboardingCustomer = lazy(() => import("./pages/onboarding/OnboardingCustomerPage"));
+const OnboardingDeveloper = lazy(() => import("./pages/onboarding/OnboardingDeveloperPage"));
+const OnboardingGuide = lazy(() => import("./pages/onboarding/OnboardingGuidePage"));
+const OnboardingChecklistPage = lazy(() => import("./pages/onboarding/OnboardingChecklistPage"));
+const OnboardingProfilePage = lazy(() => import("./pages/onboarding/OnboardingProfilePage"));
+const OnboardingWelcome = lazy(() => import("./pages/onboarding/Welcome"));
+const OnboardingProfile = lazy(() => import("./pages/onboarding/Profile"));
+const OnboardingChecklist = lazy(() => import("./pages/onboarding/Checklist"));
+const OnboardingTrust = lazy(() => import("./pages/onboarding/Trust"));
 
-// App pages
-import Dashboard from "./pages/app/DashboardPage";
-import CreateProjectPage from "./pages/app/CreateProjectPage";
-import ProjectDetailPage from "./pages/app/ProjectDetailPage";
-import Marketplace from "./pages/app/MarketplacePage";
-import Agents from "./pages/app/AgentsPage";
-import Developer from "./pages/app/DeveloperPage";
-import Settings from "./pages/app/SettingsPage";
-import Billing from "./pages/app/BillingPage";
-import Checkout from "./pages/app/CheckoutPage";
-import CheckoutSuccess from "./pages/app/CheckoutSuccessPage";
-import CheckoutCancel from "./pages/app/CheckoutCancelPage";
-import Pricing from "./pages/app/PricingPage";
-import ChatConsole from "./pages/app/ChatConsolePage";
-import CompliancePage from "./pages/app/CompliancePage";
-import LogoTestPage from "./pages/help/LogoTestPage";
-import SunbirdPilotMobile from "./pages/app/SunbirdPilotMobilePage";
+// App pages (lazy — behind auth gate)
+const Dashboard = lazy(() => import("./pages/app/DashboardPage"));
+const CreateProjectPage = lazy(() => import("./pages/app/CreateProjectPage"));
+const ProjectDetailPage = lazy(() => import("./pages/app/ProjectDetailPage"));
+const Marketplace = lazy(() => import("./pages/app/MarketplacePage"));
+const Agents = lazy(() => import("./pages/app/AgentsPage"));
+const Developer = lazy(() => import("./pages/app/DeveloperPage"));
+const Settings = lazy(() => import("./pages/app/SettingsPage"));
+const Billing = lazy(() => import("./pages/app/BillingPage"));
+const Checkout = lazy(() => import("./pages/app/CheckoutPage"));
+const CheckoutSuccess = lazy(() => import("./pages/app/CheckoutSuccessPage"));
+const CheckoutCancel = lazy(() => import("./pages/app/CheckoutCancelPage"));
+const Pricing = lazy(() => import("./pages/app/PricingPage"));
+const ChatConsole = lazy(() => import("./pages/app/ChatConsolePage"));
+const CompliancePage = lazy(() => import("./pages/app/CompliancePage"));
+const LogoTestPage = lazy(() => import("./pages/help/LogoTestPage"));
+const SunbirdPilotMobile = lazy(() => import("./pages/app/SunbirdPilotMobilePage"));
 
-// CapeControl auth components (production-ready)
-import LoginPage from "./pages/auth/LoginPage";
-import MFAChallenge from "./pages/auth/MfaChallengePage";
-import MFAEnroll from "./pages/auth/MfaEnrollPage";
+// CapeControl auth components (lazy)
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const MFAChallenge = lazy(() => import("./pages/auth/MfaChallengePage"));
+const MFAEnroll = lazy(() => import("./pages/auth/MfaEnrollPage"));
 
 // Canonical app entry redirect
 import AppEntryRedirect from "./pages/app/AppEntryRedirectPage";
@@ -118,6 +120,7 @@ function LogoutAction() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" /></div>}>
       <Routes>
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
@@ -274,6 +277,7 @@ export default function App() {
         {/* Default fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

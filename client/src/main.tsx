@@ -47,10 +47,11 @@ const mount = () => {
   );
 };
 
-// Load runtime config before mounting the app
+// Mount immediately for fast FCP, then hydrate config async
+mount();
+
 loadConfig()
   .then((config) => {
-    // Make config available globally for existing API code
     window.__CC_CONFIG__ = config;
 
     console.log("🚀 AutoLocal/CapeControl loaded", {
@@ -60,15 +61,8 @@ loadConfig()
       chatkitEnabled: CHATKIT_ENABLED,
     });
 
-    // Register service worker (your function can no-op in dev if desired)
     registerServiceWorker();
-
-    // Mount app
-    mount();
   })
   .catch((error) => {
     console.error("Failed to load app config:", error);
-
-    // Fallback: still mount the app with whatever defaults your API layer uses
-    mount();
   });

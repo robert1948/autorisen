@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Optional, cast
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -560,6 +561,9 @@ def create_app() -> FastAPI:
         expose_headers=["Content-Length"],
         max_age=86400,
     )
+
+    # GZip compression for all responses >= 500 bytes
+    application.add_middleware(GZipMiddleware, minimum_size=500)
 
     # Cache headers middleware for production cache-correctness (runs LAST to override any defaults)
     application.add_middleware(CacheHeadersMiddleware)

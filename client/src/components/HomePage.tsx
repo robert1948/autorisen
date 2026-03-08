@@ -52,6 +52,9 @@ const HomePage: React.FC = () => {
             <img 
               src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80" 
               alt="AI Anxiety Reframed" 
+              loading="lazy"
+              width={400}
+              height={225}
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
             />
             <div>
@@ -63,6 +66,9 @@ const HomePage: React.FC = () => {
             <img 
               src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80" 
               alt="Magical Queries" 
+              loading="lazy"
+              width={400}
+              height={225}
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
             />
             <div>
@@ -74,6 +80,9 @@ const HomePage: React.FC = () => {
             <img 
               src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&q=80" 
               alt="Compliant Agents" 
+              loading="lazy"
+              width={400}
+              height={225}
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
             />
             <div>
