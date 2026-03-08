@@ -78,6 +78,13 @@ KPI-008,20 active users with 7-day retention >60%,Robert,not-started,P1,2026-05-
 KPI-009,$100K ARR trajectory (85 paying users),Robert,not-started,P2,2026-09-01,Milestone,Revenue,"Business Plan Month 10–12 target. 85 × R830 ARPU = ~R70K MRR.",SCALE-001,"Financial tracking"
 
 # ──────────────────────────────────────────────────────────────
+# ENGINEERING MILESTONES (completed 2026-03-08)
+# ──────────────────────────────────────────────────────────────
+ENG-001,Google OAuth App Verification approved,Robert,done,P0,2026-03-03,Phase 1,Engineering,"Google approved brand verification for project 537766897549 (capecontrol). OAuth consent screen ready for production. Scopes: openid email profile. No code changes needed.",—,"Email confirmation from Google 2026-03-03"
+ENG-002,GCP OAuth consent screen — all checks green,Robert,done,P0,2026-03-08,Phase 1,Engineering,"GCP Project Checkup: domain verification ✅, billing account ✅, secure flows ✅, modern platforms ✅, app verification ✅. Only advisory: Cross-Account Protection (RISC) — deferred.",ENG-001,"GCP console screenshot"
+ENG-003,Lighthouse mobile performance: 71 → 98,Robert,done,P0,2026-03-08,Phase 1,Engineering,"Added GZipMiddleware to FastAPI (500-byte threshold). Converted 30+ page imports to React.lazy() with Suspense. Non-blocking mount in main.tsx. Image lazy-loading + preconnect for Unsplash. FCP 3.7s→1.6s. LCP 5.0s→1.6s. Build 546.",—,"Lighthouse audit: 98/95/96/100"
+
+# ──────────────────────────────────────────────────────────────
 # ONGOING OPERATIONS
 # ──────────────────────────────────────────────────────────────
 OPS-001,Daily LinkedIn engagement (5–10 comments),Robert,not-started,P1,ongoing,Ops,LinkedIn,"Comment on compliance/property/finance/legal tech posts daily. Non-negotiable for organic reach.",—,"Daily habit"
