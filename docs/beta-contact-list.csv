@@ -1,0 +1,33 @@
+id,name,company,role,sector,location,source,outreach_status,outreach_date,response,notes
+# ============================================================
+# CapeControl Beta Contact List — BETA-001
+# Created: 2026-03-09
+# Target: 20 prospective beta users (compliance-heavy SMBs)
+# Outreach hook: "First evidence pack in 14 days"
+# ============================================================
+# PROPERTY MANAGEMENT (4 contacts)
+PM-01,,,Property/Portfolio Manager,Property Management,South Africa,LinkedIn,not-contacted,,,SOPs for tenant management; maintenance compliance; incident documentation
+PM-02,,,Operations Manager,Property Management,South Africa,LinkedIn,not-contacted,,,Evidence trails for property inspections; contractor compliance
+PM-03,,,Facilities Director,Property Management,South Africa,LinkedIn,not-contacted,,,Maintenance schedules; health & safety audit packs
+PM-04,,,Body Corporate Manager,Property Management,South Africa,Existing Contact,not-contacted,,,Regulatory filings (CSOS); meeting minutes; financial compliance
+# ACCOUNTING & FINANCE (4 contacts)
+ACC-01,,,Practice Manager / CA,Accounting,South Africa,LinkedIn,not-contacted,,,Audit preparation; client evidence packs; SARS compliance
+ACC-02,,,Finance Manager,Accounting,South Africa,LinkedIn,not-contacted,,,Internal policy adherence; financial controls documentation
+ACC-03,,,Bookkeeper / Tax Practitioner,Accounting,South Africa,Existing Contact,not-contacted,,,Workflow checklists; POPIA compliance for client data
+ACC-04,,,CFO / Financial Director,Accounting,South Africa,LinkedIn,not-contacted,,,Board reporting; compliance evidence; governance pack exports
+# LEGAL / ATTORNEYS (3 contacts)
+LEG-01,,,Practice Manager,Legal,South Africa,LinkedIn,not-contacted,,,Matter management SOPs; compliance documentation; client onboarding
+LEG-02,,,Associate / Partner,Legal,South Africa,Existing Contact,not-contacted,,,Contract clause retrieval; regulatory filing evidence
+LEG-03,,,Legal Ops / Paralegal,Legal,South Africa,LinkedIn,not-contacted,,,Document-intensive workflows; audit trail for case files
+# MAINTENANCE / FACILITIES MANAGEMENT (3 contacts)
+MNT-01,,,Operations Manager,Maintenance,South Africa,LinkedIn,not-contacted,,,Job card tracking; SOP compliance; incident reporting
+MNT-02,,,H&S Officer,Maintenance,South Africa,LinkedIn,not-contacted,,,Safety compliance documentation; OHS Act evidence packs
+MNT-03,,,Maintenance Coordinator,Maintenance,South Africa,Existing Contact,not-contacted,,,Preventive maintenance SOPs; contractor compliance verification
+# INTERNATIONAL / CROSS-SECTOR (4 contacts)
+INT-01,,,Compliance Officer,Cross-sector,UK/EU,LinkedIn,not-contacted,,,GDPR evidence; internal audit trails
+INT-02,,,Operations Manager,Cross-sector,US/Canada,LinkedIn,not-contacted,,,SOC2/ISO compliance documentation
+INT-03,,,Risk/Quality Manager,Cross-sector,International,LinkedIn,not-contacted,,,Quality management systems; audit evidence
+INT-04,,,Startup Ops Lead,Cross-sector,International,LinkedIn,not-contacted,,,Fast-growing team needing policy structure
+# WILDCARDS / HIGH-VALUE REFERRERS (2 contacts)
+REF-01,,,Industry Consultant / Advisor,Referrer,South Africa,Existing Contact,not-contacted,,,Knows 10+ potential users; can refer and validate
+REF-02,,,Business Network Connector,Referrer,South Africa,Existing Contact,not-contacted,,,Chamber of commerce; BNI; industry body — amplifies reach

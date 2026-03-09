@@ -47,7 +47,7 @@ LI-017,First LinkedIn performance review,Robert,not-started,P1,2026-04-14,Phase 
 # ──────────────────────────────────────────────────────────────
 # BETA PROGRAM (Phase 5)
 # ──────────────────────────────────────────────────────────────
-BETA-001,Identify 20 target beta users (compliance-heavy SMBs),Robert,not-started,P0,2026-03-06,Phase 5,GTM,"Source from: LinkedIn network, existing contacts, property management, accounting, maintenance, legal. Mix of SA-based and international.",—,"List of 20 names + companies"
+BETA-001,Identify 20 target beta users (compliance-heavy SMBs),Robert,in-progress,P0,2026-03-06,Phase 5,GTM,"Template created 2026-03-09 in docs/beta-contact-list.csv. 20 slots across 6 sectors: property management (4), accounting (4), legal (3), maintenance (3), international (4), referrers (2). Robert to fill names from LinkedIn + contacts.",docs/beta-contact-list.csv,"List of 20 names + companies"
 BETA-002,Send beta invite emails (batch 1: 10 users),Robert,not-started,P0,2026-03-13,Phase 5,GTM,"Personal email + platform invite. Offer: 'First evidence pack in 14 days' program.",BETA-001,"10 invites sent; track acceptance"
 BETA-003,Send beta invite emails (batch 2: 10 users),Robert,not-started,P1,2026-03-20,Phase 5,GTM,"Second batch based on first batch learnings.",BETA-002,"10 invites sent"
 BETA-004,Set up beta feedback survey (Typeform),Robert,not-started,P1,2026-03-13,Phase 5,GTM,"Questions: onboarding experience, first value moment, evidence quality, security perception, willingness to pay.",—,"Survey link active"
