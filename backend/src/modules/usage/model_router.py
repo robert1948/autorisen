@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 # ── Model tiers ───────────────────────────────────────────────────────────────
 # Overridable via environment variables so operators can pin models.
 
-BUDGET_MODEL = os.getenv("BUDGET_MODEL", "claude-haiku-4-20250414")
+BUDGET_MODEL = os.getenv("BUDGET_MODEL", "claude-3-haiku-20240307")
 PREMIUM_MODEL = os.getenv("PREMIUM_MODEL", "claude-sonnet-4-20250514")
 
 # ── Complexity signals ────────────────────────────────────────────────────────

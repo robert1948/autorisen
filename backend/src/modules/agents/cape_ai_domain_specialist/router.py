@@ -41,7 +41,7 @@ def get_domain_service() -> DomainSpecialistService:
         _service = DomainSpecialistService(
             openai_api_key=settings.openai_api_key,
             anthropic_api_key=settings.anthropic_api_key,
-            model=os.getenv("CAPE_AI_DOMAIN_MODEL", "claude-haiku-4-20250414"),
+            model=os.getenv("CAPE_AI_DOMAIN_MODEL", "claude-3-haiku-20240307"),
         )
     return _service
 

@@ -32,7 +32,7 @@ MODEL_RATES: dict[str, dict[str, Decimal]] = {
     },
     "claude-3-sonnet-20240229": {"input": Decimal("3.00"), "output": Decimal("15.00")},
     # Haiku family
-    "claude-haiku-4-20250414": {"input": Decimal("1.00"), "output": Decimal("5.00")},
+    "claude-3-haiku-20240307": {"input": Decimal("0.25"), "output": Decimal("1.25")},
     "claude-3-5-haiku-20241022": {"input": Decimal("0.25"), "output": Decimal("1.25")},
     "claude-3-haiku-20240307": {"input": Decimal("0.25"), "output": Decimal("1.25")},
     # Opus family

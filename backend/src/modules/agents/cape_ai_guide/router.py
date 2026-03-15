@@ -38,7 +38,7 @@ def get_cape_ai_service() -> CapeAIGuideService:
         _service = CapeAIGuideService(
             openai_api_key=settings.openai_api_key,
             anthropic_api_key=settings.anthropic_api_key,
-            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-haiku-4-20250414"),
+            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-haiku-20240307"),
         )
     return _service
 
@@ -76,7 +76,7 @@ async def cape_ai_guide_health():
         return {
             "status": "healthy",
             "agent": "cape-ai-guide",
-            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-haiku-4-20250414"),
+            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-haiku-20240307"),
             "knowledge_base": "operational",
             "timestamp": "2025-11-11T06:15:00Z",
         }
