@@ -347,8 +347,19 @@ export default function ProjectDetailPage() {
         )}
 
         {instructions && (
-          <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-indigo-900 dark:text-indigo-200">
-            {instructions}
+          <div className="mt-4 space-y-4 text-sm leading-relaxed text-indigo-900 dark:text-indigo-200">
+            {instructions.split(/\n(?=### )/).map((block, i) => {
+              const headingMatch = block.match(/^### (.+)\n([\s\S]*)/);
+              if (headingMatch) {
+                return (
+                  <div key={i}>
+                    <h3 className="font-semibold text-indigo-800 dark:text-indigo-100">{headingMatch[1]}</h3>
+                    <p className="mt-1 whitespace-pre-wrap">{headingMatch[2].trim()}</p>
+                  </div>
+                );
+              }
+              return <p key={i} className="whitespace-pre-wrap">{block.trim()}</p>;
+            })}
           </div>
         )}
 

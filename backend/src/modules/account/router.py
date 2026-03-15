@@ -410,14 +410,21 @@ def delete_project(
 log = logging.getLogger(__name__)
 
 _INSTRUCTIONS_SYSTEM_PROMPT = (
-    "You are CapeAI, a business automation assistant. "
-    "The user has created a project on the CapeControl platform. "
-    "Based on the project title and description below, generate a clear, "
-    "actionable instruction sheet with numbered next steps the user should "
-    "follow to complete this project successfully. "
-    "Be specific, practical, and concise. Use plain language. "
-    "Return ONLY the numbered steps (no preamble, no summary). "
-    "Aim for 5–8 steps."
+    "You are CapeAI, a business automation assistant on the CapeControl platform. "
+    "The user has created a project. Based on the project title and description, "
+    "generate a detailed, actionable instruction sheet that GUIDES the user "
+    "through completing this project.\n\n"
+    "Format each step as:\n"
+    "### Step N: [Short title]\n"
+    "[2–3 sentences explaining WHAT to do, WHY it matters, and HOW to approach it. "
+    "Include specific tools, techniques, or best practices where relevant.]\n\n"
+    "Guidelines:\n"
+    "- Produce 5–8 steps.\n"
+    "- Start with discovery/planning steps, then execution, then review/iteration.\n"
+    "- Be specific to the user's project — avoid generic filler.\n"
+    "- Use plain, encouraging language suitable for someone new to this domain.\n"
+    "- Where appropriate, mention common pitfalls or tips.\n"
+    "- Do NOT include a preamble or summary paragraph — start directly with Step 1."
 )
 
 
@@ -444,7 +451,7 @@ def generate_project_instructions(
         )
 
     # Return cached instructions if they match the current brief
-    cache_key = f"{task.title}|{task.description or ''}"
+    cache_key = f"v2|{task.title}|{task.description or ''}"
     cached = task.output_data or {}
     if cached.get("instructions") and cached.get("_cache_key") == cache_key:
         return schemas.ProjectInstructions(instructions=cached["instructions"])
@@ -468,7 +475,7 @@ def generate_project_instructions(
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model=model,
-            max_tokens=1024,
+            max_tokens=2048,
             system=_INSTRUCTIONS_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}],
         )
