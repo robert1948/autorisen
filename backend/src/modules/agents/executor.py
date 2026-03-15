@@ -8,11 +8,10 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
+from backend.src.db import models
 from fastapi import WebSocket
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
-from backend.src.db import models
 
 
 class TaskStatus:
@@ -166,6 +165,7 @@ class AgentExecutor:
     ) -> Dict[str, Any]:
         """Execute the actual agent logic by dispatching to the appropriate agent service."""
         import os
+
         from backend.src.core.config import get_settings
 
         settings = get_settings()
@@ -181,80 +181,139 @@ class AgentExecutor:
         try:
             # Dispatch to the appropriate agent service
             if agent_slug in ("cape-ai-guide", "cape_ai_guide"):
-                from .cape_ai_guide.service import CapeAIGuideService
                 from .cape_ai_guide.schemas import CapeAIGuideTaskInput
+                from .cape_ai_guide.service import CapeAIGuideService
+
                 service = CapeAIGuideService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
-                    model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-haiku-20241022"),
+                    model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-haiku-4-20250414"),
                 )
-                task_input = CapeAIGuideTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in CapeAIGuideTaskInput.__fields__})
+                task_input = CapeAIGuideTaskInput(
+                    query=query,
+                    **{
+                        k: v
+                        for k, v in input_data.items()
+                        if k != "query" and k in CapeAIGuideTaskInput.__fields__
+                    },
+                )
                 result = await service.process_query(task_input)
                 return result.dict()
 
-            elif agent_slug in ("cape-ai-domain-specialist", "cape_ai_domain_specialist"):
-                from .cape_ai_domain_specialist.service import DomainSpecialistService
+            elif agent_slug in (
+                "cape-ai-domain-specialist",
+                "cape_ai_domain_specialist",
+            ):
                 from .cape_ai_domain_specialist.schemas import DomainSpecialistTaskInput
+                from .cape_ai_domain_specialist.service import DomainSpecialistService
+
                 service = DomainSpecialistService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
-                    model=os.getenv("DOMAIN_SPECIALIST_MODEL", "claude-3-5-haiku-20241022"),
+                    model=os.getenv(
+                        "DOMAIN_SPECIALIST_MODEL", "claude-3-5-haiku-20241022"
+                    ),
                 )
-                task_input = DomainSpecialistTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in DomainSpecialistTaskInput.__fields__})
+                task_input = DomainSpecialistTaskInput(
+                    query=query,
+                    **{
+                        k: v
+                        for k, v in input_data.items()
+                        if k != "query" and k in DomainSpecialistTaskInput.__fields__
+                    },
+                )
                 result = await service.process_query(task_input)
                 return result.dict()
 
             elif agent_slug in ("customer-agent", "customer_agent"):
-                from .customer_agent.service import CustomerAgentService
                 from .customer_agent.schemas import CustomerAgentTaskInput
+                from .customer_agent.service import CustomerAgentService
+
                 service = CustomerAgentService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
-                    model=os.getenv("CUSTOMER_AGENT_MODEL", "claude-3-5-haiku-20241022"),
+                    model=os.getenv(
+                        "CUSTOMER_AGENT_MODEL", "claude-3-5-haiku-20241022"
+                    ),
                 )
-                task_input = CustomerAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in CustomerAgentTaskInput.__fields__})
+                task_input = CustomerAgentTaskInput(
+                    query=query,
+                    **{
+                        k: v
+                        for k, v in input_data.items()
+                        if k != "query" and k in CustomerAgentTaskInput.__fields__
+                    },
+                )
                 result = await service.process_query(task_input)
                 return result.dict()
 
             elif agent_slug in ("dev-agent", "dev_agent"):
-                from .dev_agent.service import DevAgentService
                 from .dev_agent.schemas import DevAgentTaskInput
+                from .dev_agent.service import DevAgentService
+
                 service = DevAgentService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
                     model=os.getenv("DEV_AGENT_MODEL", "claude-3-5-haiku-20241022"),
                 )
-                task_input = DevAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in DevAgentTaskInput.__fields__})
+                task_input = DevAgentTaskInput(
+                    query=query,
+                    **{
+                        k: v
+                        for k, v in input_data.items()
+                        if k != "query" and k in DevAgentTaskInput.__fields__
+                    },
+                )
                 result = await service.process_query(task_input)
                 return result.dict()
 
             elif agent_slug in ("finance-agent", "finance_agent"):
-                from .finance_agent.service import FinanceAgentService
                 from .finance_agent.schemas import FinanceAgentTaskInput
+                from .finance_agent.service import FinanceAgentService
+
                 service = FinanceAgentService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
                     model=os.getenv("FINANCE_AGENT_MODEL", "claude-3-5-haiku-20241022"),
                 )
-                task_input = FinanceAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in FinanceAgentTaskInput.__fields__})
+                task_input = FinanceAgentTaskInput(
+                    query=query,
+                    **{
+                        k: v
+                        for k, v in input_data.items()
+                        if k != "query" and k in FinanceAgentTaskInput.__fields__
+                    },
+                )
                 result = await service.process_query(task_input)
                 return result.dict()
 
             elif agent_slug in ("content-agent", "content_agent"):
-                from .content_agent.service import ContentAgentService
                 from .content_agent.schemas import ContentAgentTaskInput
+                from .content_agent.service import ContentAgentService
+
                 service = ContentAgentService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
                     model=os.getenv("CONTENT_AGENT_MODEL", "claude-3-5-haiku-20241022"),
                 )
-                task_input = ContentAgentTaskInput(query=query, **{k: v for k, v in input_data.items() if k != "query" and k in ContentAgentTaskInput.__fields__})
+                task_input = ContentAgentTaskInput(
+                    query=query,
+                    **{
+                        k: v
+                        for k, v in input_data.items()
+                        if k != "query" and k in ContentAgentTaskInput.__fields__
+                    },
+                )
                 result = await service.process_query(task_input)
                 return result.dict()
 
             elif agent_slug in ("rag-agent", "rag_agent", "rag"):
+                from backend.src.modules.rag.schemas import (
+                    RAGQueryRequest,
+                    UnsupportedPolicy,
+                )
                 from backend.src.modules.rag.service import RAGService
-                from backend.src.modules.rag.schemas import RAGQueryRequest, UnsupportedPolicy
+
                 service = RAGService(
                     openai_api_key=settings.openai_api_key,
                     anthropic_api_key=settings.anthropic_api_key,
@@ -265,20 +324,25 @@ class AgentExecutor:
                     doc_types=input_data.get("doc_types"),
                     top_k=input_data.get("top_k", 5),
                     similarity_threshold=input_data.get("similarity_threshold", 0.25),
-                    unsupported_policy=input_data.get("unsupported_policy", UnsupportedPolicy.FLAG),
+                    unsupported_policy=input_data.get(
+                        "unsupported_policy", UnsupportedPolicy.FLAG
+                    ),
                     include_response=input_data.get("include_response", True),
                 )
-                user = self.db.query(models.User).filter(
-                    models.User.id == input_data.get("user_id")
-                ).first()
+                user = (
+                    self.db.query(models.User)
+                    .filter(models.User.id == input_data.get("user_id"))
+                    .first()
+                )
                 if not user:
                     return {"error": "User not found for RAG query"}
                 result = await service.query(self.db, user, rag_request)
                 return result.dict()
 
             elif agent_slug in ("capsule-agent", "capsule_agent", "capsule"):
-                from backend.src.modules.capsules.service import CapsuleService
                 from backend.src.modules.capsules.schemas import CapsuleRunRequest
+                from backend.src.modules.capsules.service import CapsuleService
+
                 service = CapsuleService()
                 capsule_request = CapsuleRunRequest(
                     capsule_id=input_data.get("capsule_id", "sop-answering"),
@@ -286,9 +350,11 @@ class AgentExecutor:
                     context=input_data.get("context"),
                     unsupported_policy=input_data.get("unsupported_policy", "flag"),
                 )
-                user = self.db.query(models.User).filter(
-                    models.User.id == input_data.get("user_id")
-                ).first()
+                user = (
+                    self.db.query(models.User)
+                    .filter(models.User.id == input_data.get("user_id"))
+                    .first()
+                )
                 if not user:
                     return {"error": "User not found for capsule run"}
                 result = await service.run(self.db, user, capsule_request)
@@ -298,7 +364,12 @@ class AgentExecutor:
                 # Fallback for unknown/custom agents
                 if websocket:
                     await websocket.send_text(
-                        json.dumps({"message": f"Executing agent '{agent_slug}'...", "progress": 50})
+                        json.dumps(
+                            {
+                                "message": f"Executing agent '{agent_slug}'...",
+                                "progress": 50,
+                            }
+                        )
                     )
                 await asyncio.sleep(1)
                 return {
@@ -363,6 +434,7 @@ class AgentExecutor:
         except Exception:
             # Policy enforcement is non-critical; log and proceed
             import logging
+
             logging.getLogger(__name__).exception(
                 "Unsupported policy enforcement failed — proceeding without gate"
             )

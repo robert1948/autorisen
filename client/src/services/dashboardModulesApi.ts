@@ -184,6 +184,9 @@ export const dashboardModulesApi = {
   deleteProject(id: string): Promise<void> {
     return apiFetch<void>(`/projects/${id}`, { method: "DELETE" });
   },
+  generateProjectInstructions(id: string): Promise<{ instructions: string }> {
+    return apiFetch<{ instructions: string }>(`/projects/${id}/instructions`, { method: "POST" });
+  },
   getProjectStatus(): Promise<ProjectStatusSummary> {
     return apiFetch<ProjectStatusSummary>("/projects/status");
   },

@@ -9,12 +9,16 @@ import { AuthProvider } from "./features/auth/AuthContext";
 import { loadConfig } from "./config";
 import { registerServiceWorker } from "./serviceWorker";
 
-// ChatKit (optional)
-import { ChatKitProvider } from "./components/chat/ChatKitProvider";
-import ChatLauncher from "./components/chat/ChatLauncher";
-
 // Feature flag (set on Heroku: VITE_ENABLE_CHATKIT=false to park chat)
 const CHATKIT_ENABLED = import.meta.env.VITE_ENABLE_CHATKIT === "true";
+
+// ChatKit (lazy-loaded only when enabled to reduce critical bundle size)
+const ChatKitProvider = CHATKIT_ENABLED
+  ? React.lazy(() => import("./components/chat/ChatKitProvider").then(m => ({ default: m.ChatKitProvider })))
+  : ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const ChatLauncher = CHATKIT_ENABLED
+  ? React.lazy(() => import("./components/chat/ChatLauncher"))
+  : () => null;
 
 // Create once (recommended)
 const queryClient = new QueryClient();
@@ -36,13 +40,15 @@ if (!rootEl) {
 const mount = () => {
   ReactDOM.createRoot(rootEl).render(
     <React.StrictMode>
-      {CHATKIT_ENABLED ? (
-        <ChatKitProvider>
+      <React.Suspense fallback={null}>
+        {CHATKIT_ENABLED ? (
+          <ChatKitProvider>
+            <RootApp />
+          </ChatKitProvider>
+        ) : (
           <RootApp />
-        </ChatKitProvider>
-      ) : (
-        <RootApp />
-      )}
+        )}
+      </React.Suspense>
     </React.StrictMode>
   );
 };

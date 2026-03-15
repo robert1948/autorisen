@@ -16,22 +16,8 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-slate-100 text-slate-500",
 };
 
-/** Contextual next-step guidance per status */
-const STATUS_GUIDANCE: Record<string, { title: string; body: string; cta: string }> = {
-  pending: {
-    title: "Ready to begin your project setup?",
-    body: "Your project has been created and is waiting for you to get started. Click \"Edit project\" to add details, refine the description, and change the status to \"in-progress\" when you're ready to start working.",
-    cta: "Need help? Ask CapeAI for step-by-step guidance.",
-  },
-  "in-progress": {
-    title: "Your project is underway",
-    body: "Great progress! Track milestones, update your description as the scope evolves, and mark the project \"completed\" when you're done.",
-    cta: "Ask CapeAI for tips on managing your workflow.",
-  },
-};
-
-function openCapeAI(placement: string) {
-  window.dispatchEvent(new CustomEvent("capeai:open", { detail: { placement } }));
+function openCapeAI(placement: string, context?: string) {
+  window.dispatchEvent(new CustomEvent("capeai:open", { detail: { placement, prefill: context } }));
 }
 
 export default function ProjectDetailPage() {
@@ -53,6 +39,11 @@ export default function ProjectDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // AI instruction sheet state
+  const [instructions, setInstructions] = useState<string | null>(null);
+  const [instructionsLoading, setInstructionsLoading] = useState(false);
+  const [instructionsError, setInstructionsError] = useState<string | null>(null);
+
   const loadProject = useCallback(async () => {
     if (!projectId) return;
     try {
@@ -73,6 +64,28 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     loadProject();
   }, [loadProject]);
+
+  const generateInstructions = useCallback(async () => {
+    if (!projectId) return;
+    setInstructionsLoading(true);
+    setInstructionsError(null);
+    try {
+      const result = await dashboardModulesApi.generateProjectInstructions(projectId);
+      setInstructions(result.instructions);
+    } catch (err: unknown) {
+      setInstructionsError(err instanceof Error ? err.message : "Failed to generate instructions");
+    } finally {
+      setInstructionsLoading(false);
+    }
+  }, [projectId]);
+
+  // Auto-generate instructions once project loads with a description
+  useEffect(() => {
+    if (project && project.description?.trim() && !instructions && !instructionsLoading) {
+      generateInstructions();
+    }
+  }, [project, instructions, instructionsLoading, generateInstructions]);
+
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -266,29 +279,89 @@ export default function ProjectDetailPage() {
               </button>
             </div>
 
-            {/* Contextual guidance based on project status */}
-            {STATUS_GUIDANCE[project.status] && (
-              <div className="rounded-lg border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 p-5 dark:border-indigo-800 dark:from-indigo-900/20 dark:to-blue-900/20">
-                <h3 className="text-base font-bold text-indigo-900 dark:text-indigo-200">
-                  {STATUS_GUIDANCE[project.status].title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-indigo-800 dark:text-indigo-300">
-                  {STATUS_GUIDANCE[project.status].body}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => openCapeAI("onboarding")}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-[0.98]"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                  {STATUS_GUIDANCE[project.status].cta}
-                </button>
-              </div>
-            )}
+
           </>
         )}
+      </div>
+
+      {/* AI-generated instruction sheet */}
+      <div className="mt-6 rounded-lg border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 p-6 shadow-sm dark:border-indigo-800 dark:from-indigo-900/20 dark:to-blue-900/20">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-indigo-900 dark:text-indigo-200">
+            Next Steps
+          </h2>
+          {instructions && (
+            <button
+              type="button"
+              onClick={generateInstructions}
+              disabled={instructionsLoading}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:opacity-50 dark:text-indigo-400"
+            >
+              {instructionsLoading ? "Regenerating..." : "Regenerate"}
+            </button>
+          )}
+        </div>
+
+        {instructionsLoading && !instructions && (
+          <div className="mt-4 space-y-2">
+            <div className="h-4 w-full animate-pulse rounded bg-indigo-200/50" />
+            <div className="h-4 w-5/6 animate-pulse rounded bg-indigo-200/50" />
+            <div className="h-4 w-4/6 animate-pulse rounded bg-indigo-200/50" />
+            <div className="h-4 w-5/6 animate-pulse rounded bg-indigo-200/50" />
+            <div className="h-4 w-3/6 animate-pulse rounded bg-indigo-200/50" />
+            <p className="mt-2 text-xs text-indigo-500">CapeAI is analysing your project...</p>
+          </div>
+        )}
+
+        {instructionsError && !instructions && (
+          <div className="mt-3">
+            <p className="text-sm text-red-600 dark:text-red-400">{instructionsError}</p>
+            <button
+              type="button"
+              onClick={generateInstructions}
+              className="mt-2 text-sm font-medium text-indigo-600 hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {instructions && (
+          <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-indigo-900 dark:text-indigo-200">
+            {instructions}
+          </div>
+        )}
+
+        {!instructions && !instructionsLoading && !instructionsError && (
+          <div className="mt-3">
+            <p className="text-sm text-indigo-700 dark:text-indigo-300">
+              {project.description?.trim()
+                ? "Generate a tailored instruction sheet for this project."
+                : "Add a project description, then generate a tailored instruction sheet."}
+            </p>
+            <button
+              type="button"
+              onClick={project.description?.trim() ? generateInstructions : () => setEditing(true)}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-[0.98]"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              {project.description?.trim() ? "Generate instructions" : "Add description first"}
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => openCapeAI("project-guidance", `Help me with my project: ${project.title}`)}
+          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          Need more help? Chat with CapeAI
+        </button>
       </div>
 
       {/* Danger zone */}

@@ -6,14 +6,19 @@ Simple implementation for basic functionality.
 """
 
 import os
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
 
 from backend.src.core.config import get_settings
+from backend.src.db.models import User
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user as get_current_user
-from backend.src.db.models import User
-from backend.src.modules.payments.enforcement import enforce_execution_limit, enforce_platform_budget, enforce_user_budget
+from backend.src.modules.payments.enforcement import (
+    enforce_execution_limit,
+    enforce_platform_budget,
+    enforce_user_budget,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from .schemas import CapeAIGuideTaskInput, CapeAIGuideTaskOutput
 from .service import CapeAIGuideService
 
@@ -33,7 +38,7 @@ def get_cape_ai_service() -> CapeAIGuideService:
         _service = CapeAIGuideService(
             openai_api_key=settings.openai_api_key,
             anthropic_api_key=settings.anthropic_api_key,
-            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-haiku-20241022"),
+            model=os.getenv("CAPE_AI_GUIDE_MODEL", "claude-haiku-4-20250414"),
         )
     return _service
 
@@ -71,7 +76,7 @@ async def cape_ai_guide_health():
         return {
             "status": "healthy",
             "agent": "cape-ai-guide",
-            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-3-5-haiku-20241022"),
+            "model": os.getenv("CAPE_AI_GUIDE_MODEL", "claude-haiku-4-20250414"),
             "knowledge_base": "operational",
             "timestamp": "2025-11-11T06:15:00Z",
         }

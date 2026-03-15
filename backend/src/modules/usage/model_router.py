@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 # ── Model tiers ───────────────────────────────────────────────────────────────
 # Overridable via environment variables so operators can pin models.
 
-BUDGET_MODEL = os.getenv("BUDGET_MODEL", "claude-3-5-haiku-20241022")
+BUDGET_MODEL = os.getenv("BUDGET_MODEL", "claude-haiku-4-20250414")
 PREMIUM_MODEL = os.getenv("PREMIUM_MODEL", "claude-sonnet-4-20250514")
 
 # ── Complexity signals ────────────────────────────────────────────────────────
@@ -78,6 +78,7 @@ _LONG_THRESHOLD = 2000  # chars
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+
 
 def classify_complexity(text: str) -> str:
     """Classify a prompt as ``simple``, ``moderate``, or ``complex``.

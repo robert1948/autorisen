@@ -8,11 +8,16 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
 
+from backend.src.db.models import (
+    Agent,
+    AgentInstallation,
+    AgentRun,
+    AuditEvent,
+    UsageLog,
+)
+from backend.src.modules.rag.models import ApprovedDocument, RAGQueryLog
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-
-from backend.src.db.models import UsageLog, AgentRun, AuditEvent, Agent, AgentInstallation
-from backend.src.modules.rag.models import ApprovedDocument, RAGQueryLog
 
 log = logging.getLogger(__name__)
 
@@ -21,9 +26,13 @@ log = logging.getLogger(__name__)
 MODEL_RATES: dict[str, dict[str, Decimal]] = {
     # Sonnet family
     "claude-sonnet-4-20250514": {"input": Decimal("3.00"), "output": Decimal("15.00")},
-    "claude-3-5-sonnet-20241022": {"input": Decimal("3.00"), "output": Decimal("15.00")},
+    "claude-3-5-sonnet-20241022": {
+        "input": Decimal("3.00"),
+        "output": Decimal("15.00"),
+    },
     "claude-3-sonnet-20240229": {"input": Decimal("3.00"), "output": Decimal("15.00")},
     # Haiku family
+    "claude-haiku-4-20250414": {"input": Decimal("1.00"), "output": Decimal("5.00")},
     "claude-3-5-haiku-20241022": {"input": Decimal("0.25"), "output": Decimal("1.25")},
     "claude-3-haiku-20240307": {"input": Decimal("0.25"), "output": Decimal("1.25")},
     # Opus family

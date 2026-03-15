@@ -65,7 +65,9 @@ class ProjectUpdate(BaseModel):
 
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = None
-    status: Optional[str] = Field(default=None, pattern="^(pending|in-progress|completed|cancelled)$")
+    status: Optional[str] = Field(
+        default=None, pattern="^(pending|in-progress|completed|cancelled)$"
+    )
 
 
 class ProjectDetail(BaseModel):
@@ -97,6 +99,12 @@ class ProjectStatusSummary(BaseModel):
     value: str
     total: int
     projects: list[ProjectStatusItem]
+
+
+class ProjectInstructions(BaseModel):
+    """AI-generated instruction sheet for a project."""
+
+    instructions: str
 
 
 class AccountBalance(BaseModel):

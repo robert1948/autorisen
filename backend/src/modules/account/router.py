@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
+import logging
+import os
 from datetime import datetime, timezone
 from typing import Any
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select, update
-from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user
 from backend.src.modules.support.sla import estimated_response_time
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func, select, update
+from sqlalchemy.orm import Session
 
 from . import schemas
 
@@ -109,7 +110,11 @@ def delete_account_me(
     db.execute(
         update(models.User)
         .where(models.User.id == current_user.id)
-        .values(is_active=False, token_version=new_token_version, updated_at=datetime.now(timezone.utc)),
+        .values(
+            is_active=False,
+            token_version=new_token_version,
+            updated_at=datetime.now(timezone.utc),
+        ),
     )
     db.execute(
         update(models.Session)
@@ -205,7 +210,11 @@ def update_personal_info(
     )
 
 
-@router.post("/projects", response_model=schemas.ProjectStatusItem, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/projects",
+    response_model=schemas.ProjectStatusItem,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_project(
     payload: schemas.ProjectCreate,
     current_user: models.User = Depends(get_verified_user),
@@ -215,7 +224,10 @@ def create_project(
     # Pick a default agent — use the first available or the Onboarding Guide
     agent = db.scalars(select(models.Agent).limit(1)).first()
     if not agent:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No agents available")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No agents available",
+        )
 
     task = models.Task(
         title=payload.title,
@@ -231,7 +243,10 @@ def create_project(
     # Auto-complete onboarding step
     try:
         from backend.src.modules.onboarding import service as onboarding_svc
-        onboarding_svc.set_step_status(db, current_user, "checklist_create_first_project", "completed")
+
+        onboarding_svc.set_step_status(
+            db, current_user, "checklist_create_first_project", "completed"
+        )
     except Exception:
         pass  # Non-critical
 
@@ -286,7 +301,9 @@ def get_project_status_summary(
         for task in tasks
     ]
     value = projects[0].status if projects else "Not set"
-    return schemas.ProjectStatusSummary(value=value, total=len(projects), projects=projects)
+    return schemas.ProjectStatusSummary(
+        value=value, total=len(projects), projects=projects
+    )
 
 
 @router.get("/projects/{project_id}", response_model=schemas.ProjectDetail)
@@ -303,7 +320,9 @@ def get_project_detail(
         )
     ).first()
     if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
     return schemas.ProjectDetail(
         id=str(task.id),
         title=task.title,
@@ -332,7 +351,9 @@ def update_project(
         )
     ).first()
     if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
 
     updates = payload.model_dump(exclude_unset=True)
     if "status" in updates:
@@ -374,9 +395,115 @@ def delete_project(
         )
     ).first()
     if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
     db.delete(task)
     db.commit()
+
+
+log = logging.getLogger(__name__)
+
+_INSTRUCTIONS_SYSTEM_PROMPT = (
+    "You are CapeAI, a business automation assistant. "
+    "The user has created a project on the CapeControl platform. "
+    "Based on the project title and description below, generate a clear, "
+    "actionable instruction sheet with numbered next steps the user should "
+    "follow to complete this project successfully. "
+    "Be specific, practical, and concise. Use plain language. "
+    "Return ONLY the numbered steps (no preamble, no summary). "
+    "Aim for 5–8 steps."
+)
+
+
+@router.post(
+    "/projects/{project_id}/instructions",
+    response_model=schemas.ProjectInstructions,
+)
+def generate_project_instructions(
+    project_id: int,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> schemas.ProjectInstructions:
+    """Generate (or return cached) AI instruction sheet for a project."""
+    task = db.scalars(
+        select(models.Task).where(
+            models.Task.id == project_id,
+            models.Task.user_id == current_user.id,
+        )
+    ).first()
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    # Return cached instructions if they match the current brief
+    cache_key = f"{task.title}|{task.description or ''}"
+    cached = task.output_data or {}
+    if cached.get("instructions") and cached.get("_cache_key") == cache_key:
+        return schemas.ProjectInstructions(instructions=cached["instructions"])
+
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI backend is not configured.",
+        )
+
+    user_prompt = f"Project: {task.title}"
+    if task.description:
+        user_prompt += f"\nDescription: {task.description}"
+
+    try:
+        import anthropic
+        from backend.src.modules.usage.model_router import select_model
+
+        model = select_model(user_prompt, force_model=os.getenv("ANTHROPIC_MODEL"))
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model=model,
+            max_tokens=1024,
+            system=_INSTRUCTIONS_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        content = "".join(b.text for b in response.content if hasattr(b, "text"))
+        if not content:
+            raise HTTPException(status_code=500, detail="Empty AI response")
+
+        # Cache in output_data so we don't regenerate on every visit
+        task.output_data = {
+            "instructions": content,
+            "_cache_key": cache_key,
+            "model": response.model,
+        }
+        db.commit()
+
+        # Record usage
+        try:
+            from backend.src.modules.usage import service as usage_svc
+
+            usage_svc.record_usage(
+                db,
+                user_id=current_user.id,
+                event_type="project_instructions",
+                model=response.model,
+                tokens_in=response.usage.input_tokens,
+                tokens_out=response.usage.output_tokens,
+            )
+        except Exception:  # noqa: BLE001
+            log.warning(
+                "Failed to record usage for project instructions", exc_info=True
+            )
+
+        return schemas.ProjectInstructions(instructions=content)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Failed to generate project instructions: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to generate instructions. Please try again.",
+        ) from exc
 
 
 @router.get("/billing/balance", response_model=schemas.AccountBalance)

@@ -50,9 +50,9 @@ const HomePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 md:gap-10">
           <div className="flex flex-col items-center text-left lg:text-center gap-6">
             <img 
-              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80" 
+              src="/images/feature-ai-anxiety.webp" 
               alt="AI Anxiety Reframed" 
-              loading="lazy"
+              fetchPriority="high"
               width={400}
               height={225}
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
@@ -64,7 +64,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="flex flex-col items-center text-left lg:text-center gap-6">
             <img 
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80" 
+              src="/images/feature-magic-queries.webp" 
               alt="Magical Queries" 
               loading="lazy"
               width={400}
@@ -78,7 +78,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="flex flex-col items-center text-left lg:text-center gap-6">
             <img 
-              src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&q=80" 
+              src="/images/feature-compliant-agents.webp" 
               alt="Compliant Agents" 
               loading="lazy"
               width={400}

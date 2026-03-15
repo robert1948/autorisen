@@ -562,8 +562,8 @@ def create_app() -> FastAPI:
         max_age=86400,
     )
 
-    # GZip compression for all responses >= 500 bytes
-    application.add_middleware(GZipMiddleware, minimum_size=500)
+    # GZip compression for all responses >= 200 bytes
+    application.add_middleware(GZipMiddleware, minimum_size=200)
 
     # Cache headers middleware for production cache-correctness (runs LAST to override any defaults)
     application.add_middleware(CacheHeadersMiddleware)
