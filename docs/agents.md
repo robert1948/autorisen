@@ -1,6 +1,6 @@
 # Agents & Modules Registry (CapeControl)
 
-> **Last verified:** 2026-02-24
+> **Last verified:** 2026-03-15
 > **Source of truth:** This document reflects the actual codebase structure.
 
 ---
@@ -12,12 +12,12 @@ All AI agents live under `backend/src/modules/agents/` as sub-packages with
 
 | Agent | Purpose | Provider | Path |
 |---|---|---|---|
-| **CapeAI Guide** | In-app assistant for onboarding/help | Claude 3.5 Haiku | `backend/src/modules/agents/cape_ai_guide/` |
-| **CapeAI Domain Specialist** | Domain-specific advice (workflows, analytics, security) | Claude 3.5 Haiku | `backend/src/modules/agents/cape_ai_domain_specialist/` |
-| **Customer Agent** | Help customers express goals, suggest workflows & plans | Claude 3.5 Haiku | `backend/src/modules/agents/customer_agent/` |
-| **Dev Agent** | Assist developers with build/test/publish of agents | Claude 3.5 Haiku | `backend/src/modules/agents/dev_agent/` |
-| **Finance Agent** | AI-powered financial analysis, budgeting, compliance | Claude 3.5 Haiku | `backend/src/modules/agents/finance_agent/` |
-| **Content Agent** | Multi-channel content generation (blog, social, email) | Claude 3.5 Haiku | `backend/src/modules/agents/content_agent/` |
+| **CapeAI Guide** | In-app assistant for onboarding/help | Claude 3 Haiku / Sonnet 4 (model router) | `backend/src/modules/agents/cape_ai_guide/` |
+| **CapeAI Domain Specialist** | Domain-specific advice (workflows, analytics, security) | Claude 3 Haiku / Sonnet 4 (model router) | `backend/src/modules/agents/cape_ai_domain_specialist/` |
+| **Customer Agent** | Help customers express goals, suggest workflows & plans | Claude 3 Haiku / Sonnet 4 (model router) | `backend/src/modules/agents/customer_agent/` |
+| **Dev Agent** | Assist developers with build/test/publish of agents | Claude 3 Haiku / Sonnet 4 (model router) | `backend/src/modules/agents/dev_agent/` |
+| **Finance Agent** | AI-powered financial analysis, budgeting, compliance | Claude 3 Haiku / Sonnet 4 (model router) | `backend/src/modules/agents/finance_agent/` |
+| **Content Agent** | Multi-channel content generation (blog, social, email) | Claude 3 Haiku / Sonnet 4 (model router) | `backend/src/modules/agents/content_agent/` |
 
 **Shared infrastructure:**
 
@@ -44,10 +44,14 @@ by the app factory via `_safe_import()`.
 | **Capsules** | Template-driven workflow runs (SOP, audit, clause, compliance) | `backend/src/modules/capsules/` |
 | **Flows** | Workflow / automation flow definitions | `backend/src/modules/flows/` |
 | **Marketplace** | Agent/workflow marketplace listings | `backend/src/modules/marketplace/` |
-| **Payments** | PayFast integration, invoices, subscriptions | `backend/src/modules/payments/` |
+| **Payments** | PayFast integration, invoices, plan enforcement (project/exec/agent limits) | `backend/src/modules/payments/` |
 | **Subscriptions** | Plan management, subscribe/cancel | `backend/src/modules/subscriptions/` |
+| **Billing** | Billing cycle automation, missed payment handling | `backend/src/modules/billing/` |
 | **User** | User profile management | `backend/src/modules/user/` |
-| **Account** | Account settings, preferences | `backend/src/modules/account/` |
+| **Account** | Account settings, projects, AI instruction sheets | `backend/src/modules/account/` |
+| **Audit** | Audit trail logging, evidence pack export | `backend/src/modules/audit/` |
+| **Chat** | CapeAI chat sessions, message handling | `backend/src/modules/chat/` |
+| **Usage** | AI usage tracking, model routing, cost metering | `backend/src/modules/usage/` |
 | **Ops** | Operational endpoints | `backend/src/modules/ops/` |
 | **Support** | Support ticket management | `backend/src/modules/support/` |
 | **Dev Dashboard** | Developer portal (API keys, usage stats) | `backend/src/modules/dev/` |

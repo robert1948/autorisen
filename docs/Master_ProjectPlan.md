@@ -1,160 +1,78 @@
-# Master Project Plan — autorisen
+# Master Project Plan — CapeControl
 
-Snapshot: 2025-11-14
+**Snapshot:** 2026-03-15 | **Build:** 539 | **Platform:** https://cape-control.com
 
-Canonical plan notice
-
-- Canonical plan: `docs/project-plan.csv`.
-- The PLAN block in this document is auto-synced by `scripts/plan_sync.py`.
-- Legacy narrative in this document may be historical/outdated; follow `docs/SYSTEM_SPEC.md` and `docs/project-plan.csv` for authoritative scope and status.
-
-See also: `docs/senior_devops.md`
+> **Canonical plan:** `docs/project-plan.csv`.
+> The PLAN block at the bottom of this document is auto-synced by `scripts/plan_sync.py --apply`.
+> See also: `docs/agents.md`, `docs/SYSTEM_SPEC.md`
 
 <!-- markdownlint-disable MD013 -->
 
-Overview
+## Overview
 
-- Purpose: keep a single, actionable roadmap for shipping monetization, operational hardening, and UX polish without regressing the production baseline.
-- Scope: finish Stripe-backed billing, stand up usage metering, keep Heroku operations healthy, and document release/rollback guardrails.
+CapeControl is a production SaaS platform for AI-powered business automation, deployed as Docker containers to Heroku. The platform provides project management, AI instruction generation, agent marketplace, compliance tooling, and workflow capsules for regulated SMBs.
 
-Scope & MVP definition
+**Current state:** 82 tasks tracked, 81 done, 1 deferred (Stripe international payments — Q3 2026).
 
-- MVP scope (current):
-  - Production-ready Stripe billing with hardened webhook handling.
-  - Usage metering for AI workloads and dashboard surfacing.
-  - Ops automation for security/compliance guardrails.
-  - Maintain existing Heroku platform while we assess an ECS migration path.
+## Architecture
 
-Workstreams
+- **Backend:** FastAPI (Python) with modular agent-based design
+- **Frontend:** React + TypeScript + Vite + Tailwind CSS
+- **Database:** PostgreSQL (Heroku `postgresql-rigid-25868`)
+- **AI Provider:** Anthropic (Claude 3 Haiku for budget, Claude Sonnet 4 for premium)
+- **Payments:** PayFast (ZAR), Stripe planned for international (Q3 2026)
+- **Deployment:** Docker → Heroku Container Registry → `capecraft` app
 
-- Payments (R: backend lead)
-  - Finalize Stripe integration, subscription tiers, and metering pipelines.
-  - Acceptance: end-to-end subscription purchase succeeds with invoices generated.
+## Workstreams
 
-- Frontend (R: frontend lead)
-  - Deliver payment UI flows and expose metering data in dashboard views.
-  - Acceptance: pilot users can self-manage plans without console intervention.
+### Completed (Q1 2026)
 
-- Platform (R: devops lead)
-  - Keep CI pipelines, container builds, and Heroku release automation green.
-  - Acceptance: deployments remain reversible and observability dashboards stay healthy.
+| Area | Key Deliverables |
+|---|---|
+| **Auth & Security** | JWT + CSRF dual-token, Google/LinkedIn OAuth, MFA with encrypted TOTP, DDoS protection, prod secret guard, Sentry |
+| **Payments** | PayFast integration (ITN, subscriptions, billing cycle), Free/Pro/Enterprise plans with ZAR pricing |
+| **Plan Enforcement** | Project limits (Free: 3, Pro: 25, Enterprise: unlimited), AI instructions gated to paid plans, execution/agent quotas |
+| **AI Features** | CapeAI chat, AI project instruction sheets (guided format), model router (budget/premium), usage tracking |
+| **Marketplace** | Real agent registry, download counts, trending algorithm, featured agents |
+| **RAG & Capsules** | Controlled retrieval pipeline, evidence trace, workflow capsule engine |
+| **Dashboard** | Live stat cards, project management CRUD, onboarding checklist, AppShell layout |
+| **Compliance** | Audit trail, evidence pack PDF export, tenant isolation, RBAC |
+| **Performance** | Lighthouse 98 (mobile), GZip, lazy routes, non-blocking mount |
+| **Docs & Quality** | 220+ tests, deployment checklist, security posture docs, beta pilot playbook |
 
-- Security & Compliance (R: security lead)
-  - Run hardening audit, validate secrets sync, and ratify billing data retention.
-  - Acceptance: audit checklist complete with evidence stored in shared drive.
+### In Progress / Planned
 
-- Business Enablement (R: project lead)
-  - Align pricing, analytics, and documentation with the technical rollout.
-  - Acceptance: launch narrative and docs available before GA toggle.
-
-Authoritative project plan (CSV)
-
-The primary source of truth for actionable tasks is the CSV located at `docs/project-plan.csv`. Edit that file to add, update, or change task rows; the Markdown narrative in this document provides context and milestones but the CSV is the machine-readable, team-facing plan.
-
-Snapshot (from `docs/project-plan.csv`) — 2025-11-14
-
-- Total tasks: 35
-- Status counts: todo: 22, in-progress: 1, completed: 12
-- Estimated hours: 118 completed, 240 remaining
-- Phase focus: payments in-flight; optimization, business, and maintenance queued next
-
-Recent updates (2025-11-14): sanitized the CSV to remove narrative rows, recomputed completion/remaining hours, and regenerated this Markdown snapshot via `scripts/plan_sync.py --apply`. All summary figures now match the authoritative dataset.
-
-Top priority (P0/P1) tasks — quick view
-
-| Task ID | Title | Owner | Status | Estimate | Depends On |
-|---|---|---|---|---:|---|
-| PAY-001 | Stripe payment integration | backend | in-progress | 16 | AGENT-001 |
-| PAY-002 | Subscription tiers and billing logic | backend | todo | 12 | PAY-001 |
-| PAY-003 | Usage tracking and metering | backend | todo | 10 | PAY-001 |
-| PAY-004 | Payment UI components | frontend | todo | 8 | PAY-001 |
-| OPT-001 | Database query optimization and indexing | backend | todo | 8 | FOUND-001 |
-| MAINT-001 | Comprehensive security audit and hardening | security | todo | 12 | FOUND-006 |
-
-How to use and update
-
-- Edit `docs/project-plan.csv` for day-to-day task changes (status, owner, estimates). Follow the CSV schema:
-  - Required header: id,phase,task,owner,status,priority,dependencies,estimated_hours,completion_date,artifacts,verification,notes,codex_hints
-  - `status` must be one of: todo, in-progress, completed, blocked, deferred
-  - Legacy status vocabulary note: the canonical statuses are `planned`, `in_progress`, `blocked`, `done` (see `docs/project-plan.csv`).
-  - `completion_date` values (when present) use ISO 8601 (YYYY-MM-DD)
-- Commit message convention: `docs(plan): <short description>` (e.g., `docs(plan): mark PAY-001 in-progress`)
-- When milestones or high-level narrative shift, update this Markdown to capture context and decisions; link to PRs or Action runs in the CSV `notes` column for traceability.
-
-Automation note
-
-- Use `scripts/plan_sync.py --apply` to regenerate the Markdown snapshot after editing the CSV. `scripts/plan_md_to_csv.py` remains available for one-off conversions from Markdown tables back to CSV if needed.
-
-Milestones & dates (Gantt-style)
-
-| ID | Milestone | Owner | Start | Target | Notes |
-|---:|---|---|---:|---:|---|
-| M1 | Stripe integration sandbox verified | backend | 2025-11-11 | 2025-11-18 | PAY-001 complete, webhook smoke tests pass |
-| M2 | Subscription gating live | backend | 2025-11-18 | 2025-11-22 | PAY-002 feature flags enabled for pilot |
-| M3 | Usage metering pipeline operational | backend | 2025-11-22 | 2025-11-29 | PAY-003 backfills + cron schedule validated |
-| M4 | Payment UI beta to pilot customers | frontend | 2025-11-24 | 2025-11-30 | PAY-004 flow QA + analytics hooks |
-| M5 | Security hardening audit completed | security | 2025-11-25 | 2025-12-02 | MAINT-001 checklist evidence archived |
-| M6 | Go-live readiness review | project lead | 2025-12-03 | 2025-12-06 | Cross-team release readiness gate |
-
-RACI (key roles)
-
-| Role | Short | Responsibility |
+| Area | Status | Target |
 |---|---|---|
-| Project Lead | PL | Prioritize backlog, coordinate releases, publish comms |
-| Backend Lead | BE | Own Stripe integration, usage metering, backend tests |
-| Frontend Lead | FE | Deliver payment UX, dashboard updates, user testing |
-| DevOps Lead | DEVOPS | Maintain CI/CD, observability, release automation |
-| Security Lead | SEC | Security reviews, secrets hygiene, compliance evidence |
+| **Stripe International** | Deferred (P2) | Q3 2026 |
+| **Closed Beta Expansion** | Active — infrastructure ready | Ongoing |
 
-Risk Register
+## How to Update
 
-| ID | Risk | Impact | Likelihood | Mitigation |
-|---:|---|---|---:|---|
-| R1 | Stripe webhook failures causing billing gaps | High | Medium | Enable idempotency keys, monitor event replay queue, add alerting |
-| R2 | Usage metering data loss from worker crashes | High | Medium | Persist events durably, nightly reconciliation job, coverage tests |
-| R3 | Deployment regression on Heroku release | Medium | Medium | Keep rollback checklist current, tag container images, smoke-test post deploy |
-| R4 | Secrets drift between GitHub and Heroku | High | Low | Continue GitHub → Heroku sync with dry-run logs and approvals |
+1. Edit `docs/project-plan.csv` for task changes (status, owner, priority).
+2. Run `python scripts/plan_sync.py --apply` to regenerate the table below.
+3. Use `make project-info` for a live summary.
+4. Commit: `docs(plan): <short description>`
 
-Operating Cadence
-
-- Daily (async): status in `#autorisen-ops`; flag blockers in `#autorisen-payments`.
-- Twice weekly: Payments/Platform sync (Tue & Thu 17:00 UTC) owned by PL.
-- On-demand: merge high-priority fixes after at least one reviewer + green CI.
-
-Checklists
-
-Release checklist (minimal)
-
-1. CI green for `ci-health` and `docker-publish` (or run locally).
-1. `HEROKU_APP_NAME` and `HEROKU_API_KEY` present in repo secrets.
-1. Smoke test `services/health` and payment happy path after deploy.
-
-Rollback checklist
-
-1. Revert release commit and re-run deploy using previous image tag.
-1. Verify `/alive` and `/api/health` return 200.
-1. Reconcile Stripe events to ensure no duplicate invoices.
-
-Secrets & Infra change checklist
-
-1. Update mapping in `infra/secrets-mapping.json` (reviewed by SEC).
-1. Run sync in dry-run (`ci/sync-github-to-heroku.yml`).
-1. Approve and run `--apply` in controlled workflow; capture audit link in CSV `notes` column.
-
-Appendix — Helpful commands
+## Key Commands
 
 ```bash
-## Validate Stripe webhook forwarding locally
-stripe listen --forward-to localhost:8000/api/payment/webhook
-
-## Production health check
-curl -sS https://autorisen-dac8e65796e7.herokuapp.com/api/health
-
-## Regenerate Markdown snapshot after CSV edits
-python scripts/plan_sync.py --apply
+make project-info          # Live stats from CSV
+make codex-plan-diff       # Check for drift
+make codex-plan-apply      # Regenerate table from CSV
+make codex-test            # Run tests (SQLite)
+make codex-test-pg         # Run tests (Postgres)
+ALLOW_PROD=1 ALLOW_PROD_DEPLOY=YES make deploy  # Production deploy
 ```
 
-Maintainers: ops@example.com, payments@example.com, platform@example.com
+## Risk Register
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| AI model retirement (Anthropic deprecates models) | Service outage | Model router with fallback; tested alternatives on file |
+| Free plan AI cost overrun | Margin erosion | Platform budget circuit breaker, per-user execution limits |
+| PayFast webhook failures | Billing gaps | ITN validation, idempotent processing, transaction logging |
+| Deployment regression | Downtime | Rollback checklist, tagged images, post-deploy smoke tests |
 
 <!-- PLAN:BEGIN -->
 
@@ -228,10 +146,19 @@ Maintainers: ops@example.com, payments@example.com, platform@example.com
 | QUAL-003 | Update stale deployment checklist | docs | done | P2 | 2026-03-04 |
 | FEAT-MKTPLACE-001 | Marketplace download counts + trending algorithm | engineering | done | P2 | 2026-03-04 |
 | FEAT-MKTPLACE-002 | Featured agents admin flag | engineering | done | P2 | 2026-03-04 |
+| ENG-OAUTH-VERIFY-001 | Google OAuth brand verification approved by Google | engineering | done | P0 | 2026-03-03 |
+| ENG-PERF-001 | Lighthouse mobile performance 71 → 98 (GZip + lazy routes + non-blocking mount) | engineering | done | P0 | 2026-03-08 |
 | BP-STRIPE-001 | Integrate Stripe for international payment rails | engineering | todo | P2 |  |
 | BP-BETA-001 | Launch closed beta with 10–20 compliance-heavy SMBs | management | done | P0 | 2026-02-24 |
 | BP-MONITOR-001 | Implement monitoring and alerting infrastructure (runbooks + backups) | engineering | done | P1 | 2026-02-24 |
 | BP-SECURITY-DOC-001 | Publish security posture documentation for buyer due diligence | docs | done | P1 | 2026-02-24 |
 | BP-DOCS-ALIGN-001 | Audit and align docs/agents.md with actual codebase | docs | done | P2 | 2026-02-24 |
+| FEAT-INSTRUCT-001 | AI-generated project instruction sheets | engineering | done | P1 | 2026-03-15 |
+| FIX-MODEL-001 | Fix retired Haiku model references across backend | engineering | done | P0 | 2026-03-15 |
+| FIX-USAGE-001 | Fix usage tracking — missing db.commit() | engineering | done | P0 | 2026-03-15 |
+| FIX-RETRY-001 | Fix infinite retry loop on project instructions error | engineering | done | P1 | 2026-03-15 |
+| FEAT-PLANLIMIT-001 | Gate project creation by plan limits | engineering | done | P0 | 2026-03-15 |
+| FEAT-PLANLIMIT-002 | Gate AI instructions by paid plan | engineering | done | P0 | 2026-03-15 |
+| FEAT-INSTRUCT-002 | Expand Next Steps with guided headings and detail | engineering | done | P1 | 2026-03-15 |
 
 <!-- PLAN:END -->
