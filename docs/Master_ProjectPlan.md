@@ -12,7 +12,7 @@
 
 CapeControl is a production SaaS platform for AI-powered business automation, deployed as Docker containers to Heroku. The platform provides project management, AI instruction generation, agent marketplace, compliance tooling, and workflow capsules for regulated SMBs.
 
-**Current state:** 82 tasks tracked, 81 done, 1 deferred (Stripe international payments — Q3 2026).
+**Current state:** 86 tasks tracked, 81 done, 5 planned.
 
 ## Architecture
 
@@ -44,8 +44,11 @@ CapeControl is a production SaaS platform for AI-powered business automation, de
 
 | Area | Status | Target |
 |---|---|---|
+| **Beta User Shipment** | Ready to invite (P0) | Q1 2026 |
+| **Pro Plan Purchase Flow** | Todo — PayFast checkout (P0) | Q2 2026 |
+| **Dashboard Metrics Polish** | Todo — real-time charts (P1) | Q2 2026 |
+| **E2E Test Coverage** | Todo — Playwright (P1) | Q2 2026 |
 | **Stripe International** | Deferred (P2) | Q3 2026 |
-| **Closed Beta Expansion** | Active — infrastructure ready | Ongoing |
 
 ## How to Update
 
@@ -160,5 +163,9 @@ ALLOW_PROD=1 ALLOW_PROD_DEPLOY=YES make deploy  # Production deploy
 | FEAT-PLANLIMIT-001 | Gate project creation by plan limits | engineering | done | P0 | 2026-03-15 |
 | FEAT-PLANLIMIT-002 | Gate AI instructions by paid plan | engineering | done | P0 | 2026-03-15 |
 | FEAT-INSTRUCT-002 | Expand Next Steps with guided headings and detail | engineering | done | P1 | 2026-03-15 |
+| BETA-SHIP-001 | Ship platform to beta users from contact list | management | todo | P0 |  |
+| FEAT-UPGRADE-001 | Add Pro plan purchase flow via PayFast | engineering | todo | P0 |  |
+| FEAT-DASH-METRICS-001 | Dashboard real-time metrics polish | engineering | todo | P1 |  |
+| QUAL-E2E-001 | Add Playwright end-to-end test coverage | engineering | todo | P1 |  |
 
 <!-- PLAN:END -->
