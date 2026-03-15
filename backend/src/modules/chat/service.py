@@ -8,13 +8,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from backend.src.db import models
 from backend.src.modules.usage.input_guard import validate_llm_input
 from backend.src.modules.usage.model_router import select_model
 from backend.src.modules.usage.token_counter import count_tokens as _count_tokens
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +64,7 @@ def _now() -> datetime:
 
 
 # ── Thread operations ─────────────────────────────────────────────────────────
+
 
 def list_threads(
     db: Session,
@@ -119,6 +119,7 @@ def create_thread(
 
 
 # ── Event / message operations ────────────────────────────────────────────────
+
 
 def list_events(
     db: Session,
@@ -291,9 +292,7 @@ def generate_ai_response(
     if messages:
         last = messages[-1]
         if last["role"] == "user":
-            last["content"] = validate_llm_input(
-                last["content"], label="chat message"
-            )
+            last["content"] = validate_llm_input(last["content"], label="chat message")
 
     if not api_key:
         log.warning("ANTHROPIC_API_KEY not set — returning placeholder response")
@@ -316,7 +315,13 @@ def generate_ai_response(
         response = client.messages.create(
             model=model,
             max_tokens=2048,
-            system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
+            system=[
+                {
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
             messages=messages,
         )
         content = ""
@@ -353,6 +358,7 @@ def generate_ai_response(
                 tokens_out=response.usage.output_tokens,
                 thread_id=thread.id,
             )
+            db.commit()
         except Exception:  # noqa: BLE001
             log.warning("Failed to record usage log", exc_info=True)
 

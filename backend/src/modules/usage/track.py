@@ -61,5 +61,6 @@ def try_record_usage(
             thread_id=thread_id,
             detail=detail,
         )
+        db.commit()
     except Exception:
         log.warning("Failed to record LLM usage (%s)", event_type, exc_info=True)

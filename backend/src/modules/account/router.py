@@ -490,6 +490,7 @@ def generate_project_instructions(
                 tokens_in=response.usage.input_tokens,
                 tokens_out=response.usage.output_tokens,
             )
+            db.commit()
         except Exception:  # noqa: BLE001
             log.warning(
                 "Failed to record usage for project instructions", exc_info=True
