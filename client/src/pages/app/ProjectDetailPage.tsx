@@ -81,10 +81,10 @@ export default function ProjectDetailPage() {
 
   // Auto-generate instructions once project loads with a description
   useEffect(() => {
-    if (project && project.description?.trim() && !instructions && !instructionsLoading) {
+    if (project && project.description?.trim() && !instructions && !instructionsLoading && !instructionsError) {
       generateInstructions();
     }
-  }, [project, instructions, instructionsLoading, generateInstructions]);
+  }, [project, instructions, instructionsLoading, instructionsError, generateInstructions]);
 
 
   const handleSave = async (e: FormEvent) => {
