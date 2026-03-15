@@ -13,6 +13,7 @@ export default function CreateProjectPage() {
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,7 +29,12 @@ export default function CreateProjectPage() {
       });
       navigate("/app/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create project. Please try again.");
+      const status = (err as { status?: number }).status;
+      if (status === 429) {
+        setLimitReached(true);
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to create project. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -45,6 +51,20 @@ export default function CreateProjectPage() {
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
             {error}
+          </div>
+        )}
+
+        {limitReached && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-900/20" role="alert">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              You&apos;ve reached the project limit on your current plan.
+            </p>
+            <a
+              href="/app/pricing"
+              className="mt-2 inline-block text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+            >
+              Upgrade your plan to create more projects &rarr;
+            </a>
           </div>
         )}
 

@@ -10,6 +10,10 @@ from typing import Any
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user
+from backend.src.modules.payments.enforcement import (
+    enforce_paid_plan,
+    enforce_project_limit,
+)
 from backend.src.modules.support.sla import estimated_response_time
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select, update
@@ -219,6 +223,7 @@ def create_project(
     payload: schemas.ProjectCreate,
     current_user: models.User = Depends(get_verified_user),
     db: Session = Depends(get_session),
+    _quota=Depends(enforce_project_limit),
 ) -> schemas.ProjectStatusItem:
     """Create a new project (stored as a task)."""
     # Pick a default agent — use the first available or the Onboarding Guide
@@ -424,6 +429,7 @@ def generate_project_instructions(
     project_id: int,
     current_user: models.User = Depends(get_verified_user),
     db: Session = Depends(get_session),
+    _plan=Depends(enforce_paid_plan),
 ) -> schemas.ProjectInstructions:
     """Generate (or return cached) AI instruction sheet for a project."""
     task = db.scalars(

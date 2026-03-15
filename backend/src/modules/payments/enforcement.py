@@ -35,14 +35,13 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import Depends, HTTPException, Request, status
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
-
-from backend.src.db.models import Agent, Subscription, UsageLog
+from backend.src.db.models import Agent, Subscription, Task, UsageLog
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_current_user
 from backend.src.modules.payments.constants import get_plan_limits
+from fastapi import Depends, HTTPException, Request, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +51,7 @@ _UPGRADE_URL = "/app/pricing"
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _platform_month_start() -> datetime:
     """Return the first instant of the current UTC month."""
@@ -79,13 +79,10 @@ def _user_spend(db: Session, user_id: str, since: datetime) -> float:
     ).scalar_one()
     return float(total)
 
+
 def _get_plan_id(db: Session, user_id: str) -> str:
     """Return the user's active plan_id, defaulting to 'free'."""
-    sub = (
-        db.query(Subscription)
-        .filter(Subscription.user_id == user_id)
-        .first()
-    )
+    sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
     if sub and sub.status in ("active", "trialing"):
         return sub.plan_id
     return "free"
@@ -94,11 +91,7 @@ def _get_plan_id(db: Session, user_id: str) -> str:
 def _billing_period_start(db: Session, user_id: str) -> datetime:
     """Derive billing period start from the subscription or fall back to
     the first day of the current UTC month."""
-    sub = (
-        db.query(Subscription)
-        .filter(Subscription.user_id == user_id)
-        .first()
-    )
+    sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
     if sub and sub.current_period_start:
         return sub.current_period_start
     now = datetime.now(timezone.utc)
@@ -122,6 +115,13 @@ def _current_agent_count(db: Session, user_id: str) -> int:
     ).scalar_one()
 
 
+def _current_project_count(db: Session, user_id: str) -> int:
+    """Count projects (tasks) owned by the user."""
+    return db.execute(
+        select(func.count(Task.id)).where(Task.user_id == user_id)
+    ).scalar_one()
+
+
 def _raise_limit_exceeded(
     *,
     limit_type: str,
@@ -130,16 +130,15 @@ def _raise_limit_exceeded(
     plan_id: str,
 ) -> None:
     """Raise an HTTP 429 with a structured error body."""
-    if limit_type == "executions":
-        detail = (
-            f"Monthly execution limit reached ({current}/{maximum}). "
-            f"Upgrade your plan for more capacity."
-        )
-    else:
-        detail = (
-            f"Agent limit reached ({current}/{maximum}). "
-            f"Upgrade your plan to create more agents."
-        )
+    _MESSAGES = {
+        "executions": "Monthly execution limit reached ({current}/{maximum}). Upgrade your plan for more capacity.",
+        "agents": "Agent limit reached ({current}/{maximum}). Upgrade your plan to create more agents.",
+        "projects": "Project limit reached ({current}/{maximum}). Upgrade your plan to create more projects.",
+    }
+    detail = _MESSAGES.get(
+        limit_type,
+        f"{limit_type.title()} limit reached ({current}/{maximum}). Upgrade your plan.",
+    ).format(current=current, maximum=maximum)
 
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -157,6 +156,7 @@ def _raise_limit_exceeded(
 # ---------------------------------------------------------------------------
 # Public FastAPI dependencies
 # ---------------------------------------------------------------------------
+
 
 async def enforce_execution_limit(
     request: Request,
@@ -180,7 +180,10 @@ async def enforce_execution_limit(
     if current >= limits.max_executions_per_month:
         log.info(
             "Execution limit hit for user=%s plan=%s (%d/%d)",
-            user_id, plan_id, current, limits.max_executions_per_month,
+            user_id,
+            plan_id,
+            current,
+            limits.max_executions_per_month,
         )
         _raise_limit_exceeded(
             limit_type="executions",
@@ -209,13 +212,75 @@ async def enforce_agent_limit(
     if current >= limits.max_agents:
         log.info(
             "Agent limit hit for user=%s plan=%s (%d/%d)",
-            user_id, plan_id, current, limits.max_agents,
+            user_id,
+            plan_id,
+            current,
+            limits.max_agents,
         )
         _raise_limit_exceeded(
             limit_type="agents",
             current=current,
             maximum=limits.max_agents,
             plan_id=plan_id,
+        )
+
+
+async def enforce_project_limit(
+    request: Request,
+    user: Any = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> None:
+    """Block project creation when the user has reached their project
+    count limit.  A max_projects of 0 means unlimited."""
+    user_id: str = user.id
+    plan_id = _get_plan_id(db, user_id)
+    limits = get_plan_limits(plan_id)
+
+    if limits.max_projects == 0:
+        return  # unlimited
+
+    current = _current_project_count(db, user_id)
+
+    request.state.plan_id = plan_id
+    request.state.plan_limits = limits
+
+    if current >= limits.max_projects:
+        log.info(
+            "Project limit hit for user=%s plan=%s (%d/%d)",
+            user_id,
+            plan_id,
+            current,
+            limits.max_projects,
+        )
+        _raise_limit_exceeded(
+            limit_type="projects",
+            current=current,
+            maximum=limits.max_projects,
+            plan_id=plan_id,
+        )
+
+
+async def enforce_paid_plan(
+    request: Request,
+    user: Any = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> None:
+    """Block the request unless the user is on a paid plan (pro or
+    enterprise).  Used to gate premium features like AI instructions."""
+    user_id: str = user.id
+    plan_id = _get_plan_id(db, user_id)
+
+    request.state.plan_id = plan_id
+
+    if plan_id == "free":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "message": "This feature requires a Pro or Enterprise plan.",
+                "code": "plan_required",
+                "plan_id": plan_id,
+                "upgrade_url": _UPGRADE_URL,
+            },
         )
 
 
@@ -248,7 +313,8 @@ async def enforce_platform_budget(
     if spent >= cap:
         log.critical(
             "CIRCUIT BREAKER: monthly AI spend $%.2f >= cap $%.2f – blocking LLM requests",
-            spent, cap,
+            spent,
+            cap,
         )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -290,7 +356,9 @@ async def enforce_user_budget(
     if spent >= cap:
         log.warning(
             "USER CIRCUIT BREAKER: user=%s monthly AI spend $%.2f >= cap $%.2f",
-            user_id, spent, cap,
+            user_id,
+            spent,
+            cap,
         )
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

@@ -160,17 +160,31 @@ def get_plan_by_id(plan_id: str) -> PlanDefinition | None:
 # Numeric plan limits (machine-readable for feature gating)
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class PlanLimits:
     max_agents: int
     max_executions_per_month: int
+    max_projects: int = 0  # 0 = unlimited
     storage_limit_mb: int = 512
 
 
 PLAN_LIMITS: Dict[str, PlanLimits] = {
-    "free": PlanLimits(max_agents=3, max_executions_per_month=50, storage_limit_mb=512),
-    "pro": PlanLimits(max_agents=50, max_executions_per_month=2000, storage_limit_mb=5_120),
-    "enterprise": PlanLimits(max_agents=500, max_executions_per_month=8000, storage_limit_mb=51_200),
+    "free": PlanLimits(
+        max_agents=3, max_executions_per_month=50, max_projects=3, storage_limit_mb=512
+    ),
+    "pro": PlanLimits(
+        max_agents=50,
+        max_executions_per_month=2000,
+        max_projects=25,
+        storage_limit_mb=5_120,
+    ),
+    "enterprise": PlanLimits(
+        max_agents=500,
+        max_executions_per_month=8000,
+        max_projects=0,
+        storage_limit_mb=51_200,
+    ),
 }
 
 

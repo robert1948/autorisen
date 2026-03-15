@@ -43,6 +43,7 @@ export default function ProjectDetailPage() {
   const [instructions, setInstructions] = useState<string | null>(null);
   const [instructionsLoading, setInstructionsLoading] = useState(false);
   const [instructionsError, setInstructionsError] = useState<string | null>(null);
+  const [planGated, setPlanGated] = useState(false);
 
   const loadProject = useCallback(async () => {
     if (!projectId) return;
@@ -73,7 +74,12 @@ export default function ProjectDetailPage() {
       const result = await dashboardModulesApi.generateProjectInstructions(projectId);
       setInstructions(result.instructions);
     } catch (err: unknown) {
-      setInstructionsError(err instanceof Error ? err.message : "Failed to generate instructions");
+      const status = (err as { status?: number }).status;
+      if (status === 403) {
+        setPlanGated(true);
+      } else {
+        setInstructionsError(err instanceof Error ? err.message : "Failed to generate instructions");
+      }
     } finally {
       setInstructionsLoading(false);
     }
@@ -81,10 +87,10 @@ export default function ProjectDetailPage() {
 
   // Auto-generate instructions once project loads with a description
   useEffect(() => {
-    if (project && project.description?.trim() && !instructions && !instructionsLoading && !instructionsError) {
+    if (project && project.description?.trim() && !instructions && !instructionsLoading && !instructionsError && !planGated) {
       generateInstructions();
     }
-  }, [project, instructions, instructionsLoading, instructionsError, generateInstructions]);
+  }, [project, instructions, instructionsLoading, instructionsError, planGated, generateInstructions]);
 
 
   const handleSave = async (e: FormEvent) => {
@@ -326,13 +332,27 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
+        {planGated && (
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              AI-generated instruction sheets are available on Pro and Enterprise plans.
+            </p>
+            <a
+              href="/app/pricing"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+            >
+              Upgrade to Pro
+            </a>
+          </div>
+        )}
+
         {instructions && (
           <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-indigo-900 dark:text-indigo-200">
             {instructions}
           </div>
         )}
 
-        {!instructions && !instructionsLoading && !instructionsError && (
+        {!instructions && !instructionsLoading && !instructionsError && !planGated && (
           <div className="mt-3">
             <p className="text-sm text-indigo-700 dark:text-indigo-300">
               {project.description?.trim()
