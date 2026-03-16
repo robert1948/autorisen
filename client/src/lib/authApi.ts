@@ -175,6 +175,43 @@ async function handleJson<T>(response: Response): Promise<T> {
   return parseError(response);
 }
 
+async function extractErrorDetail(response: Response): Promise<string> {
+  try {
+    const data = (await response.json()) as { detail?: unknown };
+    if (typeof data?.detail === "string") {
+      return data.detail;
+    }
+    if (data?.detail) {
+      return JSON.stringify(data.detail);
+    }
+  } catch (err) {
+    console.warn("Failed to parse error response", err);
+  }
+  return `Request failed with status ${response.status}`;
+}
+
+async function requestLogin(
+  email: string,
+  password: string,
+  recaptchaToken: string | null,
+): Promise<Response> {
+  const csrfToken = await fetchCsrfToken();
+  const body: Record<string, unknown> = { email, password };
+  if (recaptchaToken) {
+    body.recaptcha_token = recaptchaToken;
+  }
+
+  return fetch(`${AUTH_BASE}/login`, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      [CSRF_HEADER]: csrfToken,
+    },
+    ...defaultFetchOptions,
+    body: JSON.stringify(body),
+  });
+}
+
 export type RegisterStep1Payload = {
   first_name: string;
   last_name: string;
@@ -333,22 +370,34 @@ export async function login(
   password: string,
   recaptchaToken: string | null,
 ): Promise<TokenResponse> {
-  const csrfToken = await fetchCsrfToken();
-  const body: Record<string, unknown> = { email, password };
-  if (recaptchaToken) {
-    body.recaptcha_token = recaptchaToken;
+  let response = await requestLogin(email, password, recaptchaToken);
+  if (response.ok) {
+    return handleJson<TokenResponse>(response);
   }
-  const response = await fetch(`${AUTH_BASE}/login`, {
-    method: "POST",
-    headers: {
-      ...defaultHeaders,
-      [CSRF_HEADER]: csrfToken,
-    },
-    ...defaultFetchOptions,
-    body: JSON.stringify(body),
-  });
 
-  return handleJson<TokenResponse>(response);
+  const firstErrorDetail = await extractErrorDetail(response);
+  const isCsrfError = /csrf/i.test(firstErrorDetail);
+  if (isCsrfError) {
+    // Self-healing path: refresh CSRF cookie/token pair and retry once.
+    invalidateCsrfToken();
+    response = await requestLogin(email, password, recaptchaToken);
+    if (response.ok) {
+      return handleJson<TokenResponse>(response);
+    }
+
+    const retryErrorDetail = await extractErrorDetail(response);
+    const error = new Error(
+      /csrf/i.test(retryErrorDetail)
+        ? "Security token expired. Please refresh this page and try again."
+        : retryErrorDetail,
+    ) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
+
+  const error = new Error(firstErrorDetail) as Error & { status?: number };
+  error.status = response.status;
+  throw error;
 }
 
 export async function loginWithGoogle(

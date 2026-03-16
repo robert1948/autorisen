@@ -5,11 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
+from backend.src.db import models
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
-from backend.src.db import models
 
 
 def _utcnow() -> datetime:
@@ -120,7 +119,8 @@ def compute_progress(
     completed_required = sum(
         1
         for step in required_steps
-        if state_map.get(step.step_key) and state_map[step.step_key].status == "completed"
+        if state_map.get(step.step_key)
+        and state_map[step.step_key].status == "completed"
     )
     return int((completed_required / len(required_steps)) * 100)
 
@@ -178,14 +178,15 @@ def serialize_steps(
                 "order_index": step.order_index,
                 "required": bool(step.required),
                 "role_scope_json": step.role_scope_json,
-                "state":
-                {
-                    "status": state.status,
-                    "completed_at": state.completed_at,
-                    "skipped_at": state.skipped_at,
-                }
-                if state
-                else None,
+                "state": (
+                    {
+                        "status": state.status,
+                        "completed_at": state.completed_at,
+                        "skipped_at": state.skipped_at,
+                    }
+                    if state
+                    else None
+                ),
             }
         )
     return payload_steps
@@ -322,7 +323,9 @@ def set_step_status(
             if not session:
                 raise ValueError("Session lost after rollback")
             step = db.scalar(
-                select(models.OnboardingStep).where(models.OnboardingStep.step_key == step_key)
+                select(models.OnboardingStep).where(
+                    models.OnboardingStep.step_key == step_key
+                )
             )
             if not step:
                 raise ValueError("Step not found")
@@ -388,7 +391,10 @@ def get_next_step(db: Session, user: models.User) -> dict[str, Any]:
             break
     payload_steps = serialize_steps(steps, states)
     step_payload = (
-        next((item for item in payload_steps if item["step_key"] == next_step.step_key), None)
+        next(
+            (item for item in payload_steps if item["step_key"] == next_step.step_key),
+            None,
+        )
         if next_step
         else None
     )
@@ -451,7 +457,9 @@ def mark_step_blocked(
     states = ensure_step_state(db, session.id, steps)
     db.commit()
     payload_steps = serialize_steps(steps, states)
-    step_payload = next((item for item in payload_steps if item["step_key"] == step_key), None)
+    step_payload = next(
+        (item for item in payload_steps if item["step_key"] == step_key), None
+    )
     if not step_payload:
         raise ValueError("Step not found")
     return {
@@ -505,6 +513,9 @@ def acknowledge_trust(
 
 
 def complete_onboarding(db: Session, user: models.User) -> dict[str, Any]:
+    if not getattr(user, "is_email_verified", False):
+        raise PermissionError("Email verification is required to complete onboarding")
+
     session = get_active_session(db, user.id)
     if not session:
         session = models.OnboardingSession(

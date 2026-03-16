@@ -27,6 +27,38 @@ def _register_user(client, email: str):
     return model.access_token, headers
 
 
+def _register_user_unverified(client, email: str):
+    payload_step1 = {
+        "first_name": "Onboard",
+        "last_name": "Tester",
+        "email": email,
+        "password": "Password123!@#",
+        "confirm_password": "Password123!@#",
+        "terms_accepted": True,
+        "role": "Customer",
+        "recaptcha_token": "dummy",
+    }
+    csrf_resp = client.get("/api/auth/csrf")
+    assert csrf_resp.status_code == 200
+    csrf_token = csrf_resp.json()["token"]
+    csrf_headers = {"X-CSRF-Token": csrf_token}
+
+    step1_resp = client.post(
+        "/api/auth/register/step1", json=payload_step1, headers=csrf_headers
+    )
+    assert step1_resp.status_code == 201
+    temp_token = step1_resp.json()["temp_token"]
+
+    step2_payload = {"company_name": "CapeControl", "profile": {}}
+    step2_headers = {**csrf_headers, "Authorization": f"Bearer {temp_token}"}
+    step2_resp = client.post(
+        "/api/auth/register/step2", json=step2_payload, headers=step2_headers
+    )
+    assert step2_resp.status_code == 200
+    access_token = step2_resp.json()["access_token"]
+    return access_token
+
+
 def test_onboarding_status_empty(client):
     token, _headers = _register_user(client, "onboard-status@example.com")
     auth_headers = {"Authorization": f"Bearer {token}"}
@@ -76,3 +108,12 @@ def test_onboarding_profile_update(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["profile"]["first_name"] == "Sky"
+
+
+def test_onboarding_complete_requires_verified_email(client):
+    token = _register_user_unverified(client, "onboard-unverified@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = client.post("/api/onboarding/complete", headers=headers)
+    assert resp.status_code == 403
+    assert "Email verification is required" in resp.json()["detail"]

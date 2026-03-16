@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 from . import schemas, service
 
@@ -81,12 +80,12 @@ def get_next_step(
     payload = service.get_next_step(db, current_user)
     step_payload = payload.get("step")
     step = schemas.OnboardingStepOut(**step_payload) if step_payload else None
-    return schemas.OnboardingNextStepResponse(step=step, progress=payload.get("progress", 0))
+    return schemas.OnboardingNextStepResponse(
+        step=step, progress=payload.get("progress", 0)
+    )
 
 
-@router.post(
-    "/step-complete", response_model=schemas.OnboardingStepActionResponse
-)
+@router.post("/step-complete", response_model=schemas.OnboardingStepActionResponse)
 def complete_step_simple(
     payload: schemas.OnboardingStepCompleteRequest,
     current_user: models.User = Depends(get_current_user),
@@ -95,9 +94,13 @@ def complete_step_simple(
     try:
         data = service.set_step_status(db, current_user, payload.step_key, "completed")
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
     steps = data["steps"]
-    step_payload = next((step for step in steps if step["step_key"] == payload.step_key), None)
+    step_payload = next(
+        (step for step in steps if step["step_key"] == payload.step_key), None
+    )
     if not step_payload:
         raise HTTPException(status_code=404, detail="Step not found")
     return schemas.OnboardingStepActionResponse(
@@ -106,9 +109,7 @@ def complete_step_simple(
     )
 
 
-@router.post(
-    "/step-blocked", response_model=schemas.OnboardingStepBlockedResponse
-)
+@router.post("/step-blocked", response_model=schemas.OnboardingStepBlockedResponse)
 def block_step(
     payload: schemas.OnboardingStepBlockedRequest,
     current_user: models.User = Depends(get_current_user),
@@ -123,7 +124,9 @@ def block_step(
             notes=payload.notes,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
     step_payload = data["step"]
     return schemas.OnboardingStepBlockedResponse(
         step=schemas.OnboardingStepOut(**step_payload),
@@ -131,7 +134,9 @@ def block_step(
     )
 
 
-@router.post("/steps/{step_key}/complete", response_model=schemas.OnboardingStepActionResponse)
+@router.post(
+    "/steps/{step_key}/complete", response_model=schemas.OnboardingStepActionResponse
+)
 def complete_step(
     step_key: str,
     current_user: models.User = Depends(get_current_user),
@@ -153,7 +158,9 @@ def complete_step(
     )
 
 
-@router.post("/steps/{step_key}/skip", response_model=schemas.OnboardingStepActionResponse)
+@router.post(
+    "/steps/{step_key}/skip", response_model=schemas.OnboardingStepActionResponse
+)
 def skip_step(
     step_key: str,
     current_user: models.User = Depends(get_current_user),
@@ -196,7 +203,12 @@ def complete_onboarding(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ) -> schemas.OnboardingCompleteResponse:
-    payload = service.complete_onboarding(db, current_user)
+    try:
+        payload = service.complete_onboarding(db, current_user)
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)
+        ) from exc
     session = payload["session"]
     return schemas.OnboardingCompleteResponse(
         session=schemas.OnboardingSessionOut.from_orm(session),
