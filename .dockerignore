@@ -181,7 +181,6 @@ docker-data/
 
 # Logo files in root (should be in proper assets directory)
 LogoW.png
-=0.110
 
 # Keep optimized logo assets in client/public for deployment
 !client/public/LogoW.png

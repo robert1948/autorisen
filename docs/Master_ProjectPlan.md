@@ -117,6 +117,8 @@ ALLOW_PROD=1 ALLOW_PROD_DEPLOY=YES make deploy  # Production deploy
 | FEAT-ONBOARD-PROFILE-001 | Onboarding profile page: dark theme + pre-fill from OAuth + optional fields | engineering | done | P1 | 2026-02-19 |
 | FEAT-TRIAL-BTN-001 | Smart trial button: check auth status before redirect | engineering | done | P1 | 2026-02-19 |
 | FEAT-LOGIN-NOTIFY-001 | Send login email notification for all providers (Google/LinkedIn/email) | engineering | done | P0 | 2026-02-19 |
+| FIX-AUTH-CSRF-002 | Self-heal login when CSRF token is stale | engineering | done | P0 | 2026-03-16 |
+| FIX-ONBOARD-GATE-002 | Block onboarding completion for unverified email accounts | engineering | done | P0 | 2026-03-16 |
 | FIX-DDOS-OAUTH-001 | Exempt OAuth callbacks from DDoS burst detection | engineering | done | P1 | 2026-02-18 |
 | FIX-DASH-PREVIEW-001 | Fix dashboard stuck in read-only preview mode | engineering | done | P0 | 2026-02-19 |
 | FIX-SCAFFOLD-REDIRECT-001 | Replace scaffold route stubs with Navigate redirects and real LogoutAction | engineering | done | P1 | 2026-02-19 |

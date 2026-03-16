@@ -46,6 +46,7 @@
 
 **Manual Testing:**
 - [ ] Authentication flow tested
+- [ ] No dead-end auth/onboarding path (self-recovery or immediate guided fallback)
 - [ ] Core features functional
 - [ ] UI responsive on mobile/desktop
 - [ ] Error handling verified
