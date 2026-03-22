@@ -1,14 +1,9 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import TopNav from './nav/TopNav';
 import Footer from './Footer';
-import { useAuth } from '../features/auth/AuthContext';
 
 const HomePage: React.FC = () => {
-  const { search } = useLocation();
-  const { state: authState } = useAuth();
-  const isAuthenticated = Boolean(authState.accessToken);
-  const registerHref = `/auth/register${search}`;
   const handleOpenSupport = () => {
     console.log("Open support chat");
     // In a full implementation, this would toggle the chat modal
@@ -22,18 +17,25 @@ const HomePage: React.FC = () => {
       <section id="home" className="bg-[#0B1120] text-white text-left md:text-center py-12 md:py-24 px-10 md:px-5">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Reframe Your AI Journey: From Overwhelm to Effortless Magic
+            Governed AI Workflows for Compliance-Heavy Operations
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            In a world of complex integrations and compliance nightmares, CapeControl turns AI into your intuitive ally. No more "range anxiety"—just seamless onboarding, secure querying, and compliant agents that feel like a genius whisper in your ear.
+            CapeControl helps businesses execute multi-step operational work with advanced AI agents, approved-source retrieval, evidence-backed outputs, and human-guided controls designed for trust-sensitive workflows.
           </p>
-          <div className="inline-block bg-white/10 p-2 rounded-xl backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row justify-center gap-4">
             <Link 
-              to="/app/dashboard" 
+              to="/how-it-works" 
               className="block bg-[#ff6b6b] hover:bg-[#ff5252] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg"
             >
-              Go to Dashboard
+              Book a Governance Walkthrough
             </Link>
+            <button
+              type="button"
+              onClick={handleOpenSupport}
+              className="block bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg backdrop-blur-sm"
+            >
+              Start Guided Onboarding
+            </button>
           </div>
         </div>
       </section>
@@ -41,9 +43,9 @@ const HomePage: React.FC = () => {
       {/* The Alchemy of AI */}
       <section id="features" className="bg-[#0B1120] lg:bg-white py-12 md:py-20 px-10 md:px-5 max-w-7xl mx-auto">
         <div className="text-left lg:text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white lg:text-gray-800 mb-4">Rationality Gets You Bronze. Magic Gets You Gold.</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white lg:text-gray-800 mb-4">Trust by Design, Not by Assumption.</h2>
           <p className="text-2xl text-gray-300 lg:text-gray-600 max-w-3xl mx-auto">
-            Inspired by Rory Sutherland's <em>Alchemy</em>, we know engineering alone won't transform your business. It's the psychological spark—the reframing, the surprise—that drives adoption. CapeControl isn't just faster AI; it's AI that <em>feels</em> liberating.
+            Agents that move work forward. Evidence you can stand behind. Governance built in for teams that need speed with control.
           </p>
         </div>
 
@@ -58,8 +60,8 @@ const HomePage: React.FC = () => {
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
             />
             <div>
-              <h3 className="text-3xl font-bold text-[#667eea] mb-4">Tame AI Anxiety</h3>
-              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Like neon-lit charging stations for EVs, our guided onboarding lights up compliance paths—reducing setup dread by 70%.</p>
+              <h3 className="text-3xl font-bold text-[#667eea] mb-4">Agents That Act</h3>
+              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Agents understand workflow goals and context, then guide users through multi-step operational tasks.</p>
             </div>
           </div>
           <div className="flex flex-col items-center text-left lg:text-center gap-6">
@@ -72,8 +74,8 @@ const HomePage: React.FC = () => {
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
             />
             <div>
-              <h3 className="text-3xl font-bold text-[#764ba2] mb-4">Query with Magic</h3>
-              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Intuitive data chats for energy and finance pros. Turn complex spreadsheets into "aha!" moments—no PhD required.</p>
+              <h3 className="text-3xl font-bold text-[#764ba2] mb-4">Evidence You Can Verify</h3>
+              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Retrieval is restricted to approved business knowledge, giving teams clear source boundaries and review-ready records.</p>
             </div>
           </div>
           <div className="flex flex-col items-center text-left lg:text-center gap-6">
@@ -86,8 +88,8 @@ const HomePage: React.FC = () => {
               className="rounded-xl shadow-md w-full h-auto aspect-video object-cover shrink-0" 
             />
             <div>
-              <h3 className="text-3xl font-bold text-[#ff6b6b] mb-4">Agents That Delight</h3>
-              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Modular, secure AI agents for devs. Build compliant bots that surprise with efficiency, not errors.</p>
+              <h3 className="text-3xl font-bold text-[#ff6b6b] mb-4">Control Where It Matters</h3>
+              <p className="text-gray-300 lg:text-gray-600 text-2xl leading-relaxed">Agents recommend next actions and pause at approval points for escalation and accountable decision-making.</p>
             </div>
           </div>
         </div>
@@ -96,23 +98,23 @@ const HomePage: React.FC = () => {
       {/* Reverse Benchmark */}
       <section id="experiences" className="bg-gray-50 py-12 md:py-20 px-5">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">We Don't Copy the Best. We Fix the Worst.</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Built to Strengthen Core Business Functions</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12 md:mb-16">
-            Competitors nail power but flop on joy. We reverse-engineer the letdowns—like Buc-ee's brilliant restrooms in a sea of mediocrity.
+            Operational execution, compliance, and reporting in one governed workflow layer.
           </p>
 
           <div className="grid md:grid-cols-3 gap-8 md:gap-8 text-left">
             <div className="bg-white p-8 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="text-2xl md:text-3xl font-bold text-[#667eea] mb-4">Clunky Onboarding? Nah.</h3>
-              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">Our "Guided Onboarding Theater" feels like a witty concierge—personalized, playful, and 4x faster adoption.</p>
+              <h3 className="text-2xl md:text-3xl font-bold text-[#667eea] mb-4">Operations Support</h3>
+              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">Keep routine work moving with guided task handoffs, role-aware context, and recommended next actions.</p>
             </div>
             <div className="bg-white p-8 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="text-2xl md:text-3xl font-bold text-[#764ba2] mb-4">Boring Compliance? Think Again.</h3>
-              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">"Compliance as Comedy": Videos and tools that make red tape feel like a spy thriller. Secure, but surprisingly fun.</p>
+              <h3 className="text-2xl md:text-3xl font-bold text-[#764ba2] mb-4">Compliance Workflows</h3>
+              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">Apply approvals, escalation, and evidence requirements where risk and accountability matter most.</p>
             </div>
             <div className="bg-white p-8 md:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <h3 className="text-2xl md:text-3xl font-bold text-[#ff6b6b] mb-4">Rigid Tools? Playtime Awaits.</h3>
-              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">"Agent Playground": Free sandbox for wild, compliant creations. Devs build memes from finance data—innovation unlocked.</p>
+              <h3 className="text-2xl md:text-3xl font-bold text-[#ff6b6b] mb-4">Reporting and Documentation</h3>
+              <p className="text-gray-600 text-lg md:text-xl leading-relaxed">Produce source-grounded records and summaries that are easier to review, share, and audit.</p>
             </div>
           </div>
         </div>
@@ -120,39 +122,39 @@ const HomePage: React.FC = () => {
 
       {/* Explore the Magic */}
       <section className="py-20 px-5 max-w-5xl mx-auto text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Balance the Hive: Exploit Efficiency, Explore Surprises</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Why Teams Trust CapeControl</h2>
         <p className="text-xl text-gray-600 mb-12">
-          Like bees scouting new fields, we blend proven ROI with lucky bets. Your AI won't starve in local maxima—it'll thrive on fat-tailed wins.
+          High-trust AI starts with clear boundaries: approved-source retrieval, human approval points, and traceable activity.
         </p>
 
         <div className="flex flex-col md:flex-row justify-center items-center gap-8 mb-12">
           <div className="w-64 h-64 rounded-full bg-[#667eea] flex flex-col items-center justify-center text-white text-2xl font-bold shadow-xl">
-            <span>80%</span>
-            <span>Exploit</span>
-            <span>Efficiency</span>
+            <span>1</span>
+            <span>Approved</span>
+            <span>Sources</span>
           </div>
           <div className="w-64 h-64 rounded-full bg-[#ff6b6b] flex flex-col items-center justify-center text-white text-2xl font-bold shadow-xl">
-            <span>20%</span>
-            <span>Explore</span>
-            <span>Magic</span>
+            <span>2</span>
+            <span>Human</span>
+            <span>Checkpoints</span>
           </div>
         </div>
 
         <p className="text-lg text-gray-700">
-          Join our AI Alchemist Circles: Share "magic moments" with peers in finance and energy. One surprise insight could 4x your processes.
+          Guided onboarding helps teams understand agent behavior, approval logic, and escalation paths with confidence.
         </p>
       </section>
 
       {/* The Human Spark */}
       <section className="bg-gradient-to-br from-[#ff6b6b]/20 to-[#ff6b6b]/5 py-20 px-5 text-center">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">AI Automates. Humans Enchant.</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Advanced Agents. Clear Boundaries.</h2>
           <p className="text-xl text-gray-800 mb-8">
-            As algorithms rule, one genuine "posty" moment—a trusted chat with our AI Whisperer—creates brand quakes that last.
+            CapeControl is designed so agents can be useful without becoming opaque. Permissions, approvals, escalation ownership, and review points keep critical work accountable.
           </p>
           <div className="inline-block bg-white p-2 rounded-xl shadow-md">
             <button onClick={handleOpenSupport} className="block text-[#667eea] px-8 py-3 font-bold text-lg hover:bg-gray-50 rounded-lg transition-colors">
-              Book a Surprise Discovery Chat
+              Talk to a Workflow Specialist
             </button>
           </div>
         </div>
@@ -160,24 +162,24 @@ const HomePage: React.FC = () => {
 
       {/* Final CTA */}
       <section className="py-20 px-5 text-center bg-white">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Ignite Your Alchemy</h2>
-        <p className="text-xl text-gray-600 mb-10">Perceptions shift. Behaviors follow. Worlds transform.</p>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Ready to Deploy Governed Workflows With Confidence?</h2>
+        <p className="text-xl text-gray-600 mb-10">Start with one critical workflow and show measurable trust gains through evidence, approvals, and traceable execution.</p>
         
         <Link 
-          to={registerHref} 
+          to="/how-it-works" 
           className="inline-block bg-[#667eea] hover:bg-[#5a6fd6] text-white px-10 py-4 rounded-lg font-bold text-lg shadow-lg transition-all transform hover:-translate-y-1"
         >
-          Get Started Free – No Card Needed
+          Book a Trust-First Demo
         </Link>
         
         <p className="mt-10 text-sm text-gray-400">
-          Built for finance & energy professionals | © 2025 CapeControl
+          Built for compliance-heavy teams | © 2025 CapeControl
         </p>
       </section>
 
       {/* Quote Section */}
       <div className="bg-[#333] text-white text-center py-6 px-4">
-        <p className="text-lg italic opacity-80">"Ideas that don't make sense... until they do." – Inspired by Rory Sutherland</p>
+        <p className="text-lg italic opacity-80">"Useful autonomy. Accountable execution." – CapeControl trust-by-design principle</p>
       </div>
 
       <Footer onOpenSupport={handleOpenSupport} />

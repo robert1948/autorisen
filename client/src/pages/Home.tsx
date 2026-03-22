@@ -196,32 +196,31 @@ const Home = () => {
               <IconWand />
             </div>
             <h1>
-              Reframe Your AI Journey:
+              Governed AI Workflows
               <br />
-              <span className="magic-gradient-text">From Overwhelm to Effortless Magic.</span>
+              <span className="magic-gradient-text">for Compliance-Heavy Teams.</span>
             </h1>
             <p className="hero__sub">
-              In a landscape of complex integrations and compliance risks, CapeControl transforms AI
-              into your intuitive, secure ally. Say goodbye to &ldquo;range anxiety&rdquo;&mdash;embrace
-              seamless onboarding, secure data querying, and compliant agents that operate like a
-              genius whisper in your ear.
+              CapeControl is a governed AI workflow platform for trust-sensitive operations,
+              combining evidence-backed outputs, approval controls, and traceable execution in one
+              operating layer.
             </p>
 
             <div className="hero__actions">
               <Link
-                to="/app/dashboard"
+                to="/how-it-works"
                 className="btn btn--primary btn--magic"
                 data-analytics-cta="hero-primary"
               >
-                Go to Dashboard
+                Book a Governance Walkthrough
               </Link>
               <button
                 type="button"
                 className="btn btn--ghost"
-                onClick={() => launchChat("support")}
+                onClick={() => launchChat("onboarding")}
                 data-analytics-cta="hero-secondary"
               >
-                Talk to our team
+                Start Trust-First Onboarding
               </button>
             </div>
 
@@ -242,11 +241,12 @@ const Home = () => {
               <div className="magic-orb magic-orb--3" />
               <div className="magic-hero__card">
                 <header>
-                  <p className="hero__pane-eyebrow">CapeAI</p>
-                  <span className="hero__badge">Magic</span>
+                  <p className="hero__pane-eyebrow">Governed Agents</p>
+                  <span className="hero__badge">High Trust</span>
                 </header>
                 <p className="magic-hero__tagline">
-                  &ldquo;Compliance paths illuminated. Setup dread reduced by 70%.&rdquo;
+                  &ldquo;Move work forward with approved sources, evidence-backed outputs, and explicit
+                  human checkpoints.&rdquo;
                 </p>
                 <div className="magic-hero__sparkles">
                   <span>✦</span><span>✧</span><span>✦</span>
@@ -265,18 +265,16 @@ const Home = () => {
           data-analytics-section="philosophy"
         >
           <div className="magic-section__header">
-            <h2>The Alchemy of AI: Why Rationality Falls Short</h2>
+            <h2>The Trust Gap in Operational AI</h2>
             <p className="magic-section__subhead">
-              Rationality Gets You Bronze. <span className="magic-gradient-text">Magic Gets You Gold.</span>
+              Most teams can automate tasks, but cannot prove decisions, approvals, and source integrity under review.
             </p>
           </div>
           <div className="magic-philosophy__body">
             <p>
-              Inspired by Rory Sutherland&apos;s <em>Alchemy</em>, we recognize that engineering
-              alone is insufficient for business transformation. The real driver of adoption is the
-              psychological spark&mdash;the reframing, the element of surprise. CapeControl offers
-              more than just faster AI; it delivers an AI experience that feels truly{" "}
-              <strong>liberating</strong>.
+              CapeControl closes this trust gap by turning AI into governed workflow execution.
+              Every run can be traced, evidence can be inspected, and high-impact steps can be held
+              behind explicit human approvals.
             </p>
           </div>
         </section>
@@ -290,7 +288,7 @@ const Home = () => {
           data-analytics-section="features"
         >
           <div className="magic-section__header">
-            <h2>What We Do</h2>
+            <h2>Proof Pillars</h2>
           </div>
           <div className="magic-features__grid">
             <article
@@ -300,10 +298,10 @@ const Home = () => {
               <div className="magic-feature-card__icon">
                 <IconShield />
               </div>
-              <h3>Tame AI Anxiety</h3>
+              <h3>Governed Execution</h3>
               <p>
-                Our guided onboarding illuminates compliance paths, dramatically reducing setup dread
-                (by 70%), much like neon-lit charging stations guide EV owners.
+                Move beyond prompts into repeatable multi-step workflows with controls built into
+                execution, not bolted on afterward.
               </p>
             </article>
 
@@ -314,10 +312,10 @@ const Home = () => {
               <div className="magic-feature-card__icon">
                 <IconSparkle />
               </div>
-              <h3>Query with Magic</h3>
+              <h3>Evidence-Backed Outputs</h3>
               <p>
-                Intuitive data chats designed for energy and finance professionals, transforming
-                complex spreadsheets into instant &ldquo;aha!&rdquo; moments&mdash;no PhD required.
+                Keep outputs tied to approved knowledge so teams can verify claims, preserve source
+                boundaries, and review results with confidence.
               </p>
             </article>
 
@@ -328,10 +326,10 @@ const Home = () => {
               <div className="magic-feature-card__icon">
                 <IconRocket />
               </div>
-              <h3>Agents That Delight</h3>
+              <h3>Approval and Audit Controls</h3>
               <p>
-                Secure, modular AI agents for developers. Build compliant bots that surprise with
-                their efficiency, not their errors.
+                Gate high-impact actions with role-based approvals, escalation paths, and
+                traceable decision history.
               </p>
             </article>
           </div>
@@ -347,10 +345,10 @@ const Home = () => {
         >
           <div className="magic-section__header">
             <h2>
-              Reverse Benchmark: We Fix the Worst, We Don&apos;t Copy the Best
+              Focused Use Cases for Trust-Sensitive Teams
             </h2>
             <p className="magic-section__subhead">
-              We Don&apos;t Copy the Best. <span className="magic-gradient-text">We Fix the Worst.</span>
+              Start where governance risk is highest and evidence quality matters most.
             </p>
           </div>
 
@@ -359,11 +357,11 @@ const Home = () => {
               className="magic-usp-card"
               data-analytics-block="usp-onboarding"
             >
-              <span className="magic-usp-card__badge">Solved</span>
-              <h3>Clunky Onboarding?</h3>
+              <span className="magic-usp-card__badge">Regulated Ops</span>
+              <h3>Compliance-Ready Operations</h3>
               <p>
-                Our &ldquo;Guided Onboarding Theater&rdquo; offers a personalized, witty concierge
-                experience, accelerating adoption by <strong>4x</strong>.
+                Standardize recurring operational tasks with governed workflows that preserve
+                accountability at every handoff.
               </p>
             </article>
 
@@ -371,11 +369,11 @@ const Home = () => {
               className="magic-usp-card"
               data-analytics-block="usp-compliance"
             >
-              <span className="magic-usp-card__badge">Think Again</span>
-              <h3>Boring Compliance?</h3>
+              <span className="magic-usp-card__badge">Risk and Control</span>
+              <h3>Approval-Critical Decisions</h3>
               <p>
-                Experience &ldquo;Compliance as Comedy&rdquo;: tools and videos that make red tape
-                feel like an engaging spy thriller. It&apos;s secure, but surprisingly fun.
+                Insert mandatory approvals and escalation logic where policy, legal, or financial
+                risk requires explicit oversight.
               </p>
             </article>
 
@@ -383,11 +381,11 @@ const Home = () => {
               className="magic-usp-card"
               data-analytics-block="usp-playground"
             >
-              <span className="magic-usp-card__badge">Playtime Awaits</span>
-              <h3>Rigid Tools?</h3>
+              <span className="magic-usp-card__badge">Audit and Reporting</span>
+              <h3>Review-Ready Evidence Trails</h3>
               <p>
-                The &ldquo;Agent Playground&rdquo; is a free sandbox for wild, compliant creation.
-                Devs are empowered to unlock innovation, even by building memes from finance data.
+                Produce source-grounded records and summaries that stand up in audit reviews and
+                stakeholder reporting.
               </p>
             </article>
           </div>
@@ -402,37 +400,36 @@ const Home = () => {
           data-analytics-section="vision"
         >
           <div className="magic-section__header">
-            <h2>Explore the Magic: 20% Wild, 80% Wise</h2>
+            <h2>Simple Adoption Path</h2>
             <p className="magic-section__subhead">
-              Balance the Hive: Exploit Efficiency, Explore Surprises.
+              Adopt governance in phases so teams gain confidence before scaling automation.
             </p>
           </div>
 
           <div className="magic-vision__content">
             <p>
-              Like bees scouting new fields, we balance proven ROI (80% Exploit Efficiency) with
-              necessary lucky bets (20% Explore Magic). Your AI will thrive on fat-tailed
-              wins, rather than starving in local maxima.
+              Start with one high-risk workflow, activate approval controls, and expand once teams
+              can verify output quality and traceability in daily operations.
             </p>
 
             <div className="magic-vision__orbs">
               <div className="magic-vision__orb magic-vision__orb--exploit">
-                <span className="magic-vision__orb-pct">80%</span>
-                <span className="magic-vision__orb-label">Exploit</span>
-                <span className="magic-vision__orb-sub">Efficiency</span>
+                <span className="magic-vision__orb-pct">1</span>
+                <span className="magic-vision__orb-label">Pilot</span>
+                <span className="magic-vision__orb-sub">One Critical Workflow</span>
               </div>
               <div className="magic-vision__orb magic-vision__orb--explore">
-                <span className="magic-vision__orb-pct">20%</span>
-                <span className="magic-vision__orb-label">Explore</span>
-                <span className="magic-vision__orb-sub">Magic</span>
+                <span className="magic-vision__orb-pct">2</span>
+                <span className="magic-vision__orb-label">Govern</span>
+                <span className="magic-vision__orb-sub">Approvals and Evidence</span>
               </div>
             </div>
 
             <div className="magic-vision__community">
-              <h3>Join our AI Alchemist Circles</h3>
+              <h3>Scale with Control</h3>
               <p>
-                Share &ldquo;magic moments&rdquo; with peers in finance and energy. A single
-                surprising insight can <strong>4x</strong> your processes.
+                Roll out to additional teams only after governance expectations, review practices,
+                and escalation ownership are proven in production-like usage.
               </p>
             </div>
           </div>
@@ -447,10 +444,10 @@ const Home = () => {
           data-analytics-section="secondary-cta"
         >
           <div className="magic-spark__inner">
-            <h2>The Human Spark in an AI World</h2>
+            <h2>When Trust Is Non-Negotiable, Governance Is the Product</h2>
             <p>
-              Even as algorithms dominate, a genuine &ldquo;posty&rdquo; moment&mdash;a trusted chat
-              with our AI Whisperer&mdash;can create brand quakes that last.
+              CapeControl helps compliance-heavy teams move faster without losing oversight,
+              evidence integrity, or decision accountability.
             </p>
             <button
               type="button"
@@ -458,7 +455,7 @@ const Home = () => {
               onClick={() => launchChat("support")}
               data-analytics-cta="secondary-discovery"
             >
-              Book a Surprise Discovery Chat
+              Talk to a Governance Specialist
             </button>
           </div>
         </section>
@@ -471,23 +468,24 @@ const Home = () => {
           id="get-started"
           data-analytics-section="final-cta"
         >
-          <h2>Ready to Ignite Your Alchemy?</h2>
+          <h2>Ready to Deploy Governed AI Workflows With Confidence?</h2>
           <p className="magic-final-cta__sub">
-            Perceptions shift. Behaviors follow. Worlds transform.
+            Start with one critical workflow and show measurable trust gains through evidence,
+            approvals, and traceable execution.
           </p>
           <Link
-            to="/app/dashboard"
+            to="/how-it-works"
             className="btn btn--primary btn--magic btn--lg"
             data-analytics-cta="final-primary"
           >
-            Go to Dashboard
+            Book a Trust-First Demo
           </Link>
         </section>
 
         {/* MOTTO BANNER */}
         <div className="magic-motto" data-analytics-block="motto-banner">
-          <p>&ldquo;Ideas that don&apos;t make sense&hellip; until they do.&rdquo;</p>
-          <span>— Inspired by Rory Sutherland</span>
+          <p>&ldquo;Useful autonomy. Accountable execution.&rdquo;</p>
+          <span>— CapeControl trust-by-design principle</span>
         </div>
 
         {/* LEGAL */}
@@ -548,8 +546,8 @@ const Home = () => {
                 <h3>CapeControl</h3>
                 <div className="footer__legal-desktop">
                   <p>
-                    AI Alchemy platform that transforms enterprises in finance &amp; energy with
-                    secure, intuitive, and surprisingly delightful AI workflows.
+                    Governed agentic platform for compliance-heavy operations, built with
+                    approved-source retrieval and human-in-control execution.
                   </p>
                   <p className="footer__brand-meta">Operated by Cape Craft Projects CC (VAT: 4270105119)</p>
                   <p className="footer__brand-meta">Trading as CapeControl</p>
@@ -565,9 +563,9 @@ const Home = () => {
               <h4>Platform</h4>
               <ul className="footer__links-list">
                 <li><a href="#home">Overview</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#usp">Why CapeControl</a></li>
-                <li><a href="#vision">Our Vision</a></li>
+                <li><a href="#features">What Makes It Agentic</a></li>
+                <li><a href="#usp">Core Business Functions</a></li>
+                <li><a href="#vision">Trust and Governance</a></li>
               </ul>
             </div>
 
