@@ -112,7 +112,13 @@ def test_onboarding_profile_update(client):
 
 def test_onboarding_complete_requires_verified_email(client):
     token = _register_user_unverified(client, "onboard-unverified@example.com")
-    headers = {"Authorization": f"Bearer {token}"}
+    csrf_resp = client.get("/api/auth/csrf")
+    assert csrf_resp.status_code == 200
+    csrf_token = csrf_resp.json()["token"]
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "X-CSRF-Token": csrf_token,
+    }
 
     resp = client.post("/api/onboarding/complete", headers=headers)
     assert resp.status_code == 403
