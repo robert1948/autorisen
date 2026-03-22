@@ -212,7 +212,7 @@ const Home = () => {
                 className="btn btn--primary btn--magic"
                 data-analytics-cta="hero-primary"
               >
-                Book a Governance Walkthrough
+                View a traceable workflow demo
               </Link>
               <button
                 type="button"
@@ -335,6 +335,41 @@ const Home = () => {
           </div>
         </section>
 
+        <section
+          className="section"
+          id="traceability-flow"
+          data-analytics-section="traceability-flow"
+        >
+          <div className="magic-section__header">
+            <h2>Traceable Execution Model</h2>
+            <p className="magic-section__subhead">
+              Make every run reviewable from source selection to final sign-off.
+            </p>
+          </div>
+          <div className="magic-usp__grid">
+            <article className="magic-usp-card">
+              <h3>Input Source</h3>
+              <p>Work starts from approved-source knowledge only, with boundaries defined up front.</p>
+            </article>
+            <article className="magic-usp-card">
+              <h3>Agent Action</h3>
+              <p>Agents execute structured steps so operational work is consistent and inspectable.</p>
+            </article>
+            <article className="magic-usp-card">
+              <h3>Human Checkpoint</h3>
+              <p>High-impact decisions pause for reviewer approval before any critical action proceeds.</p>
+            </article>
+            <article className="magic-usp-card">
+              <h3>Evidence Produced</h3>
+              <p>Each output is linked to sources, decisions, and approvals for downstream review.</p>
+            </article>
+            <article className="magic-usp-card">
+              <h3>Audit-Ready Result</h3>
+              <p>Teams can present a traceable record that stands up in audits and stakeholder checks.</p>
+            </article>
+          </div>
+        </section>
+
         {/* ═══════════════════════════════════════════════════════════
             SECTION 4 — USP / REVERSE BENCHMARK
             ═══════════════════════════════════════════════════════════ */}
@@ -444,10 +479,14 @@ const Home = () => {
           data-analytics-section="secondary-cta"
         >
           <div className="magic-spark__inner">
-            <h2>When Trust Is Non-Negotiable, Governance Is the Product</h2>
+            <h2>Human Judgment Stays in Control</h2>
             <p>
-              CapeControl helps compliance-heavy teams move faster without losing oversight,
-              evidence integrity, or decision accountability.
+              CapeControl is not black-box automation. It structures execution, verifies evidence,
+              and keeps decision authority with your team at every review checkpoint.
+            </p>
+            <p>
+              The result is guided execution that accelerates work while preserving oversight,
+              accountability, and policy-aligned judgment.
             </p>
             <button
               type="button"
@@ -478,7 +517,7 @@ const Home = () => {
             className="btn btn--primary btn--magic btn--lg"
             data-analytics-cta="final-primary"
           >
-            Book a Trust-First Demo
+            See how governed AI work runs
           </Link>
         </section>
 

@@ -20,14 +20,15 @@ const HomePage: React.FC = () => {
             Governed AI Workflows for Compliance-Heavy Operations
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            CapeControl helps businesses execute multi-step operational work with advanced AI agents, approved-source retrieval, evidence-backed outputs, and human-guided controls designed for trust-sensitive workflows.
+            CapeControl helps compliance-heavy teams complete important work with governed AI,
+            approved evidence, and human-visible traceability.
           </p>
           <div className="flex flex-col md:flex-row justify-center gap-4">
             <Link 
               to="/how-it-works" 
               className="block bg-[#ff6b6b] hover:bg-[#ff5252] text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg"
             >
-              Book a Governance Walkthrough
+              View a traceable workflow demo
             </Link>
             <button
               type="button"
@@ -120,6 +121,38 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      <section className="bg-white py-12 md:py-20 px-5">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Traceable Execution Model</h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12 md:mb-16">
+            See exactly how governance works from approved input to audit-ready output.
+          </p>
+
+          <div className="grid md:grid-cols-5 gap-6 text-left">
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-[#667eea] mb-3">Input source</h3>
+              <p className="text-gray-700">Approved-source knowledge sets clear boundaries before work begins.</p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-[#764ba2] mb-3">Agent action</h3>
+              <p className="text-gray-700">Agents run structured steps so execution stays consistent and reviewable.</p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-[#ff6b6b] mb-3">Human checkpoint</h3>
+              <p className="text-gray-700">Critical decisions pause for explicit reviewer approval.</p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-[#667eea] mb-3">Evidence produced</h3>
+              <p className="text-gray-700">Outputs remain linked to sources, actions, and approvals.</p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-[#764ba2] mb-3">Audit-ready result</h3>
+              <p className="text-gray-700">Teams can present traceable records that stand up in review.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Explore the Magic */}
       <section className="py-20 px-5 max-w-5xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Why Teams Trust CapeControl</h2>
@@ -148,9 +181,10 @@ const HomePage: React.FC = () => {
       {/* The Human Spark */}
       <section className="bg-gradient-to-br from-[#ff6b6b]/20 to-[#ff6b6b]/5 py-20 px-5 text-center">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Advanced Agents. Clear Boundaries.</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Human Judgment Stays in Control.</h2>
           <p className="text-xl text-gray-800 mb-8">
-            CapeControl is designed so agents can be useful without becoming opaque. Permissions, approvals, escalation ownership, and review points keep critical work accountable.
+            CapeControl is not black-box automation and does not replace human judgment.
+            It structures, verifies, and accelerates execution while your team keeps decision authority.
           </p>
           <div className="inline-block bg-white p-2 rounded-xl shadow-md">
             <button onClick={handleOpenSupport} className="block text-[#667eea] px-8 py-3 font-bold text-lg hover:bg-gray-50 rounded-lg transition-colors">
@@ -169,7 +203,7 @@ const HomePage: React.FC = () => {
           to="/how-it-works" 
           className="inline-block bg-[#667eea] hover:bg-[#5a6fd6] text-white px-10 py-4 rounded-lg font-bold text-lg shadow-lg transition-all transform hover:-translate-y-1"
         >
-          Book a Trust-First Demo
+          See how governed AI work runs
         </Link>
         
         <p className="mt-10 text-sm text-gray-400">
