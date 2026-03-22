@@ -1,27 +1,27 @@
-# Autorisen - Production-Ready FastAPI Application
+# CapeControl - Production-Ready FastAPI Application
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/stinkie/autorisen)](https://hub.docker.com/r/stinkie/autorisen)
-[![Docker Image Size](https://img.shields.io/docker/image-size/stinkie/autorisen/latest)](https://hub.docker.com/r/stinkie/autorisen)
-[![Production Status](https://img.shields.io/badge/Production-Ready-green)](https://autorisen-dac8e65796e7.herokuapp.com)
+[![Docker Pulls](https://img.shields.io/docker/pulls/stinkie/capecraft)](https://hub.docker.com/r/stinkie/capecraft)
+[![Docker Image Size](https://img.shields.io/docker/image-size/stinkie/capecraft/latest)](https://hub.docker.com/r/stinkie/capecraft)
+[![Production Status](https://img.shields.io/badge/Production-Ready-green)](https://cape-control.com)
 
 A production-ready FastAPI backend with React frontend, featuring comprehensive authentication, CSRF protection, and enterprise-grade security.
 
 ## 🚀 Live Demo
 
-**Production Application**: https://autorisen-dac8e65796e7.herokuapp.com
+**Production Application**: https://cape-control.com
 
 ## 🐳 Quick Start
 
 ```bash
 ## Pull and run the latest image
-docker run -d -p 8000:8000 stinkie/autorisen:latest
+docker run -d -p 8000:8000 stinkie/capecraft:latest
 
 ## Run with environment variables
 docker run -d -p 8000:8000 \
   -e ENV=prod \
   -e DEBUG=false \
   -e DATABASE_URL=your_db_url \
-  stinkie/autorisen:production-ready
+  stinkie/capecraft:production-ready
 ```text
 ## 🔒 Security Features
 
@@ -80,8 +80,8 @@ Once running, access the interactive API documentation:
 ```yaml
 version: '3.8'
 services:
-  autorisen:
-    image: stinkie/autorisen:production-ready
+  capecraft:
+    image: stinkie/capecraft:production-ready
     ports:
       - "8000:8000"
     environment:
@@ -101,20 +101,20 @@ services:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: autorisen
+  name: capecraft
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: autorisen
+      app: capecraft
   template:
     metadata:
       labels:
-        app: autorisen
+        app: capecraft
     spec:
       containers:
-      - name: autorisen
-        image: stinkie/autorisen:production-ready
+      - name: capecraft
+        image: stinkie/capecraft:production-ready
         ports:
         - containerPort: 8000
         env:
@@ -142,7 +142,7 @@ spec:
 
 For issues, questions, or contributions:
 - **GitHub Issues**: https://github.com/robert1948/autorisen/issues
-- **Live Application**: https://autorisen-dac8e65796e7.herokuapp.com
+- **Live Application**: https://cape-control.com
 
 ---
 

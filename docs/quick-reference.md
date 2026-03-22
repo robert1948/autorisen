@@ -31,36 +31,36 @@ heroku config --app capecraft | grep -E "(DATABASE|OPENAI|ENV)"
 
 ```bash
 # Staging
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/health | jq
+curl -s https://dev.cape-control.com/api/health | jq
 
 # Production
-curl -s https://capecraft.herokuapp.com/api/health | jq
+curl -s https://cape-control.com/api/health | jq
 ```
 
 ### Marketplace
 
 ```bash
 # Analytics
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/marketplace/analytics | jq
+curl -s https://dev.cape-control.com/api/marketplace/analytics | jq
 
 # Categories
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/marketplace/categories | jq
+curl -s https://dev.cape-control.com/api/marketplace/categories | jq
 
 # Search
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/marketplace/search | jq
+curl -s https://dev.cape-control.com/api/marketplace/search | jq
 ```
 
 ### Agents
 
 ```bash
 # CapeAI Guide health
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-guide/health | jq
+curl -s https://dev.cape-control.com/api/agents/cape-ai-guide/health | jq
 
 # CapeAI Guide capabilities  
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-guide/capabilities | jq
+curl -s https://dev.cape-control.com/api/agents/cape-ai-guide/capabilities | jq
 
 # Domain Specialist health
-curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-domain-specialist/health | jq
+curl -s https://dev.cape-control.com/api/agents/cape-ai-domain-specialist/health | jq
 ```
 
 ## 📝 Logs

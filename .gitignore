@@ -299,6 +299,7 @@ performance_reports/
 websocket_performance_reports/
 payment_integration_reports/
 ship_autorisen_*.log
+ship_capecraft_*.log
 *.access.log
 *.error.log
 monitoring/temp/

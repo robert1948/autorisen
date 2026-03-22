@@ -128,9 +128,9 @@ alias ccsetup='cat ~/Development/autolocal/docs/developer-setup-checklist.md'
 alias ccdeploy='cat ~/Development/autolocal/docs/deployment-environments.md'
 
 # Quick health checks
-alias cchealth-staging='curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/health | jq'
-alias cchealth-prod='curl -s https://capecraft.herokuapp.com/api/health | jq'
-alias ccagents='curl -s https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-guide/health | jq'
+alias cchealth-staging='curl -s https://dev.cape-control.com/api/health | jq'
+alias cchealth-prod='curl -s https://cape-control.com/api/health | jq'
+alias ccagents='curl -s https://dev.cape-control.com/api/agents/cape-ai-guide/health | jq'
 ```
 
 ### 3. GitHub Bookmarks

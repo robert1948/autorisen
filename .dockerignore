@@ -17,6 +17,8 @@ Thumbs.db
 
 # Logs and temporary files
 *.log
+ship_autorisen_*.log
+ship_capecraft_*.log
 *.tmp
 *.temp
 *.bak

@@ -64,7 +64,7 @@ Production-ready FastAPI + React SaaS platform with agent-based architecture, AI
 
 ### 🧪 Production Validation
 
-✅ CSRF endpoints: `https://autorisen-dac8e65796e7.herokuapp.com/api/auth/csrf`  
+✅ CSRF endpoints: `https://cape-control.com/api/auth/csrf`  
 ✅ User registration with CSRF protection  
 ✅ JWT token authentication and validation  
 ✅ Protected endpoint security verification
@@ -111,7 +111,7 @@ uvicorn backend.src.app:app --host 0.0.0.0 --port 8000 --reload
 Set GitHub Actions secrets:
 
 - `HEROKU_API_KEY`
-- `HEROKU_APP_NAME=autorisen`
+- `HEROKU_APP_NAME=capecraft`
 
 ### Deploying with the Heroku CLI (recommended quick flow)
 
@@ -125,9 +125,9 @@ Set GitHub Actions secrets:
 1. Create or attach to the Heroku app:
 
    ```bash
-   heroku create autorisen
+    heroku create capecraft
    # or attach to existing
-   heroku git:remote -a autorisen
+    heroku git:remote -a capecraft
    ```
 
 1. Add a `Procfile` at the repository root to run the FastAPI app, for example:
@@ -238,7 +238,7 @@ curl -X POST https://dev.cape-control.com/api/auth/verify/resend \
   - Include:
     - `GH_TOKEN=<github token with repo + workflow>`
     - `HEROKU_API_KEY=<Heroku API Key>`
-    - `HEROKU_APP_NAME=autorisen`
+    - `HEROKU_APP_NAME=capecraft`
 - Agent specs live under `agents/<slug>/agent.yaml` with optional tests in `agents/<slug>/tests/`.
 - Tool configuration templates live in `config/<env>/tools/` and are shared by the agents listed in
   `agents/registry.yaml`.
@@ -255,8 +255,8 @@ curl -X POST https://dev.cape-control.com/api/auth/verify/resend \
 
 CapeControl uses a **dual-environment deployment strategy**:
 
-- **🧪 Staging**: `autorisen` → https://autorisen-dac8e65796e7.herokuapp.com
-- **🌟 Production**: `capecraft` → https://capecraft.herokuapp.com
+- **🧪 Staging**: `dev` → https://dev.cape-control.com
+- **🌟 Production**: `capecraft` → https://cape-control.com
 
 ### Quick Deploy
 ```bash
@@ -276,13 +276,13 @@ make deploy-heroku  # Deploys to BOTH environments
 
 ```bash
 # Staging health
-curl https://autorisen-dac8e65796e7.herokuapp.com/api/health
+curl https://dev.cape-control.com/api/health
 
 # Production health  
-curl https://capecraft.herokuapp.com/api/health
+curl https://cape-control.com/api/health
 
 # Agent endpoints (staging)
-curl https://autorisen-dac8e65796e7.herokuapp.com/api/agents/cape-ai-guide/health
+curl https://dev.cape-control.com/api/agents/cape-ai-guide/health
 ```
 
 ## ChatKit Integration (scaffold)

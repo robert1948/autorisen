@@ -175,7 +175,7 @@ project-info: ## Show current project version and status information
 	@echo ""
 	@echo "\U0001f517 \033[34mKey Links:\033[0m"
 	@echo "   \u2022 Production (Heroku: $(HEROKU_APP)): $(PROD_BASE_URL)"
-	@echo "   \u2022 Docker Hub: stinkie/capecontrol:$(APP_VERSION)"
+	@echo "   \u2022 Docker Hub: stinkie/capecraft:$(APP_VERSION)"
 	@echo ""
 	@$(PY) scripts/project_info.py
 	@echo ""
@@ -763,18 +763,18 @@ codex-test-strict: ## Run pytest with warnings as errors
 # -----------------------------------------------------------------------------
 # Usage:
 #   make dockerhub-login
-#   make dockerhub-release APP=capecontrol
+#   make dockerhub-release APP=capecraft
 #   make dockerhub-release APP=capecraft VERSION=v0.3.0
-#   make dockerhub-release APP=capecontrol PLATFORMS=linux/amd64
+#   make dockerhub-release APP=capecraft PLATFORMS=linux/amd64
 #
 # Notes:
 # - Tags produced: :latest, :$(VERSION), :docker-<engine>, :git-<sha>
 # - Requires Docker Buildx
 # -----------------------------------------------------------------------------
 
-# Config (override on CLI, e.g. make dockerhub-release APP=capecontrol)
+# Config (override on CLI, e.g. make dockerhub-release APP=capecraft)
 DH_NAMESPACE ?= stinkie
-APP          ?= capecontrol
+APP          ?= capecraft
 CONTEXT      ?= .
 DOCKERFILE   ?= Dockerfile
 PLATFORMS    ?= linux/amd64,linux/arm64

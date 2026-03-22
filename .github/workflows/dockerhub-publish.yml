@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DOCKERHUB_REPO: ${{ vars.DOCKERHUB_REPO != '' && vars.DOCKERHUB_REPO || 'stinkie/capecraft' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -39,8 +41,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_REPO }}:sha-${{ steps.meta.outputs.SHORT_SHA }}
-            ${{ vars.DOCKERHUB_REPO }}:${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('build-{0}', steps.meta.outputs.BUILD_EPOCH) }}
+            ${{ env.DOCKERHUB_REPO }}:sha-${{ steps.meta.outputs.SHORT_SHA }}
+            ${{ env.DOCKERHUB_REPO }}:${{ github.event.inputs.tag != '' && github.event.inputs.tag || format('build-{0}', steps.meta.outputs.BUILD_EPOCH) }}
           build-args: |
             GIT_SHA=${{ steps.meta.outputs.SHORT_SHA }}
             BUILD_EPOCH=${{ steps.meta.outputs.BUILD_EPOCH }}
