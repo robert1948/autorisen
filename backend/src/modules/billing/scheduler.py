@@ -20,13 +20,11 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy.orm import Session
-
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
-from backend.src.modules.payments.constants import (
-    get_plan_by_id,
-)
+from backend.src.modules.payments.constants import get_plan_by_id
+from sqlalchemy import inspect
+from sqlalchemy.orm import Session
 
 log = logging.getLogger("billing.scheduler")
 
@@ -42,11 +40,28 @@ ENABLED = os.getenv("BILLING_SCHEDULER_ENABLED", "1").lower() in {"1", "true", "
 
 _scheduler_thread: Optional[threading.Thread] = None
 _stop_event = threading.Event()
+_billing_events_table_available: Optional[bool] = None
+
+
+def _has_billing_events_table(db: Session) -> bool:
+    """Return whether the optional billing_events table exists in the target DB."""
+    global _billing_events_table_available
+    if _billing_events_table_available is not None:
+        return _billing_events_table_available
+
+    try:
+        inspector = inspect(db.bind)
+        _billing_events_table_available = bool(inspector.has_table("billing_events"))
+    except Exception:
+        _billing_events_table_available = False
+
+    return _billing_events_table_available
 
 
 # ---------------------------------------------------------------------------
 # Core billing cycle logic
 # ---------------------------------------------------------------------------
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -111,7 +126,10 @@ def _create_renewal_invoice(
     db.add(invoice)
     log.info(
         "Renewal invoice created: %s for user %s plan=%s amount=%s",
-        invoice.invoice_number, user.id, sub.plan_id, amount,
+        invoice.invoice_number,
+        user.id,
+        sub.plan_id,
+        amount,
     )
     return invoice
 
@@ -126,6 +144,15 @@ def _log_billing_event(
     invoice_id: str | None = None,
 ) -> None:
     """Insert a row into the billing_events audit table."""
+    if not _has_billing_events_table(db):
+        # Some legacy production databases may not have billing_events yet.
+        # Skip insert so renewal and dunning flows continue without hard failure.
+        log.warning(
+            "billing_events table missing; skipping billing event log (%s)",
+            event_type,
+        )
+        return
+
     event = models.BillingEvent(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -135,7 +162,13 @@ def _log_billing_event(
         invoice_id=invoice_id,
     )
     db.add(event)
-    log.info("billing_event: %s user=%s sub=%s %s", event_type, user_id, subscription_id, detail)
+    log.info(
+        "billing_event: %s user=%s sub=%s %s",
+        event_type,
+        user_id,
+        subscription_id,
+        detail,
+    )
 
 
 def _queue_reminder_email(
@@ -184,12 +217,15 @@ def _queue_reminder_email(
         idempotency_key=idempotency_key,
     )
     db.add(job)
-    log.info("Queued %s email for %s (reminder #%d)", event_type, user_email, reminder_count)
+    log.info(
+        "Queued %s email for %s (reminder #%d)", event_type, user_email, reminder_count
+    )
 
 
 # ---------------------------------------------------------------------------
 # Main scan
 # ---------------------------------------------------------------------------
+
 
 def run_billing_cycle(db: Session | None = None) -> dict:
     """Execute one full billing cycle. Returns a summary dict."""
@@ -226,7 +262,9 @@ def run_billing_cycle(db: Session | None = None) -> dict:
 
         for sub in expired_subs:
             try:
-                user = db.query(models.User).filter(models.User.id == sub.user_id).first()
+                user = (
+                    db.query(models.User).filter(models.User.id == sub.user_id).first()
+                )
                 if not user:
                     log.warning("Orphan subscription %s – no user found", sub.id)
                     continue
@@ -288,7 +326,11 @@ def run_billing_cycle(db: Session | None = None) -> dict:
                         invoice_id=invoice.id if invoice else None,
                         plan_name=plan_name,
                         amount=str(plan.price_monthly_zar) if plan else "529.00",
-                        due_date=sub.current_period_end.strftime("%Y-%m-%d") if sub.current_period_end else "",
+                        due_date=(
+                            sub.current_period_end.strftime("%Y-%m-%d")
+                            if sub.current_period_end
+                            else ""
+                        ),
                         reminder_count=1,
                     )
                     stats["reminders_queued"] += 1
@@ -313,7 +355,9 @@ def run_billing_cycle(db: Session | None = None) -> dict:
                             db.query(models.BillingEvent)
                             .filter(
                                 models.BillingEvent.subscription_id == sub.id,
-                                models.BillingEvent.event_type.in_(["reminder_sent", "payment_overdue"]),
+                                models.BillingEvent.event_type.in_(
+                                    ["reminder_sent", "payment_overdue"]
+                                ),
                             )
                             .order_by(models.BillingEvent.created_at.desc())
                             .first()
@@ -333,8 +377,14 @@ def run_billing_cycle(db: Session | None = None) -> dict:
                                 event_type="payment_overdue",
                                 invoice_id=invoice.id if invoice else None,
                                 plan_name=plan_name,
-                                amount=str(plan.price_monthly_zar) if plan else "529.00",
-                                due_date=sub.current_period_end.strftime("%Y-%m-%d") if sub.current_period_end else "",
+                                amount=(
+                                    str(plan.price_monthly_zar) if plan else "529.00"
+                                ),
+                                due_date=(
+                                    sub.current_period_end.strftime("%Y-%m-%d")
+                                    if sub.current_period_end
+                                    else ""
+                                ),
                                 reminder_count=next_count,
                             )
                             _log_billing_event(
@@ -408,7 +458,9 @@ def run_billing_cycle(db: Session | None = None) -> dict:
         )
         for sub in cancel_at_end:
             try:
-                user = db.query(models.User).filter(models.User.id == sub.user_id).first()
+                user = (
+                    db.query(models.User).filter(models.User.id == sub.user_id).first()
+                )
                 sub.status = "cancelled"
                 sub.cancelled_at = now
                 sub.plan_id = "free"
@@ -518,11 +570,14 @@ def _process_queued_emails(db: Session | None = None) -> int:
 # Background thread runner
 # ---------------------------------------------------------------------------
 
+
 def _scheduler_loop() -> None:
     """Long-running loop that calls ``run_billing_cycle`` periodically."""
     log.info(
         "Billing scheduler started (interval=%dh, grace=%dd, max_reminders=%d)",
-        CHECK_INTERVAL_HOURS, GRACE_PERIOD_DAYS, MAX_REMINDERS,
+        CHECK_INTERVAL_HOURS,
+        GRACE_PERIOD_DAYS,
+        MAX_REMINDERS,
     )
     # Short initial delay to let the app finish starting
     _stop_event.wait(30)
