@@ -6,11 +6,19 @@ import logging
 import os
 import re
 import sys
-from re import sub
 from datetime import date, datetime
 from pathlib import Path
+from re import sub
 from typing import TYPE_CHECKING, Optional, cast
 
+from backend.src.core.config import settings
+from backend.src.core.rate_limit import configure_rate_limit
+from backend.src.db.models import AppBuild
+from backend.src.db.session import SessionLocal
+from backend.src.middleware.cache_headers import CacheHeadersMiddleware
+from backend.src.middleware.monitoring import MonitoringMiddleware, metrics_store
+from backend.src.middleware.read_only import ReadOnlyModeMiddleware
+from backend.src.modules.auth.csrf import CSRFMiddleware
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,15 +36,6 @@ from starlette.responses import (
     Response,
 )
 
-from backend.src.core.config import settings
-from backend.src.core.rate_limit import configure_rate_limit
-from backend.src.db.models import AppBuild
-from backend.src.db.session import SessionLocal
-from backend.src.modules.auth.csrf import CSRFMiddleware
-from backend.src.middleware.cache_headers import CacheHeadersMiddleware
-from backend.src.middleware.read_only import ReadOnlyModeMiddleware
-from backend.src.middleware.monitoring import MonitoringMiddleware, metrics_store
-
 # ---------------------------------------------------------------------------
 # Sentry — initialise early so all exceptions are captured
 # ---------------------------------------------------------------------------
@@ -53,7 +52,8 @@ try:
             send_default_pii=False,  # never send emails/IPs to Sentry
         )
         logging.getLogger("uvicorn.error").info(
-            "Sentry initialised (env=%s)", settings.env,
+            "Sentry initialised (env=%s)",
+            settings.env,
         )
 except Exception:  # pragma: no cover – optional dependency
     sentry_sdk = None  # type: ignore[assignment]
@@ -87,12 +87,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from backend.src.agents.mcp_host import MCPHost
 
 try:
-    from backend.src.agents.mcp_host import (  # type: ignore
-        MCPConfigError as MCPConfigError_,
-    )
-    from backend.src.agents.mcp_host import (
-        mcp_host as _imported_mcp_host,
-    )
+    from backend.src.agents.mcp_host import MCPConfigError as MCPConfigError_  # type: ignore
+    from backend.src.agents.mcp_host import mcp_host as _imported_mcp_host
 except Exception:  # pragma: no cover
     MCPConfigError_ = RuntimeError  # type: ignore[assignment]
     _imported_mcp_host = None  # type: ignore[assignment]
@@ -137,9 +133,7 @@ user_router = _safe_import("user", "backend.src.modules.user.router", "router")
 payments_router = _safe_import(
     "payments", "backend.src.modules.payments.router", "router"
 )
-account_router = _safe_import(
-    "account", "backend.src.modules.account.router", "router"
-)
+account_router = _safe_import("account", "backend.src.modules.account.router", "router")
 developer_router = _safe_import(
     "developer_auth",
     "backend.src.modules.auth.admin_router",
@@ -184,6 +178,11 @@ usage_router = _safe_import(
 billing_router = _safe_import(
     "billing",
     "backend.src.modules.billing.router",
+    "router",
+)
+openclaw_router = _safe_import(
+    "openclaw",
+    "backend.src.modules.openclaw.router",
     "router",
 )
 
@@ -311,7 +310,9 @@ def _parse_int(value: str | None) -> int | None:
         return None
 
 
-def _build_version_label(app_build_version: str | None, git_sha: str | None) -> str | None:
+def _build_version_label(
+    app_build_version: str | None, git_sha: str | None
+) -> str | None:
     if app_build_version:
         if "build" in app_build_version.lower():
             return app_build_version
@@ -374,7 +375,9 @@ def record_build_if_new() -> None:
     env_info = _get_env_build_info()
     git_sha = env_info.get("git_sha")
     build_epoch_raw = env_info.get("build_epoch")
-    build_epoch = _parse_int(build_epoch_raw if isinstance(build_epoch_raw, str) else None)
+    build_epoch = _parse_int(
+        build_epoch_raw if isinstance(build_epoch_raw, str) else None
+    )
 
     if not git_sha or build_epoch is None:
         log.warning("Build metadata incomplete; skipping app_builds insert")
@@ -402,8 +405,9 @@ def record_build_if_new() -> None:
                     session.rollback()
                     return
                 next_number = session.execute(
-                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1)
-                    .where(AppBuild.app_name == app_name)
+                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1).where(
+                        AppBuild.app_name == app_name
+                    )
                 ).scalar_one()
                 build_number = int(next_number)
                 payload = {
@@ -437,8 +441,9 @@ def record_build_if_new() -> None:
                     session.rollback()
                     return
                 next_number = session.execute(
-                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1)
-                    .where(AppBuild.app_name == app_name)
+                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1).where(
+                        AppBuild.app_name == app_name
+                    )
                 ).scalar_one()
                 build_number = int(next_number)
                 payload = {
@@ -470,8 +475,9 @@ def record_build_if_new() -> None:
             )
             if exists is None:
                 next_number = session.execute(
-                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1)
-                    .where(AppBuild.app_name == app_name)
+                    select(func.coalesce(func.max(AppBuild.build_number), 0) + 1).where(
+                        AppBuild.app_name == app_name
+                    )
                 ).scalar_one()
                 build_number = int(next_number)
                 payload = {
@@ -761,7 +767,9 @@ def create_app() -> FastAPI:
                 {"error": "Sentry not configured (SENTRY_DSN not set)"},
                 status_code=501,
             )
-        raise RuntimeError("Sentry integration test — if you see this in Sentry, it works!")
+        raise RuntimeError(
+            "Sentry integration test — if you see this in Sentry, it works!"
+        )
 
     @application.get("/api/metrics", include_in_schema=False)
     def api_metrics():
@@ -872,6 +880,9 @@ def create_app() -> FastAPI:
     if billing_router:
         # → /api/billing/cycle/run, /api/billing/events, /api/billing/process-emails
         api.include_router(billing_router)
+    if openclaw_router:
+        # → /api/openclaw/health, /api/openclaw/tasks, /api/openclaw/approvals/*
+        api.include_router(openclaw_router)
 
     # Mount all versioned routes under /api
     application.include_router(api, prefix="/api")
@@ -928,12 +939,23 @@ def create_app() -> FastAPI:
     def _start_billing_scheduler() -> None:
         try:
             from backend.src.modules.billing.scheduler import start_scheduler
+
             start_scheduler()
         except Exception:
             log.exception("Billing scheduler failed to start (non-fatal)")
 
+    @application.on_event("startup")
+    def _start_openclaw_aggregation_scheduler() -> None:
+        try:
+            from backend.src.modules.openclaw.scheduler import start_scheduler
+
+            start_scheduler()
+        except Exception:
+            log.exception("OpenClaw aggregation scheduler failed to start (non-fatal)")
+
     # ----------------------------- SPA mount ------------------------------
     if spa_index:
+
         @application.get("/sw.js", include_in_schema=False)
         def service_worker():
             sw_path = CLIENT_DIST / "sw.js"
@@ -956,11 +978,27 @@ def create_app() -> FastAPI:
             )
 
         # Extensions that never belong to a React SPA — reject bot probes fast
-        _BLOCKED_EXTENSIONS = frozenset((
-            ".php", ".asp", ".aspx", ".cgi", ".jsp", ".env",
-            ".bak", ".sql", ".gz", ".tar", ".zip", ".rar",
-            ".yml", ".yaml", ".toml", ".ini", ".conf",
-        ))
+        _BLOCKED_EXTENSIONS = frozenset(
+            (
+                ".php",
+                ".asp",
+                ".aspx",
+                ".cgi",
+                ".jsp",
+                ".env",
+                ".bak",
+                ".sql",
+                ".gz",
+                ".tar",
+                ".zip",
+                ".rar",
+                ".yml",
+                ".yaml",
+                ".toml",
+                ".ini",
+                ".conf",
+            )
+        )
 
         @application.get("/{client_path:path}", include_in_schema=False)
         def _spa_fallback(client_path: str):
@@ -973,7 +1011,8 @@ def create_app() -> FastAPI:
             lower_path = normalized_path.lower()
             if any(lower_path.endswith(ext) for ext in _BLOCKED_EXTENSIONS):
                 return PlainTextResponse(
-                    "Not found", status_code=404,
+                    "Not found",
+                    status_code=404,
                     headers={"Cache-Control": "no-store"},
                 )
 
