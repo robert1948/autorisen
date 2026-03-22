@@ -125,7 +125,7 @@ export default function App() {
         {/* -------------------- MVP SCAFFOLD (SYSTEM_SPEC §2.5) -------------------- */}
         {/* Public pages */}
         <Route path="/" element={<Home />} />
-        <Route path="/landing-legacy" element={<HomePage />} />
+        <Route path="/landing-legacy" element={<Navigate to="/" replace />} />
         <Route path="/about" element={<MvpAbout />} />
         <Route path="/docs" element={<MvpDocs />} />
 
