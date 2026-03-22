@@ -5,30 +5,35 @@ Core business logic for marketplace operations including search, publishing,
 installation, analytics, and validation.
 """
 
-import semver
+import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
+import semver
+from backend.src.db import models
 from fastapi import HTTPException, status
-from sqlalchemy import select, func, desc, and_, or_
+from sqlalchemy import and_, desc, func, inspect, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
-from backend.src.db import models
 from .models import (
     AgentCategory,
-    AgentStatus,
-    MarketplaceSearchRequest,
-    MarketplaceSearchResponse,
-    AgentListing,
     AgentDetail,
     AgentInstallRequest,
     AgentInstallResponse,
-    PublishAgentRequest,
-    MarketplaceAnalytics,
-    AgentValidationResult,
-    AgentRating as AgentRatingSchema,
-    RateAgentRequest,
+    AgentListing,
     AgentRatingSummary,
+    AgentStatus,
+    AgentValidationResult,
+    MarketplaceAnalytics,
+    MarketplaceSearchRequest,
+    MarketplaceSearchResponse,
+    PublishAgentRequest,
+    RateAgentRequest,
 )
+from .models import AgentRating as AgentRatingSchema
+
+log = logging.getLogger(__name__)
 
 
 class MarketplaceService:
@@ -36,6 +41,30 @@ class MarketplaceService:
 
     def __init__(self, db: Session):
         self.db = db
+        self._agent_installations_available: Optional[bool] = None
+        self._agent_ratings_available: Optional[bool] = None
+
+    def _has_agent_installations_table(self) -> bool:
+        if self._agent_installations_available is not None:
+            return self._agent_installations_available
+        try:
+            inspector = inspect(self.db.bind)
+            self._agent_installations_available = inspector.has_table(
+                "agent_installations"
+            )
+        except Exception:
+            self._agent_installations_available = False
+        return self._agent_installations_available
+
+    def _has_agent_ratings_table(self) -> bool:
+        if self._agent_ratings_available is not None:
+            return self._agent_ratings_available
+        try:
+            inspector = inspect(self.db.bind)
+            self._agent_ratings_available = inspector.has_table("agent_ratings")
+        except Exception:
+            self._agent_ratings_available = False
+        return self._agent_ratings_available
 
     async def search_agents(
         self, request: MarketplaceSearchRequest
@@ -66,7 +95,7 @@ class MarketplaceService:
         # TODO: Implement proper JSON field filtering when database structure is finalized
 
         # Apply sorting
-        if request.sort_by == "popularity":
+        if request.sort_by == "popularity" and self._has_agent_installations_table():
             # Sub-select: count installations per agent
             dl_sub = (
                 select(
@@ -79,7 +108,10 @@ class MarketplaceService:
             query = query.outerjoin(
                 dl_sub, models.Agent.id == dl_sub.c.agent_id
             ).order_by(desc(func.coalesce(dl_sub.c.dl_count, 0)))
-        elif request.sort_by == "rating":
+        elif request.sort_by == "popularity":
+            # Compatibility fallback when legacy DB does not yet have installations.
+            query = query.order_by(desc(models.Agent.updated_at))
+        elif request.sort_by == "rating" and self._has_agent_ratings_table():
             # Sub-select: average rating per agent from user reviews
             rating_sub = (
                 select(
@@ -92,6 +124,9 @@ class MarketplaceService:
             query = query.outerjoin(
                 rating_sub, models.Agent.id == rating_sub.c.agent_id
             ).order_by(desc(func.coalesce(rating_sub.c.avg_rating, 0)))
+        elif request.sort_by == "rating":
+            # Compatibility fallback when legacy DB does not yet have ratings.
+            query = query.order_by(desc(models.Agent.updated_at))
         elif request.sort_by == "name":
             query = query.order_by(models.Agent.name)
         elif request.sort_by == "updated":
@@ -125,7 +160,9 @@ class MarketplaceService:
             )
             if published_version and published_version.manifest:
                 listing = self._agent_to_listing(
-                    agent, published_version, download_count=download_map.get(agent.id, 0)
+                    agent,
+                    published_version,
+                    download_count=download_map.get(agent.id, 0),
                 )
                 listings.append(listing)
 
@@ -298,6 +335,12 @@ class MarketplaceService:
             )
 
         # Check if already installed
+        if not self._has_agent_installations_table():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Agent installations are temporarily unavailable.",
+            )
+
         install_stmt = select(models.AgentInstallation).where(
             and_(
                 models.AgentInstallation.user_id == user_id,
@@ -379,15 +422,22 @@ class MarketplaceService:
         total_agents = self.db.scalar(total_agents_stmt) or 0
 
         # Real download count = total installations
-        total_downloads = self.db.scalar(
-            select(func.count(models.AgentInstallation.id))
-        ) or 0
-
-        # Active users = distinct users with an active installation
-        active_users = self.db.scalar(
-            select(func.count(models.AgentInstallation.user_id.distinct()))
-            .where(models.AgentInstallation.status == "active")
-        ) or 0
+        if self._has_agent_installations_table():
+            total_downloads = (
+                self.db.scalar(select(func.count(models.AgentInstallation.id))) or 0
+            )
+            # Active users = distinct users with an active installation
+            active_users = (
+                self.db.scalar(
+                    select(
+                        func.count(models.AgentInstallation.user_id.distinct())
+                    ).where(models.AgentInstallation.status == "active")
+                )
+                or 0
+            )
+        else:
+            total_downloads = 0
+            active_users = 0
 
         # Real category counts from published public agents
         popular_categories = []
@@ -501,9 +551,7 @@ class MarketplaceService:
     ) -> AgentRatingSchema:
         """Create or update a user's rating for an agent."""
         # Verify agent exists
-        agent = self.db.scalar(
-            select(models.Agent).where(models.Agent.id == agent_id)
-        )
+        agent = self.db.scalar(select(models.Agent).where(models.Agent.id == agent_id))
         if not agent:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -576,16 +624,13 @@ class MarketplaceService:
 
         # Paginated reviews
         offset = (page - 1) * limit
-        rows = (
-            self.db.scalars(
-                select(models.AgentRating)
-                .where(models.AgentRating.agent_id == agent_id)
-                .order_by(desc(models.AgentRating.created_at))
-                .offset(offset)
-                .limit(limit)
-            )
-            .all()
-        )
+        rows = self.db.scalars(
+            select(models.AgentRating)
+            .where(models.AgentRating.agent_id == agent_id)
+            .order_by(desc(models.AgentRating.created_at))
+            .offset(offset)
+            .limit(limit)
+        ).all()
 
         ratings = [
             AgentRatingSchema(
@@ -629,40 +674,61 @@ class MarketplaceService:
 
     def _get_average_rating(self, agent_id: str) -> Optional[float]:
         """Return the average user rating for an agent, or None."""
-        result = self.db.scalar(
-            select(func.avg(models.AgentRating.rating)).where(
-                models.AgentRating.agent_id == agent_id
+        if not self._has_agent_ratings_table():
+            return None
+        try:
+            result = self.db.scalar(
+                select(func.avg(models.AgentRating.rating)).where(
+                    models.AgentRating.agent_id == agent_id
+                )
             )
-        )
-        return round(float(result), 2) if result else None
+            return round(float(result), 2) if result else None
+        except SQLAlchemyError:
+            log.warning("Average rating query failed; returning None", exc_info=True)
+            return None
 
     # ------------------------------------------------------------------
     # Download-count helpers
     # ------------------------------------------------------------------
 
-    def _get_download_counts(
-        self, agent_ids: List[str]
-    ) -> Dict[str, int]:
+    def _get_download_counts(self, agent_ids: List[str]) -> Dict[str, int]:
         """Return {agent_id: install_count} for the given IDs."""
         if not agent_ids:
             return {}
-        rows = self.db.execute(
-            select(
-                models.AgentInstallation.agent_id,
-                func.count(models.AgentInstallation.id).label("cnt"),
-            )
-            .where(models.AgentInstallation.agent_id.in_(agent_ids))
-            .group_by(models.AgentInstallation.agent_id)
-        ).fetchall()
-        return {r.agent_id: r.cnt for r in rows}
+        if not self._has_agent_installations_table():
+            return {}
+        try:
+            rows = self.db.execute(
+                select(
+                    models.AgentInstallation.agent_id,
+                    func.count(models.AgentInstallation.id).label("cnt"),
+                )
+                .where(models.AgentInstallation.agent_id.in_(agent_ids))
+                .group_by(models.AgentInstallation.agent_id)
+            ).fetchall()
+            return {r.agent_id: r.cnt for r in rows}
+        except SQLAlchemyError:
+            log.warning("Download-count query failed; returning zeros", exc_info=True)
+            return {}
 
     def _get_download_count(self, agent_id: str) -> int:
         """Return the total installation count for a single agent."""
-        return self.db.scalar(
-            select(func.count(models.AgentInstallation.id)).where(
-                models.AgentInstallation.agent_id == agent_id
+        if not self._has_agent_installations_table():
+            return 0
+        try:
+            return (
+                self.db.scalar(
+                    select(func.count(models.AgentInstallation.id)).where(
+                        models.AgentInstallation.agent_id == agent_id
+                    )
+                )
+                or 0
             )
-        ) or 0
+        except SQLAlchemyError:
+            log.warning(
+                "Single download-count query failed; returning 0", exc_info=True
+            )
+            return 0
 
     # ------------------------------------------------------------------
     # Featured
@@ -715,6 +781,10 @@ class MarketplaceService:
         self, limit: int = 10, days: int = 30
     ) -> List[AgentListing]:
         """Return agents ranked by installation count in the last *days* days."""
+        if not self._has_agent_installations_table():
+            # Compatibility fallback: without installations table we cannot rank by downloads.
+            return []
+
         cutoff = datetime.utcnow() - timedelta(days=days)
 
         # Sub-select: installations since cutoff

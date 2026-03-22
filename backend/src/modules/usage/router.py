@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from backend.src.db.session import get_session
 from backend.src.db.models import Subscription
+from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user, require_roles
+from backend.src.modules.payments.constants import get_plan_limits
+from fastapi import APIRouter, Depends
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from . import service
 
@@ -35,26 +36,56 @@ async def usage_summary(
 ):
     """Return aggregated usage for the current billing period."""
     user_id: str = current_user.id  # type: ignore[union-attr]
-    sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-    plan_id = sub.plan_id if sub else "free"
-    period_start = _period_start_for_subscription(sub)
+    try:
+        sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        plan_id = sub.plan_id if sub else "free"
+        period_start = _period_start_for_subscription(sub)
 
-    summary = service.get_usage_summary(
-        db,
-        user_id=user_id,
-        period_start=period_start,
-        plan_id=plan_id,
-    )
-    # Add period_end for the frontend reset timer
-    if sub and sub.current_period_end:
-        summary["period_end"] = sub.current_period_end.isoformat()
-    else:
-        # Default: 30d from period_start
+        summary = service.get_usage_summary(
+            db,
+            user_id=user_id,
+            period_start=period_start,
+            plan_id=plan_id,
+        )
+        # Add period_end for the frontend reset timer
+        if sub and sub.current_period_end:
+            summary["period_end"] = sub.current_period_end.isoformat()
+        else:
+            # Default: 30d from period_start
+            from datetime import timedelta
+
+            summary["period_end"] = (period_start + timedelta(days=30)).isoformat()
+
+        return summary
+    except SQLAlchemyError:
+        log.warning(
+            "Usage summary query failed for user=%s; returning zeroed summary",
+            user_id,
+            exc_info=True,
+        )
+        period_start = _period_start_for_subscription(None)
         from datetime import timedelta
 
-        summary["period_end"] = (period_start + timedelta(days=30)).isoformat()
-
-    return summary
+        period_end = period_start + timedelta(days=30)
+        limits = get_plan_limits("free")
+        return {
+            "api_calls_used": 0,
+            "api_calls_limit": limits.max_executions_per_month,
+            "total_tokens_in": 0,
+            "total_tokens_out": 0,
+            "total_cost_usd": 0.0,
+            "storage_used_mb": 0,
+            "storage_limit_mb": limits.storage_limit_mb,
+            "period_start": period_start.isoformat(),
+            "period_end": period_end.isoformat(),
+            "plan_id": "free",
+            "agent_runs": 0,
+            "documents_count": 0,
+            "rag_queries": 0,
+            "evidence_exports": 0,
+            "agent_count": 0,
+            "max_agents": limits.max_agents,
+        }
 
 
 @router.get("/admin/costs")
@@ -79,7 +110,10 @@ async def admin_cost_report(
 
     # Budget alert status
     from backend.src.core.config import get_settings
-    from backend.src.modules.usage.budget_alerts import check_budget_thresholds, budget_tracker
+    from backend.src.modules.usage.budget_alerts import (
+        budget_tracker,
+        check_budget_thresholds,
+    )
 
     cap = get_settings().max_monthly_ai_spend_usd
     active_alerts = check_budget_thresholds(total_cost, cap)

@@ -41,6 +41,7 @@ from backend.src.modules.auth.deps import get_current_user
 from backend.src.modules.payments.constants import get_plan_limits
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
@@ -61,65 +62,114 @@ def _platform_month_start() -> datetime:
 
 def _total_platform_spend(db: Session, since: datetime) -> float:
     """Sum cost_usd across ALL users since the given timestamp."""
-    total = db.execute(
-        select(func.coalesce(func.sum(UsageLog.cost_usd), 0)).where(
-            UsageLog.created_at >= since,
-        )
-    ).scalar_one()
-    return float(total)
+    try:
+        total = db.execute(
+            select(func.coalesce(func.sum(UsageLog.cost_usd), 0)).where(
+                UsageLog.created_at >= since,
+            )
+        ).scalar_one()
+        return float(total)
+    except SQLAlchemyError:
+        log.warning("Could not read platform spend; defaulting to 0", exc_info=True)
+        return 0.0
 
 
 def _user_spend(db: Session, user_id: str, since: datetime) -> float:
     """Sum cost_usd for a single user since the given timestamp."""
-    total = db.execute(
-        select(func.coalesce(func.sum(UsageLog.cost_usd), 0)).where(
-            UsageLog.user_id == user_id,
-            UsageLog.created_at >= since,
+    try:
+        total = db.execute(
+            select(func.coalesce(func.sum(UsageLog.cost_usd), 0)).where(
+                UsageLog.user_id == user_id,
+                UsageLog.created_at >= since,
+            )
+        ).scalar_one()
+        return float(total)
+    except SQLAlchemyError:
+        log.warning(
+            "Could not read spend for user=%s; defaulting to 0", user_id, exc_info=True
         )
-    ).scalar_one()
-    return float(total)
+        return 0.0
 
 
 def _get_plan_id(db: Session, user_id: str) -> str:
     """Return the user's active plan_id, defaulting to 'free'."""
-    sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-    if sub and sub.status in ("active", "trialing"):
-        return sub.plan_id
+    try:
+        sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        if sub and sub.status in ("active", "trialing"):
+            return sub.plan_id
+    except SQLAlchemyError:
+        # Fail open so core product flows are not blocked by optional billing tables.
+        log.warning(
+            "Could not resolve plan for user=%s; defaulting to free",
+            user_id,
+            exc_info=True,
+        )
     return "free"
 
 
 def _billing_period_start(db: Session, user_id: str) -> datetime:
     """Derive billing period start from the subscription or fall back to
     the first day of the current UTC month."""
-    sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-    if sub and sub.current_period_start:
-        return sub.current_period_start
+    try:
+        sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        if sub and sub.current_period_start:
+            return sub.current_period_start
+    except SQLAlchemyError:
+        log.warning(
+            "Could not resolve billing period for user=%s; using month start",
+            user_id,
+            exc_info=True,
+        )
     now = datetime.now(timezone.utc)
     return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
 def _current_execution_count(db: Session, user_id: str, period_start: datetime) -> int:
     """Fast count of usage-log entries in the current billing period."""
-    return db.execute(
-        select(func.count(UsageLog.id)).where(
-            UsageLog.user_id == user_id,
-            UsageLog.created_at >= period_start,
+    try:
+        return db.execute(
+            select(func.count(UsageLog.id)).where(
+                UsageLog.user_id == user_id,
+                UsageLog.created_at >= period_start,
+            )
+        ).scalar_one()
+    except SQLAlchemyError:
+        log.warning(
+            "Could not read execution count for user=%s; defaulting to 0",
+            user_id,
+            exc_info=True,
         )
-    ).scalar_one()
+        return 0
 
 
 def _current_agent_count(db: Session, user_id: str) -> int:
     """Count agents owned by the user."""
-    return db.execute(
-        select(func.count(Agent.id)).where(Agent.owner_id == user_id)
-    ).scalar_one()
+    try:
+        return db.execute(
+            select(func.count(Agent.id)).where(Agent.owner_id == user_id)
+        ).scalar_one()
+    except SQLAlchemyError:
+        log.warning(
+            "Could not read agent count for user=%s; defaulting to 0",
+            user_id,
+            exc_info=True,
+        )
+        return 0
 
 
 def _current_project_count(db: Session, user_id: str) -> int:
     """Count projects (tasks) owned by the user."""
-    return db.execute(
-        select(func.count(Task.id)).where(Task.user_id == user_id)
-    ).scalar_one()
+    try:
+        return db.execute(
+            select(func.count(Task.id)).where(Task.user_id == user_id)
+        ).scalar_one()
+    except SQLAlchemyError:
+        log.warning(
+            "Could not read project count for user=%s; defaulting to 0",
+            user_id,
+            exc_info=True,
+        )
+        return 0
 
 
 def _raise_limit_exceeded(

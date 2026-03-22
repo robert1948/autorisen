@@ -15,19 +15,23 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from unittest.mock import Mock
+
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
+from backend.src.modules.payments.constants import get_plan_limits
 from backend.src.modules.payments.enforcement import (
     _billing_period_start,
     _current_agent_count,
     _current_execution_count,
+    _current_project_count,
     _get_plan_id,
     _raise_limit_exceeded,
     enforce_agent_limit,
     enforce_execution_limit,
 )
-from backend.src.modules.payments.constants import get_plan_limits
 
 
 def _utcnow() -> datetime:
@@ -78,7 +82,9 @@ def _seed_subscription(
     return sub
 
 
-def _seed_usage_logs(db, user: models.User, count: int, *, created_at: datetime | None = None) -> None:
+def _seed_usage_logs(
+    db, user: models.User, count: int, *, created_at: datetime | None = None
+) -> None:
     """Seed N usage log entries."""
     ts = created_at or _utcnow()
     for _ in range(count):
@@ -141,6 +147,11 @@ class TestGetPlanId:
             _seed_subscription(db, user, plan_id="pro", status="cancelled")
             assert _get_plan_id(db, user.id) == "free"
 
+    def test_db_error_returns_free(self):
+        db = Mock()
+        db.query.side_effect = SQLAlchemyError("subscriptions unavailable")
+        assert _get_plan_id(db, "user-1") == "free"
+
 
 class TestBillingPeriodStart:
     """_billing_period_start should use subscription period or fallback to month start."""
@@ -160,6 +171,13 @@ class TestBillingPeriodStart:
             now = _utcnow()
             expected = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             assert result == expected
+
+    def test_db_error_uses_month_start(self):
+        db = Mock()
+        db.query.side_effect = SQLAlchemyError("subscriptions unavailable")
+        result = _billing_period_start(db, "user-1")
+        expected = _utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        assert result == expected
 
 
 class TestCurrentExecutionCount:
@@ -185,7 +203,15 @@ class TestCurrentExecutionCount:
     def test_zero_when_empty(self):
         with SessionLocal() as db:
             user = _seed_user(db)
-            assert _current_execution_count(db, user.id, _utcnow() - timedelta(days=30)) == 0
+            assert (
+                _current_execution_count(db, user.id, _utcnow() - timedelta(days=30))
+                == 0
+            )
+
+    def test_db_error_returns_zero(self):
+        db = Mock()
+        db.execute.side_effect = SQLAlchemyError("usage_logs unavailable")
+        assert _current_execution_count(db, "user-1", _utcnow()) == 0
 
 
 class TestCurrentAgentCount:
@@ -211,6 +237,20 @@ class TestCurrentAgentCount:
             assert _current_agent_count(db, user_a.id) == 4
             assert _current_agent_count(db, user_b.id) == 2
 
+    def test_db_error_returns_zero(self):
+        db = Mock()
+        db.execute.side_effect = SQLAlchemyError("agents unavailable")
+        assert _current_agent_count(db, "user-1") == 0
+
+
+class TestCurrentProjectCount:
+    """_current_project_count should degrade gracefully on DB errors."""
+
+    def test_db_error_returns_zero(self):
+        db = Mock()
+        db.execute.side_effect = SQLAlchemyError("tasks unavailable")
+        assert _current_project_count(db, "user-1") == 0
+
 
 # ---------------------------------------------------------------------------
 # 429 response body structure
@@ -221,8 +261,8 @@ class TestRaiseLimitExceeded:
     """_raise_limit_exceeded should raise HTTPException(429) with structured detail."""
 
     def test_execution_limit_body(self):
-        from fastapi import HTTPException
         import pytest
+        from fastapi import HTTPException
 
         with pytest.raises(HTTPException) as exc_info:
             _raise_limit_exceeded(
@@ -242,8 +282,8 @@ class TestRaiseLimitExceeded:
         assert "execution limit" in detail["message"].lower()
 
     def test_agent_limit_body(self):
-        from fastapi import HTTPException
         import pytest
+        from fastapi import HTTPException
 
         with pytest.raises(HTTPException) as exc_info:
             _raise_limit_exceeded(
@@ -275,7 +315,9 @@ class TestEnforcementEndToEnd:
         """Free user with 49 executions (limit 50) should pass."""
         with SessionLocal() as db:
             user = _seed_user(db)
-            period_start = _utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            period_start = _utcnow().replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
             _seed_usage_logs(db, user, 49, created_at=_utcnow())
             plan_id = _get_plan_id(db, user.id)
             limits = get_plan_limits(plan_id)
@@ -288,7 +330,9 @@ class TestEnforcementEndToEnd:
         """Free user with 50 executions (limit 50) should be blocked."""
         with SessionLocal() as db:
             user = _seed_user(db)
-            period_start = _utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            period_start = _utcnow().replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
             _seed_usage_logs(db, user, 50, created_at=_utcnow())
             plan_id = _get_plan_id(db, user.id)
             limits = get_plan_limits(plan_id)
@@ -302,7 +346,9 @@ class TestEnforcementEndToEnd:
         with SessionLocal() as db:
             user = _seed_user(db)
             _seed_subscription(db, user, plan_id="pro", status="active")
-            period_start = _utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            period_start = _utcnow().replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
             _seed_usage_logs(db, user, 1999, created_at=_utcnow())
             plan_id = _get_plan_id(db, user.id)
             limits = get_plan_limits(plan_id)

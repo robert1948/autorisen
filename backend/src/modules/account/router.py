@@ -17,11 +17,20 @@ from backend.src.modules.payments.enforcement import (
 from backend.src.modules.support.sla import estimated_response_time
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from . import schemas
 
 router = APIRouter(tags=["account"])
+log = logging.getLogger(__name__)
+
+
+def _projects_unavailable() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Project storage is temporarily unavailable.",
+    )
 
 
 def _normalize_role(raw_role: str) -> str:
@@ -226,24 +235,32 @@ def create_project(
     _quota=Depends(enforce_project_limit),
 ) -> schemas.ProjectStatusItem:
     """Create a new project (stored as a task)."""
-    # Pick a default agent — use the first available or the Onboarding Guide
-    agent = db.scalars(select(models.Agent).limit(1)).first()
-    if not agent:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No agents available",
-        )
+    try:
+        # Pick a default agent — use the first available or the Onboarding Guide
+        agent_id = db.scalar(select(models.Agent.id).limit(1))
+        if not agent_id:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="No agents available",
+            )
 
-    task = models.Task(
-        title=payload.title,
-        description=payload.description,
-        user_id=current_user.id,
-        agent_id=agent.id,
-        status="pending",
-    )
-    db.add(task)
-    db.commit()
-    db.refresh(task)
+        task = models.Task(
+            title=payload.title,
+            description=payload.description,
+            user_id=current_user.id,
+            agent_id=agent_id,
+            status="pending",
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+    except SQLAlchemyError:
+        log.warning(
+            "Project creation storage query failed for user=%s",
+            getattr(current_user, "id", "unknown"),
+            exc_info=True,
+        )
+        raise _projects_unavailable()
 
     # Auto-complete onboarding step
     try:
@@ -268,12 +285,21 @@ def get_projects_mine(
     current_user: models.User = Depends(get_verified_user),
     db: Session = Depends(get_session),
 ) -> list[schemas.ProjectStatusItem]:
-    tasks = db.scalars(
-        select(models.Task)
-        .where(models.Task.user_id == current_user.id)
-        .order_by(models.Task.created_at.desc())
-        .limit(25),
-    ).all()
+    try:
+        tasks = db.scalars(
+            select(models.Task)
+            .where(models.Task.user_id == current_user.id)
+            .order_by(models.Task.created_at.desc())
+            .limit(25),
+        ).all()
+    except SQLAlchemyError:
+        log.warning(
+            "Project listing query failed for user=%s; returning empty list",
+            getattr(current_user, "id", "unknown"),
+            exc_info=True,
+        )
+        return []
+
     return [
         schemas.ProjectStatusItem(
             id=str(task.id),
@@ -290,12 +316,21 @@ def get_project_status_summary(
     current_user: models.User = Depends(get_verified_user),
     db: Session = Depends(get_session),
 ) -> schemas.ProjectStatusSummary:
-    tasks = db.scalars(
-        select(models.Task)
-        .where(models.Task.user_id == current_user.id)
-        .order_by(models.Task.created_at.desc())
-        .limit(25),
-    ).all()
+    try:
+        tasks = db.scalars(
+            select(models.Task)
+            .where(models.Task.user_id == current_user.id)
+            .order_by(models.Task.created_at.desc())
+            .limit(25),
+        ).all()
+    except SQLAlchemyError:
+        log.warning(
+            "Project status query failed for user=%s; returning empty status",
+            getattr(current_user, "id", "unknown"),
+            exc_info=True,
+        )
+        return schemas.ProjectStatusSummary(value="Not set", total=0, projects=[])
+
     projects = [
         schemas.ProjectStatusItem(
             id=str(task.id),
@@ -318,12 +353,22 @@ def get_project_detail(
     db: Session = Depends(get_session),
 ) -> schemas.ProjectDetail:
     """Get full project details."""
-    task = db.scalars(
-        select(models.Task).where(
-            models.Task.id == project_id,
-            models.Task.user_id == current_user.id,
+    try:
+        task = db.scalars(
+            select(models.Task).where(
+                models.Task.id == project_id,
+                models.Task.user_id == current_user.id,
+            )
+        ).first()
+    except SQLAlchemyError:
+        log.warning(
+            "Project detail query failed for user=%s project_id=%s",
+            getattr(current_user, "id", "unknown"),
+            project_id,
+            exc_info=True,
         )
-    ).first()
+        raise _projects_unavailable()
+
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -349,12 +394,22 @@ def update_project(
     db: Session = Depends(get_session),
 ) -> schemas.ProjectDetail:
     """Update a project's title, description, or status."""
-    task = db.scalars(
-        select(models.Task).where(
-            models.Task.id == project_id,
-            models.Task.user_id == current_user.id,
+    try:
+        task = db.scalars(
+            select(models.Task).where(
+                models.Task.id == project_id,
+                models.Task.user_id == current_user.id,
+            )
+        ).first()
+    except SQLAlchemyError:
+        log.warning(
+            "Project update lookup failed for user=%s project_id=%s",
+            getattr(current_user, "id", "unknown"),
+            project_id,
+            exc_info=True,
         )
-    ).first()
+        raise _projects_unavailable()
+
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -371,8 +426,18 @@ def update_project(
     for key, value in updates.items():
         setattr(task, key, value)
 
-    db.commit()
-    db.refresh(task)
+    try:
+        db.commit()
+        db.refresh(task)
+    except SQLAlchemyError:
+        log.warning(
+            "Project update commit failed for user=%s project_id=%s",
+            getattr(current_user, "id", "unknown"),
+            project_id,
+            exc_info=True,
+        )
+        raise _projects_unavailable()
+
     return schemas.ProjectDetail(
         id=str(task.id),
         title=task.title,
@@ -393,21 +458,38 @@ def delete_project(
     db: Session = Depends(get_session),
 ) -> None:
     """Delete a project."""
-    task = db.scalars(
-        select(models.Task).where(
-            models.Task.id == project_id,
-            models.Task.user_id == current_user.id,
+    try:
+        task = db.scalars(
+            select(models.Task).where(
+                models.Task.id == project_id,
+                models.Task.user_id == current_user.id,
+            )
+        ).first()
+    except SQLAlchemyError:
+        log.warning(
+            "Project delete lookup failed for user=%s project_id=%s",
+            getattr(current_user, "id", "unknown"),
+            project_id,
+            exc_info=True,
         )
-    ).first()
+        raise _projects_unavailable()
+
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
         )
-    db.delete(task)
-    db.commit()
+    try:
+        db.delete(task)
+        db.commit()
+    except SQLAlchemyError:
+        log.warning(
+            "Project delete commit failed for user=%s project_id=%s",
+            getattr(current_user, "id", "unknown"),
+            project_id,
+            exc_info=True,
+        )
+        raise _projects_unavailable()
 
-
-log = logging.getLogger(__name__)
 
 _INSTRUCTIONS_SYSTEM_PROMPT = (
     "You are CapeAI, a business automation assistant on the CapeControl platform. "
@@ -439,12 +521,22 @@ def generate_project_instructions(
     _plan=Depends(enforce_paid_plan),
 ) -> schemas.ProjectInstructions:
     """Generate (or return cached) AI instruction sheet for a project."""
-    task = db.scalars(
-        select(models.Task).where(
-            models.Task.id == project_id,
-            models.Task.user_id == current_user.id,
+    try:
+        task = db.scalars(
+            select(models.Task).where(
+                models.Task.id == project_id,
+                models.Task.user_id == current_user.id,
+            )
+        ).first()
+    except SQLAlchemyError:
+        log.warning(
+            "Project instruction lookup failed for user=%s project_id=%s",
+            getattr(current_user, "id", "unknown"),
+            project_id,
+            exc_info=True,
         )
-    ).first()
+        raise _projects_unavailable()
+
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
