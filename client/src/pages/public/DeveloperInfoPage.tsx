@@ -20,10 +20,10 @@ const DeveloperInfoPage: React.FC = () => {
             </p>
 
             <p>
-              Thank you for your interest in building AI agents with CapeControl. This document
-              gives you a straightforward overview of what joining our platform involves — the
-              opportunities, the commitments, and the risks — so you can make an informed decision
-              before signing our Terms and Conditions.
+              Thank you for your interest in building governed AI agents with CapeControl. This
+              document provides a practical overview of how the platform works, the commercial
+              model, and the responsibilities involved so you can make an informed decision before
+              signing our Terms and Conditions.
             </p>
             <p style={{ opacity: 0.7, fontStyle: "italic" }}>
               Please read this document alongside the full Terms and Conditions, which govern the
@@ -33,10 +33,10 @@ const DeveloperInfoPage: React.FC = () => {
             {/* ---- What CapeControl Does ---- */}
             <h2 style={{ marginTop: "3rem" }}>What CapeControl Does</h2>
             <p>
-              CapeControl is a platform where businesses and individuals access AI agents to handle
-              tasks such as automation, content creation, data analysis, and workflow management.
-              These agents are built by independent developers like you and made available to users
-              through subscription pricing.
+              CapeControl is a platform where businesses access AI agents for operational workflows
+              that require trust, traceability, and control. Agents built by independent developers
+              are delivered through approved-source retrieval, evidence-backed outputs, and
+              human-in-control checkpoints.
             </p>
             <p>
               As a developer, you build agents for the platform and earn a share of the revenue

@@ -35,8 +35,8 @@ const Welcome: React.FC = () => {
           )}
           
           <p className="text-gray-600 mb-6">
-            Your account has been created successfully. Let's get you started with your 
-            {userType === 'developer' ? ' developer' : ' user'} journey.
+            Your account is ready. Let&apos;s begin guided onboarding so you can configure
+            workflows with clear controls from day one.
           </p>
 
           {/* Next Steps */}
@@ -47,13 +47,13 @@ const Welcome: React.FC = () => {
                   to="/onboarding/developer"
                   className="block w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  Start Developer Onboarding
+                  Start Guided Onboarding
                 </Link>
                 <Link
-                  to="/dashboard"
+                  to="/how-it-works"
                   className="block w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Go to Dashboard
+                  See How It Works
                 </Link>
               </>
             ) : (
@@ -62,13 +62,13 @@ const Welcome: React.FC = () => {
                   to="/onboarding/customer"
                   className="block w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  Start User Onboarding
+                  Start Guided Onboarding
                 </Link>
                 <Link
-                  to="/dashboard"
+                  to="/how-it-works"
                   className="block w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Go to Dashboard
+                  See How It Works
                 </Link>
               </>
             )}

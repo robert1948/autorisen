@@ -169,5 +169,18 @@ ALLOW_PROD=1 ALLOW_PROD_DEPLOY=YES make deploy  # Production deploy
 | FEAT-UPGRADE-001 | Add Pro plan purchase flow via PayFast | engineering | todo | P0 |  |
 | FEAT-DASH-METRICS-001 | Dashboard real-time metrics polish | engineering | todo | P1 |  |
 | QUAL-E2E-001 | Add Playwright end-to-end test coverage | engineering | todo | P1 |  |
+| OPCLAW-RFC-001 | Publish OpenClaw internal evaluation RFC and pilot gates | docs | done | P1 | 2026-03-22 |
+| OPCLAW-PILOT-001 | Run 2-week OpenClaw internal pilot (Slack triage + status brief use cases) | management | in-progress | P0 |  |
+| OPCLAW-PILOT-002 | Implement pilot telemetry and guardrail enforcement for OpenClaw evaluation | engineering | todo | P0 |  |
+| OPCLAW-PILOT-101 | Define pilot owners/users and finalize baseline task set | management | in-progress | P0 |  |
+| OPCLAW-PILOT-102 | Enable pilot audit telemetry and event labeling | engineering | todo | P0 |  |
+| OPCLAW-PILOT-103 | Implement approval gate for high-impact actions in pilot scope | engineering | todo | P0 |  |
+| OPCLAW-PILOT-104 | Run Week 1 dry-runs and Security/Compliance checkpoint | management | todo | P0 |  |
+| OPCLAW-PILOT-105 | Run Week 2 live pilot and publish go/no-go scorecard | management | todo | P0 |  |
+| OPCLAW-PILOT-106 | Finalize pilot roster and manager approvals before live start | management | in-progress | P0 |  |
+| OPCLAW-PILOT-107 | Lock named owners and backups for all pilot functions | management | in-progress | P0 |  |
+| OPCLAW-INTEG-001 | Publish OpenClaw Bedrock integration spec (API contracts + policy + telemetry) | docs | done | P0 | 2026-03-22 |
+| OPCLAW-INTEG-002 | Implement Bedrock gateway and OpenClaw task endpoints in backend | engineering | in-progress | P0 |  |
+| OPCLAW-INTEG-003 | Implement OpenClaw telemetry events and approval audit trail | engineering | in-progress | P0 |  |
 
 <!-- PLAN:END -->

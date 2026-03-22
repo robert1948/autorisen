@@ -30,7 +30,7 @@ const SubscribePage: React.FC = () => {
         'Community support',
         'Basic integrations'
       ],
-      cta: 'Get Started Free'
+      cta: 'Start Guided Onboarding'
     },
     {
       name: 'Pro',

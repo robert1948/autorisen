@@ -1,0 +1,6 @@
+function,role,primary_owner,backup_owner,email,slack_handle,decision_authority,status,notes
+Product,Pilot accountable owner,<tbd>,<tbd>,<tbd>,<tbd>,approve scope and go/no-go,pending,
+Engineering,Implementation owner,<tbd>,<tbd>,<tbd>,<tbd>,approve technical readiness,pending,
+Security,Control and review owner,<tbd>,<tbd>,<tbd>,<tbd>,approve control posture,pending,
+Compliance/Legal,Policy and data owner,<tbd>,<tbd>,<tbd>,<tbd>,approve policy and data handling,pending,
+Operations,Support and incident owner,<tbd>,<tbd>,<tbd>,<tbd>,approve support/rollback readiness,pending,

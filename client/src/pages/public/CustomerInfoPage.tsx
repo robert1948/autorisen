@@ -76,9 +76,9 @@ const CustomerInfoPage: React.FC = () => {
             </p>
 
             <p>
-              Welcome to Cape Control! By committing to a Proposal, you agree to the following key
-              terms and conditions outlined in our Customer Terms and Conditions. Please review the
-              summary below to understand your rights, obligations, and what to expect.
+              Welcome to CapeControl. By committing to a Proposal, you agree to the key terms in
+              our Customer Terms and Conditions. This summary is designed to help you understand
+              your rights, obligations, and governance expectations before you proceed.
             </p>
             <p style={{ opacity: 0.7, fontStyle: "italic", marginBottom: "2.5rem" }}>
               For full details, refer to the complete{" "}
@@ -447,7 +447,7 @@ const CustomerInfoPage: React.FC = () => {
               }}
             >
               <a
-                href="https://autorisen-dac8e65796e7.herokuapp.com/auth/register"
+                href="/auth/register"
                 className="btn btn--primary"
                 style={{ textAlign: "center" }}
               >

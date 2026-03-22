@@ -18,7 +18,7 @@ const AboutPage: React.FC = () => {
               About <span className="text-blue-600">CapeControl</span>
             </h1>
             <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              Empowering everyone to harness the power of AI through intelligent automation agents.
+              Governed AI agents for teams that need execution speed, evidence, and control.
             </p>
           </div>
         </div>
@@ -31,9 +31,9 @@ const AboutPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow p-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              CapeControl democratizes AI automation by providing an intuitive platform where anyone can 
-              deploy, manage, and create intelligent agents. Whether you're automating simple tasks or 
-              building complex workflows, our platform makes AI accessible to everyone.
+              CapeControl helps compliance-heavy teams run critical workflows with governed AI.
+              Our platform combines approved-source retrieval, evidence-backed outputs, and
+              human-in-control checkpoints so organizations can adopt AI without losing accountability.
             </p>
           </div>
 
@@ -47,8 +47,8 @@ const AboutPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Smart Automation</h3>
-                <p className="text-gray-600">Deploy AI agents that learn and adapt to your workflow needs.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Governed Agent Execution</h3>
+                <p className="text-gray-600">Run multi-step workflows with clear approvals, escalation, and review points.</p>
               </div>
 
               <div className="text-center">
@@ -57,8 +57,8 @@ const AboutPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Easy Integration</h3>
-                <p className="text-gray-600">Connect with your existing tools and services seamlessly.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Approved Knowledge Controls</h3>
+                <p className="text-gray-600">Restrict retrieval to approved sources for verifiable, trust-sensitive outputs.</p>
               </div>
 
               <div className="text-center">
@@ -67,8 +67,8 @@ const AboutPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Community Driven</h3>
-                <p className="text-gray-600">Share and discover agents created by our vibrant community.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Audit-Ready Operations</h3>
+                <p className="text-gray-600">Maintain traceable records of agent activity and decisions across workflows.</p>
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@ const AboutPage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">Robert Kleyn</h3>
                 <p className="text-gray-600">Founder & CEO</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Building the future of accessible AI automation.
+                  Building practical, governed AI for high-trust business operations.
                 </p>
               </div>
               
@@ -117,20 +117,20 @@ const AboutPage: React.FC = () => {
           <div className="bg-blue-50 rounded-lg shadow p-8 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
             <p className="text-lg text-gray-600 mb-6">
-              Start automating your workflows with CapeControl today.
+              See how governed agents, approved sources, and human checkpoints fit your workflows.
             </p>
             <div className="space-x-4">
               <Link
-                to="/auth/register"
+                to="/how-it-works"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
-                Get Started Free
+                See How It Works
               </Link>
               <Link
-                to="/login"
+                to="/auth/register"
                 className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
-                Sign In
+                Start Guided Onboarding
               </Link>
             </div>
           </div>

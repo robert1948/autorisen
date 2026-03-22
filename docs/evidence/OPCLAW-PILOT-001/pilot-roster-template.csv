@@ -1,0 +1,11 @@
+user_id,name,team,role,use_case,manager_approval,data_access_scope,training_complete,slack_enabled,notes
+pilot-01,<tbd-user-1>,Support,Support Analyst,UseCase-A,pending,non-sensitive,pending,yes,Primary triage participant
+pilot-02,<tbd-user-2>,Support,Support Analyst,UseCase-A,pending,non-sensitive,pending,yes,Primary triage participant
+pilot-03,<tbd-user-3>,Operations,Ops Coordinator,UseCase-A,pending,sanitized,pending,yes,Escalation routing coverage
+pilot-04,<tbd-user-4>,Product,Project Manager,UseCase-B,pending,non-sensitive,pending,no,Project status drafting
+pilot-05,<tbd-user-5>,Product,Project Manager,UseCase-B,pending,non-sensitive,pending,no,Project status drafting
+pilot-06,<tbd-user-6>,Operations,Ops Analyst,UseCase-B,pending,sanitized,pending,no,Evidence collection support
+pilot-07,<tbd-user-7>,Engineering,Software Engineer,UseCase-A|UseCase-B,pending,sanitized,pending,yes,Technical feedback participant
+pilot-08,<tbd-user-8>,Engineering,Software Engineer,UseCase-A|UseCase-B,pending,sanitized,pending,yes,Technical feedback participant
+pilot-09,<tbd-user-9>,Security,Security Analyst,Observer,pending,sanitized,pending,no,Security observer
+pilot-10,<tbd-user-10>,Compliance,Compliance Analyst,Observer,pending,sanitized,pending,no,Compliance observer

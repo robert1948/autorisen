@@ -25,8 +25,8 @@ const Footer: React.FC<Props> = ({ onOpenSupport }) => {
               <h3>CapeControl</h3>
               <div className="footer__legal-desktop">
                 <p>
-                  Workflow-first AI platform that helps small businesses and growing teams run more
-                  smoothly, with enterprise-grade security behind the scenes.
+                  Governed agentic platform for compliance-heavy operations, with approved-source
+                  retrieval, evidence-backed outputs, and human-in-control checkpoints.
                 </p>
                 <p className="footer__brand-meta">Operated by Cape Craft Projects CC (VAT: 4270105119)</p>
                 <p className="footer__brand-meta">Trading as CapeControl</p>
