@@ -5,21 +5,27 @@ Core business logic for the Finance Agent including LLM integration,
 financial analysis, compliance checking, and forecasting.
 """
 
-import time
 import logging
+import os
+import time
 from typing import List, Optional
 
 from anthropic import AsyncAnthropic
+from backend.src.core.config import get_settings
+from backend.src.db import models
+from backend.src.modules.ai_router.bedrock import (
+    invoke_bedrock_text,
+    is_bedrock_enabled,
+)
+from backend.src.modules.ai_router.strategy import resolve_available_provider_order
+from backend.src.modules.usage.input_guard import validate_llm_input
+from backend.src.modules.usage.llm_cache import llm_cache
+from backend.src.modules.usage.track import try_record_usage
 from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
 
-from backend.src.db import models
-from backend.src.modules.usage.track import try_record_usage
-from backend.src.modules.usage.input_guard import validate_llm_input
-from backend.src.modules.usage.llm_cache import llm_cache
-
-from .schemas import FinanceAgentTaskInput, FinanceAgentTaskOutput, FinancialInsight
 from .knowledge_base import FinanceKnowledgeBase
+from .schemas import FinanceAgentTaskInput, FinanceAgentTaskOutput, FinancialInsight
 
 log = logging.getLogger(__name__)
 
@@ -71,6 +77,8 @@ class FinanceAgentService:
         openai_api_key: Optional[str] = None,
         anthropic_api_key: Optional[str] = None,
         model: str = "claude-3-5-haiku-20241022",
+        ai_provider_strategy: str = "hybrid",
+        ai_provider_fallback_order: str = "bedrock,anthropic,openai",
     ):
         self.openai_client = (
             AsyncOpenAI(api_key=openai_api_key) if openai_api_key else None
@@ -79,6 +87,8 @@ class FinanceAgentService:
             AsyncAnthropic(api_key=anthropic_api_key) if anthropic_api_key else None
         )
         self.model = model
+        self.ai_provider_strategy = ai_provider_strategy
+        self.ai_provider_fallback_order = ai_provider_fallback_order
         self.knowledge_base = FinanceKnowledgeBase()
 
     async def process_query(
@@ -99,9 +109,10 @@ class FinanceAgentService:
                 query=input_data.query, context=context, limit=4
             )
 
-            knowledge_text = "\n".join(
-                f"- {doc.title}: {doc.content}" for doc in relevant_docs
-            ) or "No specific financial knowledge matched."
+            knowledge_text = (
+                "\n".join(f"- {doc.title}: {doc.content}" for doc in relevant_docs)
+                or "No specific financial knowledge matched."
+            )
 
             user_prompt = USER_PROMPT_TEMPLATE.format(
                 query=input_data.query,
@@ -165,7 +176,9 @@ class FinanceAgentService:
                     "Always validate AI-generated financial analysis with qualified professionals."
                 ),
                 insights=[],
-                recommendations=["Consult with a qualified financial advisor for specific guidance"],
+                recommendations=[
+                    "Consult with a qualified financial advisor for specific guidance"
+                ],
                 risk_factors=[],
                 compliance_notes=[],
                 next_steps=["Provide more context for a detailed analysis"],
@@ -183,46 +196,101 @@ class FinanceAgentService:
         if cached is not None:
             return cached
 
-        if self.anthropic_client and "claude" in self.model:
-            try:
-                response = await self.anthropic_client.messages.create(
-                    model=self.model,
-                    max_tokens=1500,
-                    temperature=0.2,
-                    system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
-                    messages=[{"role": "user", "content": user_prompt}],
-                )
-                result = (response.content[0].text, {
-                    "model": response.model,
-                    "tokens_in": response.usage.input_tokens,
-                    "tokens_out": response.usage.output_tokens,
-                })
-                llm_cache.put(cache_key, result)
-                return result
-            except Exception as e:
-                log.warning("Anthropic call failed: %s", e)
+        provider_order = resolve_available_provider_order(
+            strategy=self.ai_provider_strategy,
+            fallback_order=self.ai_provider_fallback_order,
+            has_bedrock=is_bedrock_enabled(),
+            has_anthropic=self.anthropic_client is not None,
+            has_openai=self.openai_client is not None,
+        )
 
-        if self.openai_client:
-            try:
-                response = await self.openai_client.chat.completions.create(
-                    model="gpt-4o-mini" if "claude" in self.model else self.model,
-                    max_tokens=1500,
-                    temperature=0.2,
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                )
-                usage = getattr(response, "usage", None)
-                result = (response.choices[0].message.content or "", {
-                    "model": response.model,
-                    "tokens_in": getattr(usage, "prompt_tokens", 0),
-                    "tokens_out": getattr(usage, "completion_tokens", 0),
-                })
-                llm_cache.put(cache_key, result)
-                return result
-            except Exception as e:
-                log.error("OpenAI call also failed: %s", e)
+        for provider in provider_order:
+            if provider == "anthropic":
+                if not self.anthropic_client or "claude" not in self.model:
+                    continue
+                try:
+                    response = await self.anthropic_client.messages.create(
+                        model=self.model,
+                        max_tokens=1500,
+                        temperature=0.2,
+                        system=[
+                            {
+                                "type": "text",
+                                "text": SYSTEM_PROMPT,
+                                "cache_control": {"type": "ephemeral"},
+                            }
+                        ],
+                        messages=[{"role": "user", "content": user_prompt}],
+                    )
+                    result = (
+                        response.content[0].text,
+                        {
+                            "model": response.model,
+                            "tokens_in": response.usage.input_tokens,
+                            "tokens_out": response.usage.output_tokens,
+                        },
+                    )
+                    llm_cache.put(cache_key, result)
+                    return result
+                except Exception as e:
+                    log.warning("Anthropic call failed: %s", e)
+                    continue
+
+            if provider == "openai":
+                if not self.openai_client:
+                    continue
+                try:
+                    response = await self.openai_client.chat.completions.create(
+                        model="gpt-4o-mini" if "claude" in self.model else self.model,
+                        max_tokens=1500,
+                        temperature=0.2,
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                    )
+                    usage = getattr(response, "usage", None)
+                    result = (
+                        response.choices[0].message.content or "",
+                        {
+                            "model": response.model,
+                            "tokens_in": getattr(usage, "prompt_tokens", 0),
+                            "tokens_out": getattr(usage, "completion_tokens", 0),
+                        },
+                    )
+                    llm_cache.put(cache_key, result)
+                    return result
+                except Exception as e:
+                    log.error("OpenAI call failed: %s", e)
+                    continue
+
+            if provider == "bedrock":
+                try:
+                    settings = get_settings()
+                    bedrock = invoke_bedrock_text(
+                        system_prompt=SYSTEM_PROMPT,
+                        user_prompt=user_prompt,
+                        model_id=os.getenv("FINANCE_BEDROCK_MODEL_ID")
+                        or settings.ai_bedrock_model_id,
+                        region=settings.ai_bedrock_region,
+                    )
+                    result = (
+                        bedrock.text,
+                        {
+                            "model": bedrock.model_id,
+                            "tokens_in": bedrock.input_tokens,
+                            "tokens_out": bedrock.output_tokens,
+                            "estimated_usd": bedrock.estimated_usd,
+                            "latency_ms": bedrock.latency_ms,
+                            "provider": "bedrock",
+                            "region": bedrock.region,
+                        },
+                    )
+                    llm_cache.put(cache_key, result)
+                    return result
+                except Exception as e:
+                    log.warning("Bedrock call failed: %s", e)
+                    continue
 
         return (
             "Based on standard financial analysis frameworks, I'd recommend reviewing "
@@ -296,18 +364,24 @@ class FinanceAgentService:
         risks = []
 
         if input_data.currency == "ZAR":
-            risks.append("ZAR exchange rate volatility may impact foreign-denominated costs")
+            risks.append(
+                "ZAR exchange rate volatility may impact foreign-denominated costs"
+            )
 
         if input_data.analysis_type == "forecasting":
             risks.append("Forecast accuracy depends on macroeconomic stability")
-            risks.append("South African load shedding may impact operational projections")
+            risks.append(
+                "South African load shedding may impact operational projections"
+            )
 
         if input_data.analysis_type == "risk":
             risks.append("Concentration risk in key revenue streams")
             risks.append("Interest rate changes affecting debt service costs")
 
         if not risks:
-            risks.append("General economic uncertainty should be factored into financial decisions")
+            risks.append(
+                "General economic uncertainty should be factored into financial decisions"
+            )
 
         return risks
 
@@ -342,11 +416,14 @@ class FinanceAgentService:
                 "Standardize reporting formats across business units",
             ],
         }
-        return recommendations.get(analysis_type or "general", [
-            "Review key financial metrics regularly",
-            "Ensure financial reporting is timely and accurate",
-            "Maintain adequate cash reserves for operational needs",
-        ])
+        return recommendations.get(
+            analysis_type or "general",
+            [
+                "Review key financial metrics regularly",
+                "Ensure financial reporting is timely and accurate",
+                "Maintain adequate cash reserves for operational needs",
+            ],
+        )
 
     def _get_next_steps(self, analysis_type: Optional[str]) -> List[str]:
         """Get next steps based on analysis type."""

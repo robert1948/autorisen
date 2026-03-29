@@ -8,7 +8,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from backend.src.core.config import get_settings
 from backend.src.db import models
+from backend.src.modules.ai_router.bedrock import (
+    invoke_bedrock_text,
+    is_bedrock_enabled,
+)
+from backend.src.modules.ai_router.strategy import resolve_available_provider_order
 from backend.src.modules.usage.input_guard import validate_llm_input
 from backend.src.modules.usage.model_router import select_model
 from backend.src.modules.usage.token_counter import count_tokens as _count_tokens
@@ -272,13 +278,16 @@ def generate_ai_response(
     thread: models.ChatThread,
     user_message: str,  # noqa: ARG001 — reserved for future prompt augmentation
 ) -> models.ChatEvent:
-    """Call Anthropic API to generate an assistant response and persist it."""
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    """Call configured LLM providers to generate a response and persist it."""
+    settings = get_settings()
+    anthropic_key = settings.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY", "")
+    openai_key = settings.openai_api_key or os.getenv("OPENAI_API_KEY", "")
     env_model = os.getenv("ANTHROPIC_MODEL")  # explicit override
 
     # ── Intelligent model routing ─────────────────────────────────
     # If no explicit model override, route based on prompt complexity.
-    model = select_model(user_message, force_model=env_model)
+    anthropic_model = select_model(user_message, force_model=env_model)
+    openai_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
 
     system_prompt = PLACEMENT_SYSTEM_PROMPTS.get(
         thread.placement, DEFAULT_SYSTEM_PROMPT
@@ -294,11 +303,19 @@ def generate_ai_response(
         if last["role"] == "user":
             last["content"] = validate_llm_input(last["content"], label="chat message")
 
-    if not api_key:
-        log.warning("ANTHROPIC_API_KEY not set — returning placeholder response")
+    provider_order = resolve_available_provider_order(
+        strategy=settings.ai_provider_strategy,
+        fallback_order=settings.ai_provider_fallback_order,
+        has_bedrock=settings.ai_bedrock_enabled or is_bedrock_enabled(),
+        has_anthropic=bool(anthropic_key),
+        has_openai=bool(openai_key),
+    )
+
+    if not provider_order:
+        log.warning("No AI provider key configured — returning placeholder response")
         content = (
             "I'm CapeAI, but my AI backend is not configured yet. "
-            "Please ask your administrator to set the ANTHROPIC_API_KEY environment variable."
+            "Please ask your administrator to configure ANTHROPIC_API_KEY and/or OPENAI_API_KEY."
         )
         return create_event(
             db,
@@ -308,71 +325,197 @@ def generate_ai_response(
             event_metadata={"model": "placeholder", "error": "no_api_key"},
         )
 
-    try:
-        import anthropic
+    last_error: Exception | None = None
 
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model=model,
-            max_tokens=2048,
-            system=[
-                {
-                    "type": "text",
-                    "text": system_prompt,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
-            messages=messages,
-        )
-        content = ""
-        for block in response.content:
-            if hasattr(block, "text"):
-                content += block.text
-        if not content:
-            content = "I wasn't able to generate a response. Please try again."
+    for provider in provider_order:
+        if provider == "bedrock":
+            try:
+                conversation = "\n\n".join(
+                    f"{msg['role']}: {msg['content']}" for msg in messages
+                )
+                user_prompt = (
+                    "Conversation context follows. Respond as the assistant to the "
+                    "latest user intent.\n\n"
+                    f"{conversation}"
+                )
+                bedrock = invoke_bedrock_text(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    model_id=os.getenv("CHAT_BEDROCK_MODEL_ID")
+                    or settings.ai_bedrock_model_id,
+                    region=settings.ai_bedrock_region,
+                )
+                content = (
+                    bedrock.text
+                    if bedrock.text
+                    else "I wasn't able to generate a response. Please try again."
+                )
 
-        event = create_event(
-            db,
-            thread_id=thread.id,
-            role="assistant",
-            content=content,
-            event_metadata={
-                "model": response.model,
-                "usage": {
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
-                },
-            },
-        )
+                event = create_event(
+                    db,
+                    thread_id=thread.id,
+                    role="assistant",
+                    content=content,
+                    event_metadata={
+                        "provider": "bedrock",
+                        "model": bedrock.model_id,
+                        "region": bedrock.region,
+                        "usage": {
+                            "input_tokens": bedrock.input_tokens,
+                            "output_tokens": bedrock.output_tokens,
+                            "estimated_usd": bedrock.estimated_usd,
+                            "latency_ms": bedrock.latency_ms,
+                        },
+                    },
+                )
 
-        # ── Record billable usage ────────────────────────────────────
-        try:
-            from backend.src.modules.usage import service as usage_svc
+                try:
+                    from backend.src.modules.usage import service as usage_svc
 
-            usage_svc.record_usage(
-                db,
-                user_id=thread.user_id,
-                event_type="chat",
-                model=response.model,
-                tokens_in=response.usage.input_tokens,
-                tokens_out=response.usage.output_tokens,
-                thread_id=thread.id,
-            )
-            db.commit()
-        except Exception:  # noqa: BLE001
-            log.warning("Failed to record usage log", exc_info=True)
+                    usage_svc.record_usage(
+                        db,
+                        user_id=thread.user_id,
+                        event_type="chat",
+                        model=bedrock.model_id,
+                        tokens_in=bedrock.input_tokens,
+                        tokens_out=bedrock.output_tokens,
+                        thread_id=thread.id,
+                    )
+                    db.commit()
+                except Exception:  # noqa: BLE001
+                    log.warning("Failed to record usage log", exc_info=True)
 
-        return event
-    except Exception as exc:  # noqa: BLE001
-        log.exception("Anthropic API call failed: %s", exc)
-        error_content = (
-            "I encountered an error generating a response. "
-            "Please try again in a moment."
-        )
-        return create_event(
-            db,
-            thread_id=thread.id,
-            role="assistant",
-            content=error_content,
-            event_metadata={"error": str(exc)},
-        )
+                return event
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                log.warning("Bedrock API call failed, trying next provider: %s", exc)
+                continue
+
+        if provider == "anthropic" and anthropic_key:
+            try:
+                import anthropic
+
+                client = anthropic.Anthropic(api_key=anthropic_key)
+                response = client.messages.create(
+                    model=anthropic_model,
+                    max_tokens=2048,
+                    system=[
+                        {
+                            "type": "text",
+                            "text": system_prompt,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                    messages=messages,
+                )
+                content = ""
+                for block in response.content:
+                    if hasattr(block, "text"):
+                        content += block.text
+                if not content:
+                    content = "I wasn't able to generate a response. Please try again."
+
+                event = create_event(
+                    db,
+                    thread_id=thread.id,
+                    role="assistant",
+                    content=content,
+                    event_metadata={
+                        "provider": "anthropic",
+                        "model": response.model,
+                        "usage": {
+                            "input_tokens": response.usage.input_tokens,
+                            "output_tokens": response.usage.output_tokens,
+                        },
+                    },
+                )
+
+                try:
+                    from backend.src.modules.usage import service as usage_svc
+
+                    usage_svc.record_usage(
+                        db,
+                        user_id=thread.user_id,
+                        event_type="chat",
+                        model=response.model,
+                        tokens_in=response.usage.input_tokens,
+                        tokens_out=response.usage.output_tokens,
+                        thread_id=thread.id,
+                    )
+                    db.commit()
+                except Exception:  # noqa: BLE001
+                    log.warning("Failed to record usage log", exc_info=True)
+
+                return event
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                log.warning("Anthropic API call failed, trying next provider: %s", exc)
+                continue
+
+        if provider == "openai" and openai_key:
+            try:
+                from openai import OpenAI
+
+                client = OpenAI(api_key=openai_key)
+                response = client.chat.completions.create(
+                    model=openai_model,
+                    max_tokens=2048,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        *messages,
+                    ],
+                )
+                content = response.choices[0].message.content or ""
+                if not content:
+                    content = "I wasn't able to generate a response. Please try again."
+                usage = getattr(response, "usage", None)
+
+                event = create_event(
+                    db,
+                    thread_id=thread.id,
+                    role="assistant",
+                    content=content,
+                    event_metadata={
+                        "provider": "openai",
+                        "model": response.model,
+                        "usage": {
+                            "input_tokens": getattr(usage, "prompt_tokens", 0),
+                            "output_tokens": getattr(usage, "completion_tokens", 0),
+                        },
+                    },
+                )
+
+                try:
+                    from backend.src.modules.usage import service as usage_svc
+
+                    usage_svc.record_usage(
+                        db,
+                        user_id=thread.user_id,
+                        event_type="chat",
+                        model=response.model,
+                        tokens_in=getattr(usage, "prompt_tokens", 0),
+                        tokens_out=getattr(usage, "completion_tokens", 0),
+                        thread_id=thread.id,
+                    )
+                    db.commit()
+                except Exception:  # noqa: BLE001
+                    log.warning("Failed to record usage log", exc_info=True)
+
+                return event
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                log.warning("OpenAI API call failed, trying next provider: %s", exc)
+                continue
+
+    error_content = (
+        "I encountered an error generating a response. " "Please try again in a moment."
+    )
+    return create_event(
+        db,
+        thread_id=thread.id,
+        role="assistant",
+        content=error_content,
+        event_metadata={
+            "error": str(last_error) if last_error else "provider_unavailable"
+        },
+    )

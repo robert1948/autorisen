@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import time
@@ -9,14 +10,18 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
 
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
-
 from backend.src.core.config import get_settings
 from backend.src.db import models as app_models
-from backend.src.modules.usage.track import try_record_usage
+from backend.src.modules.ai_router.bedrock import (
+    invoke_bedrock_text,
+    is_bedrock_enabled,
+)
+from backend.src.modules.ai_router.strategy import resolve_available_provider_order
 from backend.src.modules.usage.llm_cache import llm_cache
 from backend.src.modules.usage.token_counter import count_tokens as _count_tokens
+from backend.src.modules.usage.track import try_record_usage
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from . import embeddings
 from .models import ApprovedDocument, DocumentChunk, RAGQueryLog
@@ -54,9 +59,7 @@ class RAGService:
     ):
         self._openai_key = openai_api_key
         self._anthropic_key = anthropic_api_key
-        self._model = model or os.getenv(
-            "RAG_LLM_MODEL", "claude-3-5-haiku-20241022"
-        )
+        self._model = model or os.getenv("RAG_LLM_MODEL", "claude-3-5-haiku-20241022")
 
     # ------------------------------------------------------------------
     # Document CRUD
@@ -130,18 +133,13 @@ class RAGService:
         if doc_type:
             q = q.where(ApprovedDocument.doc_type == doc_type)
 
-        total = db.scalar(
-            select(func.count()).select_from(q.subquery())
-        ) or 0
+        total = db.scalar(select(func.count()).select_from(q.subquery())) or 0
 
-        rows = (
-            db.scalars(
-                q.order_by(ApprovedDocument.created_at.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
-            )
-            .all()
-        )
+        rows = db.scalars(
+            q.order_by(ApprovedDocument.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).all()
         return DocumentListResponse(
             documents=[self._doc_to_response(r) for r in rows],
             total=total,
@@ -216,9 +214,7 @@ class RAGService:
         # 2b. Re-rank using hybrid cosine + BM25 scoring
         from backend.src.modules.rag.reranker import rerank_chunks
 
-        candidates = rerank_chunks(
-            request.query, candidates, top_n=request.top_k
-        )
+        candidates = rerank_chunks(request.query, candidates, top_n=request.top_k)
 
         # 3. Build citations
         citations: List[Citation] = []
@@ -313,12 +309,8 @@ class RAGService:
 
     def health(self, db: Session) -> RAGHealthResponse:
         """Return RAG subsystem health metrics."""
-        doc_count = db.scalar(
-            select(func.count()).select_from(ApprovedDocument)
-        ) or 0
-        chunk_count = db.scalar(
-            select(func.count()).select_from(DocumentChunk)
-        ) or 0
+        doc_count = db.scalar(select(func.count()).select_from(ApprovedDocument)) or 0
+        chunk_count = db.scalar(select(func.count()).select_from(DocumentChunk)) or 0
         return RAGHealthResponse(
             status="ok",
             document_count=doc_count,
@@ -401,16 +393,76 @@ class RAGService:
         system_prompt = self._build_system_prompt(grounded, unsupported_policy)
         user_prompt = self._build_user_prompt(query, citations)
 
-        if "claude" in self._model.lower():
-            result = await self._call_anthropic(system_prompt, user_prompt)
-        else:
-            result = await self._call_openai(system_prompt, user_prompt)
+        settings = get_settings()
+        provider_order = resolve_available_provider_order(
+            strategy=settings.ai_provider_strategy,
+            fallback_order=settings.ai_provider_fallback_order,
+            has_bedrock=settings.ai_bedrock_enabled or is_bedrock_enabled(),
+            has_anthropic=bool(self._anthropic_key or settings.anthropic_api_key),
+            has_openai=bool(self._openai_key or settings.openai_api_key),
+        )
+
+        result: Tuple[str, dict] = ("[Error: No AI provider configured]", {})
+
+        for provider in provider_order:
+            if provider == "bedrock":
+                result = await self._call_bedrock(system_prompt, user_prompt)
+                if not result[0].startswith("[Error"):
+                    break
+                continue
+            if provider == "anthropic":
+                result = await self._call_anthropic(system_prompt, user_prompt)
+                if not result[0].startswith("[Error"):
+                    break
+                continue
+            if provider == "openai":
+                result = await self._call_openai(system_prompt, user_prompt)
+                if not result[0].startswith("[Error"):
+                    break
+                continue
 
         # Store in semantic cache for future similar queries
         if result and result[0] and not result[0].startswith("[Error"):
             await semantic_cache.put(query, result)
 
         return result
+
+    async def _call_bedrock(
+        self, system_prompt: str, user_prompt: str
+    ) -> Tuple[str, dict]:
+        """Call Bedrock Claude-compatible API. Returns (text, usage_meta)."""
+        settings = get_settings()
+        model_id = os.getenv("RAG_BEDROCK_MODEL_ID") or settings.ai_bedrock_model_id
+
+        cache_key = llm_cache.make_key(model_id, system_prompt, user_prompt)
+        cached = llm_cache.get(cache_key)
+        if cached is not None:
+            log.debug("RAG Bedrock cache hit")
+            return cached
+
+        try:
+            result = await asyncio.to_thread(
+                invoke_bedrock_text,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                model_id=model_id,
+                region=settings.ai_bedrock_region,
+            )
+            usage_meta = {
+                "model": result.model_id,
+                "tokens_in": result.input_tokens,
+                "tokens_out": result.output_tokens,
+                "estimated_usd": result.estimated_usd,
+                "latency_ms": result.latency_ms,
+                "provider": "bedrock",
+                "region": result.region,
+            }
+            payload = (result.text or "", usage_meta)
+            llm_cache.put(cache_key, payload)
+            return payload
+        except Exception as exc:
+            log.exception("Bedrock API error during RAG response")
+            return f"[Error generating response: {exc}]", {}
 
     def _build_system_prompt(
         self, grounded: bool, unsupported_policy: UnsupportedPolicy
@@ -464,13 +516,13 @@ class RAGService:
                 "Reference sources by number (e.g., [Source 1])."
             )
         else:
-            parts.append(
-                "No approved document excerpts are available for this query."
-            )
+            parts.append("No approved document excerpts are available for this query.")
 
         return "\n".join(parts)
 
-    async def _call_anthropic(self, system_prompt: str, user_prompt: str) -> Tuple[str, dict]:
+    async def _call_anthropic(
+        self, system_prompt: str, user_prompt: str
+    ) -> Tuple[str, dict]:
         """Call Anthropic Claude API. Returns (text, usage_meta)."""
         from anthropic import AsyncAnthropic
 
@@ -491,7 +543,13 @@ class RAGService:
             resp = await client.messages.create(
                 model=self._model,
                 max_tokens=2048,
-                system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
+                system=[
+                    {
+                        "type": "text",
+                        "text": system_prompt,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
                 messages=[{"role": "user", "content": user_prompt}],
             )
             text = resp.content[0].text if resp.content else ""
@@ -507,7 +565,9 @@ class RAGService:
             log.exception("Anthropic API error during RAG response")
             return f"[Error generating response: {exc}]", {}
 
-    async def _call_openai(self, system_prompt: str, user_prompt: str) -> Tuple[str, dict]:
+    async def _call_openai(
+        self, system_prompt: str, user_prompt: str
+    ) -> Tuple[str, dict]:
         """Call OpenAI API. Returns (text, usage_meta)."""
         from openai import AsyncOpenAI
 
@@ -524,9 +584,10 @@ class RAGService:
             return "[Error: No OpenAI API key configured]", {}
 
         client = AsyncOpenAI(api_key=api_key)
+        openai_model = os.getenv("RAG_OPENAI_MODEL", "gpt-4o-mini")
         try:
             resp = await client.chat.completions.create(
-                model=self._model,
+                model=openai_model,
                 max_tokens=2048,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -572,7 +633,9 @@ class RAGService:
                 retrieval_count=len(citations),
                 grounded=1 if grounded else 0,
                 refused=1 if refused else 0,
-                cited_document_ids=[c.document_id for c in citations] if citations else None,
+                cited_document_ids=(
+                    [c.document_id for c in citations] if citations else None
+                ),
                 response_text=response_text,
                 processing_time_ms=elapsed_ms,
             )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import time as wall_time
@@ -12,6 +11,7 @@ from threading import Lock
 from uuid import uuid4
 
 from backend.src.db import models
+from backend.src.modules.ai_router.bedrock import invoke_bedrock_text
 from backend.src.modules.usage.service import record_usage
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -231,86 +231,44 @@ class OpenClawService:
             return task.output, task.evidence, task.cost, max(latency_ms, 1)
 
         try:
-            import boto3  # type: ignore
-
-            client = boto3.client("bedrock-runtime", region_name=model.region)
-            max_tokens = int(os.getenv("OPENCLAW_BEDROCK_MAX_TOKENS", "700"))
-            temperature = float(os.getenv("OPENCLAW_BEDROCK_TEMPERATURE", "0.2"))
-
-            payload = {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": request.input.text,
-                            }
-                        ],
-                    }
-                ],
-            }
-
-            response = client.invoke_model(
-                modelId=model.model_id,
-                contentType="application/json",
-                accept="application/json",
-                body=json.dumps(payload),
+            result = invoke_bedrock_text(
+                system_prompt=(
+                    "You are OpenClaw. Perform the requested workflow task and return "
+                    "a concise operational summary."
+                ),
+                user_prompt=request.input.text,
+                model_id=model.model_id,
+                region=model.region,
+                max_tokens=int(os.getenv("OPENCLAW_BEDROCK_MAX_TOKENS", "700")),
+                temperature=float(os.getenv("OPENCLAW_BEDROCK_TEMPERATURE", "0.2")),
+                input_cost_per_1k=float(
+                    os.getenv("OPENCLAW_COST_PER_1K_INPUT_USD", "0.003")
+                ),
+                output_cost_per_1k=float(
+                    os.getenv("OPENCLAW_COST_PER_1K_OUTPUT_USD", "0.015")
+                ),
             )
 
-            raw_body = response.get("body")
-            body_bytes = raw_body.read() if hasattr(raw_body, "read") else raw_body
-            data = json.loads(
-                body_bytes.decode("utf-8")
-                if isinstance(body_bytes, bytes)
-                else str(body_bytes)
-            )
-
-            segments = data.get("content", []) if isinstance(data, dict) else []
-            text_parts = [
-                str(seg.get("text", ""))
-                for seg in segments
-                if isinstance(seg, dict) and seg.get("type") == "text"
-            ]
-            summary = "\n".join(part for part in text_parts if part).strip()
+            summary = result.text.strip()
             if not summary:
                 summary = (
                     f"OpenClaw processed workflow '{request.workflow}' via Bedrock."
                 )
-
-            usage = data.get("usage", {}) if isinstance(data, dict) else {}
-            input_tokens = int(usage.get("input_tokens", 0) or 0)
-            output_tokens = int(usage.get("output_tokens", 0) or 0)
-
-            input_cost_per_1k = float(
-                os.getenv("OPENCLAW_COST_PER_1K_INPUT_USD", "0.003")
-            )
-            output_cost_per_1k = float(
-                os.getenv("OPENCLAW_COST_PER_1K_OUTPUT_USD", "0.015")
-            )
-            estimated_usd = ((input_tokens / 1000.0) * input_cost_per_1k) + (
-                (output_tokens / 1000.0) * output_cost_per_1k
-            )
-
             citation = OpenClawCitation(
                 source_id=f"model:{model.model_id}",
                 excerpt=summary[:300],
                 timestamp=datetime.now(timezone.utc),
             )
-            latency_ms = int((wall_time.perf_counter() - started) * 1000)
 
             return (
                 OpenClawTaskOutput(summary=summary, actions=[]),
                 OpenClawEvidence(citations=[citation]),
                 OpenClawCost(
-                    input_tokens=max(input_tokens, 0),
-                    output_tokens=max(output_tokens, 0),
-                    estimated_usd=max(estimated_usd, 0.0),
+                    input_tokens=result.input_tokens,
+                    output_tokens=result.output_tokens,
+                    estimated_usd=result.estimated_usd,
                 ),
-                max(latency_ms, 1),
+                result.latency_ms,
             )
         except Exception:
             self._log.warning(
