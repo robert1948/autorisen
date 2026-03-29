@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { PaymentStateProvider, usePaymentMethods, usePaymentUI } from '../../context/PaymentStateContext';
 import { PaymentErrorBoundary } from '../../components/payments/PaymentErrorBoundary';
 import { PaymentSecurityProvider, PaymentSecurityGuard } from '../../components/payments/PaymentSecurityProvider';
@@ -66,13 +66,13 @@ function BillingPageCore() {
                   { key: 'invoices', label: 'Invoices', icon: '📄', to: '/app/billing/invoices' },
                   { key: 'subscriptions', label: 'Subscriptions', icon: '🔄', to: '/app/billing/subscriptions' },
                 ].map((tab) => (
-                  <Link
+                  <NavLink
                     key={tab.key}
                     to={tab.to}
-                    reloadDocument
-                    className={`
+                    end={tab.key === 'overview'}
+                    className={({ isActive }) => `
                       py-2 px-1 border-b-2 font-medium text-sm transition-colors
-                      ${activeTab === tab.key
+                      ${isActive
                         ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-200'
                       }
@@ -80,7 +80,7 @@ function BillingPageCore() {
                   >
                     <span className="mr-2">{tab.icon}</span>
                     {tab.label}
-                  </Link>
+                  </NavLink>
                 ))}
               </div>
             </div>
