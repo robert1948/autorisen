@@ -3,8 +3,8 @@
  * Wired to real subscription, plan, and invoice data via useBilling hook.
  */
 
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { PaymentStateProvider, usePaymentMethods, usePaymentUI } from '../../context/PaymentStateContext';
 import { PaymentErrorBoundary } from '../../components/payments/PaymentErrorBoundary';
 import { PaymentSecurityProvider, PaymentSecurityGuard } from '../../components/payments/PaymentSecurityProvider';
@@ -18,7 +18,6 @@ type BillingTab = 'overview' | 'methods' | 'invoices' | 'subscriptions';
 
 function BillingPageCore() {
   const location = useLocation();
-  const navigate = useNavigate();
   const billing = useBilling();
   
   // Determine active tab from URL
@@ -30,22 +29,7 @@ function BillingPageCore() {
     return 'overview';
   };
   
-  const [activeTab, setActiveTab] = useState<BillingTab>(getActiveTab());
-  
-  // Update tab when URL changes
-  useEffect(() => {
-    setActiveTab(getActiveTab());
-  }, [location.pathname]);
-  
-  const handleTabChange = (tab: BillingTab) => {
-    const routes = {
-      overview: '/billing',
-      methods: '/billing/methods',
-      invoices: '/billing/invoices',
-      subscriptions: '/billing/subscriptions',
-    };
-    navigate(routes[tab]);
-  };
+  const activeTab = getActiveTab();
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -77,17 +61,18 @@ function BillingPageCore() {
             <div className="border-b border-gray-200 dark:border-slate-700">
               <div className="flex space-x-8">
                 {[
-                  { key: 'overview', label: 'Overview', icon: '📊' },
-                  { key: 'methods', label: 'Payment Methods', icon: '💳' },
-                  { key: 'invoices', label: 'Invoices', icon: '📄' },
-                  { key: 'subscriptions', label: 'Subscriptions', icon: '🔄' },
+                  { key: 'overview', label: 'Overview', icon: '📊', to: '/app/billing' },
+                  { key: 'methods', label: 'Payment Methods', icon: '💳', to: '/app/billing/methods' },
+                  { key: 'invoices', label: 'Invoices', icon: '📄', to: '/app/billing/invoices' },
+                  { key: 'subscriptions', label: 'Subscriptions', icon: '🔄', to: '/app/billing/subscriptions' },
                 ].map((tab) => (
-                  <button
+                  <NavLink
                     key={tab.key}
-                    onClick={() => handleTabChange(tab.key as BillingTab)}
-                    className={`
+                    to={tab.to}
+                    end={tab.key === 'overview'}
+                    className={({ isActive }) => `
                       py-2 px-1 border-b-2 font-medium text-sm transition-colors
-                      ${activeTab === tab.key
+                      ${isActive
                         ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-200'
                       }
@@ -95,7 +80,7 @@ function BillingPageCore() {
                   >
                     <span className="mr-2">{tab.icon}</span>
                     {tab.label}
-                  </button>
+                  </NavLink>
                 ))}
               </div>
             </div>
@@ -240,35 +225,115 @@ function BillingOverview({ billing }: { billing: ReturnType<typeof useBilling> }
 
 // Payment Methods Tab (Placeholder for Codex)
 function PaymentMethodsSection() {
-  const { paymentMethods, loading, error, loadPaymentMethods, updatePaymentMethod, removePaymentMethod } = usePaymentMethods();
-  const { openPaymentMethodModal } = usePaymentUI();
+  const { paymentMethods, loading, error, loadPaymentMethods, addPaymentMethod, updatePaymentMethod, removePaymentMethod } = usePaymentMethods();
+  const { isPaymentMethodModalOpen, openPaymentMethodModal, closePaymentMethodModal } = usePaymentUI();
+  const hasLoadedRef = useRef(false);
+  const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [methodType, setMethodType] = useState<PaymentMethod['methodType']>('card');
+  const [isActive, setIsActive] = useState(true);
+  const [lastFour, setLastFour] = useState('');
+  const [cardBrand, setCardBrand] = useState('');
+  const [expiryMonth, setExpiryMonth] = useState('');
+  const [expiryYear, setExpiryYear] = useState('');
+  const [modalError, setModalError] = useState<string | null>(null);
   
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
     loadPaymentMethods();
   }, [loadPaymentMethods]);
+
+  const resetForm = () => {
+    setEditingMethod(null);
+    setMethodType('card');
+    setIsActive(true);
+    setLastFour('');
+    setCardBrand('');
+    setExpiryMonth('');
+    setExpiryYear('');
+  };
+
+  const handleCloseModal = () => {
+    setModalError(null);
+    resetForm();
+    closePaymentMethodModal();
+  };
   
   const handleAdd = () => {
+    setModalError(null);
+    resetForm();
     openPaymentMethodModal();
   };
   
-  const handleEdit = (_method: PaymentMethod) => {
+  const handleEdit = (method: PaymentMethod) => {
+    setModalError(null);
+    setEditingMethod(method);
+    setMethodType(method.methodType);
+    setIsActive(method.isActive);
+    setLastFour(method.lastFour ?? '');
+    setCardBrand(method.cardBrand ?? '');
+    setExpiryMonth(method.expiryMonth ? String(method.expiryMonth) : '');
+    setExpiryYear(method.expiryYear ? String(method.expiryYear) : '');
     openPaymentMethodModal();
   };
   
-  const handleDelete = (methodId: string) => {
-    removePaymentMethod(methodId);
+  const handleDelete = async (methodId: string) => {
+    setModalError(null);
+    try {
+      await removePaymentMethod(methodId);
+    } catch (e: unknown) {
+      setModalError(e instanceof Error ? e.message : 'Failed to remove payment method');
+    }
   };
   
-  const handleSetDefault = (methodId: string) => {
-    const target = paymentMethods.find((method) => method.id === methodId);
-    if (!target) return;
-    
-    // Remove default flag from any existing default method
-    paymentMethods
-      .filter((method) => method.isDefault && method.id !== methodId)
-      .forEach((method) => updatePaymentMethod({ ...method, isDefault: false }));
-    
-    updatePaymentMethod({ ...target, isDefault: true });
+  const handleSetDefault = async (methodId: string) => {
+    setModalError(null);
+    try {
+      await updatePaymentMethod(methodId, { isDefault: true });
+    } catch (e: unknown) {
+      setModalError(e instanceof Error ? e.message : 'Failed to set default payment method');
+    }
+  };
+
+  const handleSubmitMethod = async () => {
+    setModalError(null);
+    if (isSaving) return;
+
+    if (methodType === 'card' && !/^\d{4}$/.test(lastFour.trim())) {
+      setModalError('Last four digits must be exactly 4 numbers for card methods.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const monthNum = expiryMonth ? Number(expiryMonth) : undefined;
+      const yearNum = expiryYear ? Number(expiryYear) : undefined;
+
+      const payload = {
+        methodType,
+        isActive,
+        lastFour: methodType === 'card' ? lastFour.trim() : undefined,
+        cardBrand: methodType === 'card' ? cardBrand.trim() || undefined : undefined,
+        expiryMonth: methodType === 'card' ? monthNum : undefined,
+        expiryYear: methodType === 'card' ? yearNum : undefined,
+      };
+
+      if (editingMethod) {
+        await updatePaymentMethod(editingMethod.id, payload);
+      } else {
+        await addPaymentMethod({
+          ...payload,
+          isDefault: paymentMethods.length === 0,
+        });
+      }
+
+      handleCloseModal();
+    } catch (e: unknown) {
+      setModalError(e instanceof Error ? e.message : editingMethod ? 'Failed to update payment method' : 'Failed to add payment method');
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   if (loading) {
@@ -288,13 +353,76 @@ function PaymentMethodsSection() {
   }
   
   return (
-    <PaymentMethodManager
-      methods={paymentMethods}
-      onAdd={handleAdd}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      onSetDefault={handleSetDefault}
-    />
+    <>
+      {modalError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-sm text-red-700">{modalError}</p>
+        </div>
+      )}
+      <PaymentMethodManager
+        methods={paymentMethods}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onSetDefault={handleSetDefault}
+      />
+      {isPaymentMethodModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">{editingMethod ? 'Edit payment method' : 'Add payment method'}</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Method type</label>
+              <select
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                value={methodType}
+                onChange={(e) => setMethodType(e.target.value as PaymentMethod['methodType'])}
+              >
+                <option value="card">Card</option>
+                <option value="eft">EFT</option>
+                <option value="instant_eft">Instant EFT</option>
+                <option value="bank_transfer">Bank transfer</option>
+              </select>
+            </div>
+            {editingMethod && (
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                />
+                Active method
+              </label>
+            )}
+            {methodType === 'card' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last four digits</label>
+                  <input className="w-full border border-gray-300 rounded-md px-3 py-2" value={lastFour} maxLength={4} onChange={(e) => setLastFour(e.target.value.replace(/\D/g, ''))} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Exp MM</label>
+                    <input className="w-full border border-gray-300 rounded-md px-3 py-2" value={expiryMonth} onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, ''))} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Exp YYYY</label>
+                    <input className="w-full border border-gray-300 rounded-md px-3 py-2" value={expiryYear} onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, ''))} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Card brand (optional)</label>
+                  <input className="w-full border border-gray-300 rounded-md px-3 py-2" value={cardBrand} onChange={(e) => setCardBrand(e.target.value)} />
+                </div>
+              </>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" className="px-4 py-2 rounded-md border border-gray-300 text-gray-700" onClick={handleCloseModal}>Cancel</button>
+              <button type="button" className="px-4 py-2 rounded-md bg-blue-600 text-white disabled:opacity-60" onClick={handleSubmitMethod} disabled={isSaving}>{isSaving ? 'Saving...' : editingMethod ? 'Save changes' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
