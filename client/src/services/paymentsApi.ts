@@ -30,6 +30,25 @@ export interface PaymentMethod {
   updatedAt: string;
 }
 
+export interface PaymentMethodCreate {
+  methodType: 'card' | 'eft' | 'instant_eft' | 'bank_transfer';
+  isDefault?: boolean;
+  lastFour?: string;
+  cardBrand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+}
+
+export interface PaymentMethodUpdate {
+  methodType?: 'card' | 'eft' | 'instant_eft' | 'bank_transfer';
+  isDefault?: boolean;
+  isActive?: boolean;
+  lastFour?: string;
+  cardBrand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+}
+
 export interface Invoice {
   id: string;
   userId: string;
@@ -87,6 +106,84 @@ export interface PaymentValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
+}
+
+type PaymentMethodApi = {
+  id: string;
+  user_id: string;
+  provider: 'payfast';
+  method_type: 'card' | 'eft' | 'instant_eft' | 'bank_transfer';
+  is_default: boolean;
+  is_active: boolean;
+  provider_token: string;
+  last_four?: string;
+  card_brand?: string;
+  expiry_month?: number;
+  expiry_year?: number;
+  metadata_json?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type InvoiceApi = {
+  id: string;
+  user_id?: string;
+  amount: number | string;
+  currency: string;
+  status: 'pending' | 'paid' | 'cancelled' | 'failed' | 'refunded';
+  item_name?: string;
+  item_description?: string;
+  customer_email?: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
+  payment_provider?: string;
+  external_reference?: string;
+  metadata_json?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+};
+
+function normalizePaymentMethod(method: PaymentMethodApi): PaymentMethod {
+  return {
+    id: method.id,
+    userId: method.user_id,
+    provider: method.provider,
+    methodType: method.method_type,
+    isDefault: method.is_default,
+    isActive: method.is_active,
+    providerToken: method.provider_token,
+    lastFour: method.last_four,
+    cardBrand: method.card_brand,
+    expiryMonth: method.expiry_month,
+    expiryYear: method.expiry_year,
+    metadata: method.metadata_json,
+    createdAt: method.created_at ?? new Date().toISOString(),
+    updatedAt: method.updated_at ?? new Date().toISOString(),
+  };
+}
+
+function normalizeInvoice(invoice: InvoiceApi): Invoice {
+  const parsedAmount = typeof invoice.amount === 'number'
+    ? invoice.amount
+    : Number.parseFloat(invoice.amount || '0');
+
+  return {
+    id: invoice.id,
+    userId: invoice.user_id ?? '',
+    amount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
+    currency: invoice.currency,
+    status: invoice.status,
+    itemName: invoice.item_name ?? '',
+    itemDescription: invoice.item_description,
+    customerEmail: invoice.customer_email ?? '',
+    customerFirstName: invoice.customer_first_name ?? '',
+    customerLastName: invoice.customer_last_name ?? '',
+    paymentProvider: invoice.payment_provider ?? 'payfast',
+    externalReference: invoice.external_reference ?? '',
+    metadataJson: invoice.metadata_json,
+    createdAt: invoice.created_at ?? new Date().toISOString(),
+    updatedAt: invoice.updated_at ?? new Date().toISOString(),
+  };
 }
 
 // Security validation utilities
@@ -319,7 +416,55 @@ export const paymentsApi = {
    * List payment methods with security filtering
    */
   async listPaymentMethods(): Promise<PaymentMethod[]> {
-    return securePaymentRequest<PaymentMethod[]>('/payments/methods');
+    const methods = await securePaymentRequest<PaymentMethodApi[]>('/payments/methods');
+    return (methods || []).map(normalizePaymentMethod);
+  },
+
+  /**
+   * Create payment method
+   */
+  async createPaymentMethod(payload: PaymentMethodCreate): Promise<PaymentMethod> {
+    return securePaymentRequest<PaymentMethod>('/payments/methods', {
+      method: 'POST',
+      body: {
+        method_type: payload.methodType,
+        is_default: payload.isDefault ?? false,
+        last_four: payload.lastFour,
+        card_brand: payload.cardBrand,
+        expiry_month: payload.expiryMonth,
+        expiry_year: payload.expiryYear,
+      },
+      requireCSRF: true,
+    });
+  },
+
+  /**
+   * Update payment method
+   */
+  async updatePaymentMethod(methodId: string, payload: PaymentMethodUpdate): Promise<PaymentMethod> {
+    return securePaymentRequest<PaymentMethod>(`/payments/methods/${methodId}`, {
+      method: 'PATCH',
+      body: {
+        method_type: payload.methodType,
+        is_default: payload.isDefault,
+        is_active: payload.isActive,
+        last_four: payload.lastFour,
+        card_brand: payload.cardBrand,
+        expiry_month: payload.expiryMonth,
+        expiry_year: payload.expiryYear,
+      },
+      requireCSRF: true,
+    });
+  },
+
+  /**
+   * Delete payment method
+   */
+  async deletePaymentMethod(methodId: string): Promise<{ status: string }> {
+    return securePaymentRequest<{ status: string }>(`/payments/methods/${methodId}`, {
+      method: 'DELETE',
+      requireCSRF: true,
+    });
   },
   
   /**
@@ -336,7 +481,13 @@ export const paymentsApi = {
     if (params?.status) query.set('status', params.status);
     
     const endpoint = `/payments/invoices${query.toString() ? `?${query.toString()}` : ''}`;
-    return securePaymentRequest<Invoice[]>(endpoint);
+    const payload = await securePaymentRequest<InvoiceApi[] | { invoices?: InvoiceApi[] }>(endpoint);
+    const invoices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.invoices)
+        ? payload.invoices
+        : [];
+    return invoices.map(normalizeInvoice);
   },
   
   /**

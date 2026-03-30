@@ -3,7 +3,7 @@
  * Integrates the CheckoutFlow component with URL parameters and navigation
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthContext';
 import CheckoutFlow from '../../components/payments/CheckoutFlow';
@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { state: authState, loading: authLoading } = useAuth();
   const token = authState.accessToken;
+  const autoCheckoutStartedRef = useRef(false);
   
   // Extract initial data from URL parameters
   const initialData = useMemo((): Partial<PaymentFormData> => {
@@ -68,6 +69,8 @@ export default function CheckoutPage() {
 
   React.useEffect(() => {
     if (!productCode || authLoading) return;
+    if (autoCheckoutStartedRef.current) return;
+    autoCheckoutStartedRef.current = true;
 
     const doProductCheckout = async () => {
       try {
@@ -97,6 +100,7 @@ export default function CheckoutPage() {
         handleCheckoutComplete(result);
       } catch (err) {
         console.error('Product checkout error:', err);
+        autoCheckoutStartedRef.current = false;
         // Fall through to normal checkout flow
       }
     };

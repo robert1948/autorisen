@@ -3,7 +3,7 @@
  * Comprehensive invoice management with filtering, pagination, and export capabilities
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useInvoices } from '../../context/PaymentStateContext';
 import { PaymentErrorBoundary } from './PaymentErrorBoundary';
 import type { 
@@ -58,9 +58,12 @@ export default function InvoiceHistory({ className }: { className?: string }) {
   const [state, setState] = useState<InvoiceHistoryState>(INITIAL_STATE);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   // Load initial data
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
     loadInvoices();
   }, [loadInvoices]);
 

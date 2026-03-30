@@ -7,6 +7,8 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, R
 import { paymentsApi } from '../services/paymentsApi';
 import type { 
   PaymentMethod, 
+  PaymentMethodCreate,
+  PaymentMethodUpdate,
   Invoice, 
   Transaction, 
   PayFastCheckoutResponse,
@@ -294,15 +296,20 @@ export function usePaymentMethods() {
     }
   }, [state.paymentMethodsLoading, dispatch]);
   
-  const addPaymentMethod = useCallback((method: PaymentMethod) => {
+  const addPaymentMethod = useCallback(async (payload: PaymentMethodCreate) => {
+    const method = await paymentsApi.createPaymentMethod(payload);
     dispatch({ type: 'PAYMENT_METHOD_ADDED', payload: method });
+    return method;
   }, [dispatch]);
   
-  const updatePaymentMethod = useCallback((method: PaymentMethod) => {
+  const updatePaymentMethod = useCallback(async (methodId: string, payload: PaymentMethodUpdate) => {
+    const method = await paymentsApi.updatePaymentMethod(methodId, payload);
     dispatch({ type: 'PAYMENT_METHOD_UPDATED', payload: method });
+    return method;
   }, [dispatch]);
   
-  const removePaymentMethod = useCallback((methodId: string) => {
+  const removePaymentMethod = useCallback(async (methodId: string) => {
+    await paymentsApi.deletePaymentMethod(methodId);
     dispatch({ type: 'PAYMENT_METHOD_REMOVED', payload: methodId });
   }, [dispatch]);
   

@@ -232,11 +232,20 @@ export interface PayFastFormFields {
 export interface PaymentMethodCreate {
   methodType: PaymentMethod['methodType'];
   isDefault?: boolean;
+  lastFour?: string;
+  cardBrand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
 }
 
 export interface PaymentMethodUpdate {
+  methodType?: PaymentMethod['methodType'];
   isDefault?: boolean;
   isActive?: boolean;
+  lastFour?: string;
+  cardBrand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
 }
 
 // Invoice filtering and searching
