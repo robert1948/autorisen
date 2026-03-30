@@ -2,26 +2,52 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Any
 from urllib.parse import parse_qsl
-
-import logging
-
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import PlainTextResponse
-from sqlalchemy.orm import Session
 
 from backend.src.db import models
 from backend.src.db.session import get_session
 from backend.src.modules.auth.deps import get_verified_user
-from .config import PayFastSettings, get_payfast_settings
-from .constants import get_payfast_product_by_code, get_plan_by_id, PLANS
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import PlainTextResponse
+from sqlalchemy.orm import Session
+
 from . import schemas, service
+from .config import PayFastSettings, get_payfast_settings
+from .constants import PLANS, get_payfast_product_by_code, get_plan_by_id
 
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+def _serialize_payment_method(m: models.PaymentMethod) -> dict[str, Any]:
+    def _iso(dt: datetime | None) -> str:
+        if dt is None:
+            return datetime.now(timezone.utc).isoformat()
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+
+    return {
+        "id": m.id,
+        "userId": m.user_id,
+        "provider": m.provider,
+        "methodType": m.method_type,
+        "isDefault": bool(m.is_default),
+        "isActive": bool(m.is_active),
+        "providerToken": m.provider_token or "",
+        "lastFour": m.last_four,
+        "cardBrand": m.card_brand,
+        "expiryMonth": m.expiry_month,
+        "expiryYear": m.expiry_year,
+        "metadata": m.metadata_json or {},
+        "createdAt": _iso(m.created_at),
+        "updatedAt": _iso(m.updated_at),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -48,6 +74,134 @@ def list_plans() -> schemas.PlansResponse:
         for p in PLANS
     ]
     return schemas.PlansResponse(plans=plan_list)
+
+
+# ---------------------------------------------------------------------------
+# Payment methods (authenticated)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/methods")
+def list_payment_methods(
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> list[dict[str, Any]]:
+    """List stored payment methods for the current user."""
+    methods = (
+        db.query(models.PaymentMethod)
+        .filter(models.PaymentMethod.user_id == current_user.id)
+        .order_by(
+            models.PaymentMethod.is_default.desc(),
+            models.PaymentMethod.created_at.desc(),
+        )
+        .all()
+    )
+
+    return [_serialize_payment_method(m) for m in methods]
+
+
+@router.post("/methods")
+def create_payment_method(
+    payload: schemas.PaymentMethodCreateRequest,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> dict[str, Any]:
+    """Create a new stored payment method for the current user."""
+    if payload.is_default:
+        (
+            db.query(models.PaymentMethod)
+            .filter(models.PaymentMethod.user_id == current_user.id)
+            .update({models.PaymentMethod.is_default: False}, synchronize_session=False)
+        )
+
+    method = models.PaymentMethod(
+        id=str(uuid.uuid4()),
+        user_id=current_user.id,
+        provider="payfast",
+        method_type=payload.method_type,
+        is_default=payload.is_default,
+        is_active=True,
+        provider_token=str(uuid.uuid4()),
+        last_four=payload.last_four,
+        card_brand=payload.card_brand,
+        expiry_month=payload.expiry_month,
+        expiry_year=payload.expiry_year,
+        metadata_json=dict(payload.metadata_json),
+    )
+    db.add(method)
+    db.commit()
+    db.refresh(method)
+    return _serialize_payment_method(method)
+
+
+@router.patch("/methods/{method_id}")
+def update_payment_method(
+    method_id: str,
+    payload: schemas.PaymentMethodUpdateRequest,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> dict[str, Any]:
+    """Update an existing payment method for the current user."""
+    method = (
+        db.query(models.PaymentMethod)
+        .filter(
+            models.PaymentMethod.id == method_id,
+            models.PaymentMethod.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not method:
+        raise HTTPException(status_code=404, detail="Payment method not found")
+
+    if payload.is_default is True:
+        (
+            db.query(models.PaymentMethod)
+            .filter(models.PaymentMethod.user_id == current_user.id)
+            .update({models.PaymentMethod.is_default: False}, synchronize_session=False)
+        )
+
+    updates = payload.model_dump(exclude_unset=True)
+    if "method_type" in updates:
+        method.method_type = updates["method_type"]
+    if "is_default" in updates:
+        method.is_default = bool(updates["is_default"])
+    if "is_active" in updates:
+        method.is_active = bool(updates["is_active"])
+    if "last_four" in updates:
+        method.last_four = updates["last_four"]
+    if "card_brand" in updates:
+        method.card_brand = updates["card_brand"]
+    if "expiry_month" in updates:
+        method.expiry_month = updates["expiry_month"]
+    if "expiry_year" in updates:
+        method.expiry_year = updates["expiry_year"]
+
+    db.commit()
+    db.refresh(method)
+    return _serialize_payment_method(method)
+
+
+@router.delete("/methods/{method_id}")
+def delete_payment_method(
+    method_id: str,
+    current_user: models.User = Depends(get_verified_user),
+    db: Session = Depends(get_session),
+) -> dict[str, str]:
+    """Delete a stored payment method for the current user."""
+    method = (
+        db.query(models.PaymentMethod)
+        .filter(
+            models.PaymentMethod.id == method_id,
+            models.PaymentMethod.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not method:
+        raise HTTPException(status_code=404, detail="Payment method not found")
+
+    db.delete(method)
+    db.commit()
+    return {"status": "deleted"}
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +298,12 @@ def create_subscription(
         db.add(sub)
         db.commit()
 
-    log.info("subscription_created user=%s plan=%s cycle=%s", current_user.id, payload.plan_id, payload.billing_cycle)
+    log.info(
+        "subscription_created user=%s plan=%s cycle=%s",
+        current_user.id,
+        payload.plan_id,
+        payload.billing_cycle,
+    )
 
     return schemas.SubscriptionOut(
         id=sub.id,
@@ -207,8 +366,49 @@ def list_invoices(
         .filter(models.Invoice.user_id == current_user.id)
         .order_by(models.Invoice.created_at.desc())
     )
-    total = query.count()
-    invoices = query.offset(offset).limit(min(limit, 100)).all()
+
+    all_invoices = query.all()
+
+    paid_invoices = [inv for inv in all_invoices if inv.status == "paid"]
+    latest_pending_by_key: dict[tuple[str, str, str], datetime] = {}
+    deduped_invoices: list[models.Invoice] = []
+    for inv in all_invoices:
+        if inv.status != "pending":
+            deduped_invoices.append(inv)
+            continue
+
+        # Suppress stale duplicate pending records when a matching paid invoice exists
+        # around the same checkout window.
+        has_matching_paid = any(
+            paid.item_name == inv.item_name
+            and paid.amount == inv.amount
+            and abs((paid.created_at - inv.created_at).total_seconds()) <= 86400
+            for paid in paid_invoices
+        )
+        if has_matching_paid:
+            continue
+
+        # Also suppress duplicate pending entries created in quick succession
+        # for the same invoice item/amount combination.
+        pending_key = (
+            inv.item_name or "",
+            str(inv.amount),
+            inv.currency or "ZAR",
+        )
+        latest_pending_created_at = latest_pending_by_key.get(pending_key)
+        if latest_pending_created_at is not None:
+            within_duplicate_window = (
+                abs((latest_pending_created_at - inv.created_at).total_seconds())
+                <= 86400
+            )
+            if within_duplicate_window:
+                continue
+
+        latest_pending_by_key[pending_key] = inv.created_at
+        deduped_invoices.append(inv)
+
+    total = len(deduped_invoices)
+    invoices = deduped_invoices[offset : offset + min(limit, 100)]
 
     return schemas.InvoiceListResponse(
         invoices=[
@@ -303,7 +503,11 @@ def create_checkout_session(
 
     # Use the authenticated user's email — ignore any email in the payload
     customer_email = current_user.email
-    log.info("Checkout initiated by user %s for %s", current_user.id, payload.product_code or payload.item_name)
+    log.info(
+        "Checkout initiated by user %s for %s",
+        current_user.id,
+        payload.product_code or payload.item_name,
+    )
 
     amount = payload.amount
     item_name = payload.item_name
@@ -369,7 +573,10 @@ async def handle_itn(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Empty ITN payload"
         )
 
-    log.info("ITN payload received: %s", {k: v for k, v in payload.items() if k != "signature"})
+    log.info(
+        "ITN payload received: %s",
+        {k: v for k, v in payload.items() if k != "signature"},
+    )
 
     if not service.verify_itn_signature(payload, settings=settings):
         log.warning("ITN signature verification failed")

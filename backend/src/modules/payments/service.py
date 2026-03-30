@@ -7,14 +7,14 @@ import logging
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Dict, Mapping, TypedDict
 from urllib.parse import quote_plus
 
 import httpx
+from backend.src.db import models
 from sqlalchemy.orm import Session
 
-from backend.src.db import models
 from .config import PayFastSettings
 
 log = logging.getLogger(__name__)
@@ -24,14 +24,16 @@ def _activate_subscription_on_payment(db: Session, invoice: models.Invoice) -> N
     """
     Post-payment hook: activate a user's subscription when payment completes.
 
-    Looks up the user's subscription and transitions it from 'pending' or
-    'trialing' to 'active' with proper period dates.
+    Looks up the user's subscription and transitions it from 'pending',
+    'trialing', or 'past_due' to 'active' with proper period dates.
 
     NOTE: Does NOT call db.commit() — the caller (process_itn) performs
     a single atomic commit for the entire ITN transaction.
     """
     if not invoice.user_id:
-        log.warning("Invoice %s has no user_id, skipping subscription activation", invoice.id)
+        log.warning(
+            "Invoice %s has no user_id, skipping subscription activation", invoice.id
+        )
         return
 
     sub = (
@@ -44,7 +46,7 @@ def _activate_subscription_on_payment(db: Session, invoice: models.Invoice) -> N
         log.info("No subscription found for user %s after payment", invoice.user_id)
         return
 
-    if sub.status in ("pending", "trialing"):
+    if sub.status in ("pending", "trialing", "past_due"):
         now = datetime.now(timezone.utc)
         sub.status = "active"
         sub.current_period_start = now
@@ -57,12 +59,15 @@ def _activate_subscription_on_payment(db: Session, invoice: models.Invoice) -> N
         sub.cancelled_at = None
         log.info(
             "Subscription activated for user %s on plan %s after payment on invoice %s",
-            invoice.user_id, sub.plan_id, invoice.id,
+            invoice.user_id,
+            sub.plan_id,
+            invoice.id,
         )
     else:
         log.info(
             "Subscription for user %s already in status %s, no activation needed",
-            invoice.user_id, sub.status,
+            invoice.user_id,
+            sub.status,
         )
 
 
@@ -207,11 +212,32 @@ def _create_checkout_invoice(
     if not user:
         raise ValueError("No user found for customer_email")
 
+    normalized_amount = Decimal(_format_amount(amount))
+
+    # Reuse a very recent matching pending invoice to make checkout idempotent
+    # when users retry quickly (refresh/double-click/back button).
+    recent_cutoff = datetime.now(timezone.utc) - timedelta(minutes=15)
+    existing_pending = (
+        db.query(models.Invoice)
+        .filter(
+            models.Invoice.user_id == user.id,
+            models.Invoice.status == "pending",
+            models.Invoice.payment_provider == "payfast",
+            models.Invoice.amount == normalized_amount,
+            models.Invoice.item_name == item_name,
+            models.Invoice.created_at >= recent_cutoff,
+        )
+        .order_by(models.Invoice.created_at.desc())
+        .first()
+    )
+    if existing_pending:
+        return existing_pending
+
     invoice_id = str(uuid.uuid4())
     invoice = models.Invoice(
         id=invoice_id,
         user_id=user.id,
-        amount=Decimal(_format_amount(amount)),
+        amount=normalized_amount,
         currency="ZAR",
         status="pending",
         item_name=item_name,
@@ -321,6 +347,7 @@ async def validate_itn_with_server(
 def _generate_invoice_number(db: Session) -> str:
     """Generate sequential human-readable invoice number like INV-2026-00042."""
     from sqlalchemy import func as sa_func
+
     year = datetime.now(timezone.utc).year
     prefix = f"INV-{year}-"
 
@@ -337,7 +364,9 @@ def _generate_invoice_number(db: Session) -> str:
     return f"{prefix}{seq:05d}"
 
 
-def _determine_transaction_type(payment_status: str | None, payload: Mapping[str, str]) -> str:
+def _determine_transaction_type(
+    payment_status: str | None, payload: Mapping[str, str]
+) -> str:
     """Map PayFast ITN data to internal transaction type."""
     # PayFast sends special event types for refunds/chargebacks
     pf_type = payload.get("custom_str1", "").lower()
@@ -434,6 +463,24 @@ def process_itn(
 
             # Post-payment hooks: activate subscription if linked
             _activate_subscription_on_payment(db, invoice)
+
+            # Cancel other recent duplicate pending invoices for the same user/item.
+            duplicate_pending = (
+                db.query(models.Invoice)
+                .filter(
+                    models.Invoice.user_id == invoice.user_id,
+                    models.Invoice.id != invoice.id,
+                    models.Invoice.status == "pending",
+                    models.Invoice.payment_provider == invoice.payment_provider,
+                    models.Invoice.item_name == invoice.item_name,
+                    models.Invoice.amount == invoice.amount,
+                    models.Invoice.created_at
+                    >= datetime.now(timezone.utc) - timedelta(days=1),
+                )
+                .all()
+            )
+            for dup in duplicate_pending:
+                dup.status = "cancelled"
 
     elif payment_status == "FAILED":
         transaction.status = "failed"

@@ -23,7 +23,6 @@ from typing import Optional
 from backend.src.db import models
 from backend.src.db.session import SessionLocal
 from backend.src.modules.payments.constants import get_plan_by_id
-from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 log = logging.getLogger("billing.scheduler")
@@ -40,22 +39,6 @@ ENABLED = os.getenv("BILLING_SCHEDULER_ENABLED", "1").lower() in {"1", "true", "
 
 _scheduler_thread: Optional[threading.Thread] = None
 _stop_event = threading.Event()
-_billing_events_table_available: Optional[bool] = None
-
-
-def _has_billing_events_table(db: Session) -> bool:
-    """Return whether the optional billing_events table exists in the target DB."""
-    global _billing_events_table_available
-    if _billing_events_table_available is not None:
-        return _billing_events_table_available
-
-    try:
-        inspector = inspect(db.bind)
-        _billing_events_table_available = bool(inspector.has_table("billing_events"))
-    except Exception:
-        _billing_events_table_available = False
-
-    return _billing_events_table_available
 
 
 # ---------------------------------------------------------------------------
@@ -144,15 +127,6 @@ def _log_billing_event(
     invoice_id: str | None = None,
 ) -> None:
     """Insert a row into the billing_events audit table."""
-    if not _has_billing_events_table(db):
-        # Some legacy production databases may not have billing_events yet.
-        # Skip insert so renewal and dunning flows continue without hard failure.
-        log.warning(
-            "billing_events table missing; skipping billing event log (%s)",
-            event_type,
-        )
-        return
-
     event = models.BillingEvent(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -339,7 +313,6 @@ def run_billing_cycle(db: Session | None = None) -> dict:
                 # 4. Send follow-up reminders for past_due
                 # -------------------------------------------------------
                 elif sub.status == "past_due":
-                    # Count existing reminders
                     reminder_count = (
                         db.query(models.BillingEvent)
                         .filter(
@@ -349,20 +322,20 @@ def run_billing_cycle(db: Session | None = None) -> dict:
                         .count()
                     )
 
-                    if reminder_count < MAX_REMINDERS:
-                        # Check if enough time has passed since last reminder
-                        last_reminder = (
-                            db.query(models.BillingEvent)
-                            .filter(
-                                models.BillingEvent.subscription_id == sub.id,
-                                models.BillingEvent.event_type.in_(
-                                    ["reminder_sent", "payment_overdue"]
-                                ),
-                            )
-                            .order_by(models.BillingEvent.created_at.desc())
-                            .first()
+                    # Check if enough time has passed since last reminder
+                    last_reminder = (
+                        db.query(models.BillingEvent)
+                        .filter(
+                            models.BillingEvent.subscription_id == sub.id,
+                            models.BillingEvent.event_type.in_(
+                                ["reminder_sent", "payment_overdue"]
+                            ),
                         )
+                        .order_by(models.BillingEvent.created_at.desc())
+                        .first()
+                    )
 
+                    if reminder_count < MAX_REMINDERS:
                         days_since = REMINDER_INTERVAL_DAYS + 1  # default: send
                         if last_reminder and last_reminder.created_at:
                             last_dt = _ensure_aware(last_reminder.created_at)

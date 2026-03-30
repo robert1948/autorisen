@@ -144,6 +144,129 @@ def test_process_itn_duplicate_is_idempotent(app):
         db.close()
 
 
+def test_create_checkout_session_reuses_recent_pending_invoice(app):
+    """Repeated checkout creation for same user/item/amount should reuse recent pending invoice."""
+    from backend.src.db.session import SessionLocal
+    from backend.src.modules.payments.config import PayFastSettings
+    from backend.src.modules.payments.service import create_checkout_session
+
+    db = SessionLocal()
+    try:
+        user, invoice = _seed_user_and_invoice(db)
+        settings = PayFastSettings(
+            merchant_id="10000100",
+            merchant_key="46f0cd694581a",
+            return_url="https://example.test/return",
+            cancel_url="https://example.test/cancel",
+            notify_url="https://example.test/itn",
+            mode="sandbox",
+            passphrase="test-passphrase",
+        )
+
+        checkout_1 = create_checkout_session(
+            settings=settings,
+            db=db,
+            amount="99.00",
+            item_name="Pro Plan Monthly",
+            item_description="CapeControl Pro subscription",
+            customer_email=user.email,
+            customer_first_name="Test",
+            customer_last_name="ITN",
+            metadata={"product_code": "PRO_MONTHLY"},
+        )
+
+        checkout_2 = create_checkout_session(
+            settings=settings,
+            db=db,
+            amount="99.00",
+            item_name="Pro Plan Monthly",
+            item_description="CapeControl Pro subscription",
+            customer_email=user.email,
+            customer_first_name="Test",
+            customer_last_name="ITN",
+            metadata={"product_code": "PRO_MONTHLY"},
+        )
+
+        assert (
+            checkout_1["fields"]["m_payment_id"] == checkout_2["fields"]["m_payment_id"]
+        )
+
+        pending = (
+            db.query(models.Invoice)
+            .filter(
+                models.Invoice.user_id == user.id, models.Invoice.status == "pending"
+            )
+            .all()
+        )
+        assert len(pending) == 1
+    finally:
+        db.query(models.Transaction).filter(
+            models.Transaction.invoice_id == invoice.id
+        ).delete()
+        db.query(models.Invoice).filter(models.Invoice.id == invoice.id).delete()
+        db.query(models.User).filter(models.User.id == user.id).delete()
+        db.commit()
+        db.close()
+
+
+def test_process_itn_complete_cancels_duplicate_pending_invoices(app):
+    """Once one invoice is paid, same-day duplicate pending invoices should be auto-cancelled."""
+    from backend.src.db.session import SessionLocal
+    from backend.src.modules.payments.service import process_itn
+
+    db = SessionLocal()
+    try:
+        user, paid_target = _seed_user_and_invoice(db)
+
+        duplicate = models.Invoice(
+            id=str(uuid.uuid4()),
+            user_id=user.id,
+            amount=Decimal("99.00"),
+            currency="ZAR",
+            status="pending",
+            item_name="Pro Plan Monthly",
+            item_description="CapeControl Pro subscription",
+            customer_email=user.email,
+            customer_first_name="Test",
+            customer_last_name="ITN",
+            payment_provider="payfast",
+            external_reference=str(uuid.uuid4()),
+        )
+        db.add(duplicate)
+        db.commit()
+
+        pf_payment_id = f"pf-{uuid.uuid4().hex[:12]}"
+        itn_payload = {
+            "m_payment_id": paid_target.external_reference,
+            "pf_payment_id": pf_payment_id,
+            "payment_status": "COMPLETE",
+            "amount_gross": "99.00",
+            "amount_fee": "2.28",
+            "amount_net": "96.72",
+        }
+
+        process_itn(itn_payload, db)
+        db.expire_all()
+
+        paid = (
+            db.query(models.Invoice).filter(models.Invoice.id == paid_target.id).first()
+        )
+        dup = db.query(models.Invoice).filter(models.Invoice.id == duplicate.id).first()
+
+        assert paid is not None and paid.status == "paid"
+        assert dup is not None and dup.status == "cancelled"
+    finally:
+        db.query(models.Transaction).filter(
+            models.Transaction.invoice_id.in_([paid_target.id, duplicate.id])
+        ).delete(synchronize_session=False)
+        db.query(models.Invoice).filter(
+            models.Invoice.id.in_([paid_target.id, duplicate.id])
+        ).delete(synchronize_session=False)
+        db.query(models.User).filter(models.User.id == user.id).delete()
+        db.commit()
+        db.close()
+
+
 def test_process_itn_failed_status(app):
     """FAILED ITN should create a failed transaction and mark invoice failed."""
     from backend.src.db.session import SessionLocal

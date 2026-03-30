@@ -197,3 +197,50 @@ class InvoiceDetailOut(BaseModel):
 class InvoiceListResponse(BaseModel):
     invoices: List[InvoiceOut]
     total: int
+
+
+# ---------------------------------------------------------------------------
+# Payment methods
+# ---------------------------------------------------------------------------
+
+
+class PaymentMethodCreateRequest(BaseModel):
+    method_type: str = Field(..., description="card, eft, instant_eft, bank_transfer")
+    is_default: bool = False
+    last_four: Optional[str] = Field(default=None, min_length=4, max_length=4)
+    card_brand: Optional[str] = Field(default=None, max_length=32)
+    expiry_month: Optional[int] = Field(default=None, ge=1, le=12)
+    expiry_year: Optional[int] = Field(default=None, ge=2000, le=2100)
+    metadata_json: Dict[str, str | int | float | bool] = Field(default_factory=dict)
+
+    @field_validator("method_type")
+    @classmethod
+    def validate_method_type(cls, v: str) -> str:
+        v = v.lower().strip()
+        if v not in ("card", "eft", "instant_eft", "bank_transfer"):
+            raise ValueError(
+                "method_type must be card, eft, instant_eft, or bank_transfer"
+            )
+        return v
+
+
+class PaymentMethodUpdateRequest(BaseModel):
+    method_type: Optional[str] = None
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+    last_four: Optional[str] = Field(default=None, min_length=4, max_length=4)
+    card_brand: Optional[str] = Field(default=None, max_length=32)
+    expiry_month: Optional[int] = Field(default=None, ge=1, le=12)
+    expiry_year: Optional[int] = Field(default=None, ge=2000, le=2100)
+
+    @field_validator("method_type")
+    @classmethod
+    def validate_method_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.lower().strip()
+        if v not in ("card", "eft", "instant_eft", "bank_transfer"):
+            raise ValueError(
+                "method_type must be card, eft, instant_eft, or bank_transfer"
+            )
+        return v
