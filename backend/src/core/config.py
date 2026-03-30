@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     smtp_password: Optional[str] = Field(default=None, alias="SMTP_PASSWORD")
     smtp_use_tls: bool = Field(default=True, alias="SMTP_USE_TLS")
     smtp_use_ssl: bool = Field(default=False, alias="SMTP_USE_SSL")
+    telegram_alerts_enabled: bool = Field(
+        default=False, alias="TELEGRAM_ALERTS_ENABLED"
+    )
+    telegram_bot_token: Optional[str] = Field(default=None, alias="TELEGRAM_BOT_TOKEN")
+    telegram_chat_id: Optional[str] = Field(default=None, alias="TELEGRAM_CHAT_ID")
     google_client_id: Optional[str] = Field(default=None, alias="GOOGLE_CLIENT_ID")
     google_client_secret: Optional[str] = Field(
         default=None, alias="GOOGLE_CLIENT_SECRET"

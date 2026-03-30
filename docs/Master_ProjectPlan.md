@@ -182,5 +182,6 @@ ALLOW_PROD=1 ALLOW_PROD_DEPLOY=YES make deploy  # Production deploy
 | OPCLAW-INTEG-001 | Publish OpenClaw Bedrock integration spec (API contracts + policy + telemetry) | docs | done | P0 | 2026-03-22 |
 | OPCLAW-INTEG-002 | Implement Bedrock gateway and OpenClaw task endpoints in backend | engineering | in-progress | P0 |  |
 | OPCLAW-INTEG-003 | Implement OpenClaw telemetry events and approval audit trail | engineering | in-progress | P0 |  |
+| OPS-TELEGRAM-001 | Enable Telegram notifications for outbound email activity in production | engineering | done | P0 | 2026-03-30 |
 
 <!-- PLAN:END -->

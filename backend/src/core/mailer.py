@@ -9,6 +9,7 @@ from email.message import EmailMessage
 from typing import Iterable, Mapping, Optional
 
 from backend.src.core.config import settings
+from backend.src.core.telegram import send_telegram_alert
 
 log = logging.getLogger("mailer")
 
@@ -18,6 +19,26 @@ TEST_OUTBOX: list[EmailMessage] = []
 
 class MailerError(RuntimeError):
     """Raised when an email could not be dispatched."""
+
+
+def _notify_telegram_email_activity(
+    *,
+    status: str,
+    recipients: Iterable[str],
+    subject: str,
+    error_message: Optional[str] = None,
+) -> None:
+    recipient_text = ", ".join(recipients)
+    lines = [
+        "CapeControl email activity",
+        f"Status: {status}",
+        f"To: {recipient_text}",
+        f"Subject: {subject}",
+        "Source: https://cape-control.com",
+    ]
+    if error_message:
+        lines.append(f"Error: {error_message}")
+    send_telegram_alert("\n".join(lines))
 
 
 def _require(value: Optional[str], name: str) -> str:
@@ -57,10 +78,18 @@ def send_email(
     if html_body:
         msg.add_alternative(html_body, subtype="html")
 
+    recipients = list(to)
+
     if settings.env == "test":
         TEST_OUTBOX.append(msg)
         log.info(
-            "Email captured in TEST_OUTBOX", extra={"to": list(to), "subject": subject}
+            "Email captured in TEST_OUTBOX",
+            extra={"to": recipients, "subject": subject},
+        )
+        _notify_telegram_email_activity(
+            status="captured-test",
+            recipients=recipients,
+            subject=subject,
         )
         return
 
@@ -83,9 +112,20 @@ def send_email(
                 client.ehlo()
             client.login(smtp_username, smtp_password)
             client.send_message(msg)
-            log.info("Email dispatched", extra={"to": list(to), "subject": subject})
+            log.info("Email dispatched", extra={"to": recipients, "subject": subject})
+            _notify_telegram_email_activity(
+                status="sent",
+                recipients=recipients,
+                subject=subject,
+            )
     except Exception as exc:  # pragma: no cover - network-specific path
         log.exception(
-            "Failed to send email", extra={"to": list(to), "subject": subject}
+            "Failed to send email", extra={"to": recipients, "subject": subject}
+        )
+        _notify_telegram_email_activity(
+            status="failed",
+            recipients=recipients,
+            subject=subject,
+            error_message=str(exc),
         )
         raise MailerError("Failed to send email") from exc
